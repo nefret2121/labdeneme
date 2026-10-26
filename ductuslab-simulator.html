@@ -1,0 +1,2251 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DuctusLab · Oskültasyon &amp; Hemodinami</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" />
+  <style>
+    :root {
+      --bg-0: #040812;
+      --bg-1: #070c17;
+      --bg-2: #0b1220;
+      --bg-3: #101829;
+      --glass: rgba(13, 20, 34, 0.66);
+      --glass-2: rgba(17, 26, 43, 0.55);
+      --line: rgba(160, 176, 196, 0.10);
+      --line-2: rgba(160, 176, 196, 0.18);
+      --ink: #e4e9f1;
+      --ink-2: #a6b1c2;
+      --ink-3: #6c7889;
+      --accent: #6fa3c8;
+      --accent-2: #4f7fa3;
+      --accent-dim: rgba(111, 163, 200, 0.14);
+      --amber: #d9a441;
+      --amber-dim: rgba(217, 164, 65, 0.14);
+      --ok: #5a9f7f;
+      --ok-dim: rgba(90, 159, 127, 0.16);
+      --alert: #c4565f;
+      --alert-dim: rgba(196, 86, 95, 0.16);
+      --wave: #d9a441;
+      --lv: #c4565f;
+      --ao: #6fa3c8;
+      --la: #e3cf8a;
+      --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --mono: "JetBrains Mono", "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+      --beat-dur: 0.83s;
+      --resp-dur: 3.75s;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: var(--sans);
+      font-size: 12px;
+      background: var(--bg-0);
+      color: var(--ink);
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+      -webkit-font-smoothing: antialiased;
+    }
+    .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+    .hidden { display: none !important; }
+    .eyebrow { font-size: 10px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); }
+    .eyebrow.accent { color: var(--accent); }
+    .eyebrow.amber { color: var(--amber); }
+    .eyebrow.dim { font-weight: 500; letter-spacing: 0.08em; }
+    .card-title { font-size: 13px; font-weight: 600; color: var(--ink); letter-spacing: -0.01em; }
+    .body-text { font-size: 11.5px; line-height: 1.5; color: var(--ink-2); }
+    .body-text.dim, .dim { color: var(--ink-3); }
+    .fine { font-size: 10.5px; color: var(--ink-3); line-height: 1.4; }
+    .val { font-size: 11.5px; font-weight: 500; color: var(--ink); }
+    .val.amber { color: var(--amber); }
+    .val.lv { color: var(--lv); }
+    .val.ao { color: var(--ao); }
+    .val.ok { color: var(--ok); }
+    .val.dim { color: var(--ink-3); }
+    .row-between { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .stack { display: flex; flex-direction: column; gap: 6px; }
+    .stack-sm { display: flex; flex-direction: column; gap: 4px; }
+    .stack button, .stack-sm button { text-align: left; white-space: normal; }
+    hr.sep { border: 0; border-top: 1px solid var(--line); margin: 2px 0; }
+    .glass {
+      background: var(--glass);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid var(--line);
+    }
+
+    /* ---------- controls ---------- */
+    button {
+      font-family: var(--sans);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--ink-2);
+      background: rgba(255, 255, 255, 0.025);
+      border: 1px solid var(--line-2);
+      border-radius: 9px;
+      padding: 6px 11px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.12s ease;
+    }
+    button:hover { color: var(--ink); border-color: rgba(111, 163, 200, 0.45); background: rgba(111, 163, 200, 0.08); }
+    button:active { transform: translateY(1px); }
+    button:disabled { opacity: 0.55; cursor: default; transform: none; }
+    button.active-sky { background: var(--accent); color: #071018; border-color: transparent; font-weight: 600; }
+    button.active-amber { background: var(--amber); color: #1a1205; border-color: transparent; font-weight: 600; }
+    button.active-rose { background: var(--alert-dim); color: #efb3b8; border-color: rgba(196, 86, 95, 0.5); }
+    button.active-emerald { background: var(--ok-dim); color: #a3dcc2; border-color: rgba(90, 159, 127, 0.5); }
+    .btn-xs { padding: 3px 9px; font-size: 11px; border-radius: 7px; }
+    .wide { width: 100%; padding: 9px; }
+
+    .seg {
+      display: inline-flex;
+      gap: 2px;
+      padding: 3px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+    }
+    .seg button { border: none; background: transparent; padding: 5px 11px; border-radius: 7px; }
+    .seg button:hover { background: rgba(111, 163, 200, 0.08); }
+    .seg button.active-sky { background: rgba(111, 163, 200, 0.18); color: var(--ink); font-weight: 600; box-shadow: inset 0 0 0 1px rgba(111, 163, 200, 0.35); }
+    .seg button.active-amber { background: rgba(217, 164, 65, 0.18); color: #f1d9a3; font-weight: 600; box-shadow: inset 0 0 0 1px rgba(217, 164, 65, 0.4); }
+    .seg.glass { background: var(--glass); }
+    .cnt { font-family: var(--mono); font-size: 10px; color: var(--ink-3); margin-left: 5px; }
+    .seg button.active-sky .cnt { color: var(--accent); }
+
+    .chip-group {
+      display: inline-flex;
+      gap: 4px;
+      padding: 3px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+    }
+    .chip-group.glass { background: var(--glass); }
+    .chip-group button { border: none; background: transparent; padding: 5px 10px; border-radius: 7px; font-size: 11.5px; }
+    .chip-group button.active-sky { background: var(--accent-dim); color: var(--accent); font-weight: 600; box-shadow: inset 0 0 0 1px rgba(111, 163, 200, 0.3); }
+    .chip-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .chip-grid button { font-size: 11.5px; padding: 7px 8px; }
+    .chip-grid button.active-sky { background: var(--accent-dim); color: var(--accent); border-color: rgba(111, 163, 200, 0.4); font-weight: 600; }
+
+    select, input[type="text"] {
+      width: 100%;
+      font-family: var(--sans);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--ink);
+      background: rgba(5, 9, 16, 0.6);
+      border: 1px solid var(--line-2);
+      border-radius: 9px;
+      padding: 8px 10px;
+      outline: none;
+    }
+    select:focus, input[type="text"]:focus { border-color: rgba(111, 163, 200, 0.6); }
+    input[type="text"]::placeholder { color: var(--ink-3); }
+    .sel-sm { width: 160px; padding: 4px 8px; font-size: 11px; }
+    input[type="range"] {
+      width: 100%;
+      height: 3px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: linear-gradient(90deg, rgba(111, 163, 200, 0.55), rgba(111, 163, 200, 0.15));
+      border-radius: 3px;
+      outline: none;
+      cursor: pointer;
+      margin: 7px 0 5px;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 13px; height: 13px; border-radius: 50%;
+      background: #dfe6ef; border: 2px solid var(--accent);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+    }
+    input[type="range"]::-moz-range-thumb { width: 13px; height: 13px; border-radius: 50%; background: #dfe6ef; border: 2px solid var(--accent); }
+
+    /* ---------- tooltips ---------- */
+    [data-tip] { position: relative; }
+    [data-tip]:hover::after {
+      content: attr(data-tip);
+      position: absolute;
+      left: 50%;
+      bottom: calc(100% + 8px);
+      transform: translateX(-50%);
+      background: #0e1626;
+      border: 1px solid var(--line-2);
+      color: var(--ink-2);
+      padding: 6px 9px;
+      border-radius: 8px;
+      font-family: var(--sans);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0;
+      text-transform: none;
+      line-height: 1.4;
+      text-align: left;
+      white-space: normal;
+      width: max-content;
+      max-width: 230px;
+      z-index: 200;
+      pointer-events: none;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+    }
+    [data-tip-pos="bottom"]:hover::after { bottom: auto; top: calc(100% + 8px); }
+    [data-tip-pos="left"]:hover::after { left: auto; right: 0; transform: none; }
+    .info {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 14px; height: 14px; border-radius: 50%;
+      border: 1px solid var(--line-2); color: var(--ink-3);
+      font-family: var(--mono); font-size: 9px; font-weight: 700;
+      margin-left: 6px; vertical-align: middle; cursor: help;
+    }
+
+    /* ---------- header ---------- */
+    header {
+      height: 48px;
+      background: rgba(6, 10, 20, 0.86);
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      flex-shrink: 0;
+      z-index: 30;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .wordmark { font-size: 13px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink); }
+    .wordmark em { font-style: normal; color: var(--accent); }
+    .vsep { width: 1px; height: 18px; background: var(--line-2); }
+    .product { font-size: 12px; color: var(--ink-3); font-weight: 500; }
+    .top-actions { display: flex; gap: 8px; align-items: center; }
+    .audio-btn { display: inline-flex; align-items: center; gap: 7px; }
+    .audio-btn .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-3); transition: all 0.2s; }
+    .audio-btn.on { color: #a3dcc2; border-color: rgba(90, 159, 127, 0.45); background: var(--ok-dim); }
+    .audio-btn.on .dot { background: var(--ok); box-shadow: 0 0 8px rgba(90, 159, 127, 0.8); animation: dotPulse var(--beat-dur) infinite ease-in-out; }
+    @keyframes dotPulse { 0%, 100% { opacity: 0.55; } 12% { opacity: 1; } }
+
+    /* ---------- viewport ---------- */
+    #mainWorkspace { flex: 1; display: flex; overflow: hidden; position: relative; }
+    #leftViewport {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+      background: radial-gradient(ellipse at 50% 38%, #0d1829 0%, #070d18 55%, var(--bg-0) 100%);
+    }
+    #ambientBreath, #ambientPulse { position: absolute; inset: 0; pointer-events: none; z-index: 4; }
+    #ambientBreath { opacity: 0; transition: opacity 0.6s ease; animation: breathe var(--resp-dur) infinite ease-in-out; }
+    body.listening #ambientBreath { opacity: 1; }
+    @keyframes breathe {
+      0%, 100% { box-shadow: inset 0 0 90px rgba(111, 163, 200, 0.08); }
+      50% { box-shadow: inset 0 0 140px rgba(111, 163, 200, 0.18); }
+    }
+    #ambientPulse { box-shadow: inset 0 0 170px rgba(196, 86, 95, 0.30); opacity: 0; }
+
+    .floating-top-bar {
+      position: absolute; top: 12px; left: 12px; right: 12px;
+      display: flex; justify-content: space-between; gap: 8px;
+      z-index: 20; pointer-events: none;
+    }
+    .floating-top-bar > * { pointer-events: auto; }
+    .thorax-stage { flex: 1; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; padding-top: 24px; }
+    #thoraxSvg { height: 100%; max-height: 560px; width: auto; filter: drop-shadow(0 0 30px rgba(111, 163, 200, 0.10)); }
+    .hotspot-node { cursor: pointer; transition: filter 0.15s ease; }
+    .hotspot-node:hover, .hotspot-node.hover { filter: brightness(1.3) drop-shadow(0 0 7px rgba(111, 163, 200, 0.7)); }
+    #stethChestpiece { cursor: grab; }
+    #stethChestpiece.dragging { cursor: grabbing; }
+    .pulse-ring { animation: spotPulse 1.6s infinite cubic-bezier(0.16, 1, 0.3, 1); }
+    @keyframes spotPulse { 0% { r: 9; opacity: 0.7; } 70%, 100% { r: 20; opacity: 0; } }
+    .contact-ring { animation: contact 0.55s ease-out forwards; }
+    @keyframes contact { 0% { r: 12; opacity: 0.8; } 100% { r: 32; opacity: 0; } }
+    .heart-anim { transform-origin: 255px 258px; animation: heartBeat var(--beat-dur) infinite ease-in-out; }
+    @keyframes heartBeat {
+      0%, 100% { transform: scale(1); }
+      15% { transform: scale(1.045); }
+      30% { transform: scale(0.99); }
+      45% { transform: scale(1.02); }
+    }
+    .lung-anim { transform-origin: 250px 245px; animation: lungBreathe var(--resp-dur) infinite ease-in-out; }
+    @keyframes lungBreathe {
+      0%, 100% { transform: scale(1); opacity: 0.82; }
+      50% { transform: scale(1.035, 1.028); opacity: 0.94; }
+    }
+
+    .spot-info-float { position: absolute; bottom: 12px; left: 12px; z-index: 20; padding: 9px 12px; border-radius: 12px; min-width: 230px; }
+    .spot-title { font-size: 12.5px; font-weight: 600; color: var(--ink); }
+    .spot-anat { font-size: 11px; color: var(--ink-3); margin-top: 2px; }
+    .spot-int { font-family: var(--mono); font-size: 10.5px; padding: 2px 7px; border-radius: 6px; background: var(--accent-dim); color: var(--accent); }
+    .spot-hint { font-size: 10.5px; color: var(--amber); margin-top: 4px; }
+    .microscope-float { position: absolute; bottom: 12px; right: 12px; z-index: 20; padding: 4px 5px 4px 11px; border-radius: 12px; display: flex; align-items: center; gap: 8px; }
+
+    /* ---------- monitor strips ---------- */
+    .monitor-strip { background: #05090f; border-top: 1px solid var(--line); flex-shrink: 0; display: flex; flex-direction: column; }
+    #wiggersContainer { height: 96px; padding: 6px 14px 4px; }
+    .monitor-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; height: 16px; }
+    .legend { display: flex; gap: 12px; font-size: 10.5px; color: var(--ink-3); align-items: center; }
+    .legend i { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--c); margin-right: 5px; vertical-align: middle; }
+    .readout { font-size: 10.5px; color: var(--ink-2); }
+    .readout strong { color: var(--ink); font-weight: 600; }
+    #wiggersCanvas { width: 100%; height: 64px; display: block; margin-top: 4px; }
+    .phono-section { height: 120px; }
+    .phono-section .monitor-head { padding: 6px 14px 0; }
+    .phono-canvas-wrap { position: relative; flex: 1; width: 100%; overflow: hidden; }
+    #phonoCanvas { width: 100%; height: 100%; display: block; }
+    .bottom-bar {
+      height: 42px; border-top: 1px solid var(--line); padding: 0 12px;
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      background: rgba(8, 13, 24, 0.9);
+    }
+    .bottom-left { display: flex; align-items: center; gap: 8px; }
+    .mini-vitals { display: flex; gap: 16px; font-size: 10.5px; color: var(--ink-3); letter-spacing: 0.06em; }
+    .mini-vitals strong { font-size: 12.5px; font-weight: 600; margin-left: 4px; letter-spacing: 0; }
+    .mini-vitals .hr strong { color: var(--lv); }
+    .mini-vitals .rr strong { color: var(--ao); }
+
+    /* ---------- right console ---------- */
+    #rightControlPanel {
+      width: 440px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      background: linear-gradient(180deg, rgba(11, 18, 32, 0.94), rgba(7, 12, 22, 0.97));
+      border-left: 1px solid var(--line);
+      z-index: 25;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+    .panel-head { padding: 12px 12px 10px; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; }
+    .vitals { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+    .vital { background: rgba(12, 19, 33, 0.92); padding: 8px 10px; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+    .vital .k { font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; }
+    .vital .v { font-family: var(--mono); font-size: 14px; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .vital .u { font-family: var(--sans); font-size: 9.5px; color: var(--ink-3); font-weight: 500; margin-left: 3px; }
+    .vital.hr .v { color: var(--lv); }
+    .vital.rr .v { color: var(--ao); }
+    .vital.gr .v { color: var(--amber); }
+    .right-nav { margin: 10px 12px 0; display: flex; }
+    .right-nav button { flex: 1; font-size: 11.5px; padding: 6px 4px; }
+    .tab-pane { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+    .tab-pane::-webkit-scrollbar { width: 6px; }
+    .tab-pane::-webkit-scrollbar-thumb { background: rgba(160, 176, 196, 0.14); border-radius: 6px; }
+    .card {
+      background: var(--glass-2);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 13px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+    .card-console { border-color: rgba(111, 163, 200, 0.22); background: linear-gradient(160deg, rgba(20, 31, 52, 0.62), rgba(13, 21, 36, 0.55)); }
+    .ctl { background: rgba(5, 9, 16, 0.5); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px 5px; }
+    .ctl-head { display: flex; justify-content: space-between; align-items: center; }
+    .lbl { font-size: 11px; color: var(--ink-2); font-weight: 500; }
+    .readout-line {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 8px 10px; border-left: 2px solid var(--accent);
+      background: rgba(111, 163, 200, 0.06); border-radius: 0 8px 8px 0;
+      font-size: 11px; line-height: 1.45; color: var(--ink-2);
+    }
+    .dir { font-size: 10.5px; font-weight: 600; letter-spacing: 0.06em; white-space: nowrap; color: var(--ink-3); padding-top: 1px; }
+    .dir.up { color: var(--alert); }
+    .dir.down { color: var(--accent); }
+    .feedback-box {
+      padding: 8px 10px; border-left: 2px solid var(--accent);
+      background: rgba(111, 163, 200, 0.06); border-radius: 0 8px 8px 0;
+      font-size: 11.5px; line-height: 1.45; color: var(--ink-2);
+    }
+    .feedback-box strong { color: var(--ink); }
+    .note { border-top: 1px solid var(--line); padding-top: 8px; display: flex; flex-direction: column; gap: 4px; }
+    .bars { display: flex; flex-direction: column; gap: 7px; }
+    .progress-track { width: 100%; height: 4px; background: rgba(255, 255, 255, 0.05); border-radius: 99px; overflow: hidden; margin-top: 3px; }
+    .progress-fill { height: 100%; border-radius: 99px; transition: width 0.25s ease; opacity: 0.85; }
+    .sub-box { background: rgba(5, 9, 16, 0.5); border: 1px solid var(--line); border-radius: 9px; padding: 7px 10px; font-size: 11px; }
+    .league-row.me { border-color: rgba(111, 163, 200, 0.4); }
+    .tag { font-size: 9.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); border: 1px solid var(--line-2); padding: 2px 6px; border-radius: 5px; font-weight: 600; }
+    .result { border: 1px solid rgba(90, 159, 127, 0.4); background: rgba(90, 159, 127, 0.07); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 6px; }
+    .result-title { font-size: 12px; font-weight: 600; color: #a3dcc2; }
+    .share { font-size: 11px; white-space: pre-wrap; background: rgba(5, 9, 16, 0.6); border: 1px solid var(--line); border-radius: 8px; padding: 8px; user-select: text; color: var(--ink-2); }
+    #duelPatientBtn-A, #duelPatientBtn-B { padding: 10px 12px; text-align: left; display: flex; flex-direction: column; gap: 2px; }
+    #duelPatientBtn-A strong, #duelPatientBtn-B strong { font-family: var(--mono); font-size: 16px; }
+    #duelPatientBtn-A .eyebrow, #duelPatientBtn-B .eyebrow { color: inherit; opacity: 0.7; }
+
+    /* ---------- studio ---------- */
+    body.studio-mode #rightControlPanel,
+    body.studio-mode #topUtilityButtons { display: none !important; }
+    body.studio-mode #mainWorkspace { justify-content: center; background: #020408; }
+    body.studio-mode #leftViewport {
+      flex: 0 0 430px !important;
+      width: 430px !important;
+      max-width: 96vw;
+      height: calc(100vh - 56px);
+      border: 1px solid rgba(217, 164, 65, 0.35);
+      border-radius: 22px;
+      box-shadow: 0 0 60px rgba(0, 0, 0, 0.6);
+    }
+    body.studio-mode #studioOverlayBar { display: flex !important; }
+    #studioOverlayBar {
+      display: none;
+      position: absolute; top: 54px; left: 12px; right: 12px;
+      z-index: 25; flex-direction: column; gap: 6px;
+      padding: 8px 10px; border-radius: 12px;
+    }
+    .case-badge { font-size: 11px; font-weight: 600; color: var(--ink); background: var(--amber-dim); border: 1px solid rgba(217, 164, 65, 0.35); padding: 2px 8px; border-radius: 6px; }
+
+    /* ---------- modules modal ---------- */
+    #portalModal {
+      position: fixed; inset: 0;
+      background: rgba(3, 6, 12, 0.82);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      z-index: 60;
+      display: flex; align-items: center; justify-content: center; padding: 20px;
+    }
+    .modal-box { background: var(--bg-2); border: 1px solid var(--line-2); border-radius: 18px; max-width: 920px; width: 100%; overflow: hidden; box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6); }
+    .modal-head { padding: 14px 18px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; }
+    .portal-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 16px; }
+    .portal-grid .card { cursor: pointer; }
+    .portal-soon { opacity: 0.6; cursor: not-allowed !important; }
+    .mod-ico { font-family: var(--mono); font-size: 10.5px; font-weight: 600; letter-spacing: 0.08em; color: var(--accent); background: var(--accent-dim); border: 1px solid rgba(111, 163, 200, 0.3); padding: 3px 7px; border-radius: 6px; }
+    .portal-soon .mod-ico { color: var(--ink-3); background: transparent; border-color: var(--line-2); }
+
+    #toastBox {
+      position: fixed; bottom: 26px; left: 50%;
+      transform: translateX(-50%) translateY(16px);
+      background: #0e1626; border: 1px solid var(--line-2); color: var(--ink);
+      padding: 10px 16px; border-radius: 10px;
+      font-size: 12px; font-weight: 500;
+      opacity: 0; transition: all 0.22s ease; z-index: 100; pointer-events: none;
+      max-width: 90vw; text-align: center;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+    }
+    #toastBox.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <span class="wordmark">Ductus<em>Lab</em></span>
+      <span class="vsep"></span>
+      <span class="product">Oskültasyon &amp; Hemodinami</span>
+    </div>
+
+    <div id="topUtilityButtons" class="seg">
+      <button onclick="switchOrganSystem('heart')" id="sysBtn-heart" class="active-sky">Kalp</button>
+      <button onclick="switchOrganSystem('lungs')" id="sysBtn-lungs">Akciğer</button>
+      <button onclick="switchOrganSystem('abdomen')" id="sysBtn-abdomen">Abdomen</button>
+    </div>
+
+    <div class="top-actions">
+      <button onclick="toggleAudioEngine()" id="masterAudioBtn" class="audio-btn" data-tip="Gerçek zamanlı ses sentezini başlatır / durdurur" data-tip-pos="bottom">
+        <span class="dot"></span><span id="audioBtnLabel">Ses Kapalı</span>
+      </button>
+      <button onclick="toggleStudioMode()" data-tip="9:16 dikey kayıt düzeni; konsol gizlenir. Kısayollar: 1–6 provokasyon, S ses, D/B filtre, R stüdyo" data-tip-pos="bottom">Stüdyo 9:16</button>
+      <button onclick="togglePortalModal()">Modüller</button>
+    </div>
+  </header>
+
+  <div id="mainWorkspace">
+    <section id="leftViewport">
+      <div id="ambientBreath"></div>
+      <div id="ambientPulse"></div>
+
+      <div class="floating-top-bar">
+        <div class="seg glass">
+          <button onclick="setBodySide('front')" id="sideBtn-front" class="active-sky">Ön Yüz</button>
+          <button onclick="setBodySide('back')" id="sideBtn-back">Arka Yüz</button>
+        </div>
+        <div class="chip-group glass">
+          <button onclick="toggleLayer('xray')" id="layerBtn-xray" class="active-sky" data-tip="Kosta, sternum, klavikula; arka yüzde omurga ve skapula" data-tip-pos="bottom">İskelet</button>
+          <button onclick="toggleLayer('organs')" id="layerBtn-organs" class="active-sky" data-tip="Kalp, akciğerler, büyük damarlar, karaciğer" data-tip-pos="bottom">Organlar</button>
+          <button onclick="toggleLayer('foci')" id="layerBtn-foci" class="active-sky" data-tip="Standart oskültasyon odakları ve yayılım hatları" data-tip-pos="bottom">Odaklar</button>
+          <button onclick="toggleLayer('wiggers')" id="layerBtn-wiggers" class="active-sky" data-tip="LV / aort / LA basınç eğrileri, fonokardiyogramla senkron" data-tip-pos="bottom">Wiggers</button>
+        </div>
+      </div>
+
+      <div id="studioOverlayBar" class="glass">
+        <div class="row-between">
+          <span class="eyebrow amber">Stüdyo · 9:16</span>
+          <span id="studioCaseBadge" class="case-badge">Aort Darlığı</span>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:5px;">
+          <button onclick="applyManeuver('none')">Bazal</button>
+          <button onclick="applyManeuver('valsalva')">Valsalva</button>
+          <button onclick="applyManeuver('squat')">Çömelme</button>
+          <button onclick="applyManeuver('handgrip')">El Sıkma</button>
+        </div>
+      </div>
+
+      <div class="thorax-stage">
+        <svg id="thoraxSvg" viewBox="0 0 500 540">
+          <defs>
+            <radialGradient id="bodySkinGrad" cx="50%" cy="42%" r="55%">
+              <stop offset="0%" stop-color="#6fa3c8" stop-opacity="0.16" />
+              <stop offset="65%" stop-color="#5f94bb" stop-opacity="0.08" />
+              <stop offset="100%" stop-color="#3f6a8a" stop-opacity="0.30" />
+            </radialGradient>
+            <linearGradient id="lungGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#9a7aa0" stop-opacity="0.50" />
+              <stop offset="100%" stop-color="#5b3a63" stop-opacity="0.45" />
+            </linearGradient>
+            <radialGradient id="heartGrad" cx="45%" cy="45%" r="55%">
+              <stop offset="0%" stop-color="#b0414b" stop-opacity="0.96" />
+              <stop offset="70%" stop-color="#7f2b33" stop-opacity="0.92" />
+              <stop offset="100%" stop-color="#5a1f25" stop-opacity="0.95" />
+            </radialGradient>
+            <linearGradient id="boneGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#c9d2de" stop-opacity="0.58" />
+              <stop offset="100%" stop-color="#7d8896" stop-opacity="0.32" />
+            </linearGradient>
+          </defs>
+
+          <g id="svgLayer-body">
+            <path d="M195,20 C195,48 182,68 150,78 C95,94 62,120 48,175 C36,225 32,330 28,430 L85,435 C92,340 100,255 112,210 L118,520 L382,520 L388,210 C400,255 408,340 415,435 L472,430 C468,330 464,225 452,175 C438,120 405,94 350,78 C318,68 305,48 305,20 Z"
+                  fill="url(#bodySkinGrad)" stroke="#6fa3c8" stroke-width="1.4" stroke-opacity="0.42" />
+          </g>
+
+          <g id="svgLayer-organs">
+            <g class="lung-anim">
+              <path d="M235,130 C185,128 148,165 138,235 C128,295 132,345 142,368 C165,352 208,348 235,345 Z"
+                    fill="url(#lungGrad)" stroke="#9a7aa0" stroke-opacity="0.55" stroke-width="1.4" />
+              <path d="M265,130 C315,128 352,165 362,235 C372,295 368,345 358,368 C335,352 312,348 298,332 C308,295 298,255 265,242 Z"
+                    fill="url(#lungGrad)" stroke="#9a7aa0" stroke-opacity="0.55" stroke-width="1.4" />
+            </g>
+            <g id="organsFront">
+            <path d="M242,35 L242,145 L258,145 L258,35 Z" fill="#8fb3cc" fill-opacity="0.35" stroke="#6fa3c8" stroke-width="1"/>
+            <path d="M138,378 C178,366 235,372 268,392 L225,455 C175,455 145,432 138,378 Z"
+                  fill="#6b2f33" fill-opacity="0.44" stroke="#b96a70" stroke-opacity="0.3" stroke-width="1" />
+            <path d="M252,330 L252,445 M252,445 L222,495 M252,445 L282,495"
+                  fill="none" stroke="#a8434d" stroke-opacity="0.55" stroke-width="7" stroke-linecap="round"/>
+            <path d="M226,210 L226,115 M226,125 L185,95 M226,115 L218,52 M272,115 L280,52"
+                  fill="none" stroke="#4f7fa3" stroke-opacity="0.75" stroke-width="7" stroke-linecap="round" />
+            <path d="M254,215 C254,160 282,155 278,195 M262,168 L232,52 M272,172 L268,52"
+                  fill="none" stroke="#a8434d" stroke-opacity="0.85" stroke-width="8" stroke-linecap="round" />
+            <g class="heart-anim">
+              <path d="M242,208 C222,208 212,232 218,262 C224,292 252,322 292,328 C312,330 322,310 314,282 C306,252 288,215 262,210 Z"
+                    fill="url(#heartGrad)" stroke="#d99aa0" stroke-opacity="0.65" stroke-width="1.5" />
+            </g>
+            </g>
+            <g id="organsBack" style="display:none">
+              <ellipse cx="203" cy="392" rx="22" ry="34" transform="rotate(14 203 392)" fill="#8a5a2b" fill-opacity="0.55" stroke="#c9973f" stroke-opacity="0.6" stroke-width="1.4" />
+              <ellipse cx="297" cy="404" rx="22" ry="34" transform="rotate(-14 297 404)" fill="#8a5a2b" fill-opacity="0.55" stroke="#c9973f" stroke-opacity="0.6" stroke-width="1.4" />
+              <path d="M214,422 C222,452 232,484 240,520" fill="none" stroke="#c9973f" stroke-opacity="0.4" stroke-width="3" stroke-linecap="round" />
+              <path d="M286,434 C278,462 268,492 260,520" fill="none" stroke="#c9973f" stroke-opacity="0.4" stroke-width="3" stroke-linecap="round" />
+            </g>
+          </g>
+
+          <g id="svgLayer-xray">
+            <g id="xrayFront">
+            <path d="M238,112 Q175,95 112,122 M262,112 Q325,95 388,122"
+                  fill="none" stroke="url(#boneGrad)" stroke-width="9" stroke-linecap="round" />
+            <path d="M236,110 L264,110 L258,145 L262,285 L250,312 L238,285 L242,145 Z"
+                  fill="url(#boneGrad)" stroke="#b9c3cf" stroke-opacity="0.35" stroke-width="1.2" />
+            <g fill="none" stroke="url(#boneGrad)" stroke-width="6.5" stroke-linecap="round">
+              <path d="M238,132 C195,128 158,145 142,172" />
+              <path d="M240,162 C185,158 145,178 128,210" />
+              <path d="M240,192 C180,190 138,212 122,248" />
+              <path d="M240,224 C178,224 135,248 122,286" />
+              <path d="M240,256 C180,260 138,284 128,322" />
+              <path d="M242,284 C188,296 148,320 140,355" />
+              <path d="M262,132 C305,128 342,145 358,172" />
+              <path d="M260,162 C315,158 355,178 372,210" />
+              <path d="M260,192 C320,190 362,212 378,248" />
+              <path d="M260,224 C322,224 365,248 378,286" />
+              <path d="M260,256 C320,260 362,284 372,322" />
+              <path d="M258,284 C312,296 352,320 360,355" />
+            </g>
+            </g>
+            <g id="xrayBack" style="display:none">
+              <g fill="none" stroke="url(#boneGrad)" stroke-width="6" stroke-linecap="round">
+                <path d="M242,128 C205,132 165,146 138,178" />
+                <path d="M258,128 C295,132 335,146 362,178" />
+                <path d="M242,155 C205,159 165,173 138,205" />
+                <path d="M258,155 C295,159 335,173 362,205" />
+                <path d="M242,182 C205,186 165,200 138,232" />
+                <path d="M258,182 C295,186 335,200 362,232" />
+                <path d="M242,209 C205,213 165,227 138,259" />
+                <path d="M258,209 C295,213 335,227 362,259" />
+                <path d="M242,236 C205,240 165,254 138,286" />
+                <path d="M258,236 C295,240 335,254 362,286" />
+                <path d="M242,263 C205,267 165,281 138,313" />
+                <path d="M258,263 C295,267 335,281 362,313" />
+                <path d="M242,290 C205,294 165,308 138,340" />
+                <path d="M258,290 C295,294 335,308 362,340" />
+                <path d="M242,317 C205,321 165,335 138,367" />
+                <path d="M258,317 C295,321 335,335 362,367" />
+                <path d="M242,344 C205,348 165,362 138,394" />
+                <path d="M258,344 C295,348 335,362 362,394" />
+                <path d="M242,371 C205,375 165,389 138,421" />
+                <path d="M258,371 C295,375 335,389 362,421" />
+              </g>
+              <rect x="241" y="88" width="18" height="16" rx="4" fill="url(#boneGrad)" />
+              <rect x="241" y="110" width="18" height="16" rx="4" fill="url(#boneGrad)" />
+              <rect x="241" y="132" width="18" height="16" rx="4" fill="url(#boneGrad)" />
+              <rect x="241" y="154" width="18" height="16" rx="4" fill="url(#boneGrad)" />
+              <rect x="241" y="176" width="18" height="16" rx="4" fill="url(#boneGrad)" />
+              <rect x="241" y="198" width="18" height="16" rx="4" fill="url(#boneGrad)" />
+              <rect x="241" y="220" width="18" height="16" rx="4" fill="url(#boneGrad)" />
+              <rect x="241" y="242" width="18" height="16" rx="4" fill="url(#boneGrad)" />
+              <rect x="241" y="264" width="18" height="16" rx="4" fill="url(#boneGrad)" />
+              <rect x="241" y="286" width="18" height="16" rx="4" fill="url(#boneGrad)" />
+              <rect x="241" y="308" width="18" height="16" rx="4" fill="url(#boneGrad)" />
+              <rect x="241" y="330" width="18" height="16" rx="4" fill="url(#boneGrad)" />
+              <rect x="241" y="352" width="18" height="16" rx="4" fill="url(#boneGrad)" />
+              <rect x="241" y="374" width="18" height="16" rx="4" fill="url(#boneGrad)" />
+              <rect x="241" y="396" width="18" height="16" rx="4" fill="url(#boneGrad)" />
+              <rect x="241" y="418" width="18" height="16" rx="4" fill="url(#boneGrad)" />
+              <rect x="241" y="440" width="18" height="16" rx="4" fill="url(#boneGrad)" />
+              <rect x="241" y="462" width="18" height="16" rx="4" fill="url(#boneGrad)" />
+              <rect x="241" y="484" width="18" height="16" rx="4" fill="url(#boneGrad)" />
+              <path d="M158,116 L210,132 L204,252 L146,224 Z" fill="url(#boneGrad)" stroke="#b9c3cf" stroke-opacity="0.35" stroke-width="1.2" />
+              <path d="M150,142 L208,152" fill="none" stroke="#c9d2de" stroke-opacity="0.5" stroke-width="4" stroke-linecap="round" />
+              <path d="M342,116 L290,132 L296,252 L354,224 Z" fill="url(#boneGrad)" stroke="#b9c3cf" stroke-opacity="0.35" stroke-width="1.2" />
+              <path d="M350,142 L292,152" fill="none" stroke="#c9d2de" stroke-opacity="0.5" stroke-width="4" stroke-linecap="round" />
+            </g>
+          </g>
+
+          <g id="svgLayer-radiation"></g>
+          <g id="svgLayer-foci"></g>
+
+          <g id="stethoscopeGroup">
+            <path id="stethTube" d="M205,15 C205,85 225,125 250,175" fill="none" stroke="#1b2230" stroke-width="9" stroke-linecap="round" />
+            <path id="stethTubeHighlight" d="M205,15 C205,85 225,125 250,175" fill="none" stroke="#6b7786" stroke-width="3" stroke-linecap="round" />
+            <circle id="contactRing" cx="222" cy="162" r="12" fill="none" stroke="#6fa3c8" stroke-width="2" opacity="0" />
+            <g id="stethChestpiece" transform="translate(222, 162)">
+              <circle r="22" fill="#05080f" opacity="0.5" />
+              <circle r="16" fill="#b9c3cf" stroke="#e9eef4" stroke-width="1.5" />
+              <circle r="10" fill="#2a3444" stroke="#8b96a5" stroke-width="1.2" />
+              <circle r="3.5" fill="#6fa3c8" />
+            </g>
+          </g>
+        </svg>
+
+        <div class="spot-info-float glass">
+          <div class="row-between">
+            <span id="activeSpotTitle" class="spot-title">Aort Odağı (A)</span>
+            <span id="activeSpotIntensityBadge" class="spot-int">Şiddet ×1.00</span>
+          </div>
+          <div id="activeSpotAnat" class="spot-anat">Sağ 2. interkostal aralık, sternal kenar</div>
+          <div id="bodySideHint" class="spot-hint hidden">Arka yüz: hastanın sağı ekranın sağında</div>
+        </div>
+
+        <div class="microscope-float glass">
+          <span class="eyebrow">Bileşen İzolasyonu</span>
+          <div class="chip-group" style="border:none; background:transparent; padding:0;">
+            <button onclick="setAudioMicroscope('all')" id="micro-all" class="active-sky" data-tip="Tüm akustik bileşenler">Tümü</button>
+            <button onclick="setAudioMicroscope('s1s2')" id="micro-s1s2" data-tip="Yalnızca S1 ve S2">S1 · S2</button>
+            <button onclick="setAudioMicroscope('extra')" id="micro-extra" data-tip="S3, S4, ejeksiyon kliği, açılma sesi">Ek Sesler</button>
+            <button onclick="setAudioMicroscope('murmur')" id="micro-murmur" data-tip="Üfürümler, raller, sürtünme sesi" data-tip-pos="left">Üfürüm · Ral</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="wiggersContainer" class="monitor-strip">
+        <div class="monitor-head">
+          <span class="eyebrow">Wiggers · Basınç Eğrileri</span>
+          <div class="legend">
+            <span><i style="--c:var(--lv)"></i>LV</span>
+            <span><i style="--c:var(--ao)"></i>Aort</span>
+            <span><i style="--c:var(--la)"></i>LA</span>
+          </div>
+          <span id="hemodynamicReadout" class="mono readout">LV/Ao <strong>165/110</strong> mmHg · Gradyent <strong>55</strong> mmHg</span>
+        </div>
+        <canvas id="wiggersCanvas"></canvas>
+      </div>
+
+      <div class="phono-section monitor-strip">
+        <div class="monitor-head">
+          <span class="eyebrow">Fonokardiyogram</span>
+          <span class="eyebrow dim">S1 · S2 · Ek sesler · Üfürüm zarfı</span>
+        </div>
+        <div class="phono-canvas-wrap">
+          <canvas id="phonoCanvas"></canvas>
+        </div>
+        <div class="bottom-bar">
+          <div class="bottom-left">
+            <div class="seg">
+              <button onclick="setStethFilter('diaphragm')" id="filterBtn-diaphragm" class="active-sky" data-tip="Yüksek frekans: S1, S2, çoğu üfürüm, raller">Diyafram</button>
+              <button onclick="setStethFilter('bell')" id="filterBtn-bell" data-tip="Düşük frekans: S3, S4, mitral darlığı rulmanı">Çan</button>
+            </div>
+            <button onclick="toggleBellPressure()" id="bellPressureBtn" data-tip="Çan sıkı bastırılırsa deri gerilir ve diyafram gibi davranır; düşük frekanslar kaybolur">Temas: Hafif</button>
+          </div>
+          <div class="mini-vitals mono">
+            <span class="hr">HR<strong id="bottomBpmLabel">72</strong></span>
+            <span class="rr">RR<strong id="bottomRpmLabel">16</strong></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <aside id="rightControlPanel">
+      <div class="panel-head">
+        <div class="row-between">
+          <span class="eyebrow">Klinik Konsol</span>
+          <span class="eyebrow dim">Canlı hemodinami</span>
+        </div>
+        <div class="vitals">
+          <div class="vital hr"><span class="k">HR</span><span class="v"><span id="vHr">72</span><span class="u">/dk</span></span></div>
+          <div class="vital rr"><span class="k">RR</span><span class="v"><span id="vRr">16</span><span class="u">/dk</span></span></div>
+          <div class="vital"><span class="k">LV / Ao</span><span class="v"><span id="vLvAo">165/110</span><span class="u">mmHg</span></span></div>
+          <div class="vital gr"><span class="k">Gradyent</span><span class="v"><span id="vGrad">55</span><span class="u">mmHg</span></span></div>
+        </div>
+      </div>
+
+      <nav class="seg right-nav">
+        <button onclick="switchRightTab('explore')" id="tabBtn-explore" class="active-sky">Konsol</button>
+        <button onclick="switchRightTab('duel')" id="tabBtn-duel">Ayırıcı Tanı</button>
+        <button onclick="switchRightTab('daily')" id="tabBtn-daily">Günün Vakası</button>
+        <button onclick="switchRightTab('quiz')" id="tabBtn-quiz">Sınav Modu</button>
+      </nav>
+
+      <div id="tabContent-explore" class="tab-pane">
+        <div class="card">
+          <div class="row-between">
+            <span id="caseCategoryTag" class="eyebrow accent">Sistolik Üfürümler</span>
+            <span id="caseBestFilterTag" class="eyebrow dim">Diyafram önerilir</span>
+          </div>
+          <select id="caseSelectorDropdown" onchange="selectPathology(this.value)"></select>
+          <input type="text" id="caseQuickSearch" oninput="filterCaseDropdown(this.value)" placeholder="Vaka ara: aort, HOCM, S3, plörit…" />
+        </div>
+
+        <div class="card card-console">
+          <div class="row-between">
+            <span class="card-title">Hemodinamik Simülasyon Konsolu<span class="info" data-tip="Önyük, ardyük veya evreyi değiştirin; ses fizyolojik kurallara göre anında güncellenir.">i</span></span>
+            <button class="btn-xs" onclick="resetHemodynamics()" data-tip="Tüm parametreleri bazal değere döndürür" data-tip-pos="left">Bazal</button>
+          </div>
+
+          <div class="ctl">
+            <div class="ctl-head">
+              <span class="lbl">Hastalık Evresi<span class="info" data-tip="Evre 1 hafif → Evre 3 ağır. Hemodinamik yük ve üfürüm şiddeti evreyle birlikte değişir.">i</span></span>
+              <span id="severityStageLabel" class="mono val amber">Evre 2 (Orta)</span>
+            </div>
+            <input type="range" id="severitySlider" min="1" max="3" step="0.1" value="2" oninput="updateHemodynamicSliders()" />
+          </div>
+
+          <div class="grid-2">
+            <div class="ctl">
+              <div class="ctl-head"><span class="lbl">Önyük <span class="dim">(Preload)</span></span><span id="preloadValLabel" class="mono val ao">100%</span></div>
+              <input type="range" id="preloadSlider" min="50" max="150" value="100" oninput="updateHemodynamicSliders()" />
+            </div>
+            <div class="ctl">
+              <div class="ctl-head"><span class="lbl">Ardyük <span class="dim">(Afterload)</span></span><span id="afterloadValLabel" class="mono val lv">100%</span></div>
+              <input type="range" id="afterloadSlider" min="60" max="150" value="100" oninput="updateHemodynamicSliders()" />
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="ctl">
+              <div class="ctl-head"><span class="lbl">Kalp Hızı</span><span id="bpmSliderLabel" class="mono val lv">72 /dk</span></div>
+              <input type="range" id="bpmSlider" min="45" max="150" value="72" oninput="updateVitalSliders()" />
+            </div>
+            <div class="ctl">
+              <div class="ctl-head"><span class="lbl">Solunum Hızı</span><span id="rpmSliderLabel" class="mono val ao">16 /dk</span></div>
+              <input type="range" id="rpmSlider" min="8" max="36" value="16" oninput="updateVitalSliders()" />
+            </div>
+          </div>
+
+          <hr class="sep" />
+          <span class="eyebrow">Fizyolojik Provokasyon Testleri <span class="dim">(Valsalva / Postural)</span></span>
+          <div class="chip-grid">
+            <button onclick="applyManeuver('none')" id="manBtn-none" class="active-sky" data-tip="Provokasyon yok">Bazal</button>
+            <button onclick="applyManeuver('valsalva')" id="manBtn-valsalva" data-tip="Zorlu ekspiryum fazı: venöz dönüş ve önyük azalır">Valsalva</button>
+            <button onclick="applyManeuver('squat')" id="manBtn-squat" data-tip="Venöz dönüş ve sistemik direnç artar: önyük ve ardyük yükselir">Çömelme</button>
+            <button onclick="applyManeuver('stand')" id="manBtn-stand" data-tip="Ani ayağa kalkma: önyük azalır">Ayağa Kalkma</button>
+            <button onclick="applyManeuver('handgrip')" id="manBtn-handgrip" data-tip="İzometrik egzersiz: ardyük artar">El Sıkma</button>
+            <button onclick="applyManeuver('inspiration')" id="manBtn-inspiration" data-tip="Sağ kalp sesleri belirginleşir, sol kalp sesleri azalır">İnspiryum</button>
+          </div>
+          <div class="readout-line">
+            <span id="maneuverDirection" class="mono dir">—</span>
+            <span id="liveManeuverFeedback">Provokasyon yok; hasta sakin solunumda. Bir test seçin veya önyük / ardyük kaydırıcılarını kullanın.</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="row-between">
+            <span class="card-title">Oskültasyon Bulgusu</span>
+            <span id="primarySpotBadge" class="eyebrow accent">Birincil: Aort Odağı</span>
+          </div>
+          <p id="whatYouHearText" class="body-text"></p>
+          <button id="revealCaseBtn" class="hidden btn-xs" onclick="revealCase()" style="align-self:flex-start;">Vakayı Göster</button>
+          <div class="note">
+            <span class="eyebrow amber">Klinik Not</span>
+            <div id="clinicalPearlText" class="body-text"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <span class="card-title">Akustik Profil</span>
+          <div id="componentBreakdownBars" class="bars"></div>
+        </div>
+      </div>
+
+      <div id="tabContent-duel" class="tab-pane hidden">
+        <div class="card">
+          <span class="eyebrow accent">Ayırıcı Tanı</span>
+          <span class="card-title">Aynı şekil, zıt provokasyon yanıtı</span>
+          <p class="body-text dim">Hasta A ve B'yi sırayla dinleyin; Valsalva ve çömelme yanıtlarını karşılaştırıp hangisinin hangisi olduğuna karar verin.</p>
+          <select id="duelPairSelector" onchange="initDuelPair(this.value)">
+            <option value="as_hocm">Aort Darlığı vs HOCM</option>
+            <option value="mr_vsd">Mitral Yetmezliği vs VSD</option>
+            <option value="ms_ts">Mitral Darlığı vs S3 Galo</option>
+          </select>
+        </div>
+
+        <div class="grid-2">
+          <button onclick="selectDuelPatient('A')" id="duelPatientBtn-A" class="active-sky"><span class="eyebrow">Hasta</span><strong>A</strong></button>
+          <button onclick="selectDuelPatient('B')" id="duelPatientBtn-B"><span class="eyebrow">Hasta</span><strong>B</strong></button>
+        </div>
+
+        <div class="card">
+          <span class="eyebrow">Provokasyon</span>
+          <div class="chip-grid">
+            <button onclick="applyManeuver('none')">Bazal</button>
+            <button onclick="applyManeuver('valsalva')">Valsalva</button>
+            <button onclick="applyManeuver('squat')">Çömelme</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <span class="card-title">Tanı Kararı</span>
+          <div id="duelAnswerButtons" class="stack"></div>
+          <div id="duelResultBox" class="feedback-box hidden"></div>
+        </div>
+      </div>
+
+      <div id="tabContent-daily" class="tab-pane hidden">
+        <div class="card card-console">
+          <div class="row-between">
+            <span id="dailyNumberBadge" class="eyebrow amber">Günün Vakası</span>
+            <span id="dailyStreakLabel" class="mono val amber">Seri 0 gün</span>
+          </div>
+          <span id="dailyVignette" class="card-title"></span>
+          <p id="dailyHint" class="body-text dim"></p>
+          <button onclick="startDailyPatientAudio()" class="active-amber wide">Vakayı Yükle ve Dinle</button>
+          <span class="fine">Her gün herkese aynı gizli vaka; takvime göre belirlenir.</span>
+        </div>
+
+        <div class="card">
+          <div class="row-between">
+            <span class="card-title">Tanı</span>
+            <span id="dailyAttemptsLabel" class="mono val dim">Deneme 0</span>
+          </div>
+          <div id="dailyGuessOptions" class="stack"></div>
+          <div id="dailyShareCard" class="result hidden">
+            <div id="dailyResultText" class="result-title"></div>
+            <div id="dailyRevealText" class="body-text"></div>
+            <pre id="dailySharePreview" class="mono share"></pre>
+            <button onclick="copyDailyShare()" id="copyShareBtn" class="active-emerald wide">Sonuç Kartını Kopyala</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="row-between">
+            <span class="card-title">Fakülte Ligi</span>
+            <select id="facultySelector" onchange="renderLeague()" class="sel-sm">
+              <option>Hacettepe Tıp</option>
+              <option>Cerrahpaşa Tıp</option>
+              <option>İstanbul (Çapa) Tıp</option>
+              <option>Ankara Tıp</option>
+              <option>Dicle Tıp</option>
+              <option>Ege Tıp</option>
+            </select>
+          </div>
+          <div id="leagueUserRow" class="sub-box row-between league-row me"></div>
+          <div class="row-between">
+            <span class="eyebrow dim">Örnek sıralama</span>
+            <span class="tag">Demo verisi</span>
+          </div>
+          <div id="leagueRows" class="stack-sm"></div>
+          <span class="fine">Gerçek lig sunucu bağlantısıyla gelir; satırın bu cihazdaki sonuçlardan hesaplanır.</span>
+        </div>
+      </div>
+
+      <div id="tabContent-quiz" class="tab-pane hidden">
+        <div class="card">
+          <div class="row-between">
+            <div>
+              <span class="eyebrow accent">Sınav Modu</span>
+              <div class="card-title">Klinik Oskültasyon Sınav Modu <span class="dim">(OSCE Hazırlık)</span></div>
+            </div>
+            <span id="quizScoreText" class="mono val ok" style="font-size:14px;">0 / 0</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="row-between">
+            <span class="eyebrow amber">Gizli vaka yüklendi</span>
+            <button onclick="generateNewQuizQuestion()" class="btn-xs active-sky">Yeni Vaka</button>
+          </div>
+          <div id="quizOptionsList" class="stack"></div>
+          <div id="quizFeedbackBox" class="feedback-box hidden"></div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <div id="portalModal" class="hidden">
+    <div class="modal-box">
+      <div class="modal-head">
+        <div>
+          <span class="eyebrow accent">DuctusLab · Klinik Simülasyon</span>
+          <div class="card-title" style="font-size:15px; margin-top:2px;">Semiyoloji Modülleri</div>
+        </div>
+        <button onclick="togglePortalModal()">Kapat</button>
+      </div>
+      <div class="portal-grid">
+        <div class="card card-console" onclick="togglePortalModal()">
+          <div class="row-between"><span class="mod-ico">OSK</span><span class="tag" style="color:var(--ok); border-color:rgba(90,159,127,.45);">Aktif</span></div>
+          <span class="card-title">3D Oskültasyon &amp; Wiggers</span>
+          <span class="fine">Kalp, akciğer ve abdomen; parametrik ses sentezi.</span>
+        </div>
+        <div class="card portal-soon" onclick="showToast('EKG Simülatörü bu sürümde yok; yol haritasında.')">
+          <div class="row-between"><span class="mod-ico">EKG</span><span class="tag">Yakında</span></div>
+          <span class="card-title">EKG Simülatörü</span>
+          <span class="fine">3D ileti sistemi ve 12 derivasyonlu senaryolar.</span>
+        </div>
+        <div class="card portal-soon" onclick="showToast('Kraniyal Sinir modülü bu sürümde yok; yol haritasında.')">
+          <div class="row-between"><span class="mod-ico">KS</span><span class="tag">Yakında</span></div>
+          <span class="card-title">Kraniyal Sinir Lezyonları</span>
+          <span class="fine">Pupil ışık refleksi ve okülomotor paralizi lokalizasyonu.</span>
+        </div>
+        <div class="card portal-soon" onclick="showToast('Fundoskopi modülü bu sürümde yok; yol haritasında.')">
+          <div class="row-between"><span class="mod-ico">FND</span><span class="tag">Yakında</span></div>
+          <span class="card-title">Göz Dibi (Fundoskopi)</span>
+          <span class="fine">Papilödem, diyabetik ve hipertansif retinopati.</span>
+        </div>
+        <div class="card portal-soon" onclick="showToast('Otoskopi modülü bu sürümde yok; yol haritasında.')">
+          <div class="row-between"><span class="mod-ico">OTO</span><span class="tag">Yakında</span></div>
+          <span class="card-title">Otoskopi</span>
+          <span class="fine">Timpanik membran perforasyonu ve akut otitis media.</span>
+        </div>
+        <div class="card portal-soon" onclick="showToast('Nöroloji ve spirometri modülleri bu sürümde yok; yol haritasında.')">
+          <div class="row-between"><span class="mod-ico">NRO</span><span class="tag">Yakında</span></div>
+          <span class="card-title">Yürüyüş, Refleks &amp; Spirometri</span>
+          <span class="fine">Nörolojik yürüyüş tipleri ve akım-hacim eğrileri.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastBox"></div>
+
+<script>
+    const AUSCULTATION_SPOTS = {
+      heart: [
+        { id: 'A', code: 'A', name: 'Aort Odağı', side: 'front', x: 222, y: 162, color: '#b9545d', anat: 'Sağ 2. interkostal aralık, sternal kenar' },
+        { id: 'P', code: 'P', name: 'Pulmoner Odak', side: 'front', x: 278, y: 162, color: '#b9545d', anat: 'Sol 2. interkostal aralık, sternal kenar' },
+        { id: 'E', code: 'E', name: 'Erb Noktası', side: 'front', x: 276, y: 198, color: '#b9545d', anat: 'Sol 3. interkostal aralık, sternal kenar' },
+        { id: 'T', code: 'T', name: 'Triküspit Odak', side: 'front', x: 266, y: 245, color: '#b9545d', anat: 'Sol 4-5. interkostal aralık, alt sternal kenar' },
+        { id: 'M', code: 'M', name: 'Mitral Odak (Apeks)', side: 'front', x: 315, y: 278, color: '#b9545d', anat: 'Sol 5. interkostal aralık, midklaviküler hat' },
+        { id: 'H', code: 'H', name: 'Epigastrik Odak', side: 'front', x: 250, y: 325, color: '#c98a3f', anat: 'Ksifoid altı (Sağ ventrikül & Abdominal aort)' },
+        { id: 'Cd', code: 'Cd', name: 'Sağ Karotis', side: 'front', x: 222, y: 74, color: '#a94b53', anat: 'Sağ boyun karotis arter hattı' },
+        { id: 'Ci', code: 'Ci', name: 'Sol Karotis', side: 'front', x: 278, y: 74, color: '#a94b53', anat: 'Sol boyun karotis arter hattı' },
+        { id: 'Ax', code: 'Ax', name: 'Sol Aksilla', side: 'front', x: 368, y: 265, color: '#b24c66', anat: 'Sol ön-orta aksiller hat (MY yayılımı)' }
+      ],
+      lungs: [
+        { id: 'RUL', code: '1', name: 'Sağ Üst Lob', side: 'front', x: 185, y: 145, color: '#5f94bb', anat: 'Sağ klavikula altı, 1-2. İKA' },
+        { id: 'LUL', code: '2', name: 'Sol Üst Lob', side: 'front', x: 315, y: 145, color: '#5f94bb', anat: 'Sol klavikula altı, 1-2. İKA' },
+        { id: 'RML', code: '3', name: 'Sağ Orta Lob', side: 'front', x: 175, y: 235, color: '#5f94bb', anat: 'Sağ 4. İKA, midklaviküler hat' },
+        { id: 'RLL', code: '4', name: 'Sağ Alt Lob Bazal', side: 'front', x: 152, y: 312, color: '#4f7fa3', anat: 'Sağ 6-7. İKA, lateral bazal' },
+        { id: 'LLL', code: '5', name: 'Sol Alt Lob Bazal', side: 'front', x: 348, y: 312, color: '#4f7fa3', anat: 'Sol 6-7. İKA, lateral bazal' },
+        { id: 'B_RUL', code: '6', name: 'Sağ Üst Lob (Arka)', side: 'back', x: 285, y: 165, color: '#5f94bb', anat: 'Sağ interskapüler alan, T1-T4' },
+        { id: 'B_LUL', code: '7', name: 'Sol Üst Lob (Arka)', side: 'back', x: 215, y: 165, color: '#5f94bb', anat: 'Sol interskapüler alan, T1-T4' },
+        { id: 'B_RLL', code: '8', name: 'Sağ Alt Lob (Arka)', side: 'back', x: 310, y: 290, color: '#4f7fa3', anat: 'Sağ skapula alt ucu altı, T7-T10' },
+        { id: 'B_LLL', code: '9', name: 'Sol Alt Lob (Arka)', side: 'back', x: 190, y: 290, color: '#4f7fa3', anat: 'Sol skapula alt ucu altı, T7-T10' }
+      ],
+      abdomen: [
+        { id: 'AA', code: 'Ao', name: 'Abdominal Aort', side: 'front', x: 250, y: 375, color: '#c9973f', anat: 'Epigastriyum orta hat' },
+        { id: 'RA_R', code: 'Rd', name: 'Sağ Renal Arter', side: 'front', x: 210, y: 395, color: '#c9973f', anat: 'Umbilikus üstü sağ paramedian' },
+        { id: 'RLQ', code: 'İÇ', name: 'İleoçekal Odak', side: 'front', x: 190, y: 445, color: '#5a9f7f', anat: 'Sağ alt kadran' }
+      ]
+    };
+
+    const PATHOLOGIES = {
+      aortic_stenosis: {
+        id: 'aortic_stenosis', system: 'heart', category: 'SİSTOLİK ÜFÜRÜMLER',
+        name: 'Aort Darlığı', bestFilter: 'diaphragm', primarySpot: 'A',
+        radiation: { from: 'A', to: ['Cd', 'Ci'] },
+        spotGain: { A: 1.0, E: 0.75, Cd: 0.82, Ci: 0.80, P: 0.45, M: 0.4, T: 0.3, H: 0.25 },
+        synthType: 'systolic_diamond', extraSound: 'ejection_click',
+        baseLV: 165, baseAo: 110, baseGrad: 55, valveArea: '0.9 cm²',
+        maneuverRules: {
+          valsalva: { mult: 0.55, preload: 65, afterload: 95, desc: '📉 Valsalva: Venöz dönüş (önyük) azaldığı için sol ventrikül atım hacmi düşer ve Aort Darlığı üfürümü AZALIR.' },
+          squat:    { mult: 1.40, preload: 135, afterload: 120, desc: '📈 Çömelme: Venöz dönüş ve atım hacmi arttığı için Aort Darlığı üfürümü ŞİDDETLENİR.' },
+          stand:    { mult: 0.60, preload: 70, afterload: 95, desc: '📉 Ayağa Kalkma: Önyük azalır, üfürüm AZALIR.' },
+          handgrip: { mult: 0.78, preload: 100, afterload: 140, desc: '📉 El Sıkma: Aort basıncı (ardyük) artar, transvalvüler gradyent azaldığı için üfürüm hafif AZALIR.' },
+          inspiration: { mult: 0.95, preload: 100, afterload: 100, desc: 'Ekspiryumda sol kalp sesleri daha net duyulur.' }
+        },
+        whatYouHear: 'S1 sonrası ejeksiyon kliği ve kreşendo-dekreşendo (elmas) şeklinde kaba sistolik üfürüm. Karotislere (Cd, Ci) güçlü yayılır.',
+        clinicalPearl: 'Darlık ağırlaştıkça üfürüm zirvesi geç sistole kayar, S2 paradoks çiftleşir ve Pulsus Parvus et Tardus görülür.',
+        components: [
+          { name: 'Sistolik Ejeksiyon Üfürümü (Elmas)', pct: 100, color: '#6fa3c8' },
+          { name: 'S1 & A2 Kalp Sesleri', pct: 75, color: '#5a9f7f' },
+          { name: 'Erken Sistolik Ejeksiyon Kliği', pct: 55, color: '#d9a441' }
+        ]
+      },
+      hocm: {
+        id: 'hocm', system: 'heart', category: 'SİSTOLİK ÜFÜRÜMLER',
+        name: 'Hipertrofik Obstrüktif KMP (HOCM)', bestFilter: 'diaphragm', primarySpot: 'E',
+        radiation: null,
+        spotGain: { E: 1.0, T: 0.9, M: 0.75, A: 0.55, P: 0.3, Cd: 0.15, Ci: 0.15 },
+        synthType: 'systolic_diamond', extraSound: 's4',
+        baseLV: 155, baseAo: 115, baseGrad: 40, valveArea: 'Dinamik LVOT',
+        maneuverRules: {
+          valsalva: { mult: 1.65, preload: 60, afterload: 90, desc: '🔥 Valsalva: Önyük azalır, sol ventrikül kavitesi küçülür; septum ile mitral ön yaprak yaklaşır ve HOCM üfürümü ŞİDDETLENİR!' },
+          squat:    { mult: 0.48, preload: 140, afterload: 120, desc: '📉 Çömelme: Önyük ve ardyük artar, ventrikül genişler ve HOCM üfürümü AZALIR.' },
+          stand:    { mult: 1.55, preload: 65, afterload: 95, desc: '🔥 Ayağa Kalkma: Venöz dönüş azalır, LV hacmi küçülür ve üfürüm ŞİDDETLENİR.' },
+          handgrip: { mult: 0.55, preload: 100, afterload: 140, desc: '📉 El Sıkma: Ardyük artışı LV çıkım yolunu genişletir, üfürüm AZALIR.' },
+          inspiration: { mult: 0.95, preload: 100, afterload: 100, desc: 'Ventrikül hacmini küçülten her manevra HOCM üfürümünü artırır.' }
+        },
+        whatYouHear: 'Erb ve alt sternal kenarda (E, T) sistolik kreşendo-dekreşendo üfürüm + S4 galo. Karotislere YAYILMAZ.',
+        clinicalPearl: 'Genç sporcuda senkop + Valsalva/ayağa kalkma ile ARTAN, çömelme ile AZALAN üfürüm = HOCM.',
+        components: [
+          { name: 'Dinamik LVOT Sistolik Üfürümü', pct: 100, color: '#c4565f' },
+          { name: 'S4 Atriyal Galo', pct: 70, color: '#d9a441' }
+        ]
+      },
+      mitral_regurg: {
+        id: 'mitral_regurg', system: 'heart', category: 'SİSTOLİK ÜFÜRÜMLER',
+        name: 'Mitral Yetmezliği', bestFilter: 'diaphragm', primarySpot: 'M',
+        radiation: { from: 'M', to: ['Ax'] },
+        spotGain: { M: 1.0, Ax: 0.85, T: 0.55, E: 0.45, A: 0.2 },
+        synthType: 'holosystolic', extraSound: 's3',
+        baseLV: 125, baseAo: 120, baseGrad: 0, valveArea: 'Regürjitan Orifis',
+        maneuverRules: {
+          valsalva: { mult: 0.70, preload: 70, afterload: 95, desc: '📉 Valsalva: Sol ventrikül dolumu azaldığı için üfürüm hafifler.' },
+          squat:    { mult: 1.35, preload: 130, afterload: 125, desc: '📈 Çömelme: Önyük ve ardyük artar, regürjitan kaçak ŞİDDETLENİR.' },
+          stand:    { mult: 0.72, preload: 75, afterload: 95, desc: '📉 Ayağa Kalkma: Önyük azalır.' },
+          handgrip: { mult: 1.50, preload: 100, afterload: 145, desc: '🔥 El Sıkma (Handgrip): Aortik direnç (ardyük) artınca sol atriyuma kaçan kan ve üfürüm ŞİDDETLENİR!' },
+          inspiration: { mult: 0.90, preload: 100, afterload: 100, desc: 'Sol aksillaya (Ax) yayılım tipiktir.' }
+        },
+        whatYouHear: 'Apekste (M) S1’i örten holosistolik (pansistolik) üfürüm + S3 galo. Sol aksillaya (Ax) yayılır.',
+        clinicalPearl: 'Handgrip (yumruk sıkma) ile ardyük artırıldığında Mitral Yetmezlik, Aort Yetmezliği ve VSD üfürümleri şiddetlenir.',
+        components: [
+          { name: 'Holosistolik Üfürüm', pct: 100, color: '#6fa3c8' },
+          { name: 'S3 Ventriküler Galo', pct: 65, color: '#d9a441' }
+        ]
+      },
+      vsd: {
+        id: 'vsd', system: 'heart', category: 'SİSTOLİK ÜFÜRÜMLER',
+        name: 'Ventriküler Septal Defekt (VSD)', bestFilter: 'diaphragm', primarySpot: 'T',
+        radiation: null,
+        spotGain: { T: 1.0, E: 0.9, M: 0.55, P: 0.5, Ax: 0.2 },
+        synthType: 'holosystolic', extraSound: 'none',
+        baseLV: 120, baseAo: 120, baseGrad: 85, valveArea: 'Septal Defekt',
+        maneuverRules: {
+          valsalva: { mult: 0.72, preload: 70, afterload: 95, desc: '📉 Valsalva: Şant akımı hafif azalır.' },
+          squat:    { mult: 1.35, preload: 130, afterload: 125, desc: '📈 Çömelme: Soldan sağa şant artar.' },
+          stand:    { mult: 0.75, preload: 75, afterload: 95, desc: '📉 Ayağa Kalkma: Şant hafif azalır.' },
+          handgrip: { mult: 1.55, preload: 100, afterload: 145, desc: '🔥 El Sıkma: Ardyük artışı soldan sağa şantı ve VSD üfürümünü ŞİDDETLENDİRİR!' },
+          inspiration: { mult: 1.0, preload: 100, afterload: 100, desc: 'Sol alt sternal kenarda thrill eşlik eder.' }
+        },
+        whatYouHear: 'Sol alt sternal kenarda (T, E) haşin holosistolik üfürüm. Aksillaya yayılmaz.',
+        clinicalPearl: 'Mitral yetmezlik apekste maksimum olup aksillaya yayılırken; VSD sternal kenarda maksimumdur.',
+        components: [
+          { name: 'Haşin Holosistolik Şant Üfürümü', pct: 100, color: '#c4565f' }
+        ]
+      },
+      mitral_stenosis: {
+        id: 'mitral_stenosis', system: 'heart', category: 'DİYASTOLİK ÜFÜRÜMLER',
+        name: 'Mitral Darlığı', bestFilter: 'bell', primarySpot: 'M',
+        radiation: null,
+        spotGain: { M: 1.0, T: 0.5, E: 0.35 },
+        synthType: 'diastolic_rumble', extraSound: 'opening_snap',
+        baseLV: 110, baseAo: 110, baseGrad: 18, valveArea: '1.0 cm²',
+        maneuverRules: {
+          valsalva: { mult: 0.70, preload: 70, afterload: 95, desc: '📉 Valsalva: LA dolumu azaldığı için diyastolik rulman hafifler.' },
+          squat:    { mult: 1.35, preload: 135, afterload: 115, desc: '📈 Çömelme: Venöz dönüş artar, diyastolik rulman ŞİDDETLENİR.' },
+          stand:    { mult: 0.75, preload: 75, afterload: 95, desc: 'Sol yan dekübit pozisyonda ÇAN ile dinlenmelidir.' },
+          handgrip: { mult: 1.15, preload: 100, afterload: 130, desc: 'El Sıkma: Kalp hızı ve ardyük artar, diyastol kısalır; transmitral gradyent ve rulman hafifçe artabilir.' },
+          inspiration: { mult: 0.90, preload: 100, afterload: 100, desc: 'Ekspiryum sonunda ÇAN ile en iyi duyulur.' }
+        },
+        whatYouHear: 'Sert S1, erken diyastolik Opening Snap (Açılma Sesi) ve düşük frekanslı diyastolik rulman.',
+        clinicalPearl: 'Mitral darlığı ağırlaştıkça LA basıncı artar ve S2 - Opening Snap aralığı KISALIR.',
+        components: [
+          { name: 'Düşük Frekanslı Diyastolik Rulman', pct: 100, color: '#d9a441' },
+          { name: 'Sert S1 & Opening Snap', pct: 95, color: '#c4565f' }
+        ]
+      },
+      s3_gallop: {
+        id: 's3_gallop', system: 'heart', category: 'EK SESLER & GALO',
+        name: 'Üçüncü Kalp Sesi (S3 Ventriküler Galo)', bestFilter: 'bell', primarySpot: 'M',
+        radiation: null,
+        spotGain: { M: 1.0, T: 0.75, E: 0.4 },
+        synthType: 'clean_s3', extraSound: 's3',
+        baseLV: 105, baseAo: 105, baseGrad: 0, valveArea: 'Sistolik KY',
+        maneuverRules: {
+          valsalva: { mult: 0.60, preload: 65, afterload: 90, desc: '📉 Valsalva: Venöz dönüş azaldığı için S3 hafifler.' },
+          squat:    { mult: 1.45, preload: 140, afterload: 115, desc: '🔥 Çömelme: Erken diyastolik dolum hızlanır ve S3 ŞİDDETLENİR.' },
+          stand:    { mult: 0.65, preload: 70, afterload: 95, desc: '📉 Ayağa Kalkma: S3 azalır.' },
+          handgrip: { mult: 1.20, preload: 100, afterload: 135, desc: 'El Sıkma: Ardyük artışı yetmezlikteki ventrikülün dolum basıncını yükseltir; S3 belirginleşebilir.' },
+          inspiration: { mult: 0.85, preload: 100, afterload: 100, desc: 'İnspiryum: Sol taraflı S3 ekspiryumda daha net duyulur; sağ taraflı S3 ise inspiryumla ARTAR (Carvallo).' }
+        },
+        whatYouHear: 'S2’den hemen sonra erken diyastolde duyulan düşük frekanslı "Lub-Dub-Ta" (Kentucky) galo sesi.',
+        clinicalPearl: 'Sistolik kalp yetmezliği (Dilate KMP) ve yüksek debili durumların klasik bulgusudur.',
+        components: [
+          { name: 'Erken Diyastolik S3 Galo', pct: 100, color: '#d9a441' }
+        ]
+      },
+      pleuritis_rub: {
+        id: 'pleuritis_rub', system: 'lungs', category: 'PLEVRA & AKCİĞER',
+        name: 'Plevral Sürtünme Sesi (Plörit)', bestFilter: 'diaphragm', primarySpot: 'RLL',
+        radiation: null,
+        spotGain: { RLL: 1.0, LLL: 0.65, RML: 0.7, B_RLL: 0.9, B_LLL: 0.6, B_RUL: 0.3, B_LUL: 0.25 },
+        synthType: 'pleural_rub', extraSound: 'none',
+        baseLV: 120, baseAo: 80, baseGrad: 0, valveArea: 'Plörit',
+        maneuverRules: {
+          valsalva: { mult: 0.05, preload: 100, afterload: 100, desc: '🛑 Nefes Tutma (Apne): Nefes tutulduğunda plevral sürtünme TAMAMEN DURUR (Perikardiyal frotmandan farkı!).' },
+          squat:    { mult: 1.0, preload: 100, afterload: 100, desc: 'Öksürük: Plevral sürtünme öksürmekle değişmez (sekresyon kaynaklı kaba rallerden farkı).' },
+          stand:    { mult: 1.0, preload: 100, afterload: 100, desc: 'Pozisyon: Değişmez; hem inspiryum hem ekspiryumda (bifazik) duyulur.' },
+          handgrip: { mult: 1.25, preload: 100, afterload: 100, desc: 'Bastırma: Stetoskopu göğse sıkı bastırmak sürtünme sesini belirginleştirir.' },
+          inspiration: { mult: 1.55, preload: 100, afterload: 100, desc: '🔥 Derin Solunum: Karda yürüme / kuru deri gıcırtısı sesi şiddetlenir.' }
+        },
+        whatYouHear: 'Hem inspiryum hem ekspiryumda duyulan kuru deri gıcırtısı / karda yürüme sesi.',
+        clinicalPearl: 'Nefes tutunca duruyorsa Plevral Frotman; nefes tutunca kalp atımıyla devam ediyorsa Perikardiyal Frotmandır.',
+        components: [
+          { name: 'Bifazik Plevral Sürtünme', pct: 100, color: '#d9a441' }
+        ]
+      },
+      lobar_pneumonia: {
+        id: 'lobar_pneumonia', system: 'lungs', category: 'PLEVRA & AKCİĞER',
+        name: 'Lober Pnömoni (İnce Krepitan Raller)', bestFilter: 'diaphragm', primarySpot: 'RLL',
+        radiation: null,
+        spotGain: { RLL: 1.0, B_RLL: 0.95, RML: 0.65, B_LLL: 0.3, B_RUL: 0.35, B_LUL: 0.2 },
+        synthType: 'crackles_fine', extraSound: 'none',
+        baseLV: 120, baseAo: 80, baseGrad: 0, valveArea: 'Konsolidasyon',
+        maneuverRules: {
+          valsalva: { mult: 0.05, preload: 100, afterload: 100, desc: 'Apnede raller kesilir.' },
+          squat:    { mult: 1.0, preload: 100, afterload: 100, desc: 'Öksürük: İnce krepitan raller öksürükle açılmaz (sekresyon kaynaklı kaba raller açılabilir).' },
+          stand:    { mult: 1.0, preload: 100, afterload: 100, desc: 'Pozisyon: Konsolidasyon alanında sabittir, pozisyonla değişmez.' },
+          handgrip: { mult: 1.0, preload: 100, afterload: 100, desc: 'Bastırma: Stetoskop basıncı ralleri belirgin değiştirmez.' },
+          inspiration: { mult: 1.55, preload: 100, afterload: 100, desc: '🔥 Derin İnspiryum Sonu: Kollabe alveollerin açılma sesi (ince raller) belirginleşir.' }
+        },
+        whatYouHear: 'İnspiryum sonunda saç ovuşturma / Velcro sesi gibi yüksek frekanslı ince krepitan raller.',
+        clinicalPearl: 'İnce raller geç inspiratuardır ve alveoler patolojiyi (Pnömoni, Pulmoner Ödem, İPF) gösterir.',
+        components: [
+          { name: 'Geç İnspiratuar İnce Krepitan Raller', pct: 100, color: '#c4565f' }
+        ]
+      },
+      renal_bruit: {
+        id: 'renal_bruit', system: 'abdomen', category: 'ABDOMİNAL VASKÜLER',
+        name: 'Renal Arter Stenozu (Epigastrik Üfürüm)', bestFilter: 'diaphragm', primarySpot: 'RA_R',
+        radiation: null,
+        spotGain: { RA_R: 1.0, AA: 0.75, RLQ: 0.2 },
+        synthType: 'systolic_diamond', extraSound: 'none',
+        baseLV: 185, baseAo: 115, baseGrad: 70, valveArea: 'Renovasküler HT',
+        maneuverRules: {
+          valsalva: { mult: 0.85, preload: 90, afterload: 100, desc: 'Karın duvarına diyaframla bastırılarak dinlenir.' },
+          squat:    { mult: 1.1, preload: 100, afterload: 110, desc: 'Dirençli sekonder hipertansiyon bulgusudur.' },
+          stand:    { mult: 1.0, preload: 100, afterload: 100, desc: 'Umbilikus üst-yan kadranında duyulur.' },
+          handgrip: { mult: 1.15, preload: 100, afterload: 120, desc: 'Türbülans belirginleşir.' },
+          inspiration: { mult: 0.9, preload: 100, afterload: 100, desc: 'Ekspiryum sonunda daha net duyulur.' }
+        },
+        whatYouHear: 'Renal arter odağında (Rd) nabızla senkron sistolik vasküler üfürüm (bruit).',
+        clinicalPearl: 'Genç kadında fibromüsküler displazi, yaşlıda ateroskleroza bağlı sekonder HT ipucudur.',
+        components: [
+          { name: 'Renovasküler Sistolik Üfürüm', pct: 100, color: '#d9a441' }
+        ]
+      }
+    };
+
+    const DUEL_PAIRS = {
+      as_hocm: {
+        A: 'aortic_stenosis', B: 'hocm',
+        wrongHint: 'Valsalva ile HOCM üfürümü artar, Aort Darlığı üfürümü azalır.',
+        options: [
+          { label: 'Hasta A: Aort Darlığı · Hasta B: Hipertrofik KMP (HOCM)', correct: true },
+          { label: 'Hasta A: Hipertrofik KMP (HOCM) · Hasta B: Aort Darlığı', correct: false }
+        ]
+      },
+      mr_vsd: {
+        A: 'mitral_regurg', B: 'vsd',
+        wrongHint: 'Apekste maksimum olup aksillaya yayılan Mitral Yetmezliği; sternal kenarda maksimum olan VSD.',
+        options: [
+          { label: 'Hasta A: Mitral Yetmezlik (Aksillaya yayılır) · Hasta B: VSD', correct: true },
+          { label: 'Hasta A: VSD · Hasta B: Mitral Yetmezlik', correct: false }
+        ]
+      },
+      ms_ts: {
+        A: 'mitral_stenosis', B: 's3_gallop',
+        wrongHint: 'Açılma sesi + diyastolik rulman Mitral Darlığı; S2 sonrası tek, düşük frekanslı ek ses S3 galodur.',
+        options: [
+          { label: 'Hasta A: Mitral Darlığı · Hasta B: S3 Galo', correct: true },
+          { label: 'Hasta A: S3 Galo · Hasta B: Mitral Darlığı', correct: false }
+        ]
+      }
+    };
+
+    const state = {
+      organSystem: 'heart',
+      bodySide: 'front',
+      layers: { xray: true, organs: true, foci: true, wiggers: true },
+      currentCaseId: 'aortic_stenosis',
+      activeSpotId: 'A',
+      stethFilter: 'diaphragm',
+      bellPressedHard: false,
+      microscopeMode: 'all',
+      maneuver: 'none',
+      severityStage: 2.0,
+      preload: 100,
+      afterload: 100,
+      bpm: 72,
+      rpm: 16,
+      audioRunning: false,
+      duelPairKey: 'as_hocm',
+      duelActivePatient: 'A',
+      quizTargetId: 'hocm',
+      quizScore: 0,
+      quizTotal: 0,
+      caseHidden: false,
+      duelAnswered: false,
+      duelInitialized: false,
+      quizActive: false
+    };
+
+    let audioCtx = null, masterGainNode = null, filterNode = null, noiseBuffer = null;
+    let lastBeatTime = 0, lastBreathTime = 0;
+
+    function initWebAudio() {
+      if (!audioCtx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AC();
+        masterGainNode = audioCtx.createGain();
+        masterGainNode.gain.value = 0.85;
+        filterNode = audioCtx.createBiquadFilter();
+        updateFilterNodeSettings();
+        filterNode.connect(masterGainNode);
+        masterGainNode.connect(audioCtx.destination);
+
+        const bufferSize = audioCtx.sampleRate * 2;
+        noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const out = noiseBuffer.getChannelData(0);
+        let b0 = 0, b1 = 0, b2 = 0;
+        for (let i = 0; i < bufferSize; i++) {
+          const w = Math.random() * 2 - 1;
+          b0 = 0.99 * b0 + w * 0.08;
+          b1 = 0.96 * b1 + w * 0.15;
+          b2 = 0.85 * b2 + w * 0.30;
+          out[i] = (b0 + b1 + b2 + w * 0.4) * 0.06;
+        }
+      }
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+
+    function updateFilterNodeSettings() {
+      if (!filterNode || !audioCtx) return;
+      const isDiaphragm = state.stethFilter === 'diaphragm' || state.bellPressedHard;
+      filterNode.type = isDiaphragm ? 'highpass' : 'lowpass';
+      filterNode.frequency.value = isDiaphragm ? 90 : 210;
+    }
+
+    function toggleAudioEngine() {
+      initWebAudio();
+      state.audioRunning = !state.audioRunning;
+      const btn = document.getElementById('masterAudioBtn');
+      document.getElementById('audioBtnLabel').textContent = state.audioRunning ? 'Ses Aktif' : 'Ses Kapalı';
+      btn.classList.toggle('on', state.audioRunning);
+      document.body.classList.toggle('listening', state.audioRunning);
+    }
+
+    function computeEffectiveMurmurGain() {
+      const path = PATHOLOGIES[state.currentCaseId];
+      if (!path) return 0.5;
+      const spotFactor = (path.spotGain && path.spotGain[state.activeSpotId]) ? path.spotGain[state.activeSpotId] : 0.25;
+      const manRule = path.maneuverRules[state.maneuver];
+      const manMult = manRule ? manRule.mult : 1.0;
+      const preloadFactor = (state.currentCaseId === 'hocm')
+        ? 1 + (100 - state.preload) * 0.008
+        : 1 + (state.preload - 100) * 0.006;
+      const stageFactor = 0.65 + (state.severityStage - 1) * 0.32;
+      let afterloadFactor = 1;
+      if (state.currentCaseId === 'hocm') afterloadFactor = 1 - (state.afterload - 100) * 0.008;
+      else if (path.synthType === 'holosystolic') afterloadFactor = 1 + (state.afterload - 100) * 0.008;
+      else if (path.synthType === 'systolic_diamond' && path.system === 'heart') afterloadFactor = 1 - (state.afterload - 100) * 0.004;
+      return Math.min(2.2, Math.max(0.08, spotFactor * manMult * preloadFactor * afterloadFactor * stageFactor));
+    }
+
+    function playHeartThump(startTime, freq, duration, amp) {
+      if (!audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq * 1.3, startTime);
+      osc.frequency.exponentialRampToValueAtTime(Math.max(28, freq * 0.55), startTime + duration);
+      g.gain.setValueAtTime(0.001, startTime);
+      g.gain.linearRampToValueAtTime(Math.min(0.9, amp), startTime + duration * 0.22);
+      g.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+      osc.connect(g); g.connect(filterNode);
+      osc.start(startTime); osc.stop(startTime + duration + 0.01);
+    }
+
+    function playFilteredNoise(startTime, duration, peakRatio, centerFreq, amp) {
+      if (!audioCtx || !noiseBuffer) return;
+      const src = audioCtx.createBufferSource();
+      src.buffer = noiseBuffer;
+      const bp = audioCtx.createBiquadFilter();
+      bp.type = 'bandpass';
+      bp.frequency.setValueAtTime(centerFreq, startTime);
+      bp.Q.value = 2.2;
+      const g = audioCtx.createGain();
+      const peakTime = startTime + Math.min(duration * 0.85, Math.max(0.02, peakRatio));
+      g.gain.setValueAtTime(0.001, startTime);
+      g.gain.linearRampToValueAtTime(Math.min(0.85, amp), peakTime);
+      g.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+      src.connect(bp); bp.connect(g); g.connect(filterNode);
+      src.start(startTime); src.stop(startTime + duration + 0.02);
+    }
+
+    function systoleFrac() {
+      const rr = 60 / state.bpm;
+      return Math.min(0.55, Math.max(0.26, 0.34 * Math.sqrt(0.833 / rr)));
+    }
+
+    function triggerHeartbeatAudio(now) {
+      if (!state.audioRunning || !audioCtx) return;
+      const path = PATHOLOGIES[state.currentCaseId];
+      if (!path || path.system === 'lungs') return;
+      const beatDur = 60 / state.bpm;
+      const sf = systoleFrac();
+      const spotFactor = (path.spotGain && path.spotGain[state.activeSpotId]) ? path.spotGain[state.activeSpotId] : 0.35;
+      const murmurGain = computeEffectiveMurmurGain();
+
+      if (state.microscopeMode === 'all' || state.microscopeMode === 's1s2') {
+        playHeartThump(now, 62, 0.075, 0.42 * Math.max(0.35, spotFactor));
+        playHeartThump(now + beatDur * sf, 88, 0.06, 0.34 * Math.max(0.35, spotFactor));
+      }
+      if ((state.microscopeMode === 'all' || state.microscopeMode === 'extra') && path.extraSound !== 'none') {
+        const bellPen = (state.stethFilter === 'diaphragm' || state.bellPressedHard) ? 0.35 : 1.15;
+        if (path.extraSound === 's3') playHeartThump(now + beatDur * (sf + 0.12), 46, 0.085, 0.45 * spotFactor * bellPen);
+        if (path.extraSound === 's4') playHeartThump(now + beatDur * 0.86, 44, 0.08, 0.40 * spotFactor * bellPen);
+        if (path.extraSound === 'ejection_click') playHeartThump(now + beatDur * (0.09 * sf / 0.34), 280, 0.025, 0.32 * spotFactor);
+        if (path.extraSound === 'opening_snap') playHeartThump(now + beatDur * (sf + 0.08), 310, 0.025, 0.38 * spotFactor);
+      }
+      if ((state.microscopeMode === 'all' || state.microscopeMode === 'murmur') && path.synthType !== 'clean_s3') {
+        if (path.synthType === 'systolic_diamond') playFilteredNoise(now + beatDur * 0.07, beatDur * (sf - 0.09), 0.14, 420, 0.38 * murmurGain);
+        if (path.synthType === 'holosystolic') playFilteredNoise(now + beatDur * 0.04, beatDur * (sf - 0.04), 0.15, 520, 0.36 * murmurGain);
+        if (path.synthType === 'diastolic_rumble') playFilteredNoise(now + beatDur * (sf + 0.10), beatDur * (0.84 - sf - 0.10), 0.20, 145, 0.42 * murmurGain);
+      }
+    }
+
+    function triggerBreathAudio(now) {
+      if (!state.audioRunning || !audioCtx) return;
+      const path = PATHOLOGIES[state.currentCaseId];
+      if (!path || path.system !== 'lungs' || state.maneuver === 'valsalva') return;
+      const respDur = 60 / state.rpm;
+      const gainMult = computeEffectiveMurmurGain();
+      playFilteredNoise(now + 0.05, respDur * 0.42, respDur * 0.2, 260, 0.15 * gainMult);
+      if (path.synthType === 'pleural_rub') {
+        playFilteredNoise(now + respDur * 0.22, respDur * 0.18, 0.06, 320, 0.40 * gainMult);
+        playFilteredNoise(now + respDur * 0.54, respDur * 0.18, 0.06, 300, 0.38 * gainMult);
+      } else if (path.synthType === 'crackles_fine') {
+        for (let i = 0; i < 8; i++) {
+          playFilteredNoise(now + respDur * (0.24 + Math.random() * 0.18), 0.016, 0.005, 1100, 0.35 * gainMult);
+        }
+      }
+    }
+
+    const phonoCanvas = document.getElementById('phonoCanvas');
+    const phonoCtx = phonoCanvas.getContext('2d');
+    const wiggersCanvas = document.getElementById('wiggersCanvas');
+    const wiggersCtx = wiggersCanvas.getContext('2d');
+    const waveHistory = [];
+    const MAX_POINTS = 320;
+
+    function resizeCanvases() {
+      phonoCanvas.width = phonoCanvas.clientWidth * window.devicePixelRatio;
+      phonoCanvas.height = phonoCanvas.clientHeight * window.devicePixelRatio;
+      wiggersCanvas.width = wiggersCanvas.clientWidth * window.devicePixelRatio;
+      wiggersCanvas.height = wiggersCanvas.clientHeight * window.devicePixelRatio;
+    }
+    window.addEventListener('resize', resizeCanvases);
+
+    function computeInstantSignals(beatPhase, respPhase) {
+      const path = PATHOLOGIES[state.currentCaseId];
+      const gain = computeEffectiveMurmurGain();
+      let phonoAmp = 0, lvPressure = 10, aoPressure = 80, laPressure = 8;
+      const sf = systoleFrac();
+
+      if (beatPhase < sf) {
+        const sNorm = beatPhase / sf;
+        const peakLV = path.baseLV + (state.severityStage - 2) * 22 + (state.preload - 100) * 0.25;
+        const peakAo = path.baseAo + (state.afterload - 100) * 0.3;
+        lvPressure = 10 + Math.sin(sNorm * Math.PI) * (peakLV - 10);
+        aoPressure = 78 + Math.sin(sNorm * Math.PI) * (peakAo - 78);
+        laPressure = 8 + Math.sin(sNorm * Math.PI * 2) * 4;
+      } else {
+        const dNorm = (beatPhase - sf) / (1 - sf);
+        lvPressure = 8 + Math.sin(dNorm * Math.PI) * 6;
+        aoPressure = 102 - dNorm * 24;
+        laPressure = state.currentCaseId === 'mitral_stenosis' ? (22 - dNorm * 5) : (10 - dNorm * 3);
+      }
+
+      if (path.system !== 'lungs') {
+        if (state.microscopeMode === 'all' || state.microscopeMode === 's1s2') {
+          if (beatPhase > 0.01 && beatPhase < 0.075) phonoAmp += Math.sin((beatPhase - 0.01) * 140) * 0.85;
+          if (beatPhase > sf - 0.01 && beatPhase < sf + 0.045) phonoAmp += Math.sin((beatPhase - sf + 0.01) * 160) * 0.72;
+        }
+        if (state.microscopeMode === 'all' || state.microscopeMode === 'extra') {
+          if (path.extraSound === 's3' && beatPhase > sf + 0.11 && beatPhase < sf + 0.16) phonoAmp += Math.sin((beatPhase - sf - 0.11) * 120) * 0.55;
+          if (path.extraSound === 's4' && beatPhase > 0.86 && beatPhase < 0.91) phonoAmp += Math.sin((beatPhase - 0.86) * 120) * 0.50;
+          if (path.extraSound === 'opening_snap' && beatPhase > sf + 0.07 && beatPhase < sf + 0.10) phonoAmp += Math.sin((beatPhase - sf - 0.07) * 220) * 0.65;
+        }
+        if (state.microscopeMode === 'all' || state.microscopeMode === 'murmur') {
+          const noise = (Math.random() * 2 - 1);
+          if (path.synthType === 'systolic_diamond' && beatPhase > 0.075 && beatPhase < sf - 0.02) {
+            phonoAmp += noise * Math.sin(((beatPhase - 0.075) / (sf - 0.095)) * Math.PI) * 0.72 * gain;
+          } else if (path.synthType === 'holosystolic' && beatPhase > 0.06 && beatPhase < sf) {
+            phonoAmp += noise * 0.62 * gain;
+          } else if (path.synthType === 'diastolic_rumble' && beatPhase > sf + 0.10 && beatPhase < 0.88) {
+            phonoAmp += noise * 0.52 * gain;
+          }
+        }
+      } else if (state.maneuver !== 'valsalva') {
+        phonoAmp = (Math.random() * 2 - 1) * Math.sin(respPhase * Math.PI) * 0.55 * gain;
+      }
+      return { phonoAmp, lvPressure, aoPressure, laPressure };
+    }
+
+    let lastFrameSec = 0;
+    function animationLoop(timestamp) {
+      const nowSec = timestamp / 1000;
+      const dt = lastFrameSec ? Math.min(0.1, nowSec - lastFrameSec) : 0.016;
+      lastFrameSec = nowSec;
+      const beatDur = 60 / state.bpm;
+      const respDur = 60 / state.rpm;
+
+      if (nowSec - lastBeatTime >= beatDur) {
+        lastBeatTime = nowSec;
+        triggerHeartbeatAudio(audioCtx ? audioCtx.currentTime : 0);
+      }
+      if (nowSec - lastBreathTime >= respDur) {
+        lastBreathTime = nowSec;
+        triggerBreathAudio(audioCtx ? audioCtx.currentTime : 0);
+      }
+
+      const beatPhase = ((nowSec - lastBeatTime) % beatDur) / beatDur;
+      const respPhase = ((nowSec - lastBreathTime) % respDur) / respDur;
+
+      waveHistory.push(computeInstantSignals(beatPhase, respPhase));
+      if (waveHistory.length > MAX_POINTS) waveHistory.shift();
+
+      tickStethoscope(dt);
+      updateAmbientPulse(beatPhase);
+      drawPhonoCanvas();
+      if (state.layers.wiggers) drawWiggersCanvas();
+      requestAnimationFrame(animationLoop);
+    }
+
+    function drawMonitorGrid(ctx, w, h) {
+      ctx.strokeStyle = 'rgba(160, 176, 196, 0.065)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let i = 1; i < 4; i++) { const y = (h / 4) * i; ctx.moveTo(0, y); ctx.lineTo(w, y); }
+      for (let i = 1; i < 16; i++) { const x = (w / 16) * i; ctx.moveTo(x, 0); ctx.lineTo(x, h); }
+      ctx.stroke();
+    }
+
+    function drawPhonoCanvas() {
+      const w = phonoCanvas.width, h = phonoCanvas.height;
+      phonoCtx.clearRect(0, 0, w, h);
+      drawMonitorGrid(phonoCtx, w, h);
+      phonoCtx.strokeStyle = 'rgba(160, 176, 196, 0.14)';
+      phonoCtx.lineWidth = 1;
+      phonoCtx.beginPath(); phonoCtx.moveTo(0, h / 2); phonoCtx.lineTo(w, h / 2); phonoCtx.stroke();
+
+      phonoCtx.beginPath();
+      for (let i = 0; i < waveHistory.length; i++) {
+        const x = (i / MAX_POINTS) * w;
+        const y = h / 2 - waveHistory[i].phonoAmp * (h * 0.42);
+        if (i === 0) phonoCtx.moveTo(x, y); else phonoCtx.lineTo(x, y);
+      }
+      phonoCtx.strokeStyle = '#d9a441';
+      phonoCtx.lineWidth = 1.6 * window.devicePixelRatio;
+      phonoCtx.stroke();
+    }
+
+    function drawWiggersCanvas() {
+      const w = wiggersCanvas.width, h = wiggersCanvas.height;
+      wiggersCtx.clearRect(0, 0, w, h);
+      drawMonitorGrid(wiggersCtx, w, h);
+      const mapY = (mmHg) => h - ((mmHg / 200) * (h * 0.86)) - 4;
+
+      const drawCurve = (key, color, width) => {
+        wiggersCtx.beginPath();
+        for (let i = 0; i < waveHistory.length; i++) {
+          const x = (i / MAX_POINTS) * w;
+          const y = mapY(waveHistory[i][key]);
+          if (i === 0) wiggersCtx.moveTo(x, y); else wiggersCtx.lineTo(x, y);
+        }
+        wiggersCtx.strokeStyle = color;
+        wiggersCtx.lineWidth = width * window.devicePixelRatio;
+        wiggersCtx.stroke();
+      };
+      drawCurve('aoPressure', '#6fa3c8', 1.8);
+      drawCurve('lvPressure', '#c4565f', 2.2);
+      drawCurve('laPressure', '#e3cf8a', 1.4);
+    }
+
+    function renderHotspotsAndRadiation() {
+      const fociGroup = document.getElementById('svgLayer-foci');
+      const radGroup = document.getElementById('svgLayer-radiation');
+      fociGroup.innerHTML = ''; radGroup.innerHTML = '';
+      if (!state.layers.foci) return;
+
+      const spots = AUSCULTATION_SPOTS[state.organSystem].filter(s => s.side === state.bodySide);
+      const path = PATHOLOGIES[state.currentCaseId];
+
+      if (path && path.radiation && state.bodySide === 'front') {
+        const fromSpot = spots.find(s => s.id === path.radiation.from);
+        if (fromSpot) {
+          path.radiation.to.forEach(tId => {
+            const toSpot = spots.find(s => s.id === tId);
+            if (toSpot) {
+              const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+              line.setAttribute('x1', fromSpot.x); line.setAttribute('y1', fromSpot.y);
+              line.setAttribute('x2', toSpot.x); line.setAttribute('y2', toSpot.y);
+              line.setAttribute('stroke', '#d9a441'); line.setAttribute('stroke-width', '2.5');
+              line.setAttribute('stroke-dasharray', '5,4');
+              radGroup.appendChild(line);
+            }
+          });
+        }
+      }
+
+      spots.forEach(spot => {
+        const isSelected = spot.id === state.activeSpotId;
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.setAttribute('class', 'hotspot-node');
+        g.dataset.spot = spot.id;
+        g.onclick = () => selectAuscultationSpot(spot.id);
+
+        if (isSelected) {
+          const ring = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          ring.setAttribute('cx', spot.x); ring.setAttribute('cy', spot.y); ring.setAttribute('r', '14');
+          ring.setAttribute('fill', 'none'); ring.setAttribute('stroke', '#6fa3c8');
+          ring.setAttribute('stroke-width', '1.6'); ring.setAttribute('class', 'pulse-ring');
+          g.appendChild(ring);
+        }
+
+        const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        c.setAttribute('cx', spot.x); c.setAttribute('cy', spot.y);
+        c.setAttribute('r', isSelected ? '10.5' : '8.5');
+        c.setAttribute('fill', spot.color);
+        c.setAttribute('stroke', isSelected ? '#e4e9f1' : '#0b1220');
+        c.setAttribute('stroke-width', '1.5');
+        g.appendChild(c);
+
+        const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        t.setAttribute('x', spot.x); t.setAttribute('y', spot.y + 3.5);
+        t.setAttribute('text-anchor', 'middle'); t.setAttribute('fill', '#fff');
+        t.setAttribute('font-size', '8.5'); t.setAttribute('font-weight', '700'); t.setAttribute('font-family', 'JetBrains Mono, SF Mono, Menlo, monospace');
+        t.textContent = spot.code;
+        g.appendChild(t);
+        fociGroup.appendChild(g);
+      });
+      moveStethoscopeToActiveSpot();
+    }
+
+    function selectAuscultationSpot(spotId) {
+      state.activeSpotId = spotId;
+      if (!state.audioRunning) toggleAudioEngine();
+      renderHotspotsAndRadiation();
+      updateSpotMetadataUI();
+    }
+
+    const steth = { x: 222, y: 162, tx: 222, ty: 162, dragging: false, settled: true };
+    const stethGroup = document.getElementById('stethChestpiece');
+    const stethTubeEl = document.getElementById('stethTube');
+    const stethTubeHiEl = document.getElementById('stethTubeHighlight');
+    const contactRingEl = document.getElementById('contactRing');
+    const ambientPulseEl = document.getElementById('ambientPulse');
+
+    function renderStethoscope(tilt) {
+      stethGroup.setAttribute('transform', `translate(${steth.x.toFixed(1)}, ${steth.y.toFixed(1)}) rotate(${(tilt || 0).toFixed(1)})`);
+      contactRingEl.setAttribute('cx', steth.x.toFixed(1)); contactRingEl.setAttribute('cy', steth.y.toFixed(1));
+      const d = `M185,10 C185,${(steth.y * 0.45).toFixed(0)} ${(steth.x - 18).toFixed(0)},${(steth.y * 0.75).toFixed(0)} ${steth.x.toFixed(1)},${steth.y.toFixed(1)}`;
+      stethTubeEl.setAttribute('d', d);
+      stethTubeHiEl.setAttribute('d', d);
+    }
+
+    function moveStethoscopeToActiveSpot() {
+      const spots = AUSCULTATION_SPOTS[state.organSystem];
+      const spot = spots.find(s => s.id === state.activeSpotId) || spots[0];
+      if (!spot) return;
+      steth.tx = spot.x; steth.ty = spot.y; steth.settled = false;
+    }
+
+    function tickStethoscope(dt) {
+      if (steth.dragging || steth.settled) return;
+      const dx = steth.tx - steth.x, dy = steth.ty - steth.y;
+      const k = 1 - Math.exp(-(dt || 0.016) * 9);
+      if (Math.hypot(dx, dy) < 0.2) {
+        steth.x = steth.tx; steth.y = steth.ty; steth.settled = true;
+        renderStethoscope(0);
+        onStethContact();
+        return;
+      }
+      steth.x += dx * k; steth.y += dy * k;
+      renderStethoscope(Math.max(-8, Math.min(8, dx * 0.1)));
+    }
+
+    function onStethContact() {
+      contactRingEl.classList.remove('contact-ring');
+      void contactRingEl.getBoundingClientRect();
+      contactRingEl.classList.add('contact-ring');
+      try { if (navigator.vibrate && navigator.userActivation && navigator.userActivation.hasBeenActive) navigator.vibrate(12); } catch (e) {}
+    }
+
+    function updateAmbientPulse(beatPhase) {
+      if (!state.audioRunning) { ambientPulseEl.style.opacity = 0; return; }
+      let g = 0;
+      const sf = systoleFrac();
+      if (beatPhase < 0.09) g = 1 - beatPhase / 0.09;
+      else if (beatPhase > sf - 0.01 && beatPhase < sf + 0.06) g = 0.55 * (1 - (beatPhase - sf + 0.01) / 0.07);
+      ambientPulseEl.style.opacity = (g * 0.9).toFixed(3);
+    }
+
+    function svgPointFromEvent(e) {
+      const svg = document.getElementById('thoraxSvg');
+      const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+      return pt.matrixTransform(svg.getScreenCTM().inverse());
+    }
+
+    function nearestVisibleSpot(x, y, maxDist) {
+      const spots = AUSCULTATION_SPOTS[state.organSystem].filter(s => s.side === state.bodySide);
+      let best = null, bd = Infinity;
+      spots.forEach(s => { const d = Math.hypot(s.x - x, s.y - y); if (d < bd) { bd = d; best = s; } });
+      return (best && bd <= maxDist) ? best : null;
+    }
+
+    function highlightHoverSpot(spotId) {
+      document.querySelectorAll('.hotspot-node').forEach(g => g.classList.toggle('hover', g.dataset.spot === spotId));
+    }
+
+    function initStethoscopeDrag() {
+      stethGroup.addEventListener('pointerdown', e => {
+        e.preventDefault();
+        steth.dragging = true; steth.settled = true;
+        stethGroup.classList.add('dragging');
+      });
+      window.addEventListener('pointermove', e => {
+        if (!steth.dragging) return;
+        const p = svgPointFromEvent(e);
+        steth.x = p.x; steth.y = p.y;
+        renderStethoscope(0);
+        const near = nearestVisibleSpot(p.x, p.y, 30);
+        highlightHoverSpot(near ? near.id : null);
+      });
+      const endDrag = () => {
+        if (!steth.dragging) return;
+        steth.dragging = false;
+        stethGroup.classList.remove('dragging');
+        highlightHoverSpot(null);
+        const near = nearestVisibleSpot(steth.x, steth.y, 44);
+        if (near && near.id !== state.activeSpotId) selectAuscultationSpot(near.id);
+        else moveStethoscopeToActiveSpot();
+      };
+      window.addEventListener('pointerup', endDrag);
+      window.addEventListener('pointercancel', endDrag);
+    }
+
+    function updateSpotMetadataUI() {
+      const spots = AUSCULTATION_SPOTS[state.organSystem];
+      const spot = spots.find(s => s.id === state.activeSpotId) || spots[0];
+      if (!spot) return;
+      document.getElementById('activeSpotTitle').textContent = `${spot.name} (${spot.code})`;
+      document.getElementById('activeSpotAnat').textContent = spot.anat;
+      document.getElementById('activeSpotIntensityBadge').textContent = `Şiddet ×${computeEffectiveMurmurGain().toFixed(2)}`;
+    }
+
+    function populatePathologyDropdown(filterText = '') {
+      const sel = document.getElementById('caseSelectorDropdown');
+      sel.innerHTML = '';
+      const q = filterText.trim().toLowerCase();
+      Object.values(PATHOLOGIES).forEach(p => {
+        if (p.system !== state.organSystem && !q) return;
+        if (q && !p.name.toLowerCase().includes(q) && !p.whatYouHear.toLowerCase().includes(q)) return;
+        const opt = document.createElement('option');
+        opt.value = p.id; opt.textContent = p.name;
+        if (p.id === state.currentCaseId) opt.selected = true;
+        sel.appendChild(opt);
+      });
+    }
+
+    function filterCaseDropdown(val) {
+      populatePathologyDropdown(val);
+      const sel = document.getElementById('caseSelectorDropdown');
+      if (sel.options.length > 0) selectPathology(sel.options[0].value, { fromSearch: true });
+    }
+
+    function pickSpotForCase(path) {
+      const sideSpots = AUSCULTATION_SPOTS[path.system].filter(s => s.side === state.bodySide);
+      if (state.caseHidden && sideSpots.length) return sideSpots[0].id;
+      if (sideSpots.some(s => s.id === path.primarySpot)) return path.primarySpot;
+      const ranked = sideSpots
+        .filter(s => path.spotGain && path.spotGain[s.id] != null)
+        .sort((a, b) => path.spotGain[b.id] - path.spotGain[a.id]);
+      const pick = ranked[0] || sideSpots[0] || AUSCULTATION_SPOTS[path.system][0];
+      return pick.id;
+    }
+
+    function selectPathology(caseId, opts = {}) {
+      if (!PATHOLOGIES[caseId]) return;
+      state.currentCaseId = caseId;
+      state.caseHidden = !!opts.hidden;
+      const path = PATHOLOGIES[caseId];
+      if (path.system !== state.organSystem) {
+        state.organSystem = path.system;
+        if (path.system !== 'lungs' && state.bodySide === 'back') setBodySideState('front');
+        updateSystemButtonsUI();
+      }
+      if (!opts.fromSearch) document.getElementById('caseQuickSearch').value = '';
+      state.activeSpotId = pickSpotForCase(path);
+      state.severityStage = 2.0;
+      document.getElementById('severitySlider').value = 2.0;
+      document.getElementById('severityStageLabel').textContent = 'Evre 2 (Orta)';
+      if (!state.caseHidden) setStethFilter(path.bestFilter);
+      applyManeuver('none');
+      updateExplorePanelUI();
+      renderHotspotsAndRadiation();
+      updateSpotMetadataUI();
+    }
+
+    function revealCase() {
+      state.caseHidden = false;
+      setStethFilter(PATHOLOGIES[state.currentCaseId].bestFilter);
+      updateExplorePanelUI();
+    }
+
+    function syncCaseDropdown() {
+      const sel = document.getElementById('caseSelectorDropdown');
+      if (state.caseHidden) {
+        sel.innerHTML = '<option value="">Gizli vaka — tanı bekleniyor</option>';
+        return;
+      }
+      populatePathologyDropdown(document.getElementById('caseQuickSearch').value);
+    }
+
+    function updateExplorePanelUI() {
+      const path = PATHOLOGIES[state.currentCaseId];
+      const hidden = state.caseHidden;
+      const pSpot = AUSCULTATION_SPOTS[path.system].find(s => s.id === path.primarySpot);
+      document.getElementById('caseCategoryTag').textContent = hidden ? 'GİZLİ HASTA' : path.category;
+      document.getElementById('caseBestFilterTag').textContent = hidden
+        ? 'Filtre serbest'
+        : (path.bestFilter === 'diaphragm' ? 'Diyafram önerilir' : 'Çan önerilir');
+      document.getElementById('studioCaseBadge').textContent = hidden ? 'Gizli Vaka' : path.name;
+      document.getElementById('primarySpotBadge').textContent = hidden ? 'Birincil: ?' : `Birincil: ${pSpot ? pSpot.name : path.primarySpot}`;
+      document.getElementById('whatYouHearText').textContent = hidden
+        ? 'Vaka gizli. Odakları dinleyin, provokasyon testlerini uygulayın ve tanıyı Günün Vakası, Ayırıcı Tanı veya Sınav Modu sekmesinde koyun; bulgular tanıdan sonra açılır.'
+        : path.whatYouHear;
+      document.getElementById('clinicalPearlText').textContent = hidden ? 'Tanıdan sonra açılır.' : path.clinicalPearl;
+      document.getElementById('revealCaseBtn').classList.toggle('hidden', !hidden);
+      syncCaseDropdown();
+
+      const compBox = document.getElementById('componentBreakdownBars');
+      compBox.innerHTML = '';
+      if (hidden) {
+        compBox.innerHTML = '<div class="fine">Akustik profil tanıdan sonra görünür.</div>';
+      } else {
+        path.components.forEach(c => {
+          compBox.innerHTML += `
+            <div>
+              <div class="row-between" style="font-size:11px;">
+                <span>${c.name}</span>
+                <span class="mono" style="color:var(--accent);">${c.pct}%</span>
+              </div>
+              <div class="progress-track">
+                <div class="progress-fill" style="width:${c.pct}%; background:${c.color};"></div>
+              </div>
+            </div>`;
+        });
+      }
+      updateHemodynamicReadoutUI();
+      updateManeuverButtonsUI();
+    }
+
+    function updateHemodynamicSliders() {
+      state.severityStage = parseFloat(document.getElementById('severitySlider').value);
+      state.preload = parseInt(document.getElementById('preloadSlider').value, 10);
+      state.afterload = parseInt(document.getElementById('afterloadSlider').value, 10);
+      document.getElementById('severityStageLabel').textContent = state.severityStage < 1.5 ? 'Evre 1 (Hafif)' : (state.severityStage > 2.4 ? 'Evre 3 (Ağır)' : 'Evre 2 (Orta)');
+      document.getElementById('preloadValLabel').textContent = `${state.preload}%`;
+      document.getElementById('afterloadValLabel').textContent = `${state.afterload}%`;
+      updateHemodynamicReadoutUI();
+      updateSpotMetadataUI();
+    }
+
+    function updateHemodynamicReadoutUI() {
+      const path = PATHOLOGIES[state.currentCaseId];
+      const ro = document.getElementById('hemodynamicReadout');
+      if (state.caseHidden) {
+        ro.innerHTML = `LV/Ao <strong>—</strong> · Gradyent <strong>—</strong> · Gizli vaka`;
+        document.getElementById('vLvAo').textContent = '—';
+        document.getElementById('vGrad').textContent = '—';
+        return;
+      }
+      const lv = Math.round(path.baseLV + (state.severityStage - 2) * 22 + (state.preload - 100) * 0.25);
+      const ao = Math.round(path.baseAo + (state.afterload - 100) * 0.3);
+      const grad = Math.max(0, Math.round(path.baseGrad + (state.severityStage - 2) * 20));
+      ro.innerHTML = `LV/Ao <strong>${lv}/${ao}</strong> mmHg · Gradyent <strong>${grad}</strong> mmHg · ${path.valveArea}`;
+      document.getElementById('vLvAo').textContent = `${lv}/${ao}`;
+      document.getElementById('vGrad').textContent = grad;
+    }
+
+    function applyManeuver(manKey) {
+      state.maneuver = manKey;
+      const path = PATHOLOGIES[state.currentCaseId];
+      const rule = path && path.maneuverRules[manKey];
+      const fb = document.getElementById('liveManeuverFeedback');
+      const dir = document.getElementById('maneuverDirection');
+      if (manKey === 'none') {
+        state.preload = 100; state.afterload = 100;
+        fb.textContent = 'Provokasyon yok; hasta sakin solunumda. Bir test seçin veya önyük / ardyük kaydırıcılarını kullanın.';
+        dir.textContent = '—'; dir.className = 'mono dir';
+      } else if (rule) {
+        state.preload = rule.preload; state.afterload = rule.afterload;
+        fb.textContent = rule.desc.replace(/^[^\p{L}\p{N}]+/u, '');
+        const m = rule.mult;
+        if (m < 0.2) { dir.textContent = '■ KESİLİR'; dir.className = 'mono dir down'; }
+        else if (m > 1.08) { dir.textContent = '▲ ŞİDDETLENİR'; dir.className = 'mono dir up'; }
+        else if (m < 0.92) { dir.textContent = '▼ AZALIR'; dir.className = 'mono dir down'; }
+        else { dir.textContent = '● DEĞİŞMEZ'; dir.className = 'mono dir'; }
+      }
+      document.getElementById('preloadSlider').value = state.preload;
+      document.getElementById('afterloadSlider').value = state.afterload;
+      document.getElementById('preloadValLabel').textContent = `${state.preload}%`;
+      document.getElementById('afterloadValLabel').textContent = `${state.afterload}%`;
+      updateManeuverButtonsUI();
+      updateHemodynamicReadoutUI();
+      updateSpotMetadataUI();
+    }
+
+    const MANEUVER_LABELS = {
+      heart: {
+        none: ['Bazal', 'Provokasyon yok'], valsalva: ['Valsalva', 'Zorlu ekspiryum fazı: venöz dönüş ve önyük azalır'],
+        squat: ['Çömelme', 'Venöz dönüş ve sistemik direnç artar: önyük ve ardyük yükselir'], stand: ['Ayağa Kalkma', 'Ani ayağa kalkma: önyük azalır'],
+        handgrip: ['El Sıkma', 'İzometrik egzersiz: ardyük artar'], inspiration: ['İnspiryum', 'Sağ kalp sesleri belirginleşir, sol kalp sesleri azalır']
+      },
+      lungs: {
+        none: ['Sakin Solunum', 'Provokasyon yok'], valsalva: ['Apne', 'Nefes tutma: solunum sesleri kesilir'],
+        squat: ['Öksürük', 'Öksürtme: sekresyon kaynaklı sesler değişir'], stand: ['Pozisyon', 'Pozisyon değişimi'],
+        handgrip: ['Bastırma', 'Stetoskopu göğse sıkı bastırma'], inspiration: ['Derin İnspiryum', 'Derin nefes aldırma']
+      }
+    };
+    MANEUVER_LABELS.abdomen = MANEUVER_LABELS.heart;
+
+    function updateManeuverButtonsUI() {
+      const labels = MANEUVER_LABELS[state.organSystem] || MANEUVER_LABELS.heart;
+      ['none', 'valsalva', 'squat', 'stand', 'handgrip', 'inspiration'].forEach(k => {
+        const b = document.getElementById(`manBtn-${k}`);
+        if (!b) return;
+        b.className = (k === state.maneuver) ? 'active-sky' : '';
+        b.textContent = labels[k][0];
+        b.setAttribute('data-tip', labels[k][1]);
+      });
+      const studioBtns = document.querySelectorAll('#studioOverlayBar button');
+      [['none'], ['valsalva'], ['squat'], ['handgrip']].forEach((k, i) => { if (studioBtns[i]) studioBtns[i].textContent = labels[k[0]][0]; });
+    }
+
+    function resetHemodynamics() {
+      state.severityStage = 2.0;
+      document.getElementById('severitySlider').value = 2.0;
+      applyManeuver('none');
+      updateHemodynamicSliders();
+    }
+
+    function updateVitalSliders() {
+      state.bpm = parseInt(document.getElementById('bpmSlider').value, 10);
+      state.rpm = parseInt(document.getElementById('rpmSlider').value, 10);
+      document.getElementById('bpmSliderLabel').textContent = `${state.bpm} /dk`;
+      document.getElementById('rpmSliderLabel').textContent = `${state.rpm} /dk`;
+      document.getElementById('bottomBpmLabel').textContent = state.bpm;
+      document.getElementById('bottomRpmLabel').textContent = state.rpm;
+      document.getElementById('vHr').textContent = state.bpm;
+      document.getElementById('vRr').textContent = state.rpm;
+      document.documentElement.style.setProperty('--beat-dur', `${(60 / state.bpm).toFixed(2)}s`);
+      document.documentElement.style.setProperty('--resp-dur', `${(60 / state.rpm).toFixed(2)}s`);
+    }
+
+    function setStethFilter(mode) {
+      state.stethFilter = mode;
+      document.getElementById('filterBtn-diaphragm').className = mode === 'diaphragm' ? 'active-sky' : '';
+      document.getElementById('filterBtn-bell').className = mode === 'bell' ? 'active-amber' : '';
+      updateFilterNodeSettings();
+    }
+
+    function toggleBellPressure() {
+      state.bellPressedHard = !state.bellPressedHard;
+      const btn = document.getElementById('bellPressureBtn');
+      btn.className = state.bellPressedHard ? 'active-rose' : '';
+      btn.textContent = state.bellPressedHard ? 'Temas: Sıkı' : 'Temas: Hafif';
+      updateFilterNodeSettings();
+    }
+
+    function setAudioMicroscope(mode) {
+      state.microscopeMode = mode;
+      ['all', 's1s2', 'extra', 'murmur'].forEach(m => {
+        document.getElementById(`micro-${m}`).className = (m === mode) ? 'active-sky' : '';
+      });
+    }
+
+    function switchOrganSystem(sys) {
+      state.organSystem = sys;
+      document.getElementById('caseQuickSearch').value = '';
+      if (sys !== 'lungs' && state.bodySide === 'back') setBodySideState('front');
+      updateSystemButtonsUI();
+      const first = Object.values(PATHOLOGIES).find(p => p.system === sys);
+      if (first) selectPathology(first.id);
+    }
+
+    function updateSystemButtonsUI() {
+      const meta = { heart: 'Kalp', lungs: 'Akciğer', abdomen: 'Abdomen' };
+      ['heart', 'lungs', 'abdomen'].forEach(s => {
+        const btn = document.getElementById(`sysBtn-${s}`);
+        btn.className = (s === state.organSystem) ? 'active-sky' : '';
+        btn.innerHTML = `${meta[s]}<span class="cnt">${AUSCULTATION_SPOTS[s].length}</span>`;
+      });
+    }
+
+    function setBodySideState(side) {
+      state.bodySide = side;
+      const back = side === 'back';
+      document.getElementById('sideBtn-front').className = back ? '' : 'active-sky';
+      document.getElementById('sideBtn-back').className = back ? 'active-sky' : '';
+      document.getElementById('xrayFront').style.display = back ? 'none' : 'block';
+      document.getElementById('xrayBack').style.display = back ? 'block' : 'none';
+      document.getElementById('organsFront').style.display = back ? 'none' : 'block';
+      document.getElementById('organsBack').style.display = back ? 'block' : 'none';
+      document.getElementById('bodySideHint').classList.toggle('hidden', !back);
+    }
+
+    function setBodySide(side) {
+      if (state.bodySide === side) return;
+      setBodySideState(side);
+      if (side === 'back' && state.organSystem !== 'lungs') { switchOrganSystem('lungs'); return; }
+      state.activeSpotId = pickSpotForCase(PATHOLOGIES[state.currentCaseId]);
+      renderHotspotsAndRadiation();
+      updateSpotMetadataUI();
+    }
+
+    function toggleLayer(layerName) {
+      state.layers[layerName] = !state.layers[layerName];
+      const active = state.layers[layerName];
+      document.getElementById(`layerBtn-${layerName}`).className = active ? 'active-sky' : '';
+      if (layerName === 'xray') document.getElementById('svgLayer-xray').style.display = active ? 'block' : 'none';
+      if (layerName === 'organs') document.getElementById('svgLayer-organs').style.display = active ? 'block' : 'none';
+      if (layerName === 'foci') renderHotspotsAndRadiation();
+      if (layerName === 'wiggers') document.getElementById('wiggersContainer').style.display = active ? 'flex' : 'none';
+    }
+
+    function switchRightTab(tabKey) {
+      ['explore', 'duel', 'daily', 'quiz'].forEach(t => {
+        document.getElementById(`tabContent-${t}`).classList.toggle('hidden', t !== tabKey);
+        document.getElementById(`tabBtn-${t}`).className = (t === tabKey) ? 'active-sky' : '';
+      });
+      if (tabKey === 'duel' && !state.duelInitialized) initDuelPair(state.duelPairKey);
+      if (tabKey === 'daily') initDailyChallengeUI();
+      if (tabKey === 'quiz' && !state.quizActive) generateNewQuizQuestion();
+    }
+
+    function initDuelPair(pairKey) {
+      state.duelPairKey = pairKey;
+      state.duelAnswered = false;
+      state.duelInitialized = true;
+      selectDuelPatient('A');
+      const pair = DUEL_PAIRS[pairKey];
+      const box = document.getElementById('duelAnswerButtons');
+      const res = document.getElementById('duelResultBox');
+      res.classList.add('hidden');
+      box.innerHTML = '';
+      pair.options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.style.textAlign = 'left';
+        btn.style.padding = '10px';
+        btn.textContent = opt.label;
+        btn.onclick = () => {
+          if (state.duelAnswered) return;
+          state.duelAnswered = true;
+          recordResult(opt.correct);
+          revealCase();
+          Array.from(box.children).forEach(b => b.disabled = true);
+          btn.className = opt.correct ? 'active-emerald' : 'active-rose';
+          res.classList.remove('hidden');
+          res.innerHTML = opt.correct
+            ? '<strong>Doğru.</strong> Provokasyon yanıtıyla iki patolojiyi ayırdınız. Vakalar Konsol sekmesinde açık.'
+            : `<strong>Yanlış.</strong> ${pair.wrongHint} Vakalar Konsol sekmesinde açık; tekrar dinleyin.`;
+        };
+        box.appendChild(btn);
+      });
+    }
+
+    function selectDuelPatient(letter) {
+      state.duelActivePatient = letter;
+      const pair = DUEL_PAIRS[state.duelPairKey];
+      selectPathology(pair[letter], { hidden: !state.duelAnswered });
+      document.getElementById('duelPatientBtn-A').className = letter === 'A' ? 'active-sky' : '';
+      document.getElementById('duelPatientBtn-B').className = letter === 'B' ? 'active-sky' : '';
+    }
+
+    const DAILY_EPOCH_DAY = Math.floor(Date.UTC(2026, 9, 27) / 86400000);
+    const DAILY_POOL = [
+      { id: 'hocm', bpm: 72, vignette: '24 yaş erkek sporcu — antrenman sırasında senkop', hint: 'Odakları dinleyin; Valsalva ve çömelme ile üfürümün nasıl değiştiğini test edin.' },
+      { id: 'aortic_stenosis', bpm: 68, vignette: '71 yaş erkek — efor anginası ve çabuk yorulma', hint: 'Karotis odaklarını da dinleyin; yayılım ipucu verir.' },
+      { id: 'mitral_regurg', bpm: 84, vignette: '58 yaş kadın — eforla nefes darlığı, geçirilmiş romatizmal ateş öyküsü', hint: 'Apeks ile aksillayı karşılaştırın; el sıkma manevrasını deneyin.' },
+      { id: 'vsd', bpm: 96, vignette: '6 yaş erkek çocuk — okul taramasında üfürüm saptanmış', hint: 'Sternal kenar ile apeksi karşılaştırın; aksillaya yayılım var mı?' },
+      { id: 'mitral_stenosis', bpm: 88, vignette: '44 yaş kadın — çarpıntı ve gece nefes darlığı', hint: 'Çan ile dinleyin; ek ses sistolde mi diyastolde mi?' },
+      { id: 's3_gallop', bpm: 98, vignette: '63 yaş erkek — bacaklarda şişlik, ortopne', hint: 'S2 sonrasını dikkatle dinleyin; çan basıncını değiştirin.' },
+      { id: 'lobar_pneumonia', bpm: 104, vignette: '35 yaş erkek — 3 gündür ateş, paslı balgam', hint: 'Derin inspiryum sonunu dinleyin; arka bazal odakları unutmayın.' },
+      { id: 'pleuritis_rub', bpm: 92, vignette: '29 yaş kadın — nefesle artan batıcı göğüs ağrısı', hint: 'Nefes tutturun (apne) ve ne olduğuna bakın.' },
+      { id: 'renal_bruit', bpm: 76, vignette: '31 yaş kadın — üç ilaca dirençli hipertansiyon', hint: 'Abdominal odakları dinleyin.' }
+    ];
+    const LEAGUE_DEMO_ROWS = [
+      { name: 'Hacettepe Tıp', pct: 91.4 }, { name: 'Cerrahpaşa Tıp', pct: 90.2 }, { name: 'Ankara Tıp', pct: 88.7 },
+      { name: 'Ege Tıp', pct: 87.9 }, { name: 'İstanbul (Çapa) Tıp', pct: 87.1 }, { name: 'Dicle Tıp', pct: 86.3 }
+    ];
+
+    function lsGet(key, fallback) { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch (e) { return fallback; } }
+    function lsSet(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {} }
+    function dateKeyOf(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
+    function todayKey() { return dateKeyOf(new Date()); }
+    function dayNumber() { const d = new Date(); return Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000); }
+    function seededShuffle(arr, seed) {
+      const a = [...arr];
+      let s = (Math.abs(seed) % 2147483646) + 1;
+      const rnd = () => (s = s * 16807 % 2147483647) / 2147483647;
+      for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+      return a;
+    }
+
+    function getDailyCase() {
+      const dn = dayNumber();
+      const entry = DAILY_POOL[((dn % DAILY_POOL.length) + DAILY_POOL.length) % DAILY_POOL.length];
+      const path = PATHOLOGIES[entry.id];
+      const sameSystem = Object.keys(PATHOLOGIES).filter(k => k !== entry.id && PATHOLOGIES[k].system === path.system);
+      const others = Object.keys(PATHOLOGIES).filter(k => k !== entry.id && PATHOLOGIES[k].system !== path.system);
+      const pool = sameSystem.length >= 2 ? sameSystem : [...sameSystem, ...others];
+      const distractors = seededShuffle(pool, dn).slice(0, 2);
+      const options = seededShuffle([entry.id, ...distractors], dn + 13);
+      return { number: dn - DAILY_EPOCH_DAY + 1, entry, options };
+    }
+    function getDailyProgress() {
+      const p = lsGet('ductuslab_daily_v1', null);
+      if (!p || p.dateKey !== todayKey()) return { dateKey: todayKey(), attempts: 0, solved: false, wrong: [] };
+      return p;
+    }
+    function getStreak() { return lsGet('ductuslab_streak_v1', { lastDateKey: null, count: 0 }); }
+    function getHistory() { return lsGet('ductuslab_history_v1', { correct: 0, total: 0 }); }
+    function recordResult(isCorrect) {
+      const h = getHistory();
+      h.total++; if (isCorrect) h.correct++;
+      lsSet('ductuslab_history_v1', h);
+    }
+
+    function initDailyChallengeUI() {
+      const daily = getDailyCase();
+      const prog = getDailyProgress();
+      const streak = getStreak();
+      document.getElementById('dailyNumberBadge').textContent = `Günün Vakası #${daily.number}`;
+      document.getElementById('dailyStreakLabel').textContent = `Seri ${streak.count} gün`;
+      document.getElementById('dailyVignette').textContent = daily.entry.vignette;
+      document.getElementById('dailyHint').textContent = daily.entry.hint;
+      document.getElementById('dailyAttemptsLabel').textContent = `Deneme ${prog.attempts}`;
+      const box = document.getElementById('dailyGuessOptions');
+      box.innerHTML = '';
+      daily.options.forEach(id => {
+        const b = document.createElement('button');
+        b.style.textAlign = 'left'; b.style.padding = '9px';
+        b.textContent = PATHOLOGIES[id].name;
+        if (prog.wrong.includes(id)) { b.className = 'active-rose'; b.disabled = true; b.textContent += '  ✗'; }
+        if (prog.solved && id === daily.entry.id) { b.className = 'active-emerald'; b.textContent += '  ✓'; }
+        if (prog.solved) b.disabled = true;
+        b.onclick = () => answerDaily(id, b);
+        box.appendChild(b);
+      });
+      renderDailyShareCard(daily, prog, streak);
+      renderLeague();
+    }
+
+    function answerDaily(id, btn) {
+      const daily = getDailyCase();
+      const prog = getDailyProgress();
+      if (prog.solved) return;
+      prog.attempts++;
+      if (id === daily.entry.id) {
+        prog.solved = true;
+        const streak = getStreak();
+        const y = new Date(); y.setDate(y.getDate() - 1);
+        streak.count = streak.lastDateKey === dateKeyOf(y) ? streak.count + 1 : 1;
+        streak.lastDateKey = todayKey();
+        lsSet('ductuslab_streak_v1', streak);
+        recordResult(prog.attempts === 1);
+        lsSet('ductuslab_daily_v1', prog);
+        if (state.currentCaseId === daily.entry.id) revealCase();
+        initDailyChallengeUI();
+      } else {
+        prog.wrong.push(id);
+        lsSet('ductuslab_daily_v1', prog);
+        btn.className = 'active-rose'; btn.disabled = true; btn.textContent += '  ✗';
+        document.getElementById('dailyAttemptsLabel').textContent = `Deneme ${prog.attempts}`;
+        showToast('Yanlış tanı. Provokasyon yanıtını ve yayılımı tekrar dinleyin.');
+      }
+    }
+
+    function dailyShareText(daily, prog, streak) {
+      const fac = document.getElementById('facultySelector').value;
+      const grid = '❌'.repeat(Math.max(0, prog.attempts - 1)) + '✅';
+      return `DuctusLab Günün Vakası #${daily.number} 🫀\n${grid} (${prog.attempts}. denemede)\nSeri ${streak.count} gün · ${fac}`;
+    }
+
+    function renderDailyShareCard(daily, prog, streak) {
+      const card = document.getElementById('dailyShareCard');
+      card.classList.toggle('hidden', !prog.solved);
+      if (!prog.solved) return;
+      const p = PATHOLOGIES[daily.entry.id];
+      document.getElementById('dailyResultText').textContent = `Doğru tanı: ${p.name} (${prog.attempts}. denemede)`;
+      document.getElementById('dailyRevealText').textContent = p.clinicalPearl;
+      document.getElementById('dailySharePreview').textContent = dailyShareText(daily, prog, streak);
+      document.getElementById('copyShareBtn').textContent = 'Sonuç Kartını Kopyala';
+    }
+
+    function startDailyPatientAudio() {
+      const daily = getDailyCase();
+      const prog = getDailyProgress();
+      selectPathology(daily.entry.id, { hidden: !prog.solved });
+      if (daily.entry.bpm) { document.getElementById('bpmSlider').value = daily.entry.bpm; updateVitalSliders(); }
+      if (!state.audioRunning) toggleAudioEngine();
+      showToast('Günün vakası yüklendi. Odakları dinleyin, provokasyon uygulayın, sonra tanıyı işaretleyin.');
+    }
+
+    function copyDailyShare() {
+      const text = dailyShareText(getDailyCase(), getDailyProgress(), getStreak());
+      const done = () => { document.getElementById('copyShareBtn').textContent = 'Kopyalandı'; };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+      } else {
+        fallbackCopy(text, done);
+      }
+    }
+
+    function fallbackCopy(text, done) {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); done(); } catch (e) { showToast('Panoya kopyalanamadı; kartı seçip elle kopyalayın.'); }
+      document.body.removeChild(ta);
+    }
+
+    function renderLeague() {
+      const fac = document.getElementById('facultySelector').value;
+      lsSet('ductuslab_faculty_v1', fac);
+      const h = getHistory();
+      const pct = h.total ? Math.round((h.correct / h.total) * 1000) / 10 : null;
+      document.getElementById('leagueUserRow').innerHTML =
+        `<strong style="color:var(--accent);">Sen · ${fac}</strong><span class="mono">${h.total ? `${h.correct}/${h.total} ilk denemede · %${pct}` : 'Henüz sonuç yok'}</span>`;
+      const rows = document.getElementById('leagueRows');
+      rows.innerHTML = '';
+      LEAGUE_DEMO_ROWS.forEach((r, i) => {
+        rows.innerHTML += `<div class="sub-box row-between"><span>${i + 1}. ${r.name}</span><span class="mono dim">%${r.pct}</span></div>`;
+      });
+    }
+
+    let toastTimer = null;
+    function showToast(msg) {
+      const t = document.getElementById('toastBox');
+      t.textContent = msg;
+      t.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+    }
+
+    function generateNewQuizQuestion() {
+      const keys = Object.keys(PATHOLOGIES);
+      const rk = keys[Math.floor(Math.random() * keys.length)];
+      state.quizTargetId = rk;
+      state.quizActive = true;
+      selectPathology(rk, { hidden: true });
+      const fb = document.getElementById('quizFeedbackBox');
+      fb.classList.add('hidden');
+      const box = document.getElementById('quizOptionsList');
+      box.innerHTML = '';
+
+      const shuffled = [...keys].sort(() => Math.random() - 0.5).slice(0, 4);
+      if (!shuffled.includes(rk)) shuffled[0] = rk;
+      shuffled.sort(() => Math.random() - 0.5);
+
+      let answered = false;
+      shuffled.forEach((k, idx) => {
+        const p = PATHOLOGIES[k];
+        const btn = document.createElement('button');
+        btn.style.textAlign = 'left'; btn.style.padding = '9px';
+        btn.textContent = `${idx + 1}. ${p.name}`;
+        btn.onclick = () => {
+          if (answered) return;
+          answered = true;
+          state.quizActive = false;
+          state.quizTotal++;
+          const correct = k === state.quizTargetId;
+          if (correct) state.quizScore++;
+          recordResult(correct);
+          revealCase();
+          Array.from(box.children).forEach(b => b.disabled = true);
+          btn.className = correct ? 'active-emerald' : 'active-rose';
+          fb.classList.remove('hidden');
+          fb.innerHTML = correct
+            ? `<strong>Doğru: ${p.name}</strong><br>${p.clinicalPearl}`
+            : `<strong>Yanlış.</strong> Doğru tanı: <strong>${PATHOLOGIES[state.quizTargetId].name}</strong><br>${PATHOLOGIES[state.quizTargetId].clinicalPearl}`;
+          document.getElementById('quizScoreText').textContent = `${state.quizScore} / ${state.quizTotal}`;
+        };
+        box.appendChild(btn);
+      });
+    }
+
+    function toggleStudioMode() {
+      document.body.classList.toggle('studio-mode');
+      setTimeout(resizeCanvases, 120);
+    }
+
+    function togglePortalModal() {
+      document.getElementById('portalModal').classList.toggle('hidden');
+    }
+
+    const KEY_MANEUVERS = { '1': 'none', '2': 'valsalva', '3': 'squat', '4': 'stand', '5': 'handgrip', '6': 'inspiration' };
+    window.addEventListener('keydown', e => {
+      const tag = (e.target && e.target.tagName) || '';
+      if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA' || e.metaKey || e.ctrlKey || e.altKey) return;
+      const k = e.key.toLowerCase();
+      if (KEY_MANEUVERS[k]) { applyManeuver(KEY_MANEUVERS[k]); e.preventDefault(); }
+      else if (k === 's') { toggleAudioEngine(); e.preventDefault(); }
+      else if (k === 'd') setStethFilter('diaphragm');
+      else if (k === 'b') setStethFilter('bell');
+      else if (k === 'r') toggleStudioMode();
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      resizeCanvases();
+      const savedFac = lsGet('ductuslab_faculty_v1', null);
+      const facSel = document.getElementById('facultySelector');
+      if (savedFac && Array.from(facSel.options).some(o => o.value === savedFac)) facSel.value = savedFac;
+      updateSystemButtonsUI();
+      setBodySideState('front');
+      initStethoscopeDrag();
+      selectPathology('aortic_stenosis');
+      renderStethoscope(0);
+      requestAnimationFrame(animationLoop);
+    });
+  </script>
+</body>
+</html>
