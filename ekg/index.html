@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DuctusLab · Elektrofizyoloji &amp; 12 Derivasyon EKG</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" />
+  <style>
+    :root {
+      --bg-0: #040812; --bg-1: #070c17; --bg-2: #0b1220; --bg-3: #101829;
+      --glass: rgba(13, 20, 34, 0.66); --glass-2: rgba(17, 26, 43, 0.55);
+      --line: rgba(160, 176, 196, 0.10); --line-2: rgba(160, 176, 196, 0.18);
+      --ink: #e4e9f1; --ink-2: #a6b1c2; --ink-3: #6c7889;
+      --accent: #6fa3c8; --accent-2: #4f7fa3; --accent-dim: rgba(111, 163, 200, 0.14);
+      --amber: #d9a441; --amber-dim: rgba(217, 164, 65, 0.14);
+      --ok: #5a9f7f; --ok-dim: rgba(90, 159, 127, 0.16);
+      --alert: #c4565f; --alert-dim: rgba(196, 86, 95, 0.16);
+      --violet: #9a86c9;
+      --trace: #8fd1ad; --trace-2: #d9a441; --trace-extra: #d99aa0;
+      --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --mono: "JetBrains Mono", "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body { font-family: var(--sans); font-size: 12px; background: var(--bg-0); color: var(--ink); height: 100vh; width: 100vw; overflow: hidden; display: flex; flex-direction: column; user-select: none; -webkit-font-smoothing: antialiased; }
+    .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+    .hidden { display: none !important; }
+    .eyebrow { font-size: 10px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); }
+    .eyebrow.accent { color: var(--accent); } .eyebrow.amber { color: var(--amber); } .eyebrow.alert { color: var(--alert); } .eyebrow.ok { color: var(--ok); } .eyebrow.dim { font-weight: 500; letter-spacing: 0.08em; }
+    .card-title { font-size: 13px; font-weight: 600; color: var(--ink); letter-spacing: -0.01em; }
+    .body-text { font-size: 11.5px; line-height: 1.5; color: var(--ink-2); }
+    .body-text b, .body-text strong { color: var(--ink); font-weight: 600; }
+    .dim { color: var(--ink-3); }
+    .fine { font-size: 10.5px; color: var(--ink-3); line-height: 1.4; }
+    .row-between { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .stack { display: flex; flex-direction: column; gap: 6px; }
+    .stack button { text-align: left; white-space: normal; }
+    hr.sep { border: 0; border-top: 1px solid var(--line); margin: 2px 0; }
+    .glass { background: var(--glass); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid var(--line); }
+
+    button { font-family: var(--sans); font-size: 12px; font-weight: 500; color: var(--ink-2); background: rgba(255,255,255,0.025); border: 1px solid var(--line-2); border-radius: 9px; padding: 6px 11px; cursor: pointer; white-space: nowrap; transition: background .15s, border-color .15s, color .15s, transform .12s; }
+    button:hover { color: var(--ink); border-color: rgba(111,163,200,0.45); background: rgba(111,163,200,0.08); }
+    button:active { transform: translateY(1px); }
+    button:disabled { opacity: 0.55; cursor: default; transform: none; }
+    button.active-sky { background: var(--accent); color: #071018; border-color: transparent; font-weight: 600; }
+    button.active-amber { background: var(--amber); color: #1a1205; border-color: transparent; font-weight: 600; }
+    button.active-rose { background: var(--alert-dim); color: #efb3b8; border-color: rgba(196,86,95,0.5); }
+    button.active-emerald { background: var(--ok-dim); color: #a3dcc2; border-color: rgba(90,159,127,0.5); }
+    button.on { background: var(--accent-dim); color: var(--accent); border-color: rgba(111,163,200,0.4); font-weight: 600; }
+    button.on-warn { background: var(--amber-dim); color: #f1d9a3; border-color: rgba(217,164,65,0.45); font-weight: 600; }
+    button.on-alert { background: var(--alert-dim); color: #efb3b8; border-color: rgba(196,86,95,0.5); font-weight: 600; }
+    .btn-xs { padding: 3px 9px; font-size: 11px; border-radius: 7px; }
+    .wide { width: 100%; padding: 9px; }
+    a.link-btn { text-decoration: none; display: inline-block; }
+    .seg { display: inline-flex; gap: 2px; padding: 3px; background: rgba(255,255,255,0.03); border: 1px solid var(--line); border-radius: 10px; }
+    .seg button { border: none; background: transparent; padding: 5px 11px; border-radius: 7px; }
+    .seg button:hover { background: rgba(111,163,200,0.08); }
+    .seg button.active-sky { background: rgba(111,163,200,0.18); color: var(--ink); font-weight: 600; box-shadow: inset 0 0 0 1px rgba(111,163,200,0.35); }
+    .seg.glass { background: var(--glass); }
+    .tab-nav { display: flex; margin: 10px 12px 0; }
+    .tab-nav button { flex: 1; font-size: 11.5px; padding: 6px 4px; }
+
+    select { width: 100%; font-family: var(--sans); font-size: 12px; font-weight: 500; color: var(--ink); background: rgba(5,9,16,0.6); border: 1px solid var(--line-2); border-radius: 9px; padding: 7px 10px; outline: none; }
+    select:focus { border-color: rgba(111,163,200,0.6); }
+    input[type="range"] { width: 100%; height: 3px; -webkit-appearance: none; appearance: none; background: linear-gradient(90deg, rgba(111,163,200,0.55), rgba(111,163,200,0.15)); border-radius: 3px; outline: none; cursor: pointer; margin: 7px 0 5px; }
+    input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 13px; height: 13px; border-radius: 50%; background: #dfe6ef; border: 2px solid var(--accent); box-shadow: 0 1px 4px rgba(0,0,0,0.5); }
+    input[type="range"]::-moz-range-thumb { width: 13px; height: 13px; border-radius: 50%; background: #dfe6ef; border: 2px solid var(--accent); }
+    input[type="range"].amber { background: linear-gradient(90deg, rgba(217,164,65,0.55), rgba(217,164,65,0.15)); } input[type="range"].amber::-webkit-slider-thumb { border-color: var(--amber); }
+    input[type="range"].alert { background: linear-gradient(90deg, rgba(196,86,95,0.55), rgba(196,86,95,0.15)); } input[type="range"].alert::-webkit-slider-thumb { border-color: var(--alert); }
+    input[type="range"].violet { background: linear-gradient(90deg, rgba(154,134,201,0.55), rgba(154,134,201,0.15)); } input[type="range"].violet::-webkit-slider-thumb { border-color: var(--violet); }
+
+    [data-tip] { position: relative; }
+    [data-tip]:hover::after { content: attr(data-tip); position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%); background: #0e1626; border: 1px solid var(--line-2); color: var(--ink-2); padding: 6px 9px; border-radius: 8px; font-family: var(--sans); font-size: 11px; font-weight: 500; letter-spacing: 0; text-transform: none; line-height: 1.4; text-align: left; white-space: normal; width: max-content; max-width: 250px; z-index: 200; pointer-events: none; box-shadow: 0 8px 24px rgba(0,0,0,0.45); }
+    [data-tip-pos="bottom"]:hover::after { bottom: auto; top: calc(100% + 8px); }
+    [data-tip-pos="left"]:hover::after { left: auto; right: 0; transform: none; }
+    [data-tip-pos="right"]:hover::after { left: 0; transform: none; }
+    .info { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border-radius: 50%; border: 1px solid var(--line-2); color: var(--ink-3); font-family: var(--mono); font-size: 9px; font-weight: 700; margin-left: 6px; vertical-align: middle; cursor: help; }
+
+    header { height: 48px; background: rgba(6,10,20,0.86); border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; flex-shrink: 0; z-index: 30; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .wordmark { font-size: 13px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink); }
+    .wordmark em { font-style: normal; color: var(--accent); }
+    .vsep { width: 1px; height: 18px; background: var(--line-2); }
+    .product { font-size: 12px; color: var(--ink-3); font-weight: 500; }
+    .top-actions { display: flex; gap: 8px; align-items: center; }
+    .scen-pill { display: inline-flex; align-items: center; gap: 8px; font-size: 11.5px; color: var(--ink-2); background: rgba(255,255,255,0.03); border: 1px solid var(--line-2); padding: 5px 10px; border-radius: 9px; max-width: 520px; }
+    .scen-pill strong { color: var(--ink); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .scen-pill .urg { font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; white-space: nowrap; }
+    .scen-pill.alert { border-color: rgba(196,86,95,0.45); background: var(--alert-dim); } .scen-pill.alert .urg { color: var(--alert); }
+    .scen-pill.warn { border-color: rgba(217,164,65,0.4); background: var(--amber-dim); } .scen-pill.warn .urg { color: var(--amber); }
+    .scen-pill.ok .urg { color: var(--ok); }
+    .scen-pill.hiddenc { border-color: rgba(154,134,201,0.45); } .scen-pill.hiddenc .urg { color: var(--violet); }
+    .beep-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-3); display: inline-block; margin-right: 6px; vertical-align: middle; }
+    button.on .beep-dot { background: var(--accent); box-shadow: 0 0 8px rgba(111,163,200,0.8); }
+
+    #main { flex: 1; display: flex; overflow: hidden; }
+    #leftCol { width: 300px; flex-shrink: 0; display: flex; flex-direction: column; gap: 10px; padding: 12px; overflow-y: auto; background: linear-gradient(180deg, rgba(11,18,32,0.94), rgba(7,12,22,0.97)); border-right: 1px solid var(--line); }
+    #leftCol::-webkit-scrollbar, .pane::-webkit-scrollbar { width: 6px; } #leftCol::-webkit-scrollbar-thumb, .pane::-webkit-scrollbar-thumb { background: rgba(160,176,196,0.14); border-radius: 6px; }
+    .card { background: var(--glass-2); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid var(--line); border-radius: 16px; padding: 12px 13px; display: flex; flex-direction: column; gap: 8px; }
+    .card-console { border-color: rgba(111,163,200,0.22); background: linear-gradient(160deg, rgba(20,31,52,0.62), rgba(13,21,36,0.55)); }
+    .mini-canvas { width: 100%; display: block; background: #05090f; border: 1px solid var(--line); border-radius: 10px; }
+    #heartSvg { width: 100%; height: 176px; background: #05090f; border: 1px solid var(--line); border-radius: 10px; }
+    .legend { display: flex; gap: 12px; font-size: 10.5px; color: var(--ink-3); }
+    #leftCol .card-title { font-size: 12px; }
+    #leftCol .row-between > .eyebrow { white-space: nowrap; }
+    .legend i { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--c); margin-right: 5px; vertical-align: middle; }
+
+    #center { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg-0); min-width: 0; }
+    .vitals { display: grid; grid-template-columns: repeat(6, 1fr); gap: 1px; background: var(--line); border-bottom: 1px solid var(--line); flex-shrink: 0; }
+    .vital { background: rgba(8,13,24,0.92); padding: 8px 12px; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+    .vital .k { font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; white-space: nowrap; }
+    .vital .v { font-family: var(--mono); font-size: 15px; font-weight: 600; color: var(--ink); white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .vital .u { font-family: var(--sans); font-size: 9.5px; color: var(--ink-3); font-weight: 500; margin-left: 3px; }
+    .vital.hr .v { color: var(--alert); } .vital.warn .v { color: var(--amber); } .vital.bad .v { color: var(--alert); } .vital.good .v { color: var(--ok); }
+    .vital.bad { box-shadow: inset 0 -2px 0 var(--alert); } .vital.warn { box-shadow: inset 0 -2px 0 var(--amber); }
+    .toolbar { height: 42px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 12px; border-bottom: 1px solid var(--line); background: rgba(8,13,24,0.7); flex-shrink: 0; }
+    .toolbar .group { display: flex; gap: 8px; align-items: center; }
+    .ecg-wrap { flex: 1; position: relative; overflow: hidden; min-height: 0; }
+    #ecgCanvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: crosshair; touch-action: none; }
+    .banner { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); padding: 6px 14px; border-radius: 10px; font-size: 11.5px; font-weight: 600; pointer-events: none; max-width: 80%; text-align: center; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid; box-shadow: 0 8px 24px rgba(0,0,0,0.45); z-index: 5; }
+    .banner.alert { background: rgba(60,20,26,0.85); border-color: rgba(196,86,95,0.55); color: #f1c3c7; }
+    .banner.warn { background: rgba(50,38,12,0.85); border-color: rgba(217,164,65,0.5); color: #f1d9a3; }
+    .banner.info { background: rgba(14,26,44,0.88); border-color: rgba(111,163,200,0.45); color: #cfe3f3; }
+    .caliper-box { position: absolute; top: 10px; right: 12px; padding: 7px 11px; border-radius: 10px; font-size: 11px; color: var(--ink); pointer-events: none; z-index: 5; border-color: rgba(217,164,65,0.4) !important; }
+    .caliper-box .eyebrow { margin-bottom: 3px; }
+
+    #console { width: 430px; flex-shrink: 0; display: flex; flex-direction: column; background: linear-gradient(180deg, rgba(11,18,32,0.94), rgba(7,12,22,0.97)); border-left: 1px solid var(--line); z-index: 25; }
+    .panel-head { padding: 12px 12px 10px; border-bottom: 1px solid var(--line); }
+    .pane { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+    .ctl { background: rgba(5,9,16,0.5); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px 5px; }
+    .ctl-head { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+    .lbl { font-size: 11px; color: var(--ink-2); font-weight: 500; }
+    .val { font-size: 11.5px; font-weight: 500; color: var(--ink); } .val.amber { color: var(--amber); } .val.ok { color: var(--ok); } .val.alert { color: var(--alert); } .val.ao { color: var(--accent); } .val.violet { color: var(--violet); }
+    .note { border-top: 1px solid var(--line); padding-top: 8px; display: flex; flex-direction: column; gap: 4px; }
+    .result { border-left: 2px solid var(--accent); background: rgba(111,163,200,0.06); border-radius: 0 8px 8px 0; padding: 8px 10px; font-size: 11.5px; line-height: 1.45; color: var(--ink-2); }
+    .result b, .result strong { color: var(--ink); font-weight: 600; } .result.ok { border-color: var(--ok); } .result.bad { border-color: var(--alert); } .result.warn { border-color: var(--amber); }
+    .tag { font-size: 9.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); border: 1px solid var(--line-2); padding: 2px 6px; border-radius: 5px; font-weight: 600; white-space: nowrap; }
+    .tag.ok { color: var(--ok); border-color: rgba(90,159,127,0.45); } .tag.bad { color: var(--alert); border-color: rgba(196,86,95,0.45); } .tag.warn { color: var(--amber); border-color: rgba(217,164,65,0.45); }
+    .drug-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .drug-grid button { text-align: left; white-space: normal; padding: 8px 10px; line-height: 1.3; }
+    .drug-grid button small { display: block; font-weight: 400; color: var(--ink-3); font-size: 10px; margin-top: 2px; }
+    #toastBox { position: fixed; bottom: 26px; left: 50%; transform: translateX(-50%) translateY(16px); background: #0e1626; border: 1px solid var(--line-2); color: var(--ink); padding: 10px 16px; border-radius: 10px; font-size: 12px; font-weight: 500; opacity: 0; transition: all .22s; z-index: 100; pointer-events: none; max-width: 90vw; text-align: center; box-shadow: 0 12px 32px rgba(0,0,0,0.5); }
+    #toastBox.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <span class="wordmark">Ductus<em>Lab</em></span>
+      <span class="vsep"></span>
+      <span class="product">Elektrofizyoloji &amp; 12 Derivasyon EKG</span>
+    </div>
+    <div class="scen-pill" id="scenPill"><span class="urg" id="scenUrg">—</span><strong id="scenName">—</strong></div>
+    <div class="top-actions">
+      <button onclick="toggleBeep()" id="beepBtn" data-tip="QRS senkron monitör bip sesi (B)" data-tip-pos="bottom"><span class="beep-dot"></span>Bip</button>
+      <button onclick="toggleFreeze()" id="freezeBtn" data-tip="Trase dondur / devam et (F)" data-tip-pos="bottom">Dondur</button>
+      <a class="link-btn" href="../" data-tip="Diğer modüller" data-tip-pos="bottom"><button>Modüller</button></a>
+    </div>
+  </header>
+
+  <div id="main">
+    <aside id="leftCol">
+      <div class="card">
+        <div class="row-between"><span class="card-title">İleti Sistemi &amp; Koronerler</span><span id="phaseBadge" class="eyebrow amber">SA</span></div>
+        <svg id="heartSvg" viewBox="0 0 280 230">
+          <path d="M135,20 C82,20 46,56 48,108 C50,162 94,205 146,218 C195,206 232,160 230,105 C228,56 190,20 135,20 Z" fill="#0f1726" stroke="#2a3444" stroke-width="1.6" />
+          <path d="M138,26 L136,92 L144,214" fill="none" stroke="#3a4556" stroke-width="2" stroke-dasharray="4,3" />
+          <line x1="52" y1="92" x2="226" y2="92" stroke="#3a4556" stroke-width="1.8" />
+          <path id="svgInfarct" d="M144,112 C164,118 205,136 210,188 C186,208 158,214 144,214 Z" fill="#c4565f" fill-opacity="0" />
+          <path d="M124,84 C82,98 66,138 82,186" fill="none" stroke="#b0414b" stroke-width="2" stroke-opacity="0.55" />
+          <text x="54" y="176" fill="#d99aa0" font-size="8" font-weight="600" font-family="JetBrains Mono, monospace">RCA</text>
+          <path d="M148,84 C164,118 172,162 158,208" fill="none" stroke="#b0414b" stroke-width="2.3" stroke-opacity="0.55" />
+          <text x="172" y="196" fill="#d99aa0" font-size="8" font-weight="600" font-family="JetBrains Mono, monospace">LAD</text>
+          <path d="M150,84 C188,92 214,118 216,158" fill="none" stroke="#b0414b" stroke-width="2" stroke-opacity="0.55" />
+          <text x="205" y="114" fill="#d99aa0" font-size="8" font-weight="600" font-family="JetBrains Mono, monospace">LCx</text>
+          <circle id="svgThrombus" cx="162" cy="126" r="5.5" fill="#c4565f" stroke="#e4e9f1" stroke-width="1.2" style="display:none;" />
+          <path d="M82,50 Q108,58 134,86 M82,50 Q95,78 134,86" fill="none" stroke="#d9a441" stroke-width="2" stroke-opacity="0.5" />
+          <path id="svgKent" d="M198,78 L202,114" fill="none" stroke="#9a86c9" stroke-width="3.5" style="display:none;" />
+          <line x1="134" y1="86" x2="137" y2="108" stroke="#d9a441" stroke-width="3" stroke-opacity="0.6" />
+          <path d="M137,108 C122,142 112,176 88,190 C74,178 68,154 70,134" fill="none" stroke="#6fa3c8" stroke-width="2.2" stroke-opacity="0.55" />
+          <path d="M137,108 C154,140 166,174 188,190 C205,176 210,150 206,126" fill="none" stroke="#6fa3c8" stroke-width="2.5" stroke-opacity="0.55" />
+          <text id="svgBlock" x="156" y="138" fill="#c4565f" font-size="15" font-weight="700" style="display:none;">✕</text>
+          <circle cx="82" cy="50" r="6" fill="#d9a441" stroke="#e4e9f1" stroke-width="1" />
+          <circle cx="134" cy="86" r="5.5" fill="#c9973f" stroke="#e4e9f1" stroke-width="1" />
+          <circle id="svgCursor" cx="82" cy="50" r="8.5" fill="none" stroke="#f1d9a3" stroke-width="2.2" />
+        </svg>
+        <span class="fine">SA → AV → His-Purkinje imleci canlı; iskemi bölgesi ve trombüs vaka ile yerleşir.</span>
+      </div>
+
+      <div class="card">
+        <div class="row-between"><span class="card-title">Hücresel Aksiyon Potansiyeli</span><span id="nernst" class="eyebrow accent mono">E<sub>K</sub> −93 mV</span></div>
+        <canvas id="apCanvas" class="mini-canvas" style="height:110px;"></canvas>
+        <div class="legend"><span><i style="--c:var(--alert)"></i>Endokard</span><span><i style="--c:var(--accent)"></i>Epikard</span><span class="dim">Fark → T dalgası</span></div>
+      </div>
+
+      <div class="card">
+        <div class="row-between"><span class="card-title">Cabrera Dairesi &amp; VKG</span><span class="eyebrow dim">frontal düzlem</span></div>
+        <canvas id="vecCanvas" class="mini-canvas" style="height:150px;"></canvas>
+        <span class="fine">Sıra: aVL · I · −aVR · II · aVF · III. Amber ok QRS ekseni; mavi halka anlık kalp vektörü.</span>
+      </div>
+    </aside>
+
+    <section id="center">
+      <div class="vitals">
+        <div class="vital hr"><span class="k">HR</span><span class="v"><span id="vHr">—</span><span class="u">/dk</span></span></div>
+        <div class="vital"><span class="k">TA</span><span class="v"><span id="vBp">—</span><span class="u">mmHg</span></span></div>
+        <div class="vital" id="vtPr"><span class="k">PR</span><span class="v"><span id="vPr">—</span><span class="u">ms</span></span></div>
+        <div class="vital" id="vtQrs"><span class="k">QRS</span><span class="v"><span id="vQrs">—</span><span class="u">ms</span></span></div>
+        <div class="vital" id="vtQtc"><span class="k">QTc B / F</span><span class="v"><span id="vQtc">—</span><span class="u">ms</span></span></div>
+        <div class="vital" id="vtAxis"><span class="k">Eksen</span><span class="v"><span id="vAxis">—</span></span></div>
+      </div>
+      <div class="toolbar">
+        <div class="group">
+          <div class="seg">
+            <button onclick="setPaper('monitor')" id="paperBtn-monitor" class="active-sky" data-tip="Monitör modu 0,5–40 Hz: taban çizgisi oynar, ST segmenti bir miktar bozulur (P)" data-tip-pos="bottom">Monitör</button>
+            <button onclick="setPaper('paper')" id="paperBtn-paper" data-tip="Tanısal kayıt 0,05–150 Hz: ST segmenti sadık (P)" data-tip-pos="bottom">Tanısal Kağıt</button>
+          </div>
+          <button onclick="toggleGain()" id="gainBtn" data-tip="10 veya 5 mm/mV (G)" data-tip-pos="bottom">10 mm/mV</button>
+          <button onclick="toggleExtraLeads()" id="extraBtn" data-tip="Posterior V7–V9 sütunu ve V4R ritim şeridi ekler (V)" data-tip-pos="bottom">+ V4R · V7–V9</button>
+        </div>
+        <div class="group">
+          <span class="eyebrow dim">25 mm/s</span>
+          <button onclick="toggleCaliper()" id="caliperBtn" data-tip="Dijital pergel: sürükleyerek ms ve mV ölçün (C)" data-tip-pos="left">Pergel</button>
+        </div>
+      </div>
+      <div class="ecg-wrap">
+        <canvas id="ecgCanvas"></canvas>
+        <div id="banner" class="banner info hidden"></div>
+        <div id="caliperBox" class="caliper-box glass hidden mono">
+          <div class="eyebrow amber">Pergel</div>
+          <div id="caliperText">—</div>
+        </div>
+      </div>
+    </section>
+
+    <aside id="console">
+      <div class="panel-head row-between">
+        <span class="eyebrow">Klinik Konsol</span>
+        <span class="eyebrow dim">Dower 3B vektör motoru</span>
+      </div>
+      <nav class="seg tab-nav">
+        <button onclick="switchTab('engine')" id="tabBtn-engine" class="active-sky">Konsol</button>
+        <button onclick="switchTab('lab')" id="tabBtn-lab">Elektrot &amp; Pace</button>
+        <button onclick="switchTab('therapy')" id="tabBtn-therapy">Müdahale</button>
+        <button onclick="switchTab('quiz')" id="tabBtn-quiz">Sınav Modu</button>
+      </nav>
+
+      <div id="tab-engine" class="pane">
+        <div class="card">
+          <div class="row-between"><span class="eyebrow accent">Klinik Senaryo</span><span id="scenCount" class="eyebrow dim"></span></div>
+          <select id="scenarioSelect" onchange="loadScenario(this.value)"></select>
+        </div>
+
+        <div class="card card-console">
+          <div class="row-between">
+            <span class="card-title">Elektrofizyoloji Konsolu<span class="info" data-tip="QRS süresi kalp hızından bağımsızdır; QT hızla kısalır (Fridericia). Potasyum Nernst dinlenim potansiyelini ve repolarizasyonu değiştirir.">i</span></span>
+            <button class="btn-xs" onclick="resetScenario()" data-tip="Senaryonun başlangıç değerlerine döner" data-tip-pos="left">Sıfırla</button>
+          </div>
+          <div class="ctl">
+            <div class="ctl-head"><span class="lbl" id="hrLbl">Sinüs / Odak Hızı</span><span id="lblHr" class="mono val alert">72 /dk</span></div>
+            <input type="range" id="sHr" class="alert" min="34" max="185" value="72" oninput="onParam()" />
+          </div>
+          <div class="grid-2">
+            <div class="ctl">
+              <div class="ctl-head"><span class="lbl">İskemi Tipi</span></div>
+              <select id="ischType" onchange="onParam()" style="margin:6px 0 4px; padding:5px 8px; font-size:11px;">
+                <option value="transmural">Transmural (STEMI)</option>
+                <option value="subendo">Subendokardiyal (NSTEMI)</option>
+              </select>
+            </div>
+            <div class="ctl">
+              <div class="ctl-head"><span class="lbl">Oklüzyon Süresi</span><span id="lblIsch" class="mono val alert">0 dk</span></div>
+              <input type="range" id="sIsch" class="alert" min="0" max="100" value="0" oninput="onParam()" />
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="ctl">
+              <div class="ctl-head"><span class="lbl">Serum K⁺</span><span id="lblK" class="mono val amber">4.2 mEq/L</span></div>
+              <input type="range" id="sK" class="amber" min="2.3" max="8.4" step="0.1" value="4.2" oninput="onParam()" />
+            </div>
+            <div class="ctl">
+              <div class="ctl-head"><span class="lbl">QRS Ekseni</span><span id="lblAxis" class="mono val ao">+52°</span></div>
+              <input type="range" id="sAxis" min="-180" max="180" value="52" oninput="onParam()" />
+            </div>
+          </div>
+          <span class="fine" id="axisNote"></span>
+        </div>
+
+        <div class="card">
+          <div class="row-between"><span class="card-title">Mekanizma &amp; Kriterler</span><span id="mechTag" class="tag">Açık</span></div>
+          <div id="mechText" class="body-text"></div>
+          <div class="note">
+            <span class="eyebrow amber">Klinik Not</span>
+            <div id="pearlText" class="body-text"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-lab" class="pane hidden">
+        <div class="card">
+          <span class="card-title">Elektrot &amp; Artefakt Laboratuvarı</span>
+          <span class="fine">Kalbe dokunmadan yalnızca kablolar ve filtre değişir.</span>
+          <div class="grid-2">
+            <button onclick="toggleSwap()" id="btnSwap" data-tip="RA–LA ters bağlanınca DI tersine döner, DII↔DIII ve aVR↔aVL yer değiştirir; V1–V6 değişmez">RA ↔ LA Ters</button>
+            <button onclick="toggleExtraLeads()" id="btnExtra2">V4R · V7–V9</button>
+            <button onclick="toggleNoise()" id="btnNoise" data-tip="50 Hz şebeke artefaktı">50 Hz Şebeke</button>
+            <button onclick="toggleTremor()" id="btnTremor" data-tip="4,5 Hz Parkinson tremoru; flatter ile karışabilir">Tremor 4,5 Hz</button>
+          </div>
+          <div id="labNote" class="result">RA–LA tersliği dekstrokardiden V1–V6'nın normal kalmasıyla ayrılır; dekstrokardide prekordiyal R progresyonu da kaybolur.</div>
+        </div>
+
+        <div class="card">
+          <span class="card-title">Sgarbossa Atölyesi<span class="info" data-tip="LBBB'de ST-T, QRS'e diskordandır. QRS ile aynı yönde (konkordan) ≥ 1 mm ST yükselmesi akut MI lehinedir (Smith-modifiye: diskordan STE / S derinliği ≥ %25).">i</span></span>
+          <div class="grid-2">
+            <button onclick="loadSgarbossa(false)" id="btnSgNeg">İzole LBBB</button>
+            <button onclick="loadSgarbossa(true)" id="btnSgPos">LBBB + Anterior MI</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="row-between">
+            <span class="card-title">Geçici VVI Pacemaker</span>
+            <button onclick="togglePacer()" id="btnPace" class="btn-xs">Kapalı</button>
+          </div>
+          <span class="fine">Yakalama eşiği 3,0 mA; hastanın intrinsik R dalgası 5,0 mV. Pace hızı üstteki hız kaydırıcısından.</span>
+          <div class="ctl">
+            <div class="ctl-head"><span class="lbl">Çıkış (Output)</span><span id="lblMa" class="mono val amber">5.0 mA</span></div>
+            <input type="range" id="sMa" class="amber" min="1" max="10" step="0.5" value="5" oninput="onPacer()" />
+          </div>
+          <div class="ctl">
+            <div class="ctl-head"><span class="lbl">Duyarlılık (Sensitivity)<span class="info" data-tip="Düşük mV = daha duyarlı. Eşik intrinsik R'nin (5 mV) üstüne çıkarsa cihaz R'yi görmez: undersensing, R-on-T riski">i</span></span><span id="lblMv" class="mono val ao">2.0 mV</span></div>
+            <input type="range" id="sMv" min="1" max="10" step="0.5" value="2" oninput="onPacer()" />
+          </div>
+          <div id="paceNote" class="result">Pacemaker kapalı.</div>
+        </div>
+      </div>
+
+      <div id="tab-therapy" class="pane hidden">
+        <div class="card">
+          <span class="card-title">Müdahale &amp; Tanı Manevraları</span>
+          <div class="drug-grid">
+            <button onclick="intervene('adenosine')">Adenozin 6 mg IV<small>Geçici AV düğüm bloğu</small></button>
+            <button onclick="intervene('atropine')">Atropin 0,5 mg IV<small>Vagolitik, nodal blok</small></button>
+            <button onclick="intervene('calcium')">Kalsiyum Glukonat<small>Membran stabilizasyonu</small></button>
+            <button onclick="intervene('insulin')">İnsülin + Dekstroz<small>K⁺ hücre içine</small></button>
+            <button onclick="intervene('cardioversion')">Senkron Kardiyoversiyon<small>100 J</small></button>
+            <button onclick="intervene('pci')">Primer PKG / Stent<small>Reperfüzyon</small></button>
+          </div>
+          <div id="therapyResult" class="result">Deneme önerisi: Atriyal flatter seçip adenozin verin; AV düğüm 3 s durur ve testere dişi F dalgaları açığa çıkar. K⁺ 7,8'e çekip kalsiyum verin; K⁺ değişmez ama QRS daralır.</div>
+        </div>
+      </div>
+
+      <div id="tab-quiz" class="pane hidden">
+        <div class="card">
+          <div class="row-between">
+            <div><span class="eyebrow accent">Sınav Modu</span><div class="card-title">Kör EKG Tanısı <span class="dim">(OSCE / TUS)</span></div></div>
+            <span id="quizScore" class="mono val ok" style="font-size:14px;">0 / 0</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="row-between">
+            <span class="eyebrow amber">Gizli vaka yüklendi</span>
+            <button onclick="newQuiz()" class="btn-xs active-sky">Yeni Vaka</button>
+          </div>
+          <div id="quizOptions" class="stack"></div>
+          <div id="quizFeedback" class="result hidden"></div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <div id="toastBox"></div>
+
+  <script>
+    // ---------------- Dower inverse transfer matrix (Frank X: sol, Y: aşağı, Z: arka) ----------------
+    const DOWER = {
+      I:  { x: 0.632, y: -0.235, z: 0.059 }, II: { x: 0.235, y: 1.066, z: -0.132 },
+      V1: { x: -0.515, y: 0.157, z: -0.917 }, V2: { x: 0.044, y: 0.164, z: -1.387 }, V3: { x: 0.882, y: 0.098, z: -1.277 },
+      V4: { x: 1.213, y: 0.127, z: -0.601 }, V5: { x: 1.125, y: 0.127, z: -0.086 }, V6: { x: 0.831, y: 0.076, z: 0.230 },
+      V4R: { x: -0.920, y: 0.160, z: -0.650 }, V7: { x: 0.480, y: 0.080, z: 0.680 }, V8: { x: 0.120, y: 0.080, z: 0.880 }, V9: { x: -0.150, y: 0.080, z: 0.820 }
+    };
+
+    const SCENARIOS = {
+      normal: { name: 'Normal Sinüs Ritmi', urgency: 'Fizyolojik', level: 'ok', hr: 72, axis: 52, ischemia: 0, k: 4.2, prMs: 160, qrsMs: 88, bp: '122/78', inj: { x: 0, y: 0, z: 0 },
+        mechanism: '<b>Üç fazlı QRS vektörü:</b> ilk 20 ms septal (sağa-öne → V1\'de r, V6\'da septal q), 20–60 ms sol ventrikül (sola-arkaya → V1\'de S, V6\'da R), 60–90 ms bazal vektör.',
+        pearl: 'Goldberger türetmeleri: aVR = −(I+II)/2, aVL = I − II/2, aVF = II − I/2. Einthoven: III = II − I.' },
+      ant_stemi: { name: 'Akut Anterior STEMI (proksimal LAD)', urgency: 'Kırmızı alarm', level: 'alert', hr: 94, axis: 35, ischemia: 78, k: 4.4, prMs: 164, qrsMs: 94, bp: '104/68', inj: { x: 0.35, y: -0.35, z: -0.95 },
+        mechanism: '<b>V1–V4, DI ve aVL\'de ST elevasyonu;</b> hasar vektörü öne ve yukarı yöneldiği için <b>DII, DIII, aVF\'de resiprokal ST çökmesi</b>.',
+        pearl: 'aVL ve V1\'de ST elevasyonu varsa oklüzyon 1. diyagonal ve 1. septal dal öncesi proksimal LAD\'dedir.' },
+      inf_stemi: { name: 'Akut İnferior + Sağ Ventrikül STEMI (proksimal RCA)', urgency: 'Kırmızı alarm', level: 'alert', hr: 54, axis: 78, ischemia: 82, k: 4.3, prMs: 192, qrsMs: 92, bp: '86/54', inj: { x: -0.42, y: 0.92, z: -0.25 },
+        mechanism: '<b>DII, DIII, aVF\'de ST elevasyonu (DIII > DII)</b> + DI ve aVL\'de resiprokal çökme. <b>V4R</b> açıldığında sağ ventrikül ST elevasyonu görülür.',
+        pearl: 'Proksimal RCA oklüzyonunda sağ ventrikül MI eşlik eder (V4R ≥ 1 mm STE). Önyük bağımlıdır: nitrat ve morfin kontrendike, IV sıvı verilir.' },
+      post_stemi: { name: 'İzole Posterior STEMI (LCx)', urgency: 'Gizli OMI', level: 'alert', hr: 82, axis: 40, ischemia: 80, k: 4.2, prMs: 160, qrsMs: 90, bp: '110/70', inj: { x: 0.15, y: 0.20, z: 0.98 },
+        mechanism: 'Standart 12 derivasyonda <b>V1–V3\'te yatay ST çökmesi + uzun R (R/S > 1) + dik pozitif T</b> (ayna görüntüsü). <b>V7–V9</b> takıldığında gerçek ST elevasyonu yakalanır.',
+        pearl: 'V1–V3 ST çökmesine "anterior NSTEMI" demeden önce V7–V9 çekilir; posteriorda 0,5 mm STE tanısaldır.' },
+      flutter_2_1: { name: 'Atriyal Flatter 2:1 (150/dk)', urgency: 'SVT', level: 'warn', hr: 150, axis: 50, ischemia: 0, k: 4.2, prMs: 140, qrsMs: 86, bp: '112/74', inj: { x: 0, y: 0, z: 0 },
+        mechanism: 'Sağ atriyumda <b>kavotriküspit istmus</b> çevresinde 300/dk makro-reentry; 2:1 AV iletimle ventrikül hızı tam <b>150/dk</b>. F dalgaları T içine gizlenir.',
+        pearl: 'Dar QRS, tam 150/dk taşikardide adenozin veya vagal manevra AV düğümü geçici bloke eder ve testere dişi F dalgaları ortaya çıkar.' },
+      afib: { name: 'Atriyal Fibrilasyon', urgency: 'Aritmi', level: 'warn', hr: 118, axis: 48, ischemia: 0, k: 4.1, prMs: 0, qrsMs: 86, bp: '116/76', inj: { x: 0, y: 0, z: 0 },
+        mechanism: 'P dalgası yok; 350–600/dk kaotik f dalgaları ve AV düğümün gizli iletimine bağlı <b>tamamen düzensiz R-R</b>.',
+        pearl: 'AF\'de tek R-R\'den Bazett QTc hesaplanmaz; çok atım ortalaması ve Fridericia düzeltmesi tercih edilir.' },
+      wenckebach: { name: '2. Derece AV Blok Mobitz Tip I (Wenckebach)', urgency: 'Nodal blok', level: 'warn', hr: 64, axis: 45, ischemia: 0, k: 4.2, prMs: 210, qrsMs: 88, bp: '118/74', inj: { x: 0, y: 0, z: 0 },
+        mechanism: 'PR her atımda uzar, ancak <b>PR artış miktarı azalır</b> (+55 → +30 ms); bu yüzden <b>R-R aralıkları kısalır</b>, sonra bir P bloke olur (4:3).',
+        pearl: 'Blok AV düğüm düzeyindedir; atropin vagal tonusu kaldırarak iletimi düzeltir.' },
+      av_block_3: { name: '3. Derece AV Blok (infranodal kaçış)', urgency: 'Acil blok', level: 'alert', hr: 36, axis: 70, ischemia: 0, k: 4.4, prMs: 0, qrsMs: 142, bp: '78/46', inj: { x: 0, y: 0, z: 0 },
+        mechanism: 'Atriyumlar sinüs hızında (82/dk), ventriküller His-altı idiyoventriküler kaçışla (36/dk, geniş QRS) bağımsız çalışır: <b>AV disosiyasyon</b>.',
+        pearl: 'Geniş QRS\'li infranodal tam blokta atropin etkisizdir; tedavi geçici pacemaker\'dır.' },
+      lbbb: { name: 'Sol Dal Bloğu (LBBB)', urgency: 'Dal bloğu', level: 'warn', hr: 74, axis: -35, ischemia: 0, k: 4.2, prMs: 168, qrsMs: 148, bp: '124/80', inj: { x: 0, y: 0, z: 0 },
+        mechanism: 'Septum sağdan sola uyarılır (<b>DI ve V6\'da septal q kaybolur</b>), sol ventrikül gecikir (V1\'de derin QS, V6\'da çentikli R). <b>ST-T, QRS\'e diskordandır.</b>',
+        pearl: 'Uygun diskordans normaldir. QRS ile aynı yönde (konkordan) ≥ 1 mm ST yükselmesi Sgarbossa pozitif: akut MI.' },
+      rbbb: { name: 'Sağ Dal Bloğu (RBBB)', urgency: 'Dal bloğu', level: 'warn', hr: 75, axis: 65, ischemia: 0, k: 4.2, prMs: 160, qrsMs: 140, bp: '120/78', inj: { x: 0, y: 0, z: 0 },
+        mechanism: 'İlk 60 ms septal ve LV aktivasyonu normal; son 60 ms sağ ventrikül gecikir → <b>V1–V2\'de rsR\' ve negatif T</b>, <b>DI ve V6\'da geniş S</b>.',
+        pearl: 'RBBB\'de sekonder T negatifliği yalnızca V1–V2\'de beklenir; V5–V6\'da ST-T değişikliği primer iskemi açısından incelenir.' },
+      wpw: { name: 'Wolff-Parkinson-White', urgency: 'Pre-eksitasyon', level: 'warn', hr: 78, axis: 28, ischemia: 0, k: 4.2, prMs: 92, qrsMs: 128, bp: '122/76', inj: { x: 0, y: 0, z: 0 },
+        mechanism: 'Kent demeti AV düğüm gecikmesini atlar → <b>PR < 120 ms</b>, QRS başında <b>delta dalgası</b> ve sekonder ST-T değişikliği.',
+        pearl: 'WPW + AF\'de AV düğümü bloke eden ilaçlar (adenozin, verapamil, diltiazem, digoksin, beta-bloker) iletimi Kent demetine yönlendirip VF\'ye yol açabilir.' },
+      vtach: { name: 'Monomorfik Ventriküler Taşikardi', urgency: 'Hayati aritmi', level: 'alert', hr: 168, axis: -135, ischemia: 20, k: 4.5, prMs: 0, qrsMs: 164, bp: '82/50', inj: { x: 0, y: 0, z: 0 },
+        mechanism: 'Ventriküler re-entry odağı (168/dk, kuzeybatı ekseni) + arka planda bağımsız sinüs P dalgaları: <b>AV disosiyasyon, füzyon vuruları</b>.',
+        pearl: 'Geniş QRS taşikardide AV disosiyasyon, kuzeybatı ekseni, prekordiyal negatif konkordans ve RS > 100 ms VT lehinedir.' }
+    };
+    const SCEN_KEYS = Object.keys(SCENARIOS);
+
+    const state = {
+      scenarioId: 'ant_stemi', hr: 94, axis: 35, ischemia: 78, ischType: 'transmural', k: 4.4,
+      calciumShield: false, sgarbossa: false, reperfused: false,
+      swap: false, extraLeads: false, noise: false, tremor: false, adenoTimer: 0,
+      pacer: false, paceMa: 5, paceMv: 2,
+      paper: 'monitor', gain: 10, frozen: false, beep: false,
+      caliper: false, cal: { x1: 180, y1: 300, x2: 310, y2: 250 }, drag: null,
+      quizHidden: false, quizTarget: null, quizAnswered: true, quizScore: 0, quizTotal: 0
+    };
+
+    // ---------------- electrophysiology ----------------
+    const g = (t, c, w, a) => { const d = (t - c) / w; return a * Math.exp(-0.5 * d * d); };
+    const ag = (t, c, su, sd, a) => { const s = t < c ? su : sd; const d = (t - c) / s; return a * Math.exp(-0.5 * d * d); };
+
+    function sample(tSec) {
+      const scen = SCENARIOS[state.scenarioId];
+      const rr = 60 / state.hr;
+      let effT = tSec;
+      if (state.scenarioId === 'afib') { const bi = Math.floor(tSec / rr); effT = tSec + Math.sin(bi * 12.989) * 0.19 * rr; }
+      const beatIdx = Math.floor(effT / rr);
+      const tb = ((effT % rr) + rr) % rr;
+      const wStep = beatIdx % 4;
+      const wDropped = state.scenarioId === 'wenckebach' && wStep === 3;
+      const wPrAdd = state.scenarioId === 'wenckebach' ? [0, 0.055, 0.085, 0][wStep] : 0;
+      const adenoBlocked = state.adenoTimer > 0;
+      const rawK = state.k;
+      const effK = state.calciumShield ? Math.min(rawK, 4.6) : rawK;
+      const hyperK = Math.max(0, (effK - 5.2) / 3.0);
+      const hypoK = Math.max(0, (3.6 - rawK) / 1.4);
+
+      // P wave
+      let pVec = { x: 0, y: 0, z: 0 };
+      const pSup = Math.max(0, 1 - hyperK * 1.2);
+      if (state.scenarioId === 'flutter_2_1') {
+        const ph = (tSec % 0.20) / 0.20;
+        const saw = (ph < 0.78 ? (ph / 0.78) * 2 - 1 : (1 - ph) / 0.22 * -1) * 0.19;
+        pVec = { x: 0.04 * saw, y: -1.1 * saw, z: 0.2 * saw };
+      } else if (state.scenarioId === 'afib') {
+        const f = Math.sin(tSec * 44) * 0.035 + Math.cos(tSec * 68) * 0.025;
+        pVec = { x: f * 0.4, y: f, z: -f * 0.5 };
+      } else if (state.scenarioId === 'av_block_3' || state.scenarioId === 'vtach') {
+        const pt = tSec % 0.73;
+        const ra = g(pt, 0.06, 0.016, 0.14) * pSup, la = g(pt, 0.095, 0.018, 0.13) * pSup;
+        pVec = { x: ra * 0.4 + la * 0.8, y: (ra + la) * 0.85, z: -ra * 0.45 + la * 0.55 };
+      } else {
+        const ra = g(tb, 0.055, 0.015, 0.13) * pSup, la = g(tb, 0.088, 0.017, 0.12) * pSup;
+        pVec = { x: ra * 0.45 + la * 0.82, y: (ra + la) * 0.85, z: -ra * 0.48 + la * 0.52 };
+      }
+
+      const prDelay = ((scen.prMs || 160) / 1000) + wPrAdd;
+      const qrsStart = state.scenarioId === 'wpw' ? 0.12 : (0.045 + prDelay);
+      const stretch = 1 + hyperK * 1.15;
+      let qrsVec = { x: 0, y: 0, z: 0 }, stVec = { x: 0, y: 0, z: 0 }, tVec = { x: 0, y: 0, z: 0 }, spike = 0;
+      const axR = state.axis * Math.PI / 180, mx = Math.cos(axR), my = Math.sin(axR);
+      const isch = state.ischemia / 100, sub = state.ischType === 'subendo';
+      const pathQ = (!sub && isch > 0.55) ? (isch - 0.55) * 1.6 : 0;
+
+      if (state.pacer) {
+        const captured = state.paceMa >= 3.0, under = state.paceMv > 5.0;
+        if (Math.abs(tb - qrsStart) < 0.008) spike = 1.6;
+        if (under && Math.abs(tb - (qrsStart + 0.24)) < 0.008) spike = 1.6;
+        if (captured) {
+          const w1 = g(tb, qrsStart + 0.035, 0.022, 1.15), w2 = g(tb, qrsStart + 0.078, 0.024, 0.95);
+          qrsVec = { x: (w1 + w2) * 0.75, y: -(w1 + w2) * 0.65, z: (w1 + w2) * 0.85 };
+          const te = ag(tb, qrsStart + 0.26, 0.055, 0.035, 0.42);
+          tVec = { x: -te * 0.7, y: te * 0.6, z: -te * 0.8 };
+        }
+      } else if (!wDropped && !adenoBlocked) {
+        if (state.scenarioId === 'vtach') {
+          const v1 = g(tb, 0.14, 0.034, 1.35), v2 = g(tb, 0.21, 0.028, -0.55);
+          qrsVec = { x: (v1 + v2) * mx, y: (v1 + v2) * my, z: (v1 + v2) * 0.85 };
+        } else if (state.scenarioId === 'lbbb') {
+          const l1 = g(tb, qrsStart + 0.032, 0.020, 0.95), l2 = g(tb, qrsStart + 0.075, 0.022, 1.05);
+          qrsVec = { x: (l1 + l2) * 0.88, y: -(l1 + l2) * 0.35, z: (l1 + l2) * 0.82 };
+          const se = g(tb, qrsStart + 0.15, 0.055, 1.0), te = ag(tb, qrsStart + 0.25, 0.055, 0.036, 1.0);
+          const sg = state.sgarbossa ? -0.85 : 0;
+          stVec = { x: -0.22 * se, y: 0.08 * se, z: (-0.28 + sg) * se };
+          tVec = { x: -0.42 * te, y: 0.15 * te, z: (-0.48 + sg * 0.7) * te };
+        } else if (state.scenarioId === 'rbbb') {
+          const sep = g(tb, qrsStart + 0.010, 0.006, 0.22), lv = g(tb, qrsStart + 0.034, 0.013, 1.05), rv = g(tb, qrsStart + 0.078, 0.022, 0.75);
+          qrsVec = { x: -sep * 0.5 + lv * 0.85 - rv * 0.72, y: sep * 0.3 + lv * 0.65 + rv * 0.25, z: -sep * 0.6 + lv * 0.35 - rv * 0.88 };
+          const te = ag(tb, qrsStart + 0.24, 0.050, 0.032, 0.36);
+          tVec = { x: te * 0.65, y: te * 0.45, z: te * 0.55 };
+        } else {
+          const t1 = qrsStart + 0.011 * stretch, t2 = qrsStart + 0.034 * stretch, t3 = qrsStart + 0.056 * stretch;
+          const sep = g(tb, t1, 0.0065 * stretch, 0.20 + pathQ * 0.45);
+          const main = g(tb, t2, 0.013 * stretch, 1.15);
+          const bas = g(tb, t3, 0.009 * stretch, 0.28);
+          const delta = state.scenarioId === 'wpw' ? g(tb, qrsStart - 0.005, 0.018, 0.42) : 0;
+          qrsVec = { x: -sep * 0.55 + (main + delta) * mx - bas * 0.25, y: sep * 0.25 + (main + delta) * my - bas * 0.35, z: -sep * 0.65 + (main + delta) * 0.22 + bas * 0.65 };
+          const injDir = sub ? -0.65 : 1.0;
+          const stMag = isch > 0.08 ? Math.min(0.65, isch * 0.68) * injDir : 0;
+          const stWin = g(tb, qrsStart + 0.11, 0.055, 1.0);
+          const inj = (scen.inj.x || scen.inj.y || scen.inj.z) ? scen.inj : { x: 0.35, y: -0.25, z: -0.85 };
+          const hypoDep = hypoK * 0.18 * stWin;
+          const monAtt = state.paper === 'monitor' ? 0.8 : 1.0;
+          stVec = { x: (inj.x * stMag * stWin - mx * hypoDep) * monAtt, y: (inj.y * stMag * stWin - my * hypoDep) * monAtt, z: inj.z * stMag * stWin * monAtt };
+          const qt = 0.37 * Math.cbrt(rr), tPk = qrsStart + qt * 0.62;
+          const su = Math.max(0.022, 0.052 - hyperK * 0.024), sd = Math.max(0.018, 0.032 - hyperK * 0.012);
+          const hyperacute = (isch > 0.05 && isch < 0.42 && !sub && !state.reperfused) ? isch * 0.85 : 0;
+          const lateInv = isch > 0.72 ? -(isch - 0.70) * 2.4 : 0;
+          const reperfInv = state.reperfused ? -0.62 : 0;
+          const tAmp = 0.34 + hyperK * 0.68 - hypoK * 0.18 + hyperacute + lateInv + reperfInv;
+          const te = ag(tb, tPk, su, sd, tAmp);
+          const ue = hypoK > 0.06 ? g(tb, tPk + 0.11, 0.032, 0.25 * hypoK) : 0;
+          const invZ = (isch > 0.72 || state.reperfused) ? -inj.z * 0.45 * Math.abs(te) : 0;
+          tVec = { x: (te + ue) * (mx * 0.8 + 0.15), y: (te + ue) * (my * 0.8 + 0.15), z: (te + ue) * -0.18 + invZ };
+        }
+      }
+
+      const v = { x: pVec.x + qrsVec.x + stVec.x + tVec.x, y: pVec.y + qrsVec.y + stVec.y + tVec.y, z: pVec.z + qrsVec.z + stVec.z + tVec.z };
+      const proj = r => r.x * v.x + r.y * v.y + r.z * v.z;
+      let art = 0;
+      if (state.noise) art += Math.sin(tSec * 2 * Math.PI * 50) * 0.07;
+      if (state.tremor) art += Math.sin(tSec * 2 * Math.PI * 4.5) * 0.11;
+      const drift = state.paper === 'monitor' ? Math.sin(tSec * 1.4) * 0.03 : 0;
+      // artefakt elektrot düzeyinde girer: I ve II'ye eklenir, III/aVR/aVL/aVF buradan türetilir
+      let I = proj(DOWER.I) + spike * 0.5 + art + drift, II = proj(DOWER.II) + spike * 0.8 + art * 0.7 + drift * 0.6;
+      if (state.swap) { const oI = I, oIII = II - I; I = -oI; II = oIII; }
+      const III = II - I, aVR = -(I + II) / 2, aVL = I - II / 2, aVF = II - I / 2;
+      const leads = {
+        I, II, III, aVR, aVL, aVF,
+        V1: proj(DOWER.V1) + spike * 0.6 + art * 0.5, V2: proj(DOWER.V2) + spike * 0.7 + art * 0.5, V3: proj(DOWER.V3) + spike * 0.6 + art * 0.5,
+        V4: proj(DOWER.V4) + spike * 0.5 + art * 0.5, V5: proj(DOWER.V5) + spike * 0.4 + art * 0.5, V6: proj(DOWER.V6) + spike * 0.4 + art * 0.5,
+        V4R: proj(DOWER.V4R) + art * 0.5, V7: proj(DOWER.V7) + art * 0.5, V8: proj(DOWER.V8) + art * 0.5, V9: proj(DOWER.V9) + art * 0.5
+      };
+      let stage = 'T';
+      if (tb > 0.03 && tb < 0.11) stage = 'SA';
+      else if (tb >= 0.11 && tb < qrsStart) stage = 'AV';
+      else if (!wDropped && !adenoBlocked && tb >= qrsStart && tb < qrsStart + 0.09) stage = 'QRS';
+      return { leads, vx: v.x, vy: v.y, stage, tb, qrsStart, rr };
+    }
+
+    // ---------------- canvases ----------------
+    const ecg = document.getElementById('ecgCanvas'), ectx = ecg.getContext('2d');
+    const apC = document.getElementById('apCanvas'), apx = apC.getContext('2d');
+    const vecC = document.getElementById('vecCanvas'), vcx = vecC.getContext('2d');
+    const dpr = () => window.devicePixelRatio || 1;
+    function resizeAll() {
+      [ecg, apC, vecC].forEach(c => { const r = c.getBoundingClientRect(); c.width = Math.max(10, r.width * dpr()); c.height = Math.max(10, r.height * dpr()); });
+    }
+    window.addEventListener('resize', resizeAll);
+
+    let simT = 0, lastTs = null, lastBeat = -1, cache = null;
+    const trail = [];
+
+    function drawECG() {
+      const d = dpr(), w = ecg.width, h = ecg.height, paper = state.paper === 'paper';
+      const mm = 4.5 * d, big = mm * 5, pxS = 25 * mm, pxMv = state.gain * mm;
+      ectx.fillStyle = paper ? '#fbf5f3' : '#05090f'; ectx.fillRect(0, 0, w, h);
+      ectx.lineWidth = 0.6 * d; ectx.strokeStyle = paper ? 'rgba(196,86,95,0.14)' : 'rgba(160,176,196,0.06)'; ectx.beginPath();
+      for (let x = 0; x < w; x += mm) { ectx.moveTo(x, 0); ectx.lineTo(x, h); } for (let y = 0; y < h; y += mm) { ectx.moveTo(0, y); ectx.lineTo(w, y); } ectx.stroke();
+      ectx.lineWidth = 1 * d; ectx.strokeStyle = paper ? 'rgba(196,86,95,0.32)' : 'rgba(160,176,196,0.14)'; ectx.beginPath();
+      for (let x = 0; x < w; x += big) { ectx.moveTo(x, 0); ectx.lineTo(x, h); } for (let y = 0; y < h; y += big) { ectx.moveTo(0, y); ectx.lineTo(w, y); } ectx.stroke();
+
+      const cols = state.extraLeads ? 5 : 4, strips = state.extraLeads ? ['II', 'V4R'] : ['II'];
+      const stripH = (state.extraLeads ? 0.34 : 0.26) * h, gridH = h - stripH, colW = w / cols, rowH = gridH / 3;
+      const grid = [['I', 0, 0], ['II', 0, 1], ['III', 0, 2], ['aVR', 1, 0], ['aVL', 1, 1], ['aVF', 1, 2], ['V1', 2, 0], ['V2', 2, 1], ['V3', 2, 2], ['V4', 3, 0], ['V5', 3, 1], ['V6', 3, 2]];
+      if (state.extraLeads) grid.push(['V7', 4, 0], ['V8', 4, 1], ['V9', 4, 2]);
+      ectx.strokeStyle = paper ? 'rgba(15,23,42,0.18)' : 'rgba(160,176,196,0.16)'; ectx.lineWidth = 1 * d; ectx.beginPath();
+      for (let c = 1; c < cols; c++) { ectx.moveTo(c * colW, 0); ectx.lineTo(c * colW, gridH); }
+      for (let r = 1; r <= 3; r++) { ectx.moveTo(0, r * rowH); ectx.lineTo(w, r * rowH); }
+      if (strips.length > 1) { ectx.moveTo(0, gridH + stripH / 2); ectx.lineTo(w, gridH + stripH / 2); }
+      ectx.stroke();
+
+      const cellSpan = (colW - 10 * d) / pxS, stripSpan = w / pxS;
+      if (!cache || !state.frozen || cache.cellSpan !== cellSpan || cache.stripSpan !== stripSpan) {
+        const nC = Math.max(120, Math.floor(cellSpan * 280)), nS = Math.floor(stripSpan * 220);
+        const cell = new Array(nC + 1), strip = new Array(nS + 1);
+        for (let i = 0; i <= nC; i++) cell[i] = sample(simT - cellSpan + (i / nC) * cellSpan).leads;
+        for (let i = 0; i <= nS; i++) strip[i] = sample(simT - stripSpan + (i / nS) * stripSpan).leads;
+        cache = { cell, strip, cellSpan, stripSpan };
+      }
+      const traceCol = paper ? '#1b2230' : 'var(--trace)';
+      ectx.font = `600 ${11 * d}px JetBrains Mono, SF Mono, Menlo, monospace`;
+      grid.forEach(([name, col, row]) => {
+        const x0 = col * colW, y0 = row * rowH, base = y0 + rowH * 0.58;
+        ectx.fillStyle = col === 4 ? (paper ? '#8a2a33' : '#d99aa0') : (paper ? '#334155' : '#6fa3c8');
+        ectx.fillText(name, x0 + 8 * d, y0 + 15 * d);
+        ectx.beginPath();
+        const n = cache.cell.length - 1;
+        for (let i = 0; i <= n; i++) { const px = x0 + 4 * d + (i / n) * (colW - 10 * d), py = base - (cache.cell[i][name] || 0) * pxMv; i ? ectx.lineTo(px, py) : ectx.moveTo(px, py); }
+        ectx.strokeStyle = paper ? '#1b2230' : (col === 4 ? '#d99aa0' : '#8fd1ad'); ectx.lineWidth = 1.6 * d; ectx.stroke();
+      });
+      strips.forEach((name, si) => {
+        const sh = stripH / strips.length, y0 = gridH + si * sh, base = y0 + sh * 0.58;
+        ectx.fillStyle = paper ? '#8a2a33' : '#d9a441';
+        ectx.fillText(`${name} · ritim · 25 mm/s · ${state.gain} mm/mV`, 10 * d, y0 + 15 * d);
+        ectx.beginPath(); const n = cache.strip.length - 1;
+        for (let i = 0; i <= n; i++) { const px = (i / n) * w, py = base - (cache.strip[i][name] || 0) * pxMv; i ? ectx.lineTo(px, py) : ectx.moveTo(px, py); }
+        ectx.strokeStyle = paper ? '#1b2230' : (name === 'II' ? '#d9a441' : '#d99aa0'); ectx.lineWidth = 1.8 * d; ectx.stroke();
+      });
+
+      if (state.caliper) {
+        const c = state.cal, x1 = c.x1 * d, y1 = c.y1 * d, x2 = c.x2 * d, y2 = c.y2 * d;
+        ectx.fillStyle = 'rgba(217,164,65,0.10)'; ectx.fillRect(Math.min(x1, x2), Math.min(y1, y2), Math.abs(x2 - x1), Math.abs(y2 - y1));
+        ectx.strokeStyle = 'rgba(217,164,65,0.9)'; ectx.lineWidth = 1.2 * d; ectx.setLineDash([4 * d, 3 * d]); ectx.beginPath();
+        ectx.moveTo(x1, 0); ectx.lineTo(x1, h); ectx.moveTo(x2, 0); ectx.lineTo(x2, h); ectx.moveTo(0, y1); ectx.lineTo(w, y1); ectx.moveTo(0, y2); ectx.lineTo(w, y2); ectx.stroke(); ectx.setLineDash([]);
+        ectx.fillStyle = '#d9a441'; [[x1, y1], [x2, y2]].forEach(p => { ectx.beginPath(); ectx.arc(p[0], p[1], 5 * d, 0, Math.PI * 2); ectx.fill(); });
+        const dtMs = Math.round(Math.abs(x2 - x1) / pxS * 1000), dv = (y1 - y2) / pxMv, mmV = (y1 - y2) / mm;
+        const hrTxt = dtMs >= 300 && dtMs <= 2000 ? ` · R-R → ${Math.round(60000 / dtMs)} /dk` : '';
+        document.getElementById('caliperText').textContent = `Δt ${dtMs} ms (${(dtMs / 40).toFixed(1)} kk) · ΔV ${dv >= 0 ? '+' : ''}${dv.toFixed(2)} mV (${mmV.toFixed(1)} mm)${hrTxt}`;
+      }
+    }
+
+    function drawAP(s) {
+      const d = dpr(), w = apC.width, h = apC.height;
+      apx.clearRect(0, 0, w, h);
+      const eK = Math.round(61.5 * Math.log10(state.k / 140));
+      document.getElementById('nernst').innerHTML = `E<sub>K</sub> ${eK} mV${state.calciumShield ? ' · Ca²⁺' : ''}`;
+      const yOf = mv => h - ((mv + 100) / 135) * (h - 14 * d) - 6 * d;
+      apx.strokeStyle = 'rgba(160,176,196,0.18)'; apx.lineWidth = 1; apx.setLineDash([3 * d, 3 * d]); apx.beginPath();
+      apx.moveTo(0, yOf(0)); apx.lineTo(w, yOf(0)); apx.moveTo(0, yOf(-90)); apx.lineTo(w, yOf(-90)); apx.stroke(); apx.setLineDash([]);
+      apx.fillStyle = 'rgba(160,176,196,0.5)'; apx.font = `${9 * d}px JetBrains Mono, monospace`; apx.fillText('0 mV', 4 * d, yOf(0) - 3 * d); apx.fillText('−90', 4 * d, yOf(-90) - 3 * d);
+      const effK = state.calciumShield ? Math.min(state.k, 4.6) : state.k;
+      const apd = Math.min(0.40, Math.max(0.17, 0.30 - (effK - 4.2) * 0.028));   // hiperK kısaltır, hipoK uzatır
+      const overshoot = 22 - Math.max(0, effK - 5.2) * 5;                          // hiperK: Na⁺ kanalı inaktivasyonu, faz 0 küçülür
+      const curve = (len, epi, color) => {
+        apx.beginPath();
+        for (let x = 0; x < w; x++) {
+          const t = (x / w) * 0.55; let mv = eK;
+          if (t >= 0.06 && t < 0.06 + len) {
+            const p = (t - 0.06) / len;
+            const p1End = epi ? overshoot - 16 : overshoot - 6, p2End = p1End - 12;
+            if (p < 0.04) mv = eK + (p / 0.04) * (overshoot - eK);
+            else if (p < 0.12) mv = overshoot - ((p - 0.04) / 0.08) * (overshoot - p1End);
+            else if (p < 0.62) mv = p1End - ((p - 0.12) / 0.50) * (p1End - p2End);
+            else mv = p2End + ((p - 0.62) / 0.38) * (eK - p2End);
+          }
+          const y = yOf(mv); x ? apx.lineTo(x, y) : apx.moveTo(x, y);
+        }
+        apx.strokeStyle = color; apx.lineWidth = 1.6 * d; apx.stroke();
+      };
+      curve(apd, false, '#c4565f'); curve(apd * 0.84, true, '#6fa3c8');
+      const cT = Math.min(0.54, Math.max(0, s.tb - s.qrsStart + 0.06));
+      apx.strokeStyle = 'rgba(217,164,65,0.9)'; apx.lineWidth = 1.2 * d; apx.beginPath(); apx.moveTo(cT / 0.55 * w, 0); apx.lineTo(cT / 0.55 * w, h); apx.stroke();
+      const txt = ['0', '1', '2', '3'];
+      apx.fillStyle = 'rgba(160,176,196,0.45)'; apx.font = `600 ${9 * d}px JetBrains Mono, monospace`;
+      [[0.065, '0'], [0.095, '1'], [0.19, '2'], [0.30, '3'], [0.45, '4']].forEach(([t, l]) => apx.fillText(l, t / 0.55 * w, h - 4 * d));
+    }
+
+    function drawVCG(s) {
+      const d = dpr(), w = vecC.width, h = vecC.height, cx = w / 2, cy = h / 2, r = Math.min(w, h) * 0.36;
+      vcx.clearRect(0, 0, w, h);
+      vcx.strokeStyle = 'rgba(160,176,196,0.18)'; vcx.lineWidth = 1; vcx.beginPath(); vcx.arc(cx, cy, r, 0, Math.PI * 2); vcx.stroke();
+      [[-30, 'aVL'], [0, 'I'], [30, '−aVR'], [60, 'II'], [90, 'aVF'], [120, 'III']].forEach(([deg, l]) => {
+        const a = deg * Math.PI / 180;
+        vcx.strokeStyle = 'rgba(160,176,196,0.12)'; vcx.beginPath(); vcx.moveTo(cx - Math.cos(a) * r, cy - Math.sin(a) * r); vcx.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r); vcx.stroke();
+        vcx.fillStyle = l === '−aVR' ? '#d9a441' : 'rgba(166,177,194,0.8)'; vcx.font = `600 ${9 * d}px JetBrains Mono, monospace`;
+        const tx = cx + Math.cos(a) * (r + 14 * d), ty = cy + Math.sin(a) * (r + 14 * d);
+        vcx.fillText(l, tx - vcx.measureText(l).width / 2, ty + 3 * d);
+      });
+      // normal axis arc −30…+90
+      vcx.strokeStyle = 'rgba(90,159,127,0.35)'; vcx.lineWidth = 3 * d; vcx.beginPath(); vcx.arc(cx, cy, r + 4 * d, -30 * Math.PI / 180, 90 * Math.PI / 180); vcx.stroke();
+      trail.push({ x: s.vx, y: s.vy }); if (trail.length > 50) trail.shift();
+      vcx.beginPath(); trail.forEach((p, i) => { const px = cx + p.x * r * 0.7, py = cy + p.y * r * 0.7; i ? vcx.lineTo(px, py) : vcx.moveTo(px, py); });
+      vcx.strokeStyle = '#6fa3c8'; vcx.lineWidth = 1.6 * d; vcx.stroke();
+      const a = state.axis * Math.PI / 180;
+      vcx.strokeStyle = '#d9a441'; vcx.lineWidth = 2 * d; vcx.beginPath(); vcx.moveTo(cx, cy); vcx.lineTo(cx + Math.cos(a) * r * 0.85, cy + Math.sin(a) * r * 0.85); vcx.stroke();
+      const cur = document.getElementById('svgCursor'), badge = document.getElementById('phaseBadge');
+      const pos = { SA: [82, 50, 'SA düğümü · P'], AV: [134, 86, 'AV gecikme · PR'], QRS: [152, 158, 'His-Purkinje · QRS'], T: [145, 190, 'Repolarizasyon · T'] }[s.stage];
+      cur.setAttribute('cx', pos[0]); cur.setAttribute('cy', pos[1]); badge.textContent = pos[2];
+    }
+
+    function loop(ts) {
+      if (lastTs === null) lastTs = ts;
+      const dt = Math.min(0.1, (ts - lastTs) / 1000); lastTs = ts;
+      if (!state.frozen) {
+        simT += dt;
+        if (state.adenoTimer > 0) { state.adenoTimer = Math.max(0, state.adenoTimer - dt); if (state.adenoTimer === 0) hideBanner(); }
+        const bi = Math.floor(simT / (60 / state.hr));
+        if (bi !== lastBeat) { lastBeat = bi; if (state.beep) beep(); }
+      }
+      const s = sample(simT);
+      drawECG(); drawAP(s); drawVCG(s);
+      requestAnimationFrame(loop);
+    }
+
+    let audioCtx = null;
+    function beep() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const o = audioCtx.createOscillator(), gn = audioCtx.createGain();
+      o.frequency.value = state.scenarioId === 'vtach' ? 620 : 880;
+      gn.gain.setValueAtTime(0.06, audioCtx.currentTime); gn.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.06);
+      o.connect(gn); gn.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime + 0.065);
+    }
+
+    // ---------------- UI ----------------
+    function loadScenario(id, opts = {}) {
+      const s = SCENARIOS[id]; if (!s) return;
+      state.scenarioId = id; state.hr = s.hr; state.axis = s.axis; state.ischemia = s.ischemia; state.k = s.k; state.ischType = 'transmural';
+      state.calciumShield = false; state.sgarbossa = false; state.reperfused = false; state.adenoTimer = 0;
+      if (!opts.keepQuiz) state.quizHidden = false;
+      ['sHr', 'sAxis', 'sIsch', 'sK'].forEach((el, i) => document.getElementById(el).value = [state.hr, state.axis, state.ischemia, state.k][i]);
+      document.getElementById('ischType').value = 'transmural';
+      document.getElementById('scenarioSelect').value = state.quizHidden ? '' : id;
+      hideBanner(); updateSvg(); updateLabels(); updateSgButtons();
+    }
+    function resetScenario() { loadScenario(state.scenarioId, { keepQuiz: true }); showToast('Senaryo başlangıç değerlerine döndü.'); }
+
+    function updateSvg() {
+      const id = state.scenarioId, hide = state.quizHidden;
+      const th = document.getElementById('svgThrombus'), inf = document.getElementById('svgInfarct'), kent = document.getElementById('svgKent'), blk = document.getElementById('svgBlock');
+      if (hide) { th.style.display = 'none'; inf.setAttribute('fill-opacity', '0'); kent.style.display = 'none'; blk.style.display = 'none'; return; }
+      kent.style.display = id === 'wpw' ? 'block' : 'none';
+      const blkPos = { lbbb: [154, 142], rbbb: [112, 142], av_block_3: [131, 104] }[id];
+      if (blkPos) { blk.style.display = 'block'; blk.setAttribute('x', blkPos[0]); blk.setAttribute('y', blkPos[1]); } else blk.style.display = 'none';
+      const thr = (id === 'ant_stemi' || state.sgarbossa) ? [162, 126, 0.45] : id === 'inf_stemi' ? [82, 130, 0.35] : id === 'post_stemi' ? [205, 118, 0.35] : null;
+      if (thr) { th.style.display = 'block'; th.setAttribute('cx', thr[0]); th.setAttribute('cy', thr[1]); inf.setAttribute('fill-opacity', thr[2]); }
+      else { th.style.display = 'none'; inf.setAttribute('fill-opacity', '0'); }
+    }
+
+    function onParam() {
+      state.hr = +document.getElementById('sHr').value; state.ischemia = +document.getElementById('sIsch').value;
+      state.ischType = document.getElementById('ischType').value; state.k = +document.getElementById('sK').value; state.axis = +document.getElementById('sAxis').value;
+      if (state.ischemia !== SCENARIOS[state.scenarioId].ischemia) state.reperfused = false;
+      updateLabels();
+    }
+
+    function axisName(a) { if (a < -90) return 'kuzeybatı (ekstrem)'; if (a < -30) return 'sol eksen sapması'; if (a > 90) return 'sağ eksen sapması'; return 'normal'; }
+    function updateLabels() {
+      const s = SCENARIOS[state.scenarioId], hidden = state.quizHidden;
+      document.getElementById('lblHr').textContent = `${state.hr} /dk`;
+      document.getElementById('hrLbl').textContent = state.pacer ? 'Pace Hızı' : (state.scenarioId === 'av_block_3' ? 'Kaçış Ritmi Hızı' : state.scenarioId === 'vtach' ? 'VT Hızı' : 'Sinüs / Odak Hızı');
+      document.getElementById('lblIsch').textContent = state.ischemia === 0 ? '0 dk' : `${state.ischemia * 3} dk${state.reperfused ? ' · reperfüze' : ''}`;
+      document.getElementById('lblK').textContent = `${state.k.toFixed(1)} mEq/L`;
+      document.getElementById('lblAxis').textContent = `${state.axis > 0 ? '+' : ''}${state.axis}°`;
+      document.getElementById('axisNote').textContent = `Eksen ${axisName(state.axis)}. ` + (['lbbb', 'rbbb', 'av_block_3'].includes(state.scenarioId) || state.pacer ? 'Bu senaryoda QRS vektörü sabittir; eksen kaydırıcısı yalnızca Cabrera okunu taşır.' : 'Kaydırıcı ana QRS vektörünü döndürür.');
+      const rr = 60 / state.hr, effK = state.calciumShield ? Math.min(state.k, 4.6) : state.k;
+      const qrs = s.qrsMs + Math.max(0, Math.round((effK - 5.2) * 28));
+      const qt = Math.round(370 * Math.cbrt(rr) + (4.2 - state.k) * 24), qtcB = Math.round(qt / Math.sqrt(rr)), qtcF = Math.round(qt / Math.cbrt(rr));
+      document.getElementById('vHr').textContent = state.hr; document.getElementById('vBp').textContent = s.bp;
+      document.getElementById('vPr').textContent = s.prMs > 0 ? s.prMs : '—'; document.getElementById('vQrs').textContent = qrs;
+      document.getElementById('vQtc').textContent = `${qtcB} / ${qtcF}`; document.getElementById('vAxis').textContent = `${state.axis > 0 ? '+' : ''}${state.axis}°`;
+      document.getElementById('vtPr').className = 'vital' + (s.prMs > 200 ? ' warn' : s.prMs > 0 && s.prMs < 120 ? ' warn' : '');
+      document.getElementById('vtQrs').className = 'vital' + (qrs >= 120 ? ' bad' : qrs > 100 ? ' warn' : ' good');
+      document.getElementById('vtQtc').className = 'vital' + (qtcB > 470 ? ' bad' : qtcB > 440 ? ' warn' : '');
+      document.getElementById('vtAxis').className = 'vital' + (axisName(state.axis) === 'normal' ? ' good' : ' warn');
+      const pill = document.getElementById('scenPill');
+      if (hidden) { pill.className = 'scen-pill hiddenc'; document.getElementById('scenUrg').textContent = 'Gizli vaka'; document.getElementById('scenName').textContent = 'Tanıyı Sınav Modu sekmesinde koyun'; }
+      else { pill.className = 'scen-pill ' + s.level; document.getElementById('scenUrg').textContent = s.urgency; document.getElementById('scenName').textContent = s.name; }
+      document.getElementById('mechTag').textContent = hidden ? 'Gizli' : 'Açık';
+      document.getElementById('mechTag').className = 'tag' + (hidden ? ' warn' : '');
+      document.getElementById('mechText').innerHTML = hidden ? 'Vaka gizli. Mekanizma ve kriterler tanıdan sonra açılır; kaydırıcılar ve elektrot laboratuvarı serbesttir.' : s.mechanism;
+      document.getElementById('pearlText').innerHTML = hidden ? 'Tanıdan sonra açılır.' : s.pearl;
+      document.getElementById('scenarioSelect').value = hidden ? '' : state.scenarioId;
+    }
+
+    function showBanner(msg, kind) { const b = document.getElementById('banner'); b.textContent = msg; b.className = 'banner ' + (kind || 'info'); }
+    function hideBanner() { document.getElementById('banner').className = 'banner hidden'; }
+    let toastTimer = null;
+    function showToast(msg) { const t = document.getElementById('toastBox'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2600); }
+
+    function toggleSwap() { state.swap = !state.swap; document.getElementById('btnSwap').className = state.swap ? 'on-alert' : ''; if (state.swap) showBanner('RA–LA kabloları ters: DI tersine döndü, DII↔DIII ve aVR↔aVL yer değiştirdi; V1–V6 değişmedi', 'warn'); else hideBanner(); }
+    function toggleExtraLeads() { state.extraLeads = !state.extraLeads; ['extraBtn', 'btnExtra2'].forEach(id => document.getElementById(id).className = state.extraLeads ? 'on' : ''); cache = null; }
+    function toggleNoise() { state.noise = !state.noise; document.getElementById('btnNoise').className = state.noise ? 'on-warn' : ''; }
+    function toggleTremor() { state.tremor = !state.tremor; document.getElementById('btnTremor').className = state.tremor ? 'on-warn' : ''; }
+    function updateSgButtons() {
+      const isL = state.scenarioId === 'lbbb';
+      document.getElementById('btnSgNeg').className = isL && !state.sgarbossa ? 'on' : '';
+      document.getElementById('btnSgPos').className = isL && state.sgarbossa ? 'on-alert' : '';
+    }
+    function loadSgarbossa(withMi) {
+      loadScenario('lbbb'); state.sgarbossa = withMi; updateSvg(); updateSgButtons();
+      if (withMi) showBanner('Sgarbossa pozitif: LBBB üzerine akut LAD oklüzyonu, V2–V4\'te konkordan ST elevasyonu', 'alert'); else hideBanner();
+    }
+    function togglePacer() {
+      state.pacer = !state.pacer; const b = document.getElementById('btnPace');
+      b.textContent = state.pacer ? 'VVI Açık' : 'Kapalı'; b.className = 'btn-xs' + (state.pacer ? ' on' : '');
+      onPacer(); updateLabels();
+    }
+    function onPacer() {
+      state.paceMa = +document.getElementById('sMa').value; state.paceMv = +document.getElementById('sMv').value;
+      const cap = state.paceMa >= 3, under = state.paceMv > 5;
+      document.getElementById('lblMa').textContent = `${state.paceMa.toFixed(1)} mA`; document.getElementById('lblMv').textContent = `${state.paceMv.toFixed(1)} mV`;
+      const n = document.getElementById('paceNote');
+      if (!state.pacer) { n.className = 'result'; n.textContent = 'Pacemaker kapalı.'; return; }
+      if (!cap) { n.className = 'result bad'; n.innerHTML = '<b>Yakalama kaybı.</b> Spike var, QRS yok: çıkış eşiğin (3 mA) altında. Çıkışı artırın.'; }
+      else if (under) { n.className = 'result bad'; n.innerHTML = '<b>Undersensing.</b> Duyarlılık eşiği intrinsik R\'nin (5 mV) üstünde; cihaz T dalgası üzerine spike atıyor (R-on-T riski). mV değerini düşürün.'; }
+      else { n.className = 'result ok'; n.innerHTML = '<b>Yakalama ve algılama tam.</b> RV apeks pacing: LBBB benzeri morfoloji, sol-üst eksen, diskordan T.'; }
+    }
+
+    function intervene(type) {
+      const box = document.getElementById('therapyResult'); const set = (cls, html) => { box.className = 'result ' + cls; box.innerHTML = html; };
+      const id = state.scenarioId;
+      if (type === 'adenosine') {
+        if (id === 'wpw') { loadScenario('vtach'); showBanner('Kontrendike ilaç: WPW\'de adenozin iletimi aksesuar yola yönlendirdi', 'alert'); set('bad', '<b>Kritik hata.</b> Kent demeti varlığında AV düğümü bloke eden adenozin, iletimi aksesuar yola yönlendirip malign ventriküler taşiaritmi tetikledi.'); }
+        else if (id === 'vtach') set('bad', '<b>Etkisiz.</b> Monomorfik VT AV düğümden bağımsızdır; adenozin ritmi değiştirmez. Stabil değilse senkron kardiyoversiyon.');
+        else if (id === 'av_block_3') set('warn', '<b>Anlamsız.</b> Zaten tam blok var; adenozin AV iletimi daha da baskılar.');
+        else { state.adenoTimer = 3.2; showBanner('Adenozin 6 mg IV: 3 s geçici AV düğüm bloğu', 'info'); set('ok', `<b>Adenozin etkisi (3 s).</b> AV düğüm geçici olarak bloke edildi. ${id === 'flutter_2_1' ? 'Testere dişi F dalgaları şu an çıplak.' : id === 'afib' ? 'f dalgaları ve düzensiz taban görünür.' : 'Altta sinüs P dalgaları devam eder.'}`); }
+      } else if (type === 'calcium') {
+        state.calciumShield = true; updateLabels();
+        if (state.k < 5.5) set('warn', `<b>Endikasyon yok.</b> K⁺ ${state.k.toFixed(1)} mEq/L; membran etkisi olmadan kalsiyumun EKG\'ye katkısı yoktur.`);
+        else { showBanner(`Kalsiyum glukonat: K⁺ ${state.k.toFixed(1)} mEq/L değişmedi, QRS daraldı`, 'info'); set('ok', `<b>Kalsiyum glukonat IV.</b> Eşik potansiyeli yükseldi, membran stabilize oldu, QRS daraldı. <b>Serum K⁺ hâlâ ${state.k.toFixed(1)} mEq/L</b>; şimdi insülin + dekstroz gerekir.`); }
+      } else if (type === 'insulin') {
+        const before = state.k; state.k = Math.max(4.0, state.k - 1.8); document.getElementById('sK').value = state.k; onParam(); hideBanner();
+        set(before > 5.5 ? 'ok' : 'warn', before > 5.5 ? `<b>İnsülin + dekstroz IV.</b> K⁺ hücre içine taşındı: ${before.toFixed(1)} → <b>${state.k.toFixed(1)} mEq/L</b>.` : `<b>Endikasyon yok.</b> K⁺ ${before.toFixed(1)} mEq/L iken insülin hipokalemi ve hipoglisemi riski taşır.`);
+      } else if (type === 'atropine') {
+        if (id === 'av_block_3') set('bad', '<b>Etkisiz.</b> Geniş QRS\'li infranodal tam blokta atropin bloğu açmaz; sinüsü hızlandırıp bloğu derinleştirebilir. Geçici pacemaker açın.');
+        else if (id === 'wenckebach') { loadScenario('normal'); state.hr = 86; document.getElementById('sHr').value = 86; updateLabels(); document.getElementById('scenarioSelect').value = 'normal'; set('ok', '<b>Atropin 0,5 mg IV.</b> Nodal vagal tonus kalktı; Wenckebach çözüldü, 1:1 iletim ve sinüs hızı 86/dk.'); }
+        else if (['vtach', 'afib', 'flutter_2_1'].includes(id)) set('warn', '<b>Taşikardide atropin verilmez.</b> Ventrikül hızı artar.');
+        else { state.hr = Math.min(90, state.hr + 22); document.getElementById('sHr').value = state.hr; updateLabels(); set('ok', `<b>Atropin 0,5 mg IV.</b> Sinüs hızı ${state.hr}/dk.`); }
+      } else if (type === 'cardioversion') {
+        if (['vtach', 'afib', 'flutter_2_1'].includes(id)) { loadScenario('normal'); document.getElementById('scenarioSelect').value = 'normal'; set('ok', '<b>Senkron kardiyoversiyon 100 J.</b> Re-entry kırıldı; sinüs ritmi.'); }
+        else set('warn', '<b>Endikasyon yok.</b> Sinüs ritminde veya blokta kardiyoversiyon uygulanmaz.');
+      } else if (type === 'pci') {
+        if (state.ischemia < 30) set('warn', '<b>Oklüzyon yok.</b> Reperfüzyon için önce iskemi süresini artırın veya bir STEMI vakası seçin.');
+        else { state.ischemia = 18; document.getElementById('sIsch').value = 18; state.reperfused = true; updateLabels(); showBanner('Primer PKG: ST elevasyonu > %70 geriledi, reperfüzyon T negatifliği', 'info'); set('ok', '<b>Primer PKG başarılı.</b> ST segmenti hızla indi; T dalgaları ters döndü (reperfüzyon paterni). ST\'nin tam sıfırlanmaması normaldir.'); }
+      }
+    }
+
+    function setPaper(p) { state.paper = p; document.getElementById('paperBtn-monitor').className = p === 'monitor' ? 'active-sky' : ''; document.getElementById('paperBtn-paper').className = p === 'paper' ? 'active-sky' : ''; }
+    function toggleGain() { state.gain = state.gain === 10 ? 5 : 10; document.getElementById('gainBtn').textContent = `${state.gain} mm/mV`; }
+    function toggleFreeze() { state.frozen = !state.frozen; const b = document.getElementById('freezeBtn'); b.textContent = state.frozen ? 'Devam' : 'Dondur'; b.className = state.frozen ? 'on-warn' : ''; }
+    function toggleBeep() { state.beep = !state.beep; document.getElementById('beepBtn').className = state.beep ? 'on' : ''; if (state.beep) beep(); }
+    function toggleCaliper() { state.caliper = !state.caliper; document.getElementById('caliperBtn').className = state.caliper ? 'on-warn' : ''; document.getElementById('caliperBox').classList.toggle('hidden', !state.caliper); }
+
+    ecg.addEventListener('pointerdown', e => {
+      if (!state.caliper) return; e.preventDefault();
+      const r = ecg.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top, c = state.cal;
+      if (Math.hypot(x - c.x1, y - c.y1) < 22) state.drag = 1; else if (Math.hypot(x - c.x2, y - c.y2) < 22) state.drag = 2;
+      else { c.x1 = x; c.y1 = y; c.x2 = x + 90; c.y2 = y - 35; state.drag = 2; }
+      ecg.setPointerCapture(e.pointerId);
+    });
+    ecg.addEventListener('pointermove', e => {
+      if (!state.drag) return;
+      const r = ecg.getBoundingClientRect(), x = Math.max(8, Math.min(r.width - 8, e.clientX - r.left)), y = Math.max(8, Math.min(r.height - 8, e.clientY - r.top));
+      if (state.drag === 1) { state.cal.x1 = x; state.cal.y1 = y; } else { state.cal.x2 = x; state.cal.y2 = y; }
+    });
+    ['pointerup', 'pointercancel'].forEach(ev => ecg.addEventListener(ev, () => { state.drag = null; }));
+
+    function switchTab(tab) {
+      ['engine', 'lab', 'therapy', 'quiz'].forEach(t => { document.getElementById('tab-' + t).classList.toggle('hidden', t !== tab); document.getElementById('tabBtn-' + t).className = t === tab ? 'active-sky' : ''; });
+      if (tab === 'quiz' && state.quizAnswered) newQuiz();
+    }
+    function newQuiz() {
+      const keys = SCEN_KEYS.filter(k => k !== 'normal');
+      const target = keys[Math.floor(Math.random() * keys.length)];
+      state.quizTarget = target; state.quizAnswered = false; state.quizHidden = true;
+      loadScenario(target, { keepQuiz: true });
+      const fb = document.getElementById('quizFeedback'); fb.classList.add('hidden');
+      const box = document.getElementById('quizOptions'); box.innerHTML = '';
+      const opts = [...keys].sort(() => Math.random() - 0.5).slice(0, 4); if (!opts.includes(target)) opts[0] = target; opts.sort(() => Math.random() - 0.5);
+      opts.forEach((k, i) => {
+        const b = document.createElement('button'); b.style.padding = '9px'; b.textContent = `${i + 1}. ${SCENARIOS[k].name}`;
+        b.onclick = () => {
+          if (state.quizAnswered) return;
+          state.quizAnswered = true; state.quizTotal++; state.quizHidden = false;
+          const ok = k === state.quizTarget; if (ok) state.quizScore++;
+          Array.from(box.children).forEach(x => x.disabled = true); b.className = ok ? 'active-emerald' : 'active-rose';
+          fb.classList.remove('hidden'); fb.className = 'result ' + (ok ? 'ok' : 'bad');
+          const right = SCENARIOS[state.quizTarget];
+          fb.innerHTML = ok ? `<b>Doğru: ${right.name}</b><br>${right.pearl}` : `<b>Yanlış.</b> Doğru tanı: <b>${right.name}</b><br>${right.pearl}`;
+          document.getElementById('quizScore').textContent = `${state.quizScore} / ${state.quizTotal}`;
+          updateSvg(); updateLabels();
+        };
+        box.appendChild(b);
+      });
+      updateSvg(); updateLabels();
+    }
+
+    window.addEventListener('keydown', e => {
+      const tag = (e.target && e.target.tagName) || '';
+      if (tag === 'INPUT' || tag === 'SELECT' || e.metaKey || e.ctrlKey || e.altKey) return;
+      const k = e.key.toLowerCase();
+      if (k === 'f') toggleFreeze(); else if (k === 'c') toggleCaliper(); else if (k === 'b') toggleBeep();
+      else if (k === 'p') setPaper(state.paper === 'monitor' ? 'paper' : 'monitor'); else if (k === 'g') toggleGain(); else if (k === 'v') toggleExtraLeads();
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const sel = document.getElementById('scenarioSelect');
+      sel.innerHTML = '<option value="" disabled>Gizli vaka</option>' + SCEN_KEYS.map((k, i) => `<option value="${k}">${i + 1}. ${SCENARIOS[k].name}</option>`).join('');
+      document.getElementById('scenCount').textContent = `${SCEN_KEYS.length} vaka`;
+      resizeAll(); loadScenario('ant_stemi'); onPacer();
+      requestAnimationFrame(loop);
+    });
+  </script>
+</body>
+</html>
