@@ -169,7 +169,7 @@
     <div class="profile-pill" id="profilePill"><span class="eyebrow amber" style="color:var(--amber)">Hasta</span><strong id="profilePillName">Orta ARDS</strong><span id="profilePillMech" class="mono dim">C 30 · R 14</span></div>
     <div class="top-actions">
       <button onclick="resetToProtocol()" data-tip="Seçili hasta için protokol başlangıç ayarlarına döner" data-tip-pos="bottom">Protokol Ayarları</button>
-      <a class="link-btn" href="../" data-tip="Oskültasyon modülüne dön" data-tip-pos="bottom"><button>Modüller</button></a>
+      <button onclick="goPortal()" data-tip="Diğer modüller" data-tip-pos="bottom">Modüller</button>
     </div>
   </header>
 
@@ -248,6 +248,10 @@
             <span class="card-title">Ventilatör Ayarları<span class="info" data-tip="Volüm kontrollü, sabit akımlı zorunlu ventilasyon. İnspiryum süresi = Vt / akım; kalan süre ekspiryuma kalır.">i</span></span>
             <span class="eyebrow dim">Ti <span id="lblTi" class="mono">—</span> s · Te <span id="lblTe" class="mono">—</span> s</span>
           </div>
+          <div class="grid-2">
+            <button onclick="doHold('insp')" id="btnHoldInsp" data-tip="İnspiratuvar hold (0,5 s): akım durur, Pplat ve sürüş basıncı ölçülür. Vt, PEEP, akım veya profil değişince ölçüm geçersizleşir.">İnspiratuvar Hold · Pplat</button>
+            <button onclick="doHold('exp')" id="btnHoldExp" data-tip="Ekspiratuvar hold: ekspiryum valfi kapanır, toplam PEEP ve oto-PEEP ölçülür.">Ekspiratuvar Hold · Oto-PEEP</button>
+          </div>
           <div class="ctl">
             <div class="ctl-head"><span class="lbl">Tidal Volüm (Vt)</span><span id="lblVt" class="mono val ao">420 mL</span></div>
             <input type="range" id="sVt" min="250" max="700" step="10" value="420" oninput="onSettings()" />
@@ -319,6 +323,12 @@
   <div id="toastBox"></div>
 
   <script>
+    const MODULE_ID = 'vent';
+    // ---- DuctusLab Suite köprüsü (bağımsız çalışırken sessiz) ----
+    function suiteTrack(ev, data) { try { if (window.parent !== window && window.parent.DuctusSuite) window.parent.DuctusSuite.track(MODULE_ID, ev, data || {}); } catch (e) {} }
+    function inSuite() { try { return window.parent !== window && !!window.parent.DuctusSuite; } catch (e) { return false; } }
+    function goPortal() { if (inSuite()) window.parent.DuctusSuite.openPortal(); else window.location.href = '../'; }
+    if (inSuite()) document.addEventListener('DOMContentLoaded', () => { document.head.insertAdjacentHTML('beforeend', '<style>.brand .wordmark, .brand .vsep { display: none !important; } .brand .product { color: var(--ink); font-weight: 600; }</style>'); });
     // ---------------- patient profiles ----------------
     const PROFILES = {
       normal: { name: 'Normal Akciğer', sub: 'Postoperatif, sedatize', C: 60, R: 8, shunt0: 0.04, recruit: 0.10, alvDead: 0.03, vco2: 200, hco3: 24,
@@ -344,7 +354,7 @@
     };
     const PAUSE = 0.25;   // s, end-inspiratory pause (needed to read Pplat)
     const HB = 12;        // g/dL
-    const state = { profile: 'ards_mod', sex: 'm', height: 175, vt: 420, rr: 20, flow: 40, peep: 10, fio2: 60, abg: null, abgStale: true, abgTime: null, sampling: false, live: false };
+    const state = { profile: 'ards_mod', sex: 'm', height: 175, vt: 420, rr: 20, flow: 40, peep: 10, fio2: 60, abg: null, abgStale: true, abgTime: null, sampling: false, live: false, holdInsp: false, holdExp: false, abgCount: 0 };
     let calc = null;
 
     // ---------------- physiology ----------------
@@ -399,6 +409,7 @@
     function setVital(id, val, cls) { const el = document.getElementById('vt' + id); el.className = 'vital' + (cls ? ' ' + cls : ''); }
 
     function onSettings() {
+      const prev = { vt: state.vt, rr: state.rr, flow: state.flow, peep: state.peep, fio2: state.fio2, height: state.height };
       state.height = +document.getElementById('sHeight').value;
       state.vt = +document.getElementById('sVt').value;
       state.rr = +document.getElementById('sRr').value;
@@ -406,6 +417,8 @@
       state.peep = +document.getElementById('sPeep').value;
       state.fio2 = +document.getElementById('sFio2').value;
       state.live = document.getElementById('abgLive').checked;
+      Object.keys(prev).forEach(k => { if (prev[k] !== state[k]) suiteTrack('setting', { param: k, from: prev[k], to: state[k], profile: state.profile }); });
+      if (['vt', 'peep', 'flow', 'rr'].some(k => prev[k] !== state[k])) { state.holdInsp = false; state.holdExp = false; }
       if (state.abg && !state.live) state.abgStale = true;
       refresh();
     }
@@ -431,26 +444,30 @@
       document.getElementById('profileMechLabel').textContent = `C ${P.C} mL/cmH₂O · R ${P.R} cmH₂O/L/s`;
 
       document.getElementById('vPpeak').textContent = fmt(c.ppeak);
-      document.getElementById('vPplat').textContent = fmt(c.pplat);
-      document.getElementById('vDp').textContent = fmt(c.dp);
+      document.getElementById('vPplat').textContent = state.holdInsp ? fmt(c.pplat) : '—';
+      document.getElementById('vDp').textContent = state.holdInsp ? fmt(c.dp) : '—';
       document.getElementById('vVtkg').textContent = fmt(c.vtkg, 1);
-      document.getElementById('vAuto').textContent = fmt(c.autoPeep, 1);
+      document.getElementById('vAuto').textContent = state.holdExp ? fmt(c.autoPeep, 1) : '—';
+      document.getElementById('btnHoldInsp').className = state.holdInsp ? 'active-sky' : '';
+      document.getElementById('btnHoldExp').className = state.holdExp ? 'active-sky' : '';
       document.getElementById('vIe').textContent = c.ie >= 1 ? `1 : ${fmt(c.ie, 1)}` : `${fmt(1 / Math.max(0.1, c.ie), 1)} : 1`;
       document.getElementById('vSpo2').textContent = fmt(c.spo2);
       setVital('Ppeak', 0, c.ppeak > 40 ? 'bad' : c.ppeak > 35 ? 'warn' : '');
-      setVital('Pplat', 0, c.pplat > 30 ? 'bad' : c.pplat > 27 ? 'warn' : 'good');
-      setVital('Dp', 0, c.dp > 15 ? 'bad' : c.dp > 13 ? 'warn' : 'good');
+      setVital('Pplat', 0, !state.holdInsp ? '' : c.pplat > 30 ? 'bad' : c.pplat > 27 ? 'warn' : 'good');
+      setVital('Dp', 0, !state.holdInsp ? '' : c.dp > 15 ? 'bad' : c.dp > 13 ? 'warn' : 'good');
       setVital('Vtkg', 0, c.vtkg > 8 ? 'bad' : c.vtkg > 6.5 ? 'warn' : 'good');
-      setVital('Auto', 0, c.autoPeep > 5 ? 'bad' : c.autoPeep > 2 ? 'warn' : 'good');
+      setVital('Auto', 0, !state.holdExp ? '' : c.autoPeep > 5 ? 'bad' : c.autoPeep > 2 ? 'warn' : 'good');
       setVital('Ie', 0, c.ie < 1 ? 'bad' : c.ie < 1.5 ? 'warn' : '');
       setVital('Spo2', 0, c.spo2 < 88 ? 'bad' : c.spo2 < 92 ? 'warn' : 'good');
 
       // alarms
       const al = [];
-      if (c.pplat > 30) al.push(['bad', `Pplat ${fmt(c.pplat)} > 30 · akciğer hasarı riski`]);
-      if (c.dp > 15) al.push(['bad', `ΔP ${fmt(c.dp)} > 15`]);
-      if (c.autoPeep > 5) al.push(['bad', `Oto-PEEP ${fmt(c.autoPeep, 1)} · hava hapsi`]);
-      else if (c.autoPeep > 2) al.push(['warn', `Oto-PEEP ${fmt(c.autoPeep, 1)} · ekspiryum kısa`]);
+      if (state.holdInsp && c.pplat > 30) al.push(['bad', `Pplat ${fmt(c.pplat)} > 30 · akciğer hasarı riski`]);
+      if (state.holdInsp && c.dp > 15) al.push(['bad', `ΔP ${fmt(c.dp)} > 15`]);
+      if (!state.holdInsp && c.ppeak > 30) al.push(['warn', `Ppeak ${fmt(c.ppeak)} · Pplat ölçülmedi (inspiratuvar hold)`]);
+      if (state.holdExp && c.autoPeep > 5) al.push(['bad', `Oto-PEEP ${fmt(c.autoPeep, 1)} · hava hapsi`]);
+      else if (state.holdExp && c.autoPeep > 2) al.push(['warn', `Oto-PEEP ${fmt(c.autoPeep, 1)} · ekspiryum kısa`]);
+      else if (!state.holdExp && c.autoPeep > 2) al.push(['warn', 'Ekspiryum sonu akım ≠ 0 · ekspiratuvar hold ile ölçün']);
       if (c.teClamped) al.push(['bad', 'Ti + pause döngüyü aşıyor · frekansı düşürün']);
       else if (c.ie < 1) al.push(['warn', 'Ters I:E oranı']);
       if (c.ppeak > 40) al.push(['warn', `Ppeak ${fmt(c.ppeak)} · rezistif basınç yüksek`]);
@@ -517,17 +534,18 @@
         else lines.push(['ok', 'OKSİJEN', `<b>PaO₂ ${fmt(a.pao2)}, P/F ${fmt(pf)}</b> (${berlin}). Şant ${fmt(c.shunt * 100)} %.`]);
       }
       // mechanics (live)
-      if (c.pplat > 30 || c.dp > 15) lines.push(['bad', 'MEKANİK', `<b>Pplat ${fmt(c.pplat)} · ΔP ${fmt(c.dp)}.</b> Vt\'yi düşürün (${fmt(c.vtkg, 1)} mL/kg). Pplat\'ı PEEP değil, Vt/C belirler.`]);
+      if (!state.holdInsp) lines.push(['warn', 'MEKANİK', `<b>Pplat ölçülmedi.</b> Ppeak ${fmt(c.ppeak)} rezistif bileşeni içerir; alveoler basınç için inspiratuvar hold yapın.`]);
+      else if (c.pplat > 30 || c.dp > 15) lines.push(['bad', 'MEKANİK', `<b>Pplat ${fmt(c.pplat)} · ΔP ${fmt(c.dp)}.</b> Vt\'yi düşürün (${fmt(c.vtkg, 1)} mL/kg). Pplat\'ı PEEP değil, Vt/C belirler.`]);
       else if (c.vtkg > 8) lines.push(['warn', 'MEKANİK', `<b>Vt ${fmt(c.vtkg, 1)} mL/kg PBW.</b> Basınçlar sınırda olsa da volütravma riski; 6–8 mL/kg hedefleyin.`]);
       else lines.push(['ok', 'MEKANİK', `<b>Pplat ${fmt(c.pplat)} · ΔP ${fmt(c.dp)} · Vt ${fmt(c.vtkg, 1)} mL/kg.</b> Akciğer koruyucu.`]);
-      if (c.autoPeep > 2) lines.push([c.autoPeep > 5 ? 'bad' : 'warn', 'OTO-PEEP', `<b>${fmt(c.autoPeep, 1)} cmH₂O hava hapsi.</b> Te ${fmt(c.te, 2)} s = ${fmt(c.teTau, 1)} τ (hedef ≥ 3 τ). Frekansı düşürün veya akımı artırın; Vt azaltmak da Te\'yi uzatır.`]);
+      if (state.holdExp && c.autoPeep > 2) lines.push([c.autoPeep > 5 ? 'bad' : 'warn', 'OTO-PEEP', `<b>${fmt(c.autoPeep, 1)} cmH₂O hava hapsi.</b> Te ${fmt(c.te, 2)} s = ${fmt(c.teTau, 1)} τ (hedef ≥ 3 τ). Frekansı düşürün veya akımı artırın; Vt azaltmak da Te\'yi uzatır.`]);
       box.innerHTML = lines.map(l => `<div class="line ${l[0]}"><span class="st">${l[1]}</span><span>${l[2]}</span></div>`).join('');
     }
 
     function goalValue(key, a) {
       const c = calc;
       switch (key) {
-        case 'vtkg': return c.vtkg; case 'pplat': return c.pplat; case 'dp': return c.dp; case 'auto': return c.autoPeep;
+        case 'vtkg': return c.vtkg; case 'pplat': return state.holdInsp ? c.pplat : null; case 'dp': return state.holdInsp ? c.dp : null; case 'auto': return state.holdExp ? c.autoPeep : null;
         case 'te': return c.teTau; case 'rr': return state.rr; case 'flow': return state.flow; case 'fio2': return state.fio2;
         case 'spo2': return c.spo2; case 'paco2': return a ? a.paco2 : null; case 'ph': return a ? a.ph : null; case 'pao2': return a ? a.pao2 : null;
       }
@@ -543,7 +561,7 @@
           const ok = (g[1] == null || v >= g[1]) && (g[2] == null || v <= g[2]);
           status = ok ? 'met' : 'miss'; if (ok) met++;
           txt = (g[0] === 'ph' ? fmt(v, 2) : fmt(v, g[0] === 'auto' || g[0] === 'vtkg' || g[0] === 'te' ? 1 : 0)) + (ok ? ' ✓' : ' ✗');
-        } else txt = 'kan gazı';
+        } else txt = ['pplat', 'dp'].includes(g[0]) ? 'insp. hold' : g[0] === 'auto' ? 'eksp. hold' : 'kan gazı';
         return `<div class="goal ${status}"><span>${g[3]}</span><span class="chk">${txt}</span></div>`;
       }).join('');
       document.getElementById('goals').innerHTML = html;
@@ -560,11 +578,27 @@
         n--;
         if (n > 0) { btn.textContent = `Laboratuvar · ${n}`; return; }
         clearInterval(iv);
-        state.abg = snapshot(); state.abgStale = false; state.sampling = false;
+        state.abg = snapshot(); state.abgStale = false; state.sampling = false; state.abgCount++;
         btn.disabled = false; btn.textContent = 'Kan Gazı Al';
         renderABG(); renderGoals();
+        suiteTrack('abg', abgReport());
         showToast('Arteriyel kan gazı sonuçlandı.');
       }, 700);
+    }
+
+    function doHold(kind) {
+      if (kind === 'insp') { state.holdInsp = true; showToast(`İnspiratuvar hold: Pplat ${fmt(calc.pplat)} · ΔP ${fmt(calc.dp)} cmH₂O`); }
+      else { state.holdExp = true; showToast(`Ekspiratuvar hold: toplam PEEP ${fmt(calc.peepTot, 1)} · oto-PEEP ${fmt(calc.autoPeep, 1)} cmH₂O`); }
+      suiteTrack(kind === 'insp' ? 'hold_insp' : 'hold_exp', { pplat: calc.pplat, dp: calc.dp, autoPeep: calc.autoPeep, teTau: calc.teTau });
+      refresh();
+    }
+
+    function abgReport() {
+      const P = PROFILES[state.profile], a = state.abg || snapshot();
+      const goals = P.goals.map(g => { const v = goalValue(g[0], a); const ok = v != null && (g[1] == null || v >= g[1]) && (g[2] == null || v <= g[2]); return { id: g[0], label: g[3], met: v == null ? null : ok }; });
+      return { profile: state.profile, profileName: P.name, n: state.abgCount, holdInsp: state.holdInsp, holdExp: state.holdExp,
+        pplat: calc.pplat, dp: calc.dp, autoPeep: calc.autoPeep, teTau: calc.teTau, vtkg: calc.vtkg, spo2: calc.spo2, ph: a.ph, paco2: a.paco2, pao2: a.pao2, pf: a.pf,
+        settings: { vt: state.vt, rr: state.rr, flow: state.flow, peep: state.peep, fio2: state.fio2 }, goals };
     }
 
     function setSex(s) {
@@ -578,7 +612,8 @@
       state.profile = key;
       document.querySelectorAll('#profileGrid button').forEach(b => b.className = b.dataset.p === key ? 'active-sky' : '');
       if (!keepSettings) applySettings(PROFILES[key].settings);
-      state.abg = null; state.abgStale = true;
+      state.abg = null; state.abgStale = true; state.holdInsp = false; state.holdExp = false;
+      suiteTrack('profile', { profile: key, profileName: PROFILES[key].name });
       onSettings();
     }
     function applySettings(s) {
@@ -688,7 +723,8 @@
     window.addEventListener('keydown', e => {
       const tag = (e.target && e.target.tagName) || '';
       if (tag === 'INPUT' || tag === 'SELECT' || e.metaKey || e.ctrlKey || e.altKey) return;
-      if (e.key.toLowerCase() === 'g') takeABG();
+      const k = e.key.toLowerCase();
+      if (k === 'g') takeABG(); else if (k === 'i') doHold('insp'); else if (k === 'e') doHold('exp');
     });
   </script>
 </body>
