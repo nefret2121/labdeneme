@@ -254,7 +254,7 @@
 
     .floating-top-bar {
       position: absolute; top: 12px; left: 12px; right: 12px;
-      display: flex; justify-content: space-between; gap: 8px;
+      display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap;
       z-index: 20; pointer-events: none;
     }
     .floating-top-bar > * { pointer-events: auto; }
@@ -281,12 +281,15 @@
       50% { transform: scale(1.035, 1.028); opacity: 0.94; }
     }
 
-    .spot-info-float { position: absolute; bottom: 12px; left: 12px; z-index: 20; padding: 9px 12px; border-radius: 12px; min-width: 230px; }
+    .stage-floats { position: absolute; left: 12px; right: 12px; bottom: 12px; z-index: 20; display: flex; justify-content: space-between; align-items: flex-end; gap: 8px; flex-wrap: wrap; pointer-events: none; }
+    .stage-floats > * { pointer-events: auto; }
+    .spot-info-float { padding: 9px 12px; border-radius: 12px; min-width: 230px; }
     .spot-title { font-size: 12.5px; font-weight: 600; color: var(--ink); }
     .spot-anat { font-size: 11px; color: var(--ink-3); margin-top: 2px; }
     .spot-int { font-family: var(--mono); font-size: 10.5px; padding: 2px 7px; border-radius: 6px; background: var(--accent-dim); color: var(--accent); }
     .spot-hint { font-size: 10.5px; color: var(--amber); margin-top: 4px; }
-    .microscope-float { position: absolute; bottom: 12px; right: 12px; z-index: 20; padding: 4px 5px 4px 11px; border-radius: 12px; display: flex; align-items: center; gap: 8px; }
+    .microscope-float { padding: 4px 5px 4px 11px; border-radius: 12px; display: flex; align-items: center; gap: 8px; }
+    .microscope-float .eyebrow { white-space: nowrap; }
 
     /* ---------- monitor strips ---------- */
     .monitor-strip { background: #05090f; border-top: 1px solid var(--line); flex-shrink: 0; display: flex; flex-direction: column; }
@@ -395,7 +398,19 @@
       border-radius: 22px;
       box-shadow: 0 0 60px rgba(0, 0, 0, 0.6);
     }
-    body.studio-mode #studioOverlayBar { display: flex !important; }
+    body.studio-mode #studioOverlayBar { display: flex !important; position: static; margin: 8px 12px 0; }
+    body.studio-mode .floating-top-bar { position: static; padding: 10px 12px 0; justify-content: center; }
+    body.studio-mode .thorax-stage { flex-direction: column; align-items: stretch; justify-content: flex-start; padding: 8px 0 0; }
+    body.studio-mode #thoraxSvg { flex: 1 1 0; min-height: 0; height: auto; width: 100%; max-height: none; }
+    body.studio-mode .stage-floats { position: static; flex-direction: column; align-items: stretch; flex-wrap: nowrap; padding: 8px 12px 10px; gap: 8px; }
+    body.studio-mode .microscope-float { flex-wrap: wrap; justify-content: center; gap: 4px; padding: 8px 10px; }
+    body.studio-mode .microscope-float .eyebrow { width: 100%; text-align: center; }
+    body.studio-mode .microscope-float .chip-group { justify-content: center; }
+    @media (max-width: 1200px) {
+      .monitor-head { height: auto; flex-wrap: wrap; row-gap: 2px; }
+      #wiggersContainer { height: auto; padding-bottom: 6px; }
+      #wiggersCanvas { height: 64px; }
+    }
     #studioOverlayBar {
       display: none;
       position: absolute; top: 54px; left: 12px; right: 12px;
@@ -462,8 +477,9 @@
       #studioOverlayBar { position: static; margin: 8px 10px 0; }
       .thorax-stage { flex: none; flex-direction: column; align-items: stretch; justify-content: flex-start; height: auto; padding-top: 8px; overflow: visible; }
       #thoraxSvg { width: 100%; max-width: 520px; height: auto; max-height: none; margin: 0 auto; touch-action: none; }
-      .spot-info-float { position: static; min-width: 0; width: auto; margin: 8px 10px 0; }
-      .microscope-float { position: static; width: auto; margin: 8px 10px 10px; flex-wrap: wrap; justify-content: center; gap: 4px; padding: 8px 10px; }
+      .stage-floats { position: static; flex-direction: column; align-items: stretch; flex-wrap: nowrap; padding: 8px 10px 10px; gap: 8px; }
+      .spot-info-float { min-width: 0; }
+      .microscope-float { flex-wrap: wrap; justify-content: center; gap: 4px; padding: 8px 10px; }
       .microscope-float .eyebrow { width: 100%; text-align: center; }
       .microscope-float .chip-group { justify-content: center; }
       .monitor-head { height: auto; flex-wrap: wrap; row-gap: 2px; }
@@ -692,6 +708,7 @@
           </g>
         </svg>
 
+        <div class="stage-floats">
         <div class="spot-info-float glass">
           <div class="row-between">
             <span id="activeSpotTitle" class="spot-title">Aort Odağı (A)</span>
@@ -709,6 +726,7 @@
             <button onclick="setAudioMicroscope('extra')" id="micro-extra" data-tip="S3, S4, ejeksiyon kliği, açılma sesi">Ek Sesler</button>
             <button onclick="setAudioMicroscope('murmur')" id="micro-murmur" data-tip="Üfürümler, raller, sürtünme sesi" data-tip-pos="left">Üfürüm · Ral</button>
           </div>
+        </div>
         </div>
       </div>
 
