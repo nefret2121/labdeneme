@@ -432,6 +432,65 @@
       box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
     }
     #toastBox.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    /* ======================= MOBİL / 9:16 (≤ 900 px) — masaüstü kuralları değişmez ======================= */
+    @media (max-width: 900px) {
+      html, body { width: 100%; max-width: 100vw; overflow-x: hidden; height: auto; min-height: 100dvh; overflow-y: auto; }
+      body { display: flex; flex-direction: column; }
+
+      /* 2) başlık: ilk satır logo + eylemler, ikinci satır sistem seçici tam genişlik */
+      header { height: auto; padding: 8px 10px; flex-wrap: wrap; gap: 6px; }
+      .brand { order: 1; min-width: 0; }
+      .product { white-space: nowrap; }
+      .top-actions { order: 2; gap: 6px; }
+      .top-actions button { padding: 6px 9px; font-size: 11.5px; }
+      #topUtilityButtons { order: 3; width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); }
+      #topUtilityButtons button { text-align: center; }
+
+      /* 1) tek sütun: sahne + konsol alt alta, her ikisi %100 */
+      #mainWorkspace { display: flex; flex-direction: column; width: 100%; overflow: visible; }
+      #leftViewport { width: 100% !important; max-width: 100% !important; min-width: 0 !important; flex: none; overflow: visible; }
+      #rightControlPanel { width: 100% !important; max-width: 100% !important; min-width: 0 !important; flex: none; border-left: none; border-top: 1px solid var(--line); }
+      .tab-pane { overflow: visible; }
+      .vitals { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); }
+      .right-nav { flex-wrap: wrap; }
+      .right-nav button { flex: 1 1 45%; }
+      .chip-grid { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); }
+      .chip-group { flex-wrap: wrap; justify-content: center; }
+
+      /* 4) gövde altı: üst çubuk, odak rozeti ve bileşen izolasyonu normal akışta, üst üste binmez */
+      .floating-top-bar { position: static; flex-wrap: wrap; justify-content: center; padding: 10px 10px 0; }
+      #studioOverlayBar { position: static; margin: 8px 10px 0; }
+      .thorax-stage { flex: none; flex-direction: column; align-items: stretch; justify-content: flex-start; height: auto; padding-top: 8px; overflow: visible; }
+      #thoraxSvg { width: 100%; max-width: 520px; height: auto; max-height: none; margin: 0 auto; touch-action: none; }
+      .spot-info-float { position: static; min-width: 0; width: auto; margin: 8px 10px 0; }
+      .microscope-float { position: static; width: auto; margin: 8px 10px 10px; flex-wrap: wrap; justify-content: center; gap: 4px; padding: 8px 10px; }
+      .microscope-float .eyebrow { width: 100%; text-align: center; }
+      .microscope-float .chip-group { justify-content: center; }
+      .monitor-head { height: auto; flex-wrap: wrap; row-gap: 2px; }
+      .monitor-head .eyebrow { white-space: nowrap; }
+      #wiggersContainer { height: auto; padding-bottom: 6px; }
+      #wiggersCanvas { height: 64px; }
+      .phono-section { height: auto; }
+      .phono-canvas-wrap { flex: none; height: 64px; }
+      .bottom-bar { height: auto; min-height: 42px; flex-wrap: wrap; justify-content: space-between; padding: 6px 10px; }
+      .bottom-left { flex-wrap: wrap; }
+
+      /* 3) stüdyo 9:16: telefon ekranı zaten dikey, kapsayıcı tam ekran */
+      body.studio-mode #mainWorkspace { justify-content: flex-start; }
+      body.studio-mode #leftViewport { flex: none !important; width: 100vw !important; max-width: 100vw !important; height: auto; min-height: calc(100dvh - 48px); margin: 0 !important; border: none; border-radius: 0; box-shadow: none; }
+      body.studio-mode .thorax-stage { flex: 1; justify-content: center; }
+
+      .portal-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+      #portalModal { align-items: flex-start; overflow-y: auto; }
+    }
+    @media (max-width: 560px) {
+      .product, .vsep { display: none; }
+      .vitals { grid-template-columns: repeat(2, 1fr); }
+    }
+    /* 2b) dokunmatik ekranda tooltip asılı kalmasın */
+    @media (hover: none), (max-width: 900px) {
+      [data-tip]:hover::after, [data-tip]:focus::after, [data-tip]:active::after { display: none !important; }
+    }
   </style>
 </head>
 <body>
@@ -1381,7 +1440,8 @@
       wiggersCanvas.width = wiggersCanvas.clientWidth * window.devicePixelRatio;
       wiggersCanvas.height = wiggersCanvas.clientHeight * window.devicePixelRatio;
     }
-    window.addEventListener('resize', resizeCanvases);
+    window.addEventListener('resize', () => requestAnimationFrame(resizeCanvases));
+    window.addEventListener('orientationchange', () => setTimeout(resizeCanvases, 220));
 
     function computeInstantSignals(beatPhase, respPhase) {
       const path = PATHOLOGIES[state.currentCaseId];
@@ -2237,7 +2297,8 @@
 
     function toggleStudioMode() {
       document.body.classList.toggle('studio-mode');
-      setTimeout(resizeCanvases, 120);
+      requestAnimationFrame(() => requestAnimationFrame(resizeCanvases));
+      setTimeout(resizeCanvases, 160);
     }
 
     function togglePortalModal() {
