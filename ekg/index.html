@@ -157,7 +157,7 @@
     <div class="top-actions">
       <button onclick="toggleBeep()" id="beepBtn" data-tip="QRS senkron monitör bip sesi (B)" data-tip-pos="bottom"><span class="beep-dot"></span>Bip</button>
       <button onclick="toggleFreeze()" id="freezeBtn" data-tip="Trase dondur / devam et (F)" data-tip-pos="bottom">Dondur</button>
-      <a class="link-btn" href="../" data-tip="Diğer modüller" data-tip-pos="bottom"><button>Modüller</button></a>
+      <button onclick="goPortal()" data-tip="Diğer modüller" data-tip-pos="bottom">Modüller</button>
     </div>
   </header>
 
@@ -375,6 +375,12 @@
   <div id="toastBox"></div>
 
   <script>
+    const MODULE_ID = 'ekg';
+    // ---- DuctusLab Suite köprüsü (bağımsız çalışırken sessiz) ----
+    function suiteTrack(ev, data) { try { if (window.parent !== window && window.parent.DuctusSuite) window.parent.DuctusSuite.track(MODULE_ID, ev, data || {}); } catch (e) {} }
+    function inSuite() { try { return window.parent !== window && !!window.parent.DuctusSuite; } catch (e) { return false; } }
+    function goPortal() { if (inSuite()) window.parent.DuctusSuite.openPortal(); else window.location.href = '../'; }
+    if (inSuite()) document.addEventListener('DOMContentLoaded', () => { document.head.insertAdjacentHTML('beforeend', '<style>.brand .wordmark, .brand .vsep { display: none !important; } .brand .product { color: var(--ink); font-weight: 600; }</style>'); });
     // ---------------- Dower inverse transfer matrix (Frank X: sol, Y: aşağı, Z: arka) ----------------
     const DOWER = {
       I:  { x: 0.632, y: -0.235, z: 0.059 }, II: { x: 0.235, y: 1.066, z: -0.132 },
@@ -777,8 +783,8 @@
     let toastTimer = null;
     function showToast(msg) { const t = document.getElementById('toastBox'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2600); }
 
-    function toggleSwap() { state.swap = !state.swap; document.getElementById('btnSwap').className = state.swap ? 'on-alert' : ''; if (state.swap) showBanner('RA–LA kabloları ters: DI tersine döndü, DII↔DIII ve aVR↔aVL yer değiştirdi; V1–V6 değişmedi', 'warn'); else hideBanner(); }
-    function toggleExtraLeads() { state.extraLeads = !state.extraLeads; ['extraBtn', 'btnExtra2'].forEach(id => document.getElementById(id).className = state.extraLeads ? 'on' : ''); cache = null; }
+    function toggleSwap() { state.swap = !state.swap; suiteTrack('swap', { on: state.swap }); document.getElementById('btnSwap').className = state.swap ? 'on-alert' : ''; if (state.swap) showBanner('RA–LA kabloları ters: DI tersine döndü, DII↔DIII ve aVR↔aVL yer değiştirdi; V1–V6 değişmedi', 'warn'); else hideBanner(); }
+    function toggleExtraLeads() { state.extraLeads = !state.extraLeads; suiteTrack('extra_leads', { on: state.extraLeads }); ['extraBtn', 'btnExtra2'].forEach(id => document.getElementById(id).className = state.extraLeads ? 'on' : ''); cache = null; }
     function toggleNoise() { state.noise = !state.noise; document.getElementById('btnNoise').className = state.noise ? 'on-warn' : ''; }
     function toggleTremor() { state.tremor = !state.tremor; document.getElementById('btnTremor').className = state.tremor ? 'on-warn' : ''; }
     function updateSgButtons() {
@@ -807,6 +813,7 @@
     }
 
     function intervene(type) {
+      suiteTrack('intervene', { type, scenario: state.scenarioId });
       const box = document.getElementById('therapyResult'); const set = (cls, html) => { box.className = 'result ' + cls; box.innerHTML = html; };
       const id = state.scenarioId;
       if (type === 'adenosine') {
@@ -835,11 +842,11 @@
       }
     }
 
-    function setPaper(p) { state.paper = p; document.getElementById('paperBtn-monitor').className = p === 'monitor' ? 'active-sky' : ''; document.getElementById('paperBtn-paper').className = p === 'paper' ? 'active-sky' : ''; }
+    function setPaper(p) { state.paper = p; suiteTrack('paper', { paper: p }); document.getElementById('paperBtn-monitor').className = p === 'monitor' ? 'active-sky' : ''; document.getElementById('paperBtn-paper').className = p === 'paper' ? 'active-sky' : ''; }
     function toggleGain() { state.gain = state.gain === 10 ? 5 : 10; document.getElementById('gainBtn').textContent = `${state.gain} mm/mV`; }
     function toggleFreeze() { state.frozen = !state.frozen; const b = document.getElementById('freezeBtn'); b.textContent = state.frozen ? 'Devam' : 'Dondur'; b.className = state.frozen ? 'on-warn' : ''; }
     function toggleBeep() { state.beep = !state.beep; document.getElementById('beepBtn').className = state.beep ? 'on' : ''; if (state.beep) beep(); }
-    function toggleCaliper() { state.caliper = !state.caliper; document.getElementById('caliperBtn').className = state.caliper ? 'on-warn' : ''; document.getElementById('caliperBox').classList.toggle('hidden', !state.caliper); }
+    function toggleCaliper() { state.caliper = !state.caliper; suiteTrack('caliper', { on: state.caliper }); document.getElementById('caliperBtn').className = state.caliper ? 'on-warn' : ''; document.getElementById('caliperBox').classList.toggle('hidden', !state.caliper); }
 
     ecg.addEventListener('pointerdown', e => {
       if (!state.caliper) return; e.preventDefault();
@@ -853,9 +860,13 @@
       const r = ecg.getBoundingClientRect(), x = Math.max(8, Math.min(r.width - 8, e.clientX - r.left)), y = Math.max(8, Math.min(r.height - 8, e.clientY - r.top));
       if (state.drag === 1) { state.cal.x1 = x; state.cal.y1 = y; } else { state.cal.x2 = x; state.cal.y2 = y; }
     });
-    ['pointerup', 'pointercancel'].forEach(ev => ecg.addEventListener(ev, () => { state.drag = null; }));
+    ['pointerup', 'pointercancel'].forEach(ev => ecg.addEventListener(ev, () => {
+      if (state.drag && state.caliper) { const c = state.cal, pxS = 25 * 4.5, pxMv = state.gain * 4.5; suiteTrack('caliper_measure', { dtMs: Math.round(Math.abs(c.x2 - c.x1) / pxS * 1000), dv: +((c.y1 - c.y2) / pxMv).toFixed(2) }); }
+      state.drag = null;
+    }));
 
     function switchTab(tab) {
+      suiteTrack('tab', { tab });
       ['engine', 'lab', 'therapy', 'quiz'].forEach(t => { document.getElementById('tab-' + t).classList.toggle('hidden', t !== tab); document.getElementById('tabBtn-' + t).className = t === tab ? 'active-sky' : ''; });
       if (tab === 'quiz' && state.quizAnswered) newQuiz();
     }
@@ -864,6 +875,7 @@
       const target = keys[Math.floor(Math.random() * keys.length)];
       state.quizTarget = target; state.quizAnswered = false; state.quizHidden = true;
       loadScenario(target, { keepQuiz: true });
+      suiteTrack('quiz_start', { mode: 'quiz', caseId: target, caseName: SCENARIOS[target].name });
       const fb = document.getElementById('quizFeedback'); fb.classList.add('hidden');
       const box = document.getElementById('quizOptions'); box.innerHTML = '';
       const opts = [...keys].sort(() => Math.random() - 0.5).slice(0, 4); if (!opts.includes(target)) opts[0] = target; opts.sort(() => Math.random() - 0.5);
@@ -873,6 +885,7 @@
           if (state.quizAnswered) return;
           state.quizAnswered = true; state.quizTotal++; state.quizHidden = false;
           const ok = k === state.quizTarget; if (ok) state.quizScore++;
+          suiteTrack('quiz_answer', { mode: 'quiz', caseId: state.quizTarget, caseName: SCENARIOS[state.quizTarget].name, chosen: SCENARIOS[k].name, correct: ok });
           Array.from(box.children).forEach(x => x.disabled = true); b.className = ok ? 'active-emerald' : 'active-rose';
           fb.classList.remove('hidden'); fb.className = 'result ' + (ok ? 'ok' : 'bad');
           const right = SCENARIOS[state.quizTarget];
