@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DuctusLab · Mekanik Ventilasyon &amp; Kan Gazı</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" />
+  <style>
+    :root {
+      --bg-0: #040812; --bg-1: #070c17; --bg-2: #0b1220; --bg-3: #101829;
+      --glass: rgba(13, 20, 34, 0.66); --glass-2: rgba(17, 26, 43, 0.55);
+      --line: rgba(160, 176, 196, 0.10); --line-2: rgba(160, 176, 196, 0.18);
+      --ink: #e4e9f1; --ink-2: #a6b1c2; --ink-3: #6c7889;
+      --accent: #6fa3c8; --accent-2: #4f7fa3; --accent-dim: rgba(111, 163, 200, 0.14);
+      --amber: #d9a441; --amber-dim: rgba(217, 164, 65, 0.14);
+      --ok: #5a9f7f; --ok-dim: rgba(90, 159, 127, 0.16);
+      --alert: #c4565f; --alert-dim: rgba(196, 86, 95, 0.16);
+      --violet: #9a86c9;
+      --paw: #6fa3c8; --flow: #d9a441; --vol: #5a9f7f; --palv: #9a86c9;
+      --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --mono: "JetBrains Mono", "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body { font-family: var(--sans); font-size: 12px; background: var(--bg-0); color: var(--ink); height: 100vh; width: 100vw; overflow: hidden; display: flex; flex-direction: column; user-select: none; -webkit-font-smoothing: antialiased; }
+    .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+    .hidden { display: none !important; }
+    .eyebrow { font-size: 10px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); }
+    .eyebrow.accent { color: var(--accent); } .eyebrow.amber { color: var(--amber); } .eyebrow.dim { font-weight: 500; letter-spacing: 0.08em; }
+    .card-title { font-size: 13px; font-weight: 600; color: var(--ink); letter-spacing: -0.01em; }
+    .body-text { font-size: 11.5px; line-height: 1.5; color: var(--ink-2); }
+    .dim { color: var(--ink-3); }
+    .fine { font-size: 10.5px; color: var(--ink-3); line-height: 1.4; }
+    .row-between { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .stack { display: flex; flex-direction: column; gap: 6px; }
+    hr.sep { border: 0; border-top: 1px solid var(--line); margin: 2px 0; }
+    .glass { background: var(--glass); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid var(--line); }
+
+    button { font-family: var(--sans); font-size: 12px; font-weight: 500; color: var(--ink-2); background: rgba(255,255,255,0.025); border: 1px solid var(--line-2); border-radius: 9px; padding: 6px 11px; cursor: pointer; white-space: nowrap; transition: background .15s, border-color .15s, color .15s, transform .12s; }
+    button:hover { color: var(--ink); border-color: rgba(111,163,200,0.45); background: rgba(111,163,200,0.08); }
+    button:active { transform: translateY(1px); }
+    button:disabled { opacity: 0.55; cursor: default; transform: none; }
+    button.active-sky { background: var(--accent); color: #071018; border-color: transparent; font-weight: 600; }
+    button.active-amber { background: var(--amber); color: #1a1205; border-color: transparent; font-weight: 600; }
+    .btn-xs { padding: 3px 9px; font-size: 11px; border-radius: 7px; }
+    .wide { width: 100%; padding: 9px; }
+    a.link-btn { text-decoration: none; display: inline-block; }
+
+    .seg { display: inline-flex; gap: 2px; padding: 3px; background: rgba(255,255,255,0.03); border: 1px solid var(--line); border-radius: 10px; }
+    .seg button { border: none; background: transparent; padding: 5px 11px; border-radius: 7px; }
+    .seg button:hover { background: rgba(111,163,200,0.08); }
+    .seg button.active-sky { background: rgba(111,163,200,0.18); color: var(--ink); font-weight: 600; box-shadow: inset 0 0 0 1px rgba(111,163,200,0.35); }
+    .chip-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+    .chip-grid button { font-size: 11.5px; padding: 8px 8px; text-align: left; white-space: normal; line-height: 1.3; }
+    .chip-grid button.active-sky { background: var(--accent-dim); color: var(--accent); border-color: rgba(111,163,200,0.4); font-weight: 600; }
+    .chip-grid button small { display: block; font-weight: 400; color: var(--ink-3); font-size: 10px; margin-top: 2px; }
+    .chip-grid button.active-sky small { color: rgba(111,163,200,0.8); }
+
+    select { width: 100%; font-family: var(--sans); font-size: 12px; font-weight: 500; color: var(--ink); background: rgba(5,9,16,0.6); border: 1px solid var(--line-2); border-radius: 9px; padding: 7px 10px; outline: none; }
+    .sel-sm { width: auto; padding: 4px 8px; font-size: 11px; }
+    input[type="range"] { width: 100%; height: 3px; -webkit-appearance: none; appearance: none; background: linear-gradient(90deg, rgba(111,163,200,0.55), rgba(111,163,200,0.15)); border-radius: 3px; outline: none; cursor: pointer; margin: 7px 0 5px; }
+    input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 13px; height: 13px; border-radius: 50%; background: #dfe6ef; border: 2px solid var(--accent); box-shadow: 0 1px 4px rgba(0,0,0,0.5); }
+    input[type="range"]::-moz-range-thumb { width: 13px; height: 13px; border-radius: 50%; background: #dfe6ef; border: 2px solid var(--accent); }
+    input[type="range"].amber { background: linear-gradient(90deg, rgba(217,164,65,0.55), rgba(217,164,65,0.15)); }
+    input[type="range"].amber::-webkit-slider-thumb { border-color: var(--amber); }
+    input[type="range"].ok { background: linear-gradient(90deg, rgba(90,159,127,0.55), rgba(90,159,127,0.15)); }
+    input[type="range"].ok::-webkit-slider-thumb { border-color: var(--ok); }
+    input[type="range"].alert { background: linear-gradient(90deg, rgba(196,86,95,0.55), rgba(196,86,95,0.15)); }
+    input[type="range"].alert::-webkit-slider-thumb { border-color: var(--alert); }
+
+    [data-tip] { position: relative; }
+    [data-tip]:hover::after { content: attr(data-tip); position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%); background: #0e1626; border: 1px solid var(--line-2); color: var(--ink-2); padding: 6px 9px; border-radius: 8px; font-family: var(--sans); font-size: 11px; font-weight: 500; letter-spacing: 0; text-transform: none; line-height: 1.4; text-align: left; white-space: normal; width: max-content; max-width: 240px; z-index: 200; pointer-events: none; box-shadow: 0 8px 24px rgba(0,0,0,0.45); }
+    [data-tip-pos="bottom"]:hover::after { bottom: auto; top: calc(100% + 8px); }
+    [data-tip-pos="left"]:hover::after { left: auto; right: 0; transform: none; }
+    .info { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border-radius: 50%; border: 1px solid var(--line-2); color: var(--ink-3); font-family: var(--mono); font-size: 9px; font-weight: 700; margin-left: 6px; vertical-align: middle; cursor: help; }
+
+    header { height: 48px; background: rgba(6,10,20,0.86); border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; flex-shrink: 0; z-index: 30; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .wordmark { font-size: 13px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink); }
+    .wordmark em { font-style: normal; color: var(--accent); }
+    .vsep { width: 1px; height: 18px; background: var(--line-2); }
+    .product { font-size: 12px; color: var(--ink-3); font-weight: 500; }
+    .top-actions { display: flex; gap: 8px; align-items: center; }
+    .profile-pill { display: inline-flex; align-items: center; gap: 8px; font-size: 11.5px; color: var(--ink-2); background: var(--amber-dim); border: 1px solid rgba(217,164,65,0.35); padding: 5px 10px; border-radius: 9px; }
+    .profile-pill strong { color: #f1d9a3; font-weight: 600; }
+
+    #main { flex: 1; display: flex; overflow: hidden; }
+    #monitor { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: radial-gradient(ellipse at 50% 30%, #0d1829 0%, #070d18 55%, var(--bg-0) 100%); }
+    .vitals-bar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: var(--line); border-bottom: 1px solid var(--line); flex-shrink: 0; }
+    .vital { background: rgba(8,13,24,0.92); padding: 9px 12px; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+    .vital .k { font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; white-space: nowrap; }
+    .vital .v { font-family: var(--mono); font-size: 16px; font-weight: 600; color: var(--ink); white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .vital .u { font-family: var(--sans); font-size: 9.5px; color: var(--ink-3); font-weight: 500; margin-left: 3px; }
+    .vital.warn .v { color: var(--amber); } .vital.bad .v { color: var(--alert); } .vital.good .v { color: var(--ok); }
+    .vital.bad { box-shadow: inset 0 -2px 0 var(--alert); }
+    .vital.warn { box-shadow: inset 0 -2px 0 var(--amber); }
+
+    .alarm-strip { height: 30px; display: flex; align-items: center; gap: 10px; padding: 0 14px; border-bottom: 1px solid var(--line); background: rgba(8,13,24,0.7); flex-shrink: 0; overflow: hidden; }
+    .alarm { font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; padding: 3px 8px; border-radius: 6px; border: 1px solid; white-space: nowrap; }
+    .alarm.bad { color: #efb3b8; border-color: rgba(196,86,95,0.5); background: var(--alert-dim); animation: blink 1.2s infinite; }
+    .alarm.warn { color: #f1d9a3; border-color: rgba(217,164,65,0.45); background: var(--amber-dim); }
+    .alarm.ok { color: #a3dcc2; border-color: rgba(90,159,127,0.4); background: var(--ok-dim); }
+    @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.55; } }
+
+    .waves { flex: 1; display: flex; flex-direction: column; padding: 10px 12px; gap: 8px; overflow: hidden; }
+    .wave { flex: 1; background: #05090f; border: 1px solid var(--line); border-radius: 12px; position: relative; overflow: hidden; display: flex; flex-direction: column; }
+    .wave-head { display: flex; justify-content: space-between; align-items: center; padding: 6px 12px 0; height: 20px; }
+    .wave-head .legend { display: flex; gap: 12px; font-size: 10.5px; color: var(--ink-3); }
+    .legend i { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--c); margin-right: 5px; vertical-align: middle; }
+    .legend i.dash { border-radius: 0; height: 2px; width: 10px; background: repeating-linear-gradient(90deg, var(--c) 0 3px, transparent 3px 5px); }
+    .wave canvas { position: absolute; left: 0; right: 0; top: 24px; bottom: 0; width: 100%; height: calc(100% - 24px); display: block; }
+    .waves .wave { min-height: 0; }
+    .wave .readout { font-family: var(--mono); font-size: 10.5px; color: var(--ink-2); }
+    .wave .readout strong { color: var(--ink); font-weight: 600; }
+
+    #console { width: 440px; flex-shrink: 0; display: flex; flex-direction: column; background: linear-gradient(180deg, rgba(11,18,32,0.94), rgba(7,12,22,0.97)); border-left: 1px solid var(--line); z-index: 25; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+    .panel-head { padding: 12px 12px 10px; border-bottom: 1px solid var(--line); }
+    .pane { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+    .pane::-webkit-scrollbar { width: 6px; } .pane::-webkit-scrollbar-thumb { background: rgba(160,176,196,0.14); border-radius: 6px; }
+    .card { background: var(--glass-2); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid var(--line); border-radius: 16px; padding: 13px 14px; display: flex; flex-direction: column; gap: 9px; }
+    .card-console { border-color: rgba(111,163,200,0.22); background: linear-gradient(160deg, rgba(20,31,52,0.62), rgba(13,21,36,0.55)); }
+    .ctl { background: rgba(5,9,16,0.5); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px 5px; }
+    .ctl-head { display: flex; justify-content: space-between; align-items: center; }
+    .lbl { font-size: 11px; color: var(--ink-2); font-weight: 500; }
+    .val { font-size: 11.5px; font-weight: 500; color: var(--ink); }
+    .val.amber { color: var(--amber); } .val.ok { color: var(--ok); } .val.alert { color: var(--alert); } .val.ao { color: var(--accent); } .val.dim { color: var(--ink-3); }
+
+    .abg-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+    .abg { background: rgba(5,9,16,0.55); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; }
+    .abg .k { font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; }
+    .abg .v { font-family: var(--mono); font-size: 15px; font-weight: 600; color: var(--ink); }
+    .abg .v .u { font-family: var(--sans); font-size: 9.5px; color: var(--ink-3); font-weight: 500; margin-left: 3px; }
+    .abg.stale .v { color: var(--ink-3); }
+    .abg.live { border-color: rgba(90,159,127,0.3); }
+    .tag { font-size: 9.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); border: 1px solid var(--line-2); padding: 2px 6px; border-radius: 5px; font-weight: 600; }
+    .tag.stale { color: var(--amber); border-color: rgba(217,164,65,0.45); }
+    .tag.fresh { color: var(--ok); border-color: rgba(90,159,127,0.45); }
+    .tag.live { color: var(--ok); border-color: rgba(90,159,127,0.45); }
+    .interp { display: flex; flex-direction: column; gap: 5px; }
+    .line { display: flex; gap: 9px; align-items: flex-start; padding: 7px 10px; border-left: 2px solid var(--line-2); background: rgba(255,255,255,0.02); border-radius: 0 8px 8px 0; font-size: 11px; line-height: 1.45; color: var(--ink-2); }
+    .line b { color: var(--ink); font-weight: 600; }
+    .line.ok { border-color: var(--ok); } .line.warn { border-color: var(--amber); } .line.bad { border-color: var(--alert); }
+    .line .st { font-family: var(--mono); font-size: 10px; font-weight: 600; letter-spacing: 0.06em; white-space: nowrap; padding-top: 1px; color: var(--ink-3); }
+    .line.ok .st { color: var(--ok); } .line.warn .st { color: var(--amber); } .line.bad .st { color: var(--alert); }
+    .goals { display: flex; flex-direction: column; gap: 4px; }
+    .goal { display: flex; justify-content: space-between; align-items: center; font-size: 11px; padding: 6px 10px; border-radius: 8px; background: rgba(5,9,16,0.5); border: 1px solid var(--line); color: var(--ink-2); }
+    .goal .chk { font-family: var(--mono); font-size: 10.5px; font-weight: 600; color: var(--ink-3); }
+    .goal.met { border-color: rgba(90,159,127,0.35); } .goal.met .chk { color: var(--ok); }
+    .goal.miss .chk { color: var(--alert); }
+    .goal-score { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--amber); }
+    .note { border-top: 1px solid var(--line); padding-top: 8px; display: flex; flex-direction: column; gap: 4px; }
+    .switch { display: inline-flex; align-items: center; gap: 6px; font-size: 10.5px; color: var(--ink-3); cursor: pointer; }
+    .switch input { accent-color: var(--accent); }
+
+    #toastBox { position: fixed; bottom: 26px; left: 50%; transform: translateX(-50%) translateY(16px); background: #0e1626; border: 1px solid var(--line-2); color: var(--ink); padding: 10px 16px; border-radius: 10px; font-size: 12px; font-weight: 500; opacity: 0; transition: all .22s; z-index: 100; pointer-events: none; max-width: 90vw; text-align: center; box-shadow: 0 12px 32px rgba(0,0,0,0.5); }
+    #toastBox.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <span class="wordmark">Ductus<em>Lab</em></span>
+      <span class="vsep"></span>
+      <span class="product">Mekanik Ventilasyon &amp; Kan Gazı</span>
+    </div>
+    <div class="profile-pill" id="profilePill"><span class="eyebrow amber" style="color:var(--amber)">Hasta</span><strong id="profilePillName">Orta ARDS</strong><span id="profilePillMech" class="mono dim">C 30 · R 14</span></div>
+    <div class="top-actions">
+      <button onclick="resetToProtocol()" data-tip="Seçili hasta için protokol başlangıç ayarlarına döner" data-tip-pos="bottom">Protokol Ayarları</button>
+      <a class="link-btn" href="../" data-tip="Oskültasyon modülüne dön" data-tip-pos="bottom"><button>Modüller</button></a>
+    </div>
+  </header>
+
+  <div id="main">
+    <section id="monitor">
+      <div class="vitals-bar">
+        <div class="vital" id="vtPpeak"><span class="k">Ppeak</span><span class="v"><span id="vPpeak">—</span><span class="u">cmH₂O</span></span></div>
+        <div class="vital" id="vtPplat"><span class="k">Pplat</span><span class="v"><span id="vPplat">—</span><span class="u">cmH₂O</span></span></div>
+        <div class="vital" id="vtDp"><span class="k">ΔP sürüş</span><span class="v"><span id="vDp">—</span><span class="u">cmH₂O</span></span></div>
+        <div class="vital" id="vtVtkg"><span class="k">Vt / PBW</span><span class="v"><span id="vVtkg">—</span><span class="u">mL/kg</span></span></div>
+        <div class="vital" id="vtAuto"><span class="k">Oto-PEEP</span><span class="v"><span id="vAuto">—</span><span class="u">cmH₂O</span></span></div>
+        <div class="vital" id="vtIe"><span class="k">I : E</span><span class="v"><span id="vIe">—</span></span></div>
+        <div class="vital" id="vtSpo2"><span class="k">SpO₂</span><span class="v"><span id="vSpo2">—</span><span class="u">%</span></span></div>
+      </div>
+      <div class="alarm-strip" id="alarmStrip"></div>
+
+      <div class="waves">
+        <div class="wave">
+          <div class="wave-head">
+            <span class="eyebrow">Hava Yolu Basıncı · Paw</span>
+            <div class="legend"><span><i style="--c:var(--paw)"></i>Paw</span><span><i class="dash" style="--c:var(--palv)"></i>Alveoler (Palv)</span></div>
+            <span class="readout" id="roPaw"></span>
+          </div>
+          <canvas id="cvPaw"></canvas>
+        </div>
+        <div class="wave">
+          <div class="wave-head">
+            <span class="eyebrow">Akım · Flow</span>
+            <div class="legend"><span><i style="--c:var(--flow)"></i>L/dk</span></div>
+            <span class="readout" id="roFlow"></span>
+          </div>
+          <canvas id="cvFlow"></canvas>
+        </div>
+        <div class="wave">
+          <div class="wave-head">
+            <span class="eyebrow">Volüm · FRC üstü</span>
+            <div class="legend"><span><i style="--c:var(--vol)"></i>mL</span></div>
+            <span class="readout" id="roVol"></span>
+          </div>
+          <canvas id="cvVol"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <aside id="console">
+      <div class="panel-head row-between">
+        <span class="eyebrow">Klinik Konsol</span>
+        <span class="eyebrow dim">VC-CMV · sabit akım</span>
+      </div>
+      <div class="pane">
+
+        <div class="card">
+          <div class="row-between">
+            <span class="card-title">Hasta Profili</span>
+            <span class="eyebrow dim" id="profileMechLabel"></span>
+          </div>
+          <div class="chip-grid" id="profileGrid"></div>
+          <div class="grid-2">
+            <div class="ctl">
+              <div class="ctl-head"><span class="lbl">Boy</span><span id="lblHeight" class="mono val">175 cm</span></div>
+              <input type="range" id="sHeight" min="150" max="195" step="1" value="175" oninput="onSettings()" />
+            </div>
+            <div class="ctl" style="display:flex; flex-direction:column; justify-content:center; gap:6px;">
+              <span class="lbl">Cinsiyet <span class="info" data-tip="PBW: Erkek 50 + 0,91×(boy−152,4); Kadın 45,5 + 0,91×(boy−152,4)">i</span></span>
+              <div class="seg" style="align-self:flex-start;">
+                <button id="sexM" class="active-sky" onclick="setSex('m')">Erkek</button>
+                <button id="sexF" onclick="setSex('f')">Kadın</button>
+              </div>
+            </div>
+          </div>
+          <span class="fine">PBW <span id="lblPbw" class="mono">—</span> kg · Tidal volüm hedefi 6 mL/kg = <span id="lblVt6" class="mono">—</span> mL</span>
+        </div>
+
+        <div class="card card-console">
+          <div class="row-between">
+            <span class="card-title">Ventilatör Ayarları<span class="info" data-tip="Volüm kontrollü, sabit akımlı zorunlu ventilasyon. İnspiryum süresi = Vt / akım; kalan süre ekspiryuma kalır.">i</span></span>
+            <span class="eyebrow dim">Ti <span id="lblTi" class="mono">—</span> s · Te <span id="lblTe" class="mono">—</span> s</span>
+          </div>
+          <div class="ctl">
+            <div class="ctl-head"><span class="lbl">Tidal Volüm (Vt)</span><span id="lblVt" class="mono val ao">420 mL</span></div>
+            <input type="range" id="sVt" min="250" max="700" step="10" value="420" oninput="onSettings()" />
+          </div>
+          <div class="grid-2">
+            <div class="ctl">
+              <div class="ctl-head"><span class="lbl">Frekans (RR)</span><span id="lblRr" class="mono val amber">20 /dk</span></div>
+              <input type="range" id="sRr" class="amber" min="8" max="36" step="1" value="20" oninput="onSettings()" />
+            </div>
+            <div class="ctl">
+              <div class="ctl-head"><span class="lbl">İnsp. Akım</span><span id="lblFlow" class="mono val amber">40 L/dk</span></div>
+              <input type="range" id="sFlow" class="amber" min="20" max="80" step="5" value="40" oninput="onSettings()" />
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="ctl">
+              <div class="ctl-head"><span class="lbl">PEEP</span><span id="lblPeep" class="mono val ok">10 cmH₂O</span></div>
+              <input type="range" id="sPeep" class="ok" min="0" max="24" step="1" value="10" oninput="onSettings()" />
+            </div>
+            <div class="ctl">
+              <div class="ctl-head"><span class="lbl">FiO₂</span><span id="lblFio2" class="mono val alert">60 %</span></div>
+              <input type="range" id="sFio2" class="alert" min="21" max="100" step="1" value="60" oninput="onSettings()" />
+            </div>
+          </div>
+          <div class="row-between">
+            <span class="fine">Dakika ventilasyonu <span id="lblMv" class="mono">—</span> L/dk · Alveoler <span id="lblVa" class="mono">—</span> L/dk · Vd/Vt <span id="lblVdvt" class="mono">—</span></span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="row-between">
+            <span class="card-title">Arteriyel Kan Gazı</span>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <span id="abgTag" class="tag stale">Örnek yok</span>
+              <button id="abgBtn" class="btn-xs active-sky" onclick="takeABG()">Kan Gazı Al</button>
+            </div>
+          </div>
+          <div class="abg-grid">
+            <div class="abg" id="abgBoxPh"><span class="k">pH</span><span class="v" id="aPh">—</span></div>
+            <div class="abg" id="abgBoxCo2"><span class="k">PaCO₂</span><span class="v"><span id="aCo2">—</span><span class="u">mmHg</span></span></div>
+            <div class="abg" id="abgBoxO2"><span class="k">PaO₂</span><span class="v"><span id="aO2">—</span><span class="u">mmHg</span></span></div>
+            <div class="abg" id="abgBoxPf"><span class="k">PaO₂ / FiO₂</span><span class="v"><span id="aPf">—</span></span></div>
+            <div class="abg live"><span class="k">SpO₂ · canlı</span><span class="v"><span id="aSpo2">—</span><span class="u">%</span></span></div>
+            <div class="abg" id="abgBoxHco3"><span class="k">HCO₃⁻</span><span class="v"><span id="aHco3">24</span><span class="u">mEq/L</span></span></div>
+          </div>
+          <div class="row-between">
+            <span class="fine" id="abgWhen">Ayar değişikliği kan gazına ancak yeni örnekle yansır; SpO₂ sürekli izlenir.</span>
+            <label class="switch" data-tip="Demo için kan gazını örnek almadan canlı güncelle" data-tip-pos="left"><input type="checkbox" id="abgLive" onchange="onSettings()" /> canlı</label>
+          </div>
+          <div class="interp" id="interp"></div>
+        </div>
+
+        <div class="card">
+          <div class="row-between">
+            <span class="card-title">Klinik Hedefler</span>
+            <span class="goal-score" id="goalScore">0 / 0</span>
+          </div>
+          <div class="goals" id="goals"></div>
+          <div class="note">
+            <span class="eyebrow amber">Klinik Not</span>
+            <div id="pearl" class="body-text"></div>
+          </div>
+        </div>
+
+      </div>
+    </aside>
+  </div>
+
+  <div id="toastBox"></div>
+
+  <script>
+    // ---------------- patient profiles ----------------
+    const PROFILES = {
+      normal: { name: 'Normal Akciğer', sub: 'Postoperatif, sedatize', C: 60, R: 8, shunt0: 0.04, recruit: 0.10, alvDead: 0.03, vco2: 200, hco3: 24,
+        settings: { vt: 480, rr: 14, flow: 50, peep: 5, fio2: 40 },
+        goals: [['vtkg', 6, 8, 'Vt 6–8 mL/kg PBW'], ['pplat', null, 30, 'Pplat ≤ 30'], ['paco2', 35, 45, 'PaCO₂ 35–45'], ['ph', 7.35, 7.45, 'pH 7,35–7,45'], ['spo2', 94, 100, 'SpO₂ ≥ 94'], ['pao2', null, 150, 'Hiperoksi yok (PaO₂ ≤ 150)']],
+        pearl: 'Sağlıklı akciğerde bile yüksek tidal volüm (>10 mL/kg) ventilatör ilişkili akciğer hasarı riskini artırır; 6–8 mL/kg PBW standarttır.' },
+      ards_mod: { name: 'Orta ARDS', sub: 'P/F 100–200 (Berlin)', C: 30, R: 14, shunt0: 0.32, recruit: 0.55, alvDead: 0.15, vco2: 240, hco3: 24,
+        settings: { vt: 420, rr: 20, flow: 40, peep: 10, fio2: 60 },
+        goals: [['vtkg', 4, 8, 'Vt 4–8 mL/kg PBW'], ['pplat', null, 30, 'Pplat ≤ 30'], ['dp', null, 15, 'ΔP ≤ 15'], ['spo2', 88, 95, 'SpO₂ 88–95'], ['ph', 7.25, 7.50, 'pH ≥ 7,25 (permisif hiperkapni)'], ['auto', null, 3, 'Oto-PEEP < 3']],
+        pearl: 'ARDSNet: Vt 6 mL/kg PBW, Pplat ≤ 30 cmH₂O. Sürüş basıncı (ΔP = Pplat − PEEP) ≤ 15 mortaliteyle en güçlü ilişkili mekanik değişkendir (Amato 2015).' },
+      ards_sev: { name: 'Ağır ARDS', sub: 'P/F < 100', C: 20, R: 16, shunt0: 0.48, recruit: 0.50, alvDead: 0.20, vco2: 230, hco3: 22,
+        settings: { vt: 380, rr: 26, flow: 45, peep: 14, fio2: 90 },
+        goals: [['vtkg', 4, 6, 'Vt 4–6 mL/kg PBW'], ['pplat', null, 30, 'Pplat ≤ 30'], ['dp', null, 15, 'ΔP ≤ 15'], ['spo2', 88, 95, 'SpO₂ 88–95'], ['ph', 7.20, 7.50, 'pH ≥ 7,20'], ['fio2', null, 80, 'FiO₂ ≤ 80 (mümkünse)']],
+        pearl: 'Ağır ARDS\'de kompliyans çok düşüktür; 6 mL/kg bile Pplat > 30 yapabilir. Çözüm Vt\'yi 4–5 mL/kg\'a düşürmek, hiperkapniyi tolere etmek ve prone pozisyonu düşünmektir.' },
+      copd: { name: 'KOAH Alevlenmesi', sub: 'Obstrüktif, uzun τ', C: 55, R: 26, shunt0: 0.10, recruit: 0.05, alvDead: 0.20, vco2: 210, hco3: 30,
+        settings: { vt: 450, rr: 20, flow: 40, peep: 5, fio2: 40 },
+        goals: [['auto', null, 4, 'Oto-PEEP < 4'], ['te', 3, null, 'Te ≥ 3 zaman sabiti'], ['spo2', 88, 92, 'SpO₂ 88–92'], ['ph', 7.25, 7.45, 'pH 7,25–7,45'], ['pplat', null, 30, 'Pplat ≤ 30'], ['paco2', null, 65, 'PaCO₂ ≤ 65 (kronik taban)']],
+        pearl: 'Obstrüktif hastada ekspiryum zaman sabiti (τ = R × C) uzundur. Frekansı düşürmek ve akımı artırmak Te\'yi uzatır; oto-PEEP böyle çözülür, PEEP artırarak değil.' },
+      asthma: { name: 'Status Astmatikus', sub: 'Ağır bronkospazm', C: 50, R: 38, shunt0: 0.08, recruit: 0.05, alvDead: 0.15, vco2: 230, hco3: 24,
+        settings: { vt: 450, rr: 24, flow: 40, peep: 5, fio2: 50 },
+        goals: [['auto', null, 5, 'Oto-PEEP < 5'], ['rr', null, 14, 'RR ≤ 14 (uzun Te)'], ['flow', 60, null, 'Akım ≥ 60 L/dk'], ['pplat', null, 30, 'Pplat ≤ 30'], ['ph', 7.20, 7.45, 'pH ≥ 7,20 (permisif)'], ['spo2', 90, 100, 'SpO₂ ≥ 90']],
+        pearl: 'Astımda Ppeak çok yüksek, Pplat normal olabilir: fark rezistif basınçtır (R × akım) ve alveolü etkilemez. Tehlike Pplat ve oto-PEEP\'tir; düşük frekans, yüksek akım, hiperkapniye tolerans.' }
+    };
+    const PAUSE = 0.25;   // s, end-inspiratory pause (needed to read Pplat)
+    const HB = 12;        // g/dL
+    const state = { profile: 'ards_mod', sex: 'm', height: 175, vt: 420, rr: 20, flow: 40, peep: 10, fio2: 60, abg: null, abgStale: true, abgTime: null, sampling: false, live: false };
+    let calc = null;
+
+    // ---------------- physiology ----------------
+    function pbwCalc() { return (state.sex === 'm' ? 50 : 45.5) + 0.91 * (state.height - 152.4); }
+    function sO2(p) { return 1 / (23400 / (p * p * p + 150 * p) + 1); }   // Severinghaus
+    function content(p) { return 1.34 * HB * sO2(p) + 0.003 * p; }
+    function pFromContent(c) { let lo = 10, hi = 700; for (let i = 0; i < 40; i++) { const m = (lo + hi) / 2; if (content(m) < c) lo = m; else hi = m; } return (lo + hi) / 2; }
+
+    function compute() {
+      const P = PROFILES[state.profile];
+      const pbw = pbwCalc();
+      const flowLs = state.flow / 60;
+      const ti = state.vt / (flowLs * 1000);
+      const ttot = 60 / state.rr;
+      let te = ttot - ti - PAUSE;
+      const teClamped = te < 0.15;
+      if (teClamped) te = 0.15;
+      const tau = P.R * P.C / 1000;
+      const k = Math.exp(-te / tau);
+      const vTrap = state.vt * k / (1 - k);
+      let autoPeep = vTrap / P.C;
+      if (autoPeep > 25) autoPeep = 25;
+      const peepTot = state.peep + autoPeep;
+      const dp = state.vt / P.C;
+      const pplat = peepTot + dp;
+      const ppeak = pplat + P.R * flowLs;
+      const mv = state.vt * state.rr / 1000;
+      const overdist = Math.max(0, pplat - 28) * 0.015;
+      const vdAnat = 1.3 * pbw + 40;   // entübe hasta: ETT + HME/Y parçası
+      const vd = vdAnat + state.vt * (P.alvDead + overdist);
+      const va = Math.max(0.4, (state.vt - vd) * state.rr / 1000);
+      const paco2 = Math.min(130, Math.max(18, 0.863 * P.vco2 / va));
+      const ph = 6.1 + Math.log10(P.hco3 / (0.03 * paco2));
+      const pao2Alv = (state.fio2 / 100) * 713 - paco2 / 0.8;
+      let shunt = P.shunt0 * (1 - P.recruit * Math.min(1, Math.max(0, (state.peep - 5) / 12)));
+      shunt += Math.max(0, pplat - 30) * 0.012;                // overdistension → V/Q worsening
+      shunt = Math.min(0.6, shunt);
+      const cc = content(Math.max(40, pao2Alv));
+      let pao2 = Math.max(35, pao2Alv * (1 - shunt));
+      for (let i = 0; i < 25; i++) {
+        const ca = content(pao2); const cv = Math.max(2, ca - 4.6);
+        const caNew = (1 - shunt) * cc + shunt * cv;
+        pao2 = Math.max(30, pFromContent(caNew));
+      }
+      const spo2 = Math.min(100, sO2(pao2) * 100);
+      const pf = pao2 / (state.fio2 / 100);
+      return { pbw, ti, te, teClamped, ttot, tau, teTau: te / tau, vTrap, autoPeep, peepTot, dp, pplat, ppeak, mv, va, vd, vdvt: vd / state.vt, paco2, ph, pao2, pao2Alv, shunt, spo2, pf, ie: ti + PAUSE === 0 ? 0 : te / (ti + PAUSE), vtkg: state.vt / pbw, flowLs };
+    }
+
+    // ---------------- UI ----------------
+    function fmt(x, d = 0) { return Number(x).toFixed(d); }
+    function setVital(id, val, cls) { const el = document.getElementById('vt' + id); el.className = 'vital' + (cls ? ' ' + cls : ''); }
+
+    function onSettings() {
+      state.height = +document.getElementById('sHeight').value;
+      state.vt = +document.getElementById('sVt').value;
+      state.rr = +document.getElementById('sRr').value;
+      state.flow = +document.getElementById('sFlow').value;
+      state.peep = +document.getElementById('sPeep').value;
+      state.fio2 = +document.getElementById('sFio2').value;
+      state.live = document.getElementById('abgLive').checked;
+      if (state.abg && !state.live) state.abgStale = true;
+      refresh();
+    }
+
+    function refresh() {
+      calc = compute();
+      const c = calc, P = PROFILES[state.profile];
+      document.getElementById('lblHeight').textContent = `${state.height} cm`;
+      document.getElementById('lblVt').textContent = `${state.vt} mL`;
+      document.getElementById('lblRr').textContent = `${state.rr} /dk`;
+      document.getElementById('lblFlow').textContent = `${state.flow} L/dk`;
+      document.getElementById('lblPeep').textContent = `${state.peep} cmH₂O`;
+      document.getElementById('lblFio2').textContent = `${state.fio2} %`;
+      document.getElementById('lblPbw').textContent = fmt(c.pbw, 1);
+      document.getElementById('lblVt6').textContent = fmt(c.pbw * 6);
+      document.getElementById('lblTi').textContent = fmt(c.ti, 2);
+      document.getElementById('lblTe').textContent = fmt(c.te, 2);
+      document.getElementById('lblMv').textContent = fmt(c.mv, 1);
+      document.getElementById('lblVa').textContent = fmt(c.va, 1);
+      document.getElementById('lblVdvt').textContent = fmt(c.vdvt, 2);
+      document.getElementById('profilePillName').textContent = P.name;
+      document.getElementById('profilePillMech').textContent = `C ${P.C} · R ${P.R} · τ ${fmt(c.tau, 2)} s`;
+      document.getElementById('profileMechLabel').textContent = `C ${P.C} mL/cmH₂O · R ${P.R} cmH₂O/L/s`;
+
+      document.getElementById('vPpeak').textContent = fmt(c.ppeak);
+      document.getElementById('vPplat').textContent = fmt(c.pplat);
+      document.getElementById('vDp').textContent = fmt(c.dp);
+      document.getElementById('vVtkg').textContent = fmt(c.vtkg, 1);
+      document.getElementById('vAuto').textContent = fmt(c.autoPeep, 1);
+      document.getElementById('vIe').textContent = c.ie >= 1 ? `1 : ${fmt(c.ie, 1)}` : `${fmt(1 / Math.max(0.1, c.ie), 1)} : 1`;
+      document.getElementById('vSpo2').textContent = fmt(c.spo2);
+      setVital('Ppeak', 0, c.ppeak > 40 ? 'bad' : c.ppeak > 35 ? 'warn' : '');
+      setVital('Pplat', 0, c.pplat > 30 ? 'bad' : c.pplat > 27 ? 'warn' : 'good');
+      setVital('Dp', 0, c.dp > 15 ? 'bad' : c.dp > 13 ? 'warn' : 'good');
+      setVital('Vtkg', 0, c.vtkg > 8 ? 'bad' : c.vtkg > 6.5 ? 'warn' : 'good');
+      setVital('Auto', 0, c.autoPeep > 5 ? 'bad' : c.autoPeep > 2 ? 'warn' : 'good');
+      setVital('Ie', 0, c.ie < 1 ? 'bad' : c.ie < 1.5 ? 'warn' : '');
+      setVital('Spo2', 0, c.spo2 < 88 ? 'bad' : c.spo2 < 92 ? 'warn' : 'good');
+
+      // alarms
+      const al = [];
+      if (c.pplat > 30) al.push(['bad', `Pplat ${fmt(c.pplat)} > 30 · akciğer hasarı riski`]);
+      if (c.dp > 15) al.push(['bad', `ΔP ${fmt(c.dp)} > 15`]);
+      if (c.autoPeep > 5) al.push(['bad', `Oto-PEEP ${fmt(c.autoPeep, 1)} · hava hapsi`]);
+      else if (c.autoPeep > 2) al.push(['warn', `Oto-PEEP ${fmt(c.autoPeep, 1)} · ekspiryum kısa`]);
+      if (c.teClamped) al.push(['bad', 'Ti + pause döngüyü aşıyor · frekansı düşürün']);
+      else if (c.ie < 1) al.push(['warn', 'Ters I:E oranı']);
+      if (c.ppeak > 40) al.push(['warn', `Ppeak ${fmt(c.ppeak)} · rezistif basınç yüksek`]);
+      if (c.spo2 < 88) al.push(['bad', `SpO₂ ${fmt(c.spo2)} · hipoksemi`]);
+      if (c.vtkg > 8) al.push(['warn', `Vt ${fmt(c.vtkg, 1)} mL/kg · volütravma`]);
+      if (!al.length) al.push(['ok', 'Alarm yok · akciğer koruyucu sınırlar içinde']);
+      document.getElementById('alarmStrip').innerHTML = al.map(a => `<span class="alarm ${a[0]}">${a[1]}</span>`).join('');
+
+      if (state.live) { state.abg = snapshot(); state.abgStale = false; state.abgTime = null; }
+      renderABG();
+      renderGoals();
+      document.getElementById('pearl').textContent = P.pearl;
+    }
+
+    function snapshot() { return { ph: calc.ph, paco2: calc.paco2, pao2: calc.pao2, pf: calc.pf, hco3: PROFILES[state.profile].hco3, spo2: calc.spo2, at: Date.now() }; }
+
+    function renderABG() {
+      const a = state.abg;
+      const stale = state.abgStale;
+      document.getElementById('aSpo2').textContent = fmt(calc.spo2);
+      ['Ph', 'Co2', 'O2', 'Pf', 'Hco3'].forEach(k => document.getElementById('abgBox' + k).classList.toggle('stale', !a || stale));
+      const tag = document.getElementById('abgTag');
+      if (state.live) { tag.className = 'tag live'; tag.textContent = 'Canlı (demo)'; }
+      else if (!a) { tag.className = 'tag stale'; tag.textContent = 'Örnek yok'; }
+      else if (stale) { tag.className = 'tag stale'; tag.textContent = 'Eski örnek'; }
+      else { tag.className = 'tag fresh'; tag.textContent = 'Güncel'; }
+      if (a) {
+        document.getElementById('aPh').textContent = fmt(a.ph, 2);
+        document.getElementById('aCo2').textContent = fmt(a.paco2);
+        document.getElementById('aO2').textContent = fmt(a.pao2);
+        document.getElementById('aPf').textContent = fmt(a.pf);
+        document.getElementById('aHco3').textContent = a.hco3;
+      }
+      const when = document.getElementById('abgWhen');
+      if (state.live) when.textContent = 'Demo modu: kan gazı her ayar değişiminde anında güncellenir.';
+      else if (!a) when.textContent = 'Ayar değişikliği kan gazına ancak yeni örnekle yansır; SpO₂ sürekli izlenir.';
+      else if (stale) when.textContent = 'Ayarlar örnekten sonra değişti. Yeni etkiyi görmek için tekrar kan gazı alın.';
+      else when.textContent = 'Örnek mevcut ayarları yansıtıyor.';
+      renderInterp(a && !stale ? a : null);
+    }
+
+    function renderInterp(a) {
+      const box = document.getElementById('interp');
+      const c = calc;
+      const lines = [];
+      if (!a) {
+        lines.push(['', '—', 'Yorum için güncel bir kan gazı gerekir. Mekanik değerler ve SpO₂ yukarıda canlı.']);
+      } else {
+        // acid–base (acute respiratory, fixed HCO3)
+        const trapRisk = c.autoPeep > 2 || c.teTau < 3;
+        const fixCo2 = trapRisk
+          ? 'Frekans artışı hava hapsini büyütür: Pplat izni varsa Vt\'yi hafif artırın, akımı yükseltin ve hiperkapniyi tolere edin.'
+          : 'Frekansı artırın; Vt artışı Pplat\'a bakılarak düşünülür.';
+        if (a.ph < 7.25) lines.push(['bad', 'ASİDOZ', `<b>Respiratuvar asidoz, ağır.</b> PaCO₂ ${fmt(a.paco2)} · alveoler ventilasyon ${fmt(c.va, 1)} L/dk yetersiz. ${fixCo2}`]);
+        else if (a.ph < 7.35) lines.push(['warn', 'ASİDOZ', `<b>Respiratuvar asidoz, hafif.</b> PaCO₂ ${fmt(a.paco2)}. ARDS\'de pH ≥ 7,25 ise permisif hiperkapni kabul edilir.`]);
+        else if (a.ph > 7.45) lines.push(['warn', 'ALKALOZ', `<b>Respiratuvar alkaloz.</b> PaCO₂ ${fmt(a.paco2)} · hiperventilasyon. Frekansı veya Vt\'yi azaltın.`]);
+        else lines.push(['ok', 'NORMAL', `<b>Asit-baz dengede.</b> PaCO₂ ${fmt(a.paco2)}, pH ${fmt(a.ph, 2)}.`]);
+        // oxygenation
+        const pf = a.pf;
+        const berlin = pf > 300 ? 'ARDS kriteri dışı' : pf > 200 ? 'hafif ARDS aralığı' : pf > 100 ? 'orta ARDS aralığı' : 'ağır ARDS aralığı';
+        if (a.pao2 < 55) lines.push(['bad', 'HİPOKSEMİ', `<b>PaO₂ ${fmt(a.pao2)}, P/F ${fmt(pf)}</b> (${berlin}). Şant ${fmt(c.shunt * 100)} %. PEEP ile derlenme ve FiO₂ artışı; P/F < 150 ise prone düşünün.`]);
+        else if (a.pao2 < 70) lines.push(['warn', 'SINIRDA', `<b>PaO₂ ${fmt(a.pao2)}, P/F ${fmt(pf)}</b> (${berlin}). Şant ${fmt(c.shunt * 100)} %. SpO₂ 88–95 hedefi için yeterli olabilir.`]);
+        else if (a.pao2 > 150 && state.fio2 > 30) lines.push(['warn', 'HİPEROKSİ', `<b>PaO₂ ${fmt(a.pao2)}</b> gereksiz yüksek. FiO₂\'yi düşürün; hiperoksi de toksiktir ve PEEP ihtiyacını maskeler.`]);
+        else lines.push(['ok', 'OKSİJEN', `<b>PaO₂ ${fmt(a.pao2)}, P/F ${fmt(pf)}</b> (${berlin}). Şant ${fmt(c.shunt * 100)} %.`]);
+      }
+      // mechanics (live)
+      if (c.pplat > 30 || c.dp > 15) lines.push(['bad', 'MEKANİK', `<b>Pplat ${fmt(c.pplat)} · ΔP ${fmt(c.dp)}.</b> Vt\'yi düşürün (${fmt(c.vtkg, 1)} mL/kg). Pplat\'ı PEEP değil, Vt/C belirler.`]);
+      else if (c.vtkg > 8) lines.push(['warn', 'MEKANİK', `<b>Vt ${fmt(c.vtkg, 1)} mL/kg PBW.</b> Basınçlar sınırda olsa da volütravma riski; 6–8 mL/kg hedefleyin.`]);
+      else lines.push(['ok', 'MEKANİK', `<b>Pplat ${fmt(c.pplat)} · ΔP ${fmt(c.dp)} · Vt ${fmt(c.vtkg, 1)} mL/kg.</b> Akciğer koruyucu.`]);
+      if (c.autoPeep > 2) lines.push([c.autoPeep > 5 ? 'bad' : 'warn', 'OTO-PEEP', `<b>${fmt(c.autoPeep, 1)} cmH₂O hava hapsi.</b> Te ${fmt(c.te, 2)} s = ${fmt(c.teTau, 1)} τ (hedef ≥ 3 τ). Frekansı düşürün veya akımı artırın; Vt azaltmak da Te\'yi uzatır.`]);
+      box.innerHTML = lines.map(l => `<div class="line ${l[0]}"><span class="st">${l[1]}</span><span>${l[2]}</span></div>`).join('');
+    }
+
+    function goalValue(key, a) {
+      const c = calc;
+      switch (key) {
+        case 'vtkg': return c.vtkg; case 'pplat': return c.pplat; case 'dp': return c.dp; case 'auto': return c.autoPeep;
+        case 'te': return c.teTau; case 'rr': return state.rr; case 'flow': return state.flow; case 'fio2': return state.fio2;
+        case 'spo2': return c.spo2; case 'paco2': return a ? a.paco2 : null; case 'ph': return a ? a.ph : null; case 'pao2': return a ? a.pao2 : null;
+      }
+    }
+    function renderGoals() {
+      const P = PROFILES[state.profile];
+      const a = state.abg && !state.abgStale ? state.abg : null;
+      let met = 0;
+      const html = P.goals.map(g => {
+        const v = goalValue(g[0], a);
+        let status = 'na', txt = '—';
+        if (v != null) {
+          const ok = (g[1] == null || v >= g[1]) && (g[2] == null || v <= g[2]);
+          status = ok ? 'met' : 'miss'; if (ok) met++;
+          txt = (g[0] === 'ph' ? fmt(v, 2) : fmt(v, g[0] === 'auto' || g[0] === 'vtkg' || g[0] === 'te' ? 1 : 0)) + (ok ? ' ✓' : ' ✗');
+        } else txt = 'kan gazı';
+        return `<div class="goal ${status}"><span>${g[3]}</span><span class="chk">${txt}</span></div>`;
+      }).join('');
+      document.getElementById('goals').innerHTML = html;
+      document.getElementById('goalScore').textContent = `${met} / ${P.goals.length}`;
+    }
+
+    function takeABG() {
+      if (state.sampling) return;
+      state.sampling = true;
+      const btn = document.getElementById('abgBtn');
+      let n = 3;
+      btn.disabled = true; btn.textContent = `Laboratuvar · ${n}`;
+      const iv = setInterval(() => {
+        n--;
+        if (n > 0) { btn.textContent = `Laboratuvar · ${n}`; return; }
+        clearInterval(iv);
+        state.abg = snapshot(); state.abgStale = false; state.sampling = false;
+        btn.disabled = false; btn.textContent = 'Kan Gazı Al';
+        renderABG(); renderGoals();
+        showToast('Arteriyel kan gazı sonuçlandı.');
+      }, 700);
+    }
+
+    function setSex(s) {
+      state.sex = s;
+      document.getElementById('sexM').className = s === 'm' ? 'active-sky' : '';
+      document.getElementById('sexF').className = s === 'f' ? 'active-sky' : '';
+      onSettings();
+    }
+
+    function setProfile(key, keepSettings) {
+      state.profile = key;
+      document.querySelectorAll('#profileGrid button').forEach(b => b.className = b.dataset.p === key ? 'active-sky' : '');
+      if (!keepSettings) applySettings(PROFILES[key].settings);
+      state.abg = null; state.abgStale = true;
+      onSettings();
+    }
+    function applySettings(s) {
+      document.getElementById('sVt').value = s.vt; document.getElementById('sRr').value = s.rr; document.getElementById('sFlow').value = s.flow;
+      document.getElementById('sPeep').value = s.peep; document.getElementById('sFio2').value = s.fio2;
+    }
+    function resetToProtocol() { applySettings(PROFILES[state.profile].settings); state.abg = null; state.abgStale = true; onSettings(); showToast('Protokol başlangıç ayarları yüklendi.'); }
+
+    let toastTimer = null;
+    function showToast(msg) { const t = document.getElementById('toastBox'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2600); }
+
+    // ---------------- waveforms ----------------
+    const canvases = ['cvPaw', 'cvFlow', 'cvVol'].map(id => document.getElementById(id));
+    const ctxs = canvases.map(c => c.getContext('2d'));
+    function resize() { canvases.forEach(c => { const r = c.parentElement.getBoundingClientRect(); c.width = Math.max(10, r.width * devicePixelRatio); c.height = Math.max(10, (r.height - 24) * devicePixelRatio); }); }
+    window.addEventListener('resize', resize);
+
+    function wave(phase) {
+      const c = calc, P = PROFILES[state.profile];
+      const ti = c.ti, tp = PAUSE, te = c.te, F = c.flowLs * 1000;
+      let paw, palv, flow, vol;
+      if (phase < ti) {
+        vol = c.vTrap + F * phase;
+        palv = state.peep + vol / P.C;
+        paw = palv + P.R * c.flowLs;
+        flow = state.flow;
+      } else if (phase < ti + tp) {
+        vol = c.vTrap + state.vt; palv = state.peep + vol / P.C; paw = palv; flow = 0;
+      } else {
+        const t = phase - ti - tp;
+        vol = (c.vTrap + state.vt) * Math.exp(-t / c.tau);
+        palv = state.peep + vol / P.C;
+        flow = -((palv - state.peep) / P.R) * 60;
+        paw = state.peep + (c.pplat - state.peep) * Math.exp(-t / 0.06);
+      }
+      return { paw, palv, flow, vol };
+    }
+
+    function grid(ctx, w, h) {
+      ctx.strokeStyle = 'rgba(160,176,196,0.065)'; ctx.lineWidth = 1; ctx.beginPath();
+      for (let i = 1; i < 4; i++) { const y = h / 4 * i; ctx.moveTo(0, y); ctx.lineTo(w, y); }
+      for (let i = 1; i < 16; i++) { const x = w / 16 * i; ctx.moveTo(x, 0); ctx.lineTo(x, h); }
+      ctx.stroke();
+    }
+    function hline(ctx, w, y, color, dash) { ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = 1; ctx.setLineDash(dash || []); ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); ctx.restore(); }
+
+    let t0 = null;
+    function draw(ts) {
+      if (!calc) { requestAnimationFrame(draw); return; }
+      if (t0 === null) t0 = ts;
+      const now = (ts - t0) / 1000;
+      const W = Math.max(6, calc.ttot * 2.5);
+      const dpr = devicePixelRatio;
+      const pawMax = Math.max(40, Math.ceil((calc.ppeak + 6) / 10) * 10);
+      const flowMax = Math.max(60, Math.ceil((state.flow + 10) / 20) * 20);
+      const volMax = Math.max(600, Math.ceil((calc.vTrap + state.vt + 100) / 100) * 100);
+      const series = [[], [], [], []];
+      const [cp, cf, cv] = canvases;
+      for (let x = 0; x <= cp.width; x += 2 * dpr) {
+        const t = now - W + (x / cp.width) * W;
+        const phase = ((t % calc.ttot) + calc.ttot) % calc.ttot;
+        const s = wave(phase);
+        series[0].push([x, s.paw]); series[1].push([x, s.palv]); series[2].push([x, s.flow]); series[3].push([x, s.vol]);
+      }
+      // Paw
+      let ctx = ctxs[0], h = cp.height, w = cp.width;
+      ctx.clearRect(0, 0, w, h); grid(ctx, w, h);
+      const yP = v => h - 6 * dpr - (v / pawMax) * (h - 12 * dpr);
+      hline(ctx, w, yP(30), 'rgba(196,86,95,0.35)', [4 * dpr, 4 * dpr]);
+      hline(ctx, w, yP(state.peep), 'rgba(90,159,127,0.3)', [2 * dpr, 4 * dpr]);
+      ctx.save(); ctx.setLineDash([4 * dpr, 4 * dpr]); ctx.strokeStyle = 'rgba(154,134,201,0.8)'; ctx.lineWidth = 1.2 * dpr; ctx.beginPath();
+      series[1].forEach((p, i) => i ? ctx.lineTo(p[0], yP(p[1])) : ctx.moveTo(p[0], yP(p[1]))); ctx.stroke(); ctx.restore();
+      ctx.strokeStyle = '#6fa3c8'; ctx.lineWidth = 1.7 * dpr; ctx.beginPath();
+      series[0].forEach((p, i) => i ? ctx.lineTo(p[0], yP(p[1])) : ctx.moveTo(p[0], yP(p[1]))); ctx.stroke();
+      // Flow
+      ctx = ctxs[1]; h = cf.height; w = cf.width;
+      ctx.clearRect(0, 0, w, h); grid(ctx, w, h);
+      const yF = v => h / 2 - (v / flowMax) * (h / 2 - 6 * dpr);
+      hline(ctx, w, yF(0), 'rgba(160,176,196,0.25)');
+      ctx.strokeStyle = '#d9a441'; ctx.lineWidth = 1.7 * dpr; ctx.beginPath();
+      series[2].forEach((p, i) => i ? ctx.lineTo(p[0], yF(p[1])) : ctx.moveTo(p[0], yF(p[1]))); ctx.stroke();
+      // Vol
+      ctx = ctxs[2]; h = cv.height; w = cv.width;
+      ctx.clearRect(0, 0, w, h); grid(ctx, w, h);
+      const yV = v => h - 6 * dpr - (v / volMax) * (h - 12 * dpr);
+      hline(ctx, w, yV(0), 'rgba(160,176,196,0.25)');
+      if (calc.vTrap > 15) hline(ctx, w, yV(calc.vTrap), 'rgba(196,86,95,0.45)', [3 * dpr, 3 * dpr]);
+      ctx.strokeStyle = '#5a9f7f'; ctx.lineWidth = 1.7 * dpr; ctx.beginPath();
+      series[3].forEach((p, i) => i ? ctx.lineTo(p[0], yV(p[1])) : ctx.moveTo(p[0], yV(p[1]))); ctx.stroke();
+
+      document.getElementById('roPaw').innerHTML = `Ppeak <strong>${fmt(calc.ppeak)}</strong> · Pplat <strong>${fmt(calc.pplat)}</strong> · PEEP <strong>${state.peep}</strong>${calc.autoPeep > 0.5 ? ` · toplam PEEP <strong>${fmt(calc.peepTot, 1)}</strong>` : ''}`;
+      document.getElementById('roFlow').innerHTML = `İnsp <strong>${state.flow}</strong> L/dk · Ti <strong>${fmt(calc.ti, 2)}</strong> s · Te <strong>${fmt(calc.te, 2)}</strong> s${calc.autoPeep > 0.5 ? ` · <span style="color:var(--alert)">ekspiryum sonu akım ≠ 0</span>` : ''}`;
+      document.getElementById('roVol').innerHTML = `Vt <strong>${state.vt}</strong> mL${calc.vTrap > 15 ? ` · hapsolan <strong style="color:var(--alert)">${fmt(calc.vTrap)}</strong> mL` : ''} · VE <strong>${fmt(calc.mv, 1)}</strong> L/dk`;
+      requestAnimationFrame(draw);
+    }
+
+    // ---------------- init ----------------
+    window.addEventListener('DOMContentLoaded', () => {
+      const grid = document.getElementById('profileGrid');
+      Object.entries(PROFILES).forEach(([k, p]) => {
+        const b = document.createElement('button'); b.dataset.p = k; b.innerHTML = `${p.name}<small>${p.sub} · C ${p.C} · R ${p.R}</small>`; b.onclick = () => setProfile(k); grid.appendChild(b);
+      });
+      resize();
+      setProfile('ards_mod');
+      requestAnimationFrame(draw);
+    });
+    window.addEventListener('keydown', e => {
+      const tag = (e.target && e.target.tagName) || '';
+      if (tag === 'INPUT' || tag === 'SELECT' || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key.toLowerCase() === 'g') takeABG();
+    });
+  </script>
+</body>
+</html>
