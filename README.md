@@ -26,7 +26,9 @@ Tüm modüller tek dosyada: `ductuslab-suite.html` → https://nefret2121.github
 | Oskültasyon & Wiggers | `/` | Parametrik ses sentezi, hemodinamik konsol, provokasyon testleri |
 | Mekanik Ventilasyon & Kan Gazı | `/ventilator/` | VC-CMV fizik motoru, oto-PEEP, hold manevraları, ABG |
 | 3D EKG Simülatörü | `/ekg/` | Dower 3B vektör motoru, 12 vaka, elektrot laboratuvarı, pacemaker |
-| 3D Ekokardiyografi & POCUS | `/eko/` | Three.js 3D toraks + deride kayan prob; tek analitik anatomik modelden (göğüs duvarı, kostalar, akciğer, karaciğer, 4 odacık, kapaklar, perikart) gerçek zamanlı prosedürel B-Mod (benek, odak bağımlı PSF, TGC, kosta/akciğer gölgesi); 9 standart pencere (PLAX, 3×PSAX, A4C/A5C/A3C, SubX, IVC); M-Mod, CW spektral ve renkli Doppler (BART, Nyquist); 6 patoloji; akıllı prob/ölçüm jürisi |
+| 3D Ekokardiyografi & POCUS | `/eko/` | Three.js 3D toraks: gerçek anatomi mesh'leri (BodyParts3D — deri, kostalar/sternum, kalp, büyük damarlar, karaciğer, diyafram), doğrudan sürüklenen prob ve kesit yelpazesi; mesh'e kalibre tek analitik anatomik modelden (göğüs duvarı, kostalar, akciğer, karaciğer, 4 odacık, kapaklar, perikart) gerçek zamanlı prosedürel B-Mod (benek, odak bağımlı PSF, TGC, kosta/akciğer gölgesi); 9 standart pencere (PLAX, 3×PSAX, A4C/A5C/A3C, SubX, IVC); M-Mod, CW spektral ve renkli Doppler (BART, Nyquist); 6 patoloji; akıllı prob/ölçüm jürisi |
+
+Eko modülündeki 3D anatomi, [BodyParts3D 4.0](https://lifesciencedb.jp/bp3d/) (© The Database Center for Life Science, [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)) verisinden türetilmiş, sadeleştirilip tek dosyaya gömülmüş 69 parçadır.
 
 Paket içindeki "Jüri" çekmecesi tamamen çevrimdışı, kural tabanlı çalışır; Eko modülünde prob tutuşu (kosta gölgesi, foreshortening), derinlik/gain ve Doppler açısı ihlallerini canlı izler, Doppler açı ve foreshortening deneylerini kayda geçer.
 
