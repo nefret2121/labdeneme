@@ -26,7 +26,7 @@ Tüm modüller tek dosyada: `ductuslab-suite.html` → https://nefret2121.github
 | Oskültasyon & Wiggers | `/` | Parametrik ses sentezi, hemodinamik konsol, provokasyon testleri |
 | Mekanik Ventilasyon & Kan Gazı | `/ventilator/` | VC-CMV fizik motoru, oto-PEEP, hold manevraları, ABG |
 | 3D EKG Simülatörü | `/ekg/` | Dower 3B vektör motoru, 12 vaka, elektrot laboratuvarı, pacemaker |
-| 3D Ekokardiyografi & POCUS | `/eko/` | 3D toraks/prob ve kesit düzlemi, SDF ışın izlemeli B-Mod, kosta gölgesi, M-Mod, CW/renkli Doppler (ΔP = 4v²), 6 patoloji, akıllı prob/ölçüm jürisi |
+| 3D Ekokardiyografi & POCUS | `/eko/` | Three.js 3D toraks + deride kayan prob; tek analitik anatomik modelden (göğüs duvarı, kostalar, akciğer, karaciğer, 4 odacık, kapaklar, perikart) gerçek zamanlı prosedürel B-Mod (benek, odak bağımlı PSF, TGC, kosta/akciğer gölgesi); 9 standart pencere (PLAX, 3×PSAX, A4C/A5C/A3C, SubX, IVC); M-Mod, CW spektral ve renkli Doppler (BART, Nyquist); 6 patoloji; akıllı prob/ölçüm jürisi |
 
 Paket içindeki "Jüri" çekmecesi tamamen çevrimdışı, kural tabanlı çalışır; Eko modülünde prob tutuşu (kosta gölgesi, foreshortening), derinlik/gain ve Doppler açısı ihlallerini canlı izler, Doppler açı ve foreshortening deneylerini kayda geçer.
 
