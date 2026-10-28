@@ -1411,7 +1411,8 @@ const EchoScene = (() => {
     S.drag = null;
     el.addEventListener('pointerdown', e => {
       const part = pick(e);
-      S.drag = { mode: part || 'orbit', lx: e.clientX, ly: e.clientY };
+      S.drag = { mode: part || 'orbit', lx: e.clientX, ly: e.clientY, offX: 0, offY: 0 };
+      if (part === 'grip') { const p = skinHit(e); if (p) { S.drag.offX = probe.position.x - p.x; S.drag.offY = probe.position.y - p.y; } } // tutma noktası ile prob ayağı arasındaki ofset korunur (sıçrama yok)
       el.setPointerCapture(e.pointerId); el.style.cursor = part ? 'grabbing' : 'grabbing';
     });
     el.addEventListener('pointermove', e => {
@@ -1419,7 +1420,7 @@ const EchoScene = (() => {
       const d = S.drag; const dx = e.clientX - d.lx, dy = e.clientY - d.ly; d.lx = e.clientX; d.ly = e.clientY;
       if (d.mode === 'orbit') { const o = S.orbit; o.theta -= dx * 0.008; o.phi = Math.min(2.9, Math.max(0.2, o.phi - dy * 0.008)); applyCamera(); return; }
       if (!S.onPose) return;
-      if (d.mode === 'grip') { const p = skinHit(e); if (p) S.onPose({ slideTo: [p.x, p.y] }); }
+      if (d.mode === 'grip') { const p = skinHit(e); if (p) S.onPose({ slideTo: [p.x + d.offX, p.y + d.offY] }); }
       else if (d.mode === 'dash') S.onPose({ rot: dx * 0.6 });
       else if (d.mode === 'tail') S.onPose({ tilt: -dy * 0.35, rock: dx * 0.35 });
     });
