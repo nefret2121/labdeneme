@@ -114,7 +114,7 @@
     <div class="top-actions">
       <button onclick="triggerSniffTest()" class="active-amber">Sniff</button>
       <button onclick="toggleFreeze()" id="freezeBtn">❚❚ Dondur</button>
-      <button onclick="goPortal()" title="Diğer DuctusLab modülleri">Modüller</button>
+      <button onclick="goPortal()" id="btnPortal" title="Diğer DuctusLab modülleri">Modüller</button>
     </div>
   </header>
 
@@ -1472,7 +1472,8 @@ const EchoScene = (() => {
   function suiteTrack(ev, data) { try { if (window.parent !== window && window.parent.DuctusSuite) window.parent.DuctusSuite.track(MODULE_ID, ev, data || {}); } catch (e) {} }
   function inSuite() { try { return window.parent !== window && !!window.parent.DuctusSuite; } catch (e) { return false; } }
   window.goPortal = function () { if (inSuite()) window.parent.DuctusSuite.openPortal(); else window.location.href = '../ductuslab-suite.html'; };
-  if (inSuite()) document.addEventListener('DOMContentLoaded', () => { document.head.insertAdjacentHTML('beforeend', '<style>.brand .wordmark, .brand .vsep { display: none !important; } .brand .product { color: var(--ink); font-weight: 600; }</style>'); });
+  // Paket içinde: logo ve "Modüller" paket çubuğunda zaten var → modül başlığı tek satıra sadeleşir
+  if (inSuite()) document.addEventListener('DOMContentLoaded', () => { document.head.insertAdjacentHTML('beforeend', '<style>.brand .wordmark, .brand .vsep, #btnPortal { display: none !important; } .brand .product { color: var(--ink); font-weight: 600; } header { height: 40px; }</style>'); });
 
   // ---- patolojiler ----
   const PATH = {
@@ -1515,7 +1516,7 @@ const EchoScene = (() => {
     labels: false, color: false, mmode: false, cw: false, mAngle: 0, cwAngle: 0, sector: 45,
     lastBmode: 0, fr: 30, ecgBuf: new Float32Array(1200), ecgIdx: 0, lastJury: 0, lastSig: null, juryScore: 98, lastDopCycleMax: 0, cycleMax: 0, lastTau: 0,
     cwHist: new Float32Array(160), strip: null, stripCtx: null, stripX: 0, vmaxDisp: 0, vmaxHold: 0, pwOn: false,
-    quality: 98, scene: null, lut: null, rgba: null, img: null, bw: 0, bh: 0, started: Date.now()
+    quality: 98, scene: null, lut: null, rgba: null, img: null, bw: 0, bh: 0, started: Date.now(), tween: null
   };
   let lastTime = performance.now();
 
@@ -1547,7 +1548,19 @@ const EchoScene = (() => {
     const base = M.WINDOWS[st.win].pose;
     return { sx: base.sx + st.off.dx, sy: base.sy + st.off.dy, rot: base.rot + st.off.rot, tilt: base.tilt + st.off.tilt, rock: base.rock + st.off.rock, press: Math.max(0, base.press + st.off.press) };
   }
-  function poseChanged() { E.pose = currentPose(); E.posDirty = true; }
+  function poseChanged() { st.tween = null; E.pose = currentPose(); E.posDirty = true; }
+  // Pencere değişiminde prob ışınlanmaz, deride kayarak gider (3D sahne + B-Mod birlikte, ~0.7 s)
+  function tweenTo(toPose, dur) {
+    const from = E.pose; if (!from) { E.pose = toPose; E.posDirty = true; return; }
+    st.tween = { from: Object.assign({}, from), to: toPose, t0: performance.now(), dur: dur || 700 };
+  }
+  function stepTween(now) {
+    const tw = st.tween; if (!tw) return;
+    let s = Math.min(1, (now - tw.t0) / tw.dur); s = s * s * (3 - 2 * s);
+    const ang = (a, b) => { let d = ((b - a + 540) % 360) - 180; return a + d * s; };
+    E.pose = { sx: tw.from.sx + (tw.to.sx - tw.from.sx) * s, sy: tw.from.sy + (tw.to.sy - tw.from.sy) * s, rot: ang(tw.from.rot, tw.to.rot), tilt: tw.from.tilt + (tw.to.tilt - tw.from.tilt) * s, rock: tw.from.rock + (tw.to.rock - tw.from.rock) * s, press: tw.from.press + (tw.to.press - tw.from.press) * s };
+    E.posDirty = true; if (s >= 1) { E.pose = tw.to; st.tween = null; }
+  }
   function setWindow(id, keepOffsets) {
     const W = M.WINDOWS[id]; if (!W) return;
     st.win = id; if (!keepOffsets) st.off = { dx: 0, dy: 0, rot: 0, tilt: 0, rock: 0, press: 0 };
@@ -1557,7 +1570,7 @@ const EchoScene = (() => {
     const CB = { plax: [8, 28, 5, 12], psax_ao: [0, 30, 4, 11], psax_mv: [0, 30, 4, 11], psax_pm: [0, 30, 4, 11], a4c: [0, 32, 8, 16], a5c: [-6, 32, 8, 16], subx: [0, 34, 6, 16], ivc: [0, 30, 6, 15] }[id] || [0, 30, 4, 11];
     $('sCbCenter').value = CB[0]; $('sCbWidth').value = CB[1]; $('sCbMin').value = CB[2]; $('sCbMax').value = CB[3]; onColorBox();
     ['dx', 'dy', 'rot', 'tilt', 'rock', 'press'].forEach(k => { const el = $('s_' + k); if (el) el.value = st.off[k]; });
-    poseChanged(); rebuildLut(); updateSliderLabels();
+    tweenTo(currentPose()); rebuildLut(); updateSliderLabels();
     st.lastSig = null;
     suiteTrack('window', { id, name: W.name });
   }
@@ -1828,6 +1841,7 @@ const EchoScene = (() => {
   function loop(now) {
     requestAnimationFrame(loop);
     const dt = Math.min(0.05, (now - lastTime) / 1000); lastTime = now;
+    stepTween(now);
     if (!st.frozen) {
       st.tAbs += dt;
       // kalp fazı (AF: düzensiz RR)
