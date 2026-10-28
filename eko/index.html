@@ -1,0 +1,1585 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DuctusLab · 3D Ekokardiyografi &amp; POCUS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" />
+  <style>
+    :root {
+      --bg-main: #04070e;
+      --bg-panel: #080e1a;
+      --bg-card: #0c1526;
+      --bg-sub: #050a14;
+      --border: #192841;
+      --sky: #38bdf8;
+      --emerald: #10b981;
+      --amber: #fbbf24;
+      --rose: #f43f5e;
+      --purple: #a855f7;
+      --text: #f1f5f9;
+      --muted: #8496b0;
+    }
+    * { box-sizing: border-box; user-select: none; margin: 0; padding: 0; }
+    body {
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      background: var(--bg-main);
+      color: var(--text);
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .mono { font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-variant-numeric: tabular-nums; }
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: var(--bg-main); }
+    ::-webkit-scrollbar-thumb { background: #1e2f4d; border-radius: 99px; }
+
+    button {
+      cursor: pointer;
+      font-family: inherit;
+      background: var(--bg-card);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 5px 9px;
+      font-size: 11px;
+      font-weight: 600;
+      transition: all 0.14s ease;
+    }
+    button:hover { border-color: var(--sky); filter: brightness(1.14); }
+    button.active-sky { background: var(--sky); color: #04101f; border-color: var(--sky); font-weight: 700; }
+    button.active-emerald { background: var(--emerald); color: #04101f; border-color: var(--emerald); font-weight: 700; }
+    button.active-amber { background: var(--amber); color: #04101f; border-color: var(--amber); font-weight: 700; }
+    button.active-rose { background: var(--rose); color: #fff; border-color: var(--rose); font-weight: 700; }
+
+    select {
+      width: 100%;
+      background: var(--bg-sub);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 6px 8px;
+      font-size: 11.5px;
+      font-weight: 700;
+      outline: none;
+    }
+    input[type="range"] { width: 100%; cursor: pointer; accent-color: var(--sky); height: 5px; }
+
+    header {
+      height: 46px;
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border);
+      padding: 0 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .badge-logo {
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      color: var(--sky);
+      font-size: 10.5px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 6px;
+      letter-spacing: 0.6px;
+    }
+    .vital-strip {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--bg-sub);
+      border: 1px solid var(--border);
+      padding: 4px 12px;
+      border-radius: 8px;
+      font-size: 11px;
+    }
+
+    .workspace { flex: 1; display: flex; overflow: hidden; }
+
+    /* SOL SÜTUN: 3D TORAKS, PROB VE KESİT DÜZLEMİ */
+    .left-col {
+      width: 350px;
+      background: var(--bg-panel);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      padding: 9px;
+      gap: 8px;
+      overflow-y: auto;
+    }
+    .panel-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 9px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .panel-title {
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* ORTA SÜTUN: GERÇEK ZAMANLI B-MOD SEKTÖR + M-MOD / DOPPLER EKRANI */
+    .center-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #020409;
+      overflow: hidden;
+      position: relative;
+    }
+    .echo-toolbar {
+      min-height: 40px;
+      background: #070d1a;
+      border-bottom: 1px solid var(--border);
+      padding: 4px 10px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 4px 6px;
+      flex-shrink: 0;
+    }
+    .echo-stage {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+    #bModeCanvas {
+      width: 100%;
+      flex: 1;
+      display: block;
+      background: #020408;
+    }
+    #subTraceCanvas {
+      width: 100%;
+      height: 155px;
+      border-top: 1px solid var(--border);
+      background: #040811;
+      display: block;
+      flex-shrink: 0;
+    }
+
+    /* Kılavuz / Jüri Uyarı Rozeti */
+    .coach-banner {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(8, 15, 30, 0.92);
+      border: 1px solid var(--sky);
+      border-radius: 99px;
+      padding: 5px 14px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #e0f2fe;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      pointer-events: none;
+      box-shadow: 0 6px 22px rgba(0,0,0,0.65);
+    }
+
+    /* SAĞ SÜTUN: PROB KİNEMATİKLERİ (PART+C), CİHAZ AYARLARI, PATOLOJİ & JÜRİ */
+    .right-col {
+      width: 410px;
+      background: var(--bg-panel);
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+    .tab-bar {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 5px;
+      padding: 7px;
+      background: var(--bg-sub);
+      border-bottom: 1px solid var(--border);
+    }
+    .tab-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+    .row-between { display: flex; justify-content: space-between; align-items: center; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+    .info-callout {
+      background: rgba(56, 189, 248, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.28);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 11px;
+      line-height: 1.45;
+      color: #e0f2fe;
+    }
+    .pearl-callout {
+      background: rgba(251, 191, 36, 0.08);
+      border: 1px solid rgba(251, 191, 36, 0.28);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 11px;
+      line-height: 1.45;
+      color: #fef3c7;
+    }
+    .hidden { display: none !important; }
+
+    @media (max-width: 960px) {
+      body { height: auto; min-height: 100dvh; overflow-y: auto; overflow-x: hidden; }
+      header { height: auto; flex-wrap: wrap; padding: 8px; gap: 6px; }
+      .workspace { flex-direction: column; overflow: visible; }
+      .left-col, .center-col, .right-col { width: 100% !important; border: none; border-bottom: 1px solid var(--border); }
+      #bModeCanvas { min-height: 340px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ÜST BAR -->
+  <header>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <span class="badge-logo">DUCTUSLAB · EKO & POCUS</span>
+      <div>
+        <div style="font-size:9.5px; color:var(--muted); font-weight:700; text-transform:uppercase;">SDF Akustik Işın İzleme · M-Mod · CW/Renkli Doppler</div>
+        <div style="font-size:12.5px; font-weight:800;">3D Transtorasik Ekokardiyografi & Yatak Başı Ultrason Simülatörü</div>
+      </div>
+    </div>
+
+    <div class="vital-strip mono">
+      <div>❤️ HR: <strong id="topHr" style="color:var(--emerald);">72</strong>/dk</div>
+      <div style="color:var(--border);">|</div>
+      <div>🩸 EF: <strong id="topEf" style="color:var(--sky);">%62</strong></div>
+      <div style="color:var(--border);">|</div>
+      <div>🫁 Solunum: <strong id="topResp" style="color:var(--amber);">Spontan</strong></div>
+      <div style="color:var(--border);">|</div>
+      <div>⚡ Kare Hızı: <strong id="topFps" style="color:#c084fc;">42 FPS</strong></div>
+    </div>
+
+    <div style="display:flex; gap:6px;">
+      <button onclick="triggerSniffTest()" class="active-amber">👃 Sniff (Koklama) Manevrası</button>
+      <button onclick="toggleFreeze()" id="freezeBtn">❄️ Dondur</button>
+      <button onclick="goPortal()" id="portalBtn" title="Diğer DuctusLab modülleri">Modüller</button>
+    </div>
+  </header>
+
+  <div class="workspace">
+
+    <!-- SOL PANEL: 3D TORAKS, KOSTALAR, PROB VE SEKTÖR KESİT DÜZLEMİ -->
+    <aside class="left-col">
+      <div class="panel-box">
+        <div class="panel-title">
+          <span>🫀 3D Toraks, Prob & Kesit Düzlemi</span>
+          <span id="probeWindowBadge" class="mono" style="color:var(--sky); font-size:9.5px;">PLAX (3. İKA)</span>
+        </div>
+
+        <!-- Görsel Katman Filtreleri (Not: Kostayı gizlemek akustik gölgeyi kaldırmaz!) -->
+        <div style="display:flex; gap:4px; flex-wrap:wrap;">
+          <button onclick="toggle3DLayer('ribs')" id="layerBtn-ribs" class="active-sky" style="font-size:10px; padding:3px 7px;">🦴 Kostalar (Görsel)</button>
+          <button onclick="toggle3DLayer('lungs')" id="layerBtn-lungs" class="active-sky" style="font-size:10px; padding:3px 7px;">🫁 Akciğerler</button>
+          <button onclick="toggle3DLayer('beam')" id="layerBtn-beam" class="active-emerald" style="font-size:10px; padding:3px 7px;">📐 Kesit Yelpazesi</button>
+        </div>
+
+        <canvas id="thorax3DCanvas" width="325" height="275" style="width:100%; height:255px; background:#050a14; border-radius:8px; border:1px solid #142238; cursor:grab;"></canvas>
+
+        <div style="font-size:10px; color:var(--muted); display:flex; justify-content:space-between;">
+          <span>🟠 Turuncu Kenar: Prob İndeks İşareti (Marker)</span>
+          <span>🔵 Mavi Sektör: Ultrason Düzlemi</span>
+        </div>
+      </div>
+
+      <!-- Hızlı Standart Pencere Seçici (PLAX, PSAX, A4C, SUBX, IVC) -->
+      <div class="panel-box">
+        <div class="panel-title"><span>🎯 Standart Eko Pencereleri (Preset)</span></div>
+        <div class="grid-5">
+          <button onclick="setEchoWindow('plax')" id="winBtn-plax" class="active-sky">PLAX</button>
+          <button onclick="setEchoWindow('psax_ao')" id="winBtn-psax_ao">PSAX·Ao</button>
+          <button onclick="setEchoWindow('psax_mv')" id="winBtn-psax_mv">PSAX·MV</button>
+          <button onclick="setEchoWindow('a4c')" id="winBtn-a4c">Apikal 4B</button>
+          <button onclick="setEchoWindow('subx_ivc')" id="winBtn-subx_ivc">SubX·IVC</button>
+        </div>
+        <div id="windowGuideNote" style="font-size:10.5px; color:#cbd5e1; line-height:1.4;">
+          <strong>Parasternal Uzun Eksen (PLAX):</strong> Sol 3–4. interkostal aralık, prob işareti (marker) hastanın <strong>sağ omzuna (saat 10)</strong> bakar.
+        </div>
+      </div>
+
+      <!-- Canlı Akıllı Jüri & Foreshortening / Açı Denetimi -->
+      <div class="panel-box" style="border-color:rgba(16,185,129,0.35);">
+        <div class="panel-title">
+          <span style="color:var(--emerald);">🧠 Akıllı Prob & Ölçüm Jürisi (0 API)</span>
+          <span id="qualityScoreBadge" class="mono" style="color:var(--emerald);">Kalite: %96</span>
+        </div>
+        <div id="juryFeedbackBox" style="font-size:10.8px; color:#d1fae5; line-height:1.42;">
+          ✅ <strong>Optimal Pencere:</strong> İnterkostal aralıktasınız, kosta gölgesi yok. LA arkasında İnen Aorta net seçiliyor.
+        </div>
+      </div>
+    </aside>
+
+    <!-- ORTA PANEL: CANLI B-MOD SEKTÖR EKRANI + M-MOD & CW DOPPLER SPEKTRUMU -->
+    <main class="center-col">
+      <div class="echo-toolbar">
+        <div style="display:flex; gap:5px; align-items:center; flex-wrap:wrap;">
+          <button onclick="toggleLabelsOverlay()" id="btnOverlay" class="active-sky">🏷️ Anatomi Etiketleri: Açık</button>
+          <button onclick="toggleColorDoppler()" id="btnColorDoppler">🎨 Renkli Doppler (BART)</button>
+          <button onclick="setSubTraceMode('mmode')" id="btnSub-mmode" class="active-amber">📈 Alt Ekran: M-Mod (EPSS/TAPSE)</button>
+          <button onclick="setSubTraceMode('cw')" id="btnSub-cw">🌊 Alt Ekran: CW Doppler (ΔP=4v²)</button>
+        </div>
+
+        <div style="display:flex; gap:5px; align-items:center;">
+          <button onclick="toggleMarkerSide()" id="btnMarkerConv" title="Kardiyoloji: Sağda | Abdominal/Acil: Solda">📍 Marker: Sağ (Kardiyo)</button>
+        </div>
+      </div>
+
+      <div class="echo-stage">
+        <!-- Üst Canlı Koç / Rehber Bandı -->
+        <div id="liveCoachBanner" class="coach-banner">
+          <span id="coachText">🎯 PLAX Kesiti: RV Önde → Septum → LV / AO / MV → LA → İnen Aorta</span>
+        </div>
+
+        <!-- Ana B-Mod Ultrason Sektör Canvas -->
+        <canvas id="bModeCanvas"></canvas>
+
+        <!-- Alt M-Mod veya CW Spektral Doppler + Senkron EKG Canvas -->
+        <canvas id="subTraceCanvas"></canvas>
+      </div>
+    </main>
+
+    <!-- SAĞ PANEL: 1) PROB & CİHAZ  2) KLİNİK PATOLOJİLER  3) RUSH & ÖLÇÜM DENEYLERİ -->
+    <aside class="right-col">
+      <div class="tab-bar">
+        <button onclick="switchRightTab('probe')" id="rTabBtn-probe" class="active-sky">🎛️ Prob & Cihaz</button>
+        <button onclick="switchRightTab('pathology')" id="rTabBtn-pathology">🫀 Patoloji & Vaka</button>
+        <button onclick="switchRightTab('labs')" id="rTabBtn-labs">📐 Doppler & RUSH</button>
+      </div>
+
+      <!-- SEKME 1: PROB EL HAREKETLERİ (PART+C) & ULTRASON MAKİNE PANELİ -->
+      <div id="rTabPane-probe" class="tab-body">
+        <!-- A) Probun 5 Kinematik El Hareketi -->
+        <div class="panel-box" style="background:linear-gradient(145deg,#0d1b33,#081120); border-color:rgba(56,189,248,0.35);">
+          <div class="panel-title">
+            <span style="color:var(--sky);">✋ 1. Prob El Hareketleri (PART + C)</span>
+            <button onclick="resetProbePose()" style="padding:2px 7px; font-size:10px;">Merkezle</button>
+          </div>
+
+          <!-- Slide (İnterkostal Kaydırma -> Kosta Gölgesi / Foreshortening) -->
+          <div>
+            <div class="row-between" style="font-size:10.5px;">
+              <span>↕️ Slide (İnterkostal Kaydırma - Kosta / Apeks)</span>
+              <span id="lblSlide" class="mono" style="color:var(--sky);">0.0 cm (İKA İçi)</span>
+            </div>
+            <input type="range" id="sliderSlide" min="-100" max="100" value="0" oninput="onProbeChange()" />
+          </div>
+
+          <!-- Rotate (0° - 180° Saat Yönü Döndürme) -->
+          <div>
+            <div class="row-between" style="font-size:10.5px;">
+              <span>🔄 Rotate (Döndürme: 0° PLAX → 90° PSAX → 180° Ayna)</span>
+              <span id="lblRotate" class="mono" style="color:var(--amber);">0°</span>
+            </div>
+            <input type="range" id="sliderRotate" min="0" max="180" value="0" oninput="onProbeChange()" />
+          </div>
+
+          <!-- Tilt / Fan (Düzlem Dışı Yelpazeleme: Taban -> Apeks) -->
+          <div>
+            <div class="row-between" style="font-size:10.5px;">
+              <span>📐 Tilt / Fan (Yelpazeleme: Aort → Mitral → Papiller)</span>
+              <span id="lblTilt" class="mono" style="color:var(--emerald);">0°</span>
+            </div>
+            <input type="range" id="sliderTilt" min="-45" max="45" value="0" oninput="onProbeChange()" />
+          </div>
+
+          <!-- Rock (Düzlem İçi Yatırma / Doppler Açısı θ) -->
+          <div>
+            <div class="row-between" style="font-size:10.5px;">
+              <span>⚖️ Rock / Heel-Toe (Düzlem İçi Açı & Doppler θ)</span>
+              <span id="lblRock" class="mono" style="color:#c084fc;">0°</span>
+            </div>
+            <input type="range" id="sliderRock" min="-45" max="45" value="0" oninput="onProbeChange()" />
+          </div>
+        </div>
+
+        <!-- B) Ultrason Makine / Sinyal İşleme Paneli -->
+        <div class="panel-box">
+          <div class="panel-title"><span>🖥️ 2. Ultrason Cihaz & Akustik Paneli</span></div>
+
+          <div class="grid-2">
+            <div>
+              <div class="row-between" style="font-size:10.5px;">
+                <span>📏 Derinlik (Depth)</span>
+                <span id="lblDepth" class="mono" style="color:var(--sky);">16 cm</span>
+              </div>
+              <input type="range" id="sliderDepth" min="8" max="24" step="1" value="16" oninput="onMachineChange()" />
+            </div>
+
+            <div>
+              <div class="row-between" style="font-size:10.5px;">
+                <span>💡 Genel Kazanç (Gain)</span>
+                <span id="lblGain" class="mono" style="color:var(--amber);">55 dB</span>
+              </div>
+              <input type="range" id="sliderGain" min="20" max="90" value="55" oninput="onMachineChange()" />
+            </div>
+          </div>
+
+          <div class="grid-2" style="margin-top:4px;">
+            <div>
+              <div class="row-between" style="font-size:10.5px;">
+                <span>🎯 Odak Derinliği (Focus)</span>
+                <span id="lblFocus" class="mono" style="color:var(--emerald);">9 cm</span>
+              </div>
+              <input type="range" id="sliderFocus" min="4" max="20" step="1" value="9" oninput="onMachineChange()" />
+            </div>
+
+            <div>
+              <div class="row-between" style="font-size:10.5px;">
+                <span>📍 M-Mod / CW İmleç Hattı</span>
+                <span id="lblCursorX" class="mono" style="color:var(--amber);">Merkez</span>
+              </div>
+              <input type="range" id="sliderCursorAngle" min="-32" max="32" value="0" oninput="onMachineChange()" />
+            </div>
+          </div>
+        </div>
+
+        <div class="info-callout" id="probePhysicsHint">
+          💡 <strong>Fizik Kuralı:</strong> <em>Slide</em> kaydırıcısını uçlara çekerseniz prob kaburga kemiğine (kosta) biner ve ekranda <strong>radyal akustik gölge</strong> oluşur. <em>Derinliği</em> 12 cm altına indirirseniz LA arkasındaki <strong>İnen Aorta</strong> kadrajdan çıkar!
+        </div>
+      </div>
+
+      <!-- SEKME 2: KLİNİK PATOLOJİLER VE POCUS VAKALARI -->
+      <div id="rTabPane-pathology" class="tab-body hidden">
+        <div class="panel-box">
+          <div class="panel-title">
+            <span>KLİNİK SENARYO & PATOLOJİ (6 VAKA)</span>
+            <span id="pathUrgencyBadge" style="color:var(--emerald);">NORMAL</span>
+          </div>
+          <select id="pathologySelect" onchange="loadEchoPathology(this.value)">
+            <option value="normal">1. Normal Kalp & Fizyolojik Kapak Hareketleri (EF %62)</option>
+            <option value="tamponade">2. Kardiyak Tamponad (Perikardiyal Efüzyon + Diyastolik RV Kollapsı)</option>
+            <option value="pe_rv">3. Akut Masif Pulmoner Emboli (RV Dilatasyonu + PSAX "D-Sign")</option>
+            <option value="severe_as">4. Ağır Kalsifik Aort Darlığı (Vmax 4.5 m/sn, ΔP 81 mmHg)</option>
+            <option value="dcmp">5. Dilate Kardiyomiyopati - Düşük EF (%24) + Artmış EPSS (&gt;14 mm)</option>
+            <option value="hocm">6. Hipertrofik KMP (Asimetrik Septal Hipertrofi + Mitral SAM)</option>
+          </select>
+        </div>
+
+        <div class="panel-box">
+          <div class="panel-title"><span>🔍 Ekokardiyografik Mekanizma & Bulgular</span></div>
+          <div id="echoMechanismBox" class="info-callout"></div>
+          <div class="pearl-callout">
+            <div style="font-size:10px; font-weight:800; color:var(--amber); margin-bottom:2px;">⚡ TUS / YDUS & ACİL POCUS KURALI</div>
+            <div id="echoPearlBox"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SEKME 3: DOPPLER AÇI DENEYİ (cos²θ) & M-MOD ÖLÇÜMLERİ -->
+      <div id="rTabPane-labs" class="tab-body hidden">
+        <div class="panel-box" style="border-color:rgba(251,191,36,0.4);">
+          <div class="panel-title">
+            <span style="color:var(--amber);">🧪 Deney 1: Hastaya Dokunmadan Gradyenti Düşür (cos²θ)</span>
+          </div>
+          <p style="font-size:10.5px; color:var(--muted);">
+            Ağır Aort Darlığında gerçek jet hızı <strong>4.50 m/sn (Pik ΔP = 81 mmHg)</strong> iken CW Doppler açısını değiştirerek ölçüm hatasını test edin:
+          </p>
+          <div class="grid-2">
+            <button onclick="runDopplerAngleDemo(0)" class="active-emerald">0° Tam Paralel (81 mmHg)</button>
+            <button onclick="runDopplerAngleDemo(35)" class="active-rose">35° Açılı Tutuş (54 mmHg!)</button>
+          </div>
+          <div id="dopplerMathReadout" class="info-callout mono" style="font-size:10.5px;">
+            θ = 0° | v_ölçülen = 4.50 m/sn | ΔP = 4v² = 81.0 mmHg (Hata: %0)
+          </div>
+        </div>
+
+        <div class="panel-box">
+          <div class="panel-title"><span>🧪 Deney 2: Foreshortening (Yalancı Apeks) Tuzağı</span></div>
+          <p style="font-size:10.5px; color:var(--muted);">
+            Apikal 4 Boşlukta prob bir üst interkostal aralığa kayarsa gerçek apeks kesitten çıkar, sol ventrikül yuvarlaklaşır ve EF olduğundan yüksek görünür:
+          </p>
+          <div class="grid-2">
+            <button onclick="runForeshorteningDemo(false)" class="active-sky">Doğru Gerçek Apeks</button>
+            <button onclick="runForeshorteningDemo(true)" class="active-amber">Foreshortened (Hatalı Kesit)</button>
+          </div>
+        </div>
+
+        <div class="panel-box">
+          <div class="panel-title"><span>📏 Canlı M-Mod & Hemodinamik Ölçüm Özeti</span></div>
+          <div id="mModeMetricsBox" class="mono" style="font-size:11px; color:#cbd5e1; line-height:1.55;">
+            • EPSS (E-Septum Mesafesi): <strong>4.2 mm</strong> (Normal &lt;7 mm)<br>
+            • TAPSE (RV Fonksiyonu): <strong>22 mm</strong> (Normal &gt;17 mm)<br>
+            • IVC Çapı &amp; Kollaps: <strong>1.6 cm / %58 Kollaps</strong> (RAP ~3 mmHg)
+          </div>
+        </div>
+      </div>
+    </aside>
+
+  </div>
+
+  <script>
+    const MODULE_ID = 'eko';
+    // ---- DuctusLab Suite köprüsü (bağımsız çalışırken sessiz) ----
+    function suiteTrack(ev, data) { try { if (window.parent !== window && window.parent.DuctusSuite) window.parent.DuctusSuite.track(MODULE_ID, ev, data || {}); } catch (e) {} }
+    function inSuite() { try { return window.parent !== window && !!window.parent.DuctusSuite; } catch (e) { return false; } }
+    function goPortal() { if (inSuite()) window.parent.DuctusSuite.openPortal(); else window.location.href = '../ductuslab-suite.html'; }
+
+    // Canvas 2D roundRect eski tarayıcılarda yoksa (Safari < 16, Firefox < 112) yedek çizim
+    if (typeof CanvasRenderingContext2D !== 'undefined' && !CanvasRenderingContext2D.prototype.roundRect) {
+      CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
+        const rr = Math.min(Math.abs(r || 0), Math.abs(w) / 2, Math.abs(h) / 2);
+        this.moveTo(x + rr, y);
+        this.arcTo(x + w, y, x + w, y + h, rr);
+        this.arcTo(x + w, y + h, x, y + h, rr);
+        this.arcTo(x, y + h, x, y, rr);
+        this.arcTo(x, y, x + w, y, rr);
+        this.closePath();
+        return this;
+      };
+    }
+
+    // ============================================================================
+    // 1. PATOLOJİ VERİTABANI VE KLİNİK KURALLAR
+    // ============================================================================
+    const ECHO_PATHOLOGIES = {
+      normal: {
+        id: 'normal', name: 'Normal Ekokardiyografi (EF %62)', urgency: 'FİZYOLOJİK',
+        hr: 72, ef: 62, lvEddMm: 47, rvRatio: 0.65, wallMm: 9,
+        pericardialFluidMm: 0, aorticVmax: 1.3, epssMm: 4.2, tapseMm: 22, ivcCm: 1.6, ivcCollapsePct: 58,
+        mechanism: '<strong>PLAX:</strong> Sağ ventrikül (RV) önde, İnterventriküler Septum (IVS) ve LV arka duvarı sistolde %40 kalınlaşır. Mitral ön yaprakçık diyastolde E ve A tepeleriyle açılır, septuma yaklaşır (<strong>EPSS &lt; 7 mm</strong>).',
+        pearl: 'Sol Atriyumun (LA) hemen arkasındaki yuvarlak yapı <strong>İnen Torasik Aorta</strong>’dır. Perikardiyal sıvı inen aortanın <strong>önüne</strong> girer, plevral efüzyon ise <strong>arkasında</strong> kalır!'
+      },
+      tamponade: {
+        id: 'tamponade', name: 'Kardiyak Tamponad (Perikardiyal Efüzyon + RV Kollapsı)', urgency: '🚨 KIRMIZI ALARM',
+        hr: 112, ef: 58, lvEddMm: 42, rvRatio: 0.45, wallMm: 10,
+        pericardialFluidMm: 24, aorticVmax: 1.1, epssMm: 5.0, tapseMm: 14, ivcCm: 2.5, ivcCollapsePct: 12,
+        mechanism: 'Kalbi çevreleyen geniş anekoik (siyah) perikardiyal sıvı + perikard içi basınç sağ kalp basıncını aştığı için <strong>Erken Diyastolik Sağ Ventrikül (RV) Kollapsı</strong>, <strong>Swinging Heart (Sallanan Kalp)</strong> ve pletorik IVC (&gt;2.1 cm, kollaps &lt;%50).',
+        pearl: 'Tamponad tanısı sıvının miktarıyla değil <strong>hemodinamik bası bulgularıyla</strong> (RA geç diyastolik, <strong>RV erken diyastolik kollaps</strong> ve mitral E dalgasında &gt;%25 solunumsal varyasyon) konur!'
+      },
+      pe_rv: {
+        id: 'pe_rv', name: 'Akut Masif Pulmoner Emboli (RV Basınç Yükü & D-Sign)', urgency: '🚨 ACİL POCUS',
+        hr: 118, ef: 60, lvEddMm: 40, rvRatio: 1.25, wallMm: 9,
+        pericardialFluidMm: 0, aorticVmax: 1.2, epssMm: 4.8, tapseMm: 11, ivcCm: 2.4, ivcCollapsePct: 18,
+        mechanism: 'Sağ ventrikül (RV) ileri derecede dilate (<strong>A4C’de RV &gt; LV</strong>), PSAX kısa eksende interventriküler septum sol ventriküle doğru düzleşip LV’yi <strong>"D" harfi (D-Sign)</strong> şekline sokar.',
+        pearl: '<strong>McConnell Bulgusu:</strong> RV serbest duvarı akinetik/hipokinetik iken <strong>RV apeksinin hiperdinamik</strong> kasılması akut pulmoner emboli için yüksek özgüllüğe sahiptir.'
+      },
+      severe_as: {
+        id: 'severe_as', name: 'Ağır Kalsifik Aort Darlığı (Konsantrik LVH + Jet)', urgency: 'KAPAK HASTALIĞI',
+        hr: 68, ef: 56, lvEddMm: 46, rvRatio: 0.65, wallMm: 15,
+        pericardialFluidMm: 0, aorticVmax: 4.5, epssMm: 5.5, tapseMm: 20, ivcCm: 1.7, ivcCollapsePct: 52,
+        mechanism: 'Aort kapak yaprakçıkları parlak (hiperekoik/kalsifik) ve sistolik açılması kısıtlı (&lt;1.0 cm²). Sol ventrikülde <strong>konsantrik hipertrofi (duvar 15 mm)</strong> ve CW Doppler’de <strong>Vmax = 4.5 m/sn (Pik ΔP = 81 mmHg)</strong>.',
+        pearl: 'Bernoulli denklemi: <strong>ΔP = 4 × v²</strong>. Eğer probu jet akımına paralel tutmazsanız (θ &gt; 20°), hızı cos(θ) kadar, gradyenti ise <strong>cos²(θ) kadar düşük ölçersiniz</strong> ve ağır darlığı kaçırırsınız!'
+      },
+      dcmp: {
+        id: 'dcmp', name: 'Dilate Kardiyomiyopati (Düşük EF %24 + Artmış EPSS)', urgency: 'KALP YETMEZLİĞİ',
+        hr: 96, ef: 24, lvEddMm: 66, rvRatio: 0.80, wallMm: 7,
+        pericardialFluidMm: 4, aorticVmax: 0.95, epssMm: 16.5, tapseMm: 13, ivcCm: 2.3, ivcCollapsePct: 22,
+        mechanism: 'Sol ventrikül balon gibi genişlemiş (LVIDd: 66 mm), duvarlar incelmiş ve global hipokinetik (EF %24). Mitral ön yaprakçık diyastolde septuma yaklaşamaz (<strong>EPSS = 16.5 mm</strong>).',
+        pearl: 'Acil POCUS’ta göz kararı EF dışında en hızlı kantitatif düşük EF göstergesi PLAX M-Mod’da <strong>EPSS (E-Point Septal Separation) &gt; 7 mm</strong> olmasıdır.'
+      },
+      hocm: {
+        id: 'hocm', name: 'Hipertrofik Obstrüktif KMP (Asimetrik Septum + SAM)', urgency: 'OBSTRÜKTİF KMP',
+        hr: 76, ef: 72, lvEddMm: 40, rvRatio: 0.65, wallMm: 21,
+        pericardialFluidMm: 0, aorticVmax: 3.8, epssMm: 2.0, tapseMm: 21, ivcCm: 1.6, ivcCollapsePct: 55,
+        mechanism: 'İnterventriküler septum asimetrik olarak aşırı kalınlaşmış (<strong>21 mm, IVS/PW &gt; 1.3</strong>). Sistolde Venturi/sürüklenme etkisiyle mitral ön yaprakçık LVOT’a doğru çekilir (<strong>SAM - Sistolik Öne Hareket</strong>).',
+        pearl: 'HOCM CW Doppler zarfı <strong>geç sistolde zirve yapan "Hançer (Dagger-shaped)"</strong> şeklindedir ve Valsalva manevrasıyla LVOT gradyenti artar.'
+      }
+    };
+
+    // ============================================================================
+    // 2. UYGULAMA DURUMU (STATE)
+    // ============================================================================
+    const state = {
+      windowId: 'plax',      // 'plax' | 'psax_ao' | 'psax_mv' | 'a4c' | 'subx_ivc'
+      pathologyId: 'normal',
+      slide: 0,              // -100 .. +100 (+70 üstü kosta gölgesi veya foreshortening)
+      rotateDeg: 0,          // 0 .. 180
+      tiltDeg: 0,            // -45 .. +45
+      rockDeg: 0,            // -45 .. +45 (Doppler açısını da etkiler)
+      depthCm: 16,           // 8 .. 24 cm
+      gainDb: 55,            // 20 .. 90 dB
+      focusCm: 9,            // 4 .. 20 cm
+      cursorAngleDeg: 0,     // M-Mod / CW hattı açısı
+      showLabels: true,
+      colorDoppler: false,
+      subMode: 'mmode',      // 'mmode' | 'cw'
+      markerOnRight: true,   // Kardiyoloji: Sağda (true), Abdominal: Solda (false)
+      show3DRibs: true,
+      show3DLungs: true,
+      show3DBeam: true,
+      sniffTimer: 0,
+      frozen: false
+    };
+
+    // Dokuya bağlı (Lagrangian) Speckle Tablosu (TV karıncası olmaması için sabit tohumlu!)
+    const SPECKLE_SIZE = 256;
+    const speckleField = new Float32Array(SPECKLE_SIZE * SPECKLE_SIZE);
+    for (let i = 0; i < speckleField.length; i++) {
+      // Rayleigh dağılımı benzeri benek yoğunluğu
+      const u1 = Math.max(0.0001, Math.random());
+      const u2 = Math.random();
+      speckleField[i] = Math.sqrt(-2.0 * Math.log(u1)) * 0.52 + 0.15 * Math.cos(2 * Math.PI * u2);
+    }
+
+    function sampleTissueSpeckle(tx, ty) {
+      const ix = ((Math.floor(tx * 3.2) % SPECKLE_SIZE) + SPECKLE_SIZE) % SPECKLE_SIZE;
+      const iy = ((Math.floor(ty * 3.2) % SPECKLE_SIZE) + SPECKLE_SIZE) % SPECKLE_SIZE;
+      return speckleField[iy * SPECKLE_SIZE + ix];
+    }
+
+    // ============================================================================
+    // 3. SOL PANEL: 3D TORAKS, KALP, KOSTALAR VE KESİT DÜZLEMİ ÇİZİMİ
+    // ============================================================================
+    const thoraxCanvas = document.getElementById('thorax3DCanvas');
+    const tCtx = thoraxCanvas.getContext('2d');
+
+    function render3DThoraxAndProbe(timeSec, cardiacPhase) {
+      const w = thoraxCanvas.width, h = thoraxCanvas.height;
+      tCtx.clearRect(0, 0, w, h);
+
+      // Arka plan ızgara
+      tCtx.strokeStyle = 'rgba(30, 58, 95, 0.22)';
+      tCtx.lineWidth = 1;
+      for (let x = 0; x < w; x += 28) { tCtx.beginPath(); tCtx.moveTo(x, 0); tCtx.lineTo(x, h); tCtx.stroke(); }
+      for (let y = 0; y < h; y += 28) { tCtx.beginPath(); tCtx.moveTo(0, y); tCtx.lineTo(w, y); tCtx.stroke(); }
+
+      const cx = w * 0.5, cy = h * 0.52;
+      const beatScale = 1 - 0.06 * Math.sin(cardiacPhase * Math.PI);
+
+      // 1) Karaciğer (Subksifoid komşuluğu)
+      tCtx.fillStyle = 'rgba(180, 83, 9, 0.32)';
+      tCtx.strokeStyle = 'rgba(217, 119, 6, 0.55)';
+      tCtx.beginPath();
+      tCtx.moveTo(cx - 85, cy + 52);
+      tCtx.quadraticCurveTo(cx - 20, cy + 38, cx + 45, cy + 72);
+      tCtx.lineTo(cx - 80, cy + 95);
+      tCtx.closePath();
+      tCtx.fill(); tCtx.stroke();
+
+      // 2) 3D Kalp ve Büyük Damarlar
+      tCtx.save();
+      tCtx.translate(cx + 8, cy + 4);
+      tCtx.scale(beatScale, beatScale);
+
+      // Perikardiyal Efüzyon Halesi
+      const p = ECHO_PATHOLOGIES[state.pathologyId];
+      if (p.pericardialFluidMm > 0) {
+        tCtx.fillStyle = 'rgba(56, 189, 248, 0.18)';
+        tCtx.strokeStyle = '#38bdf8';
+        tCtx.beginPath();
+        tCtx.ellipse(6, 8, 58, 48, -0.45, 0, Math.PI * 2);
+        tCtx.fill(); tCtx.stroke();
+      }
+
+      // Sağ ve Sol Ventrikül Gövdesi (Apeks sol aşağıya bakar)
+      tCtx.fillStyle = 'rgba(225, 29, 72, 0.78)';
+      tCtx.strokeStyle = '#fda4af';
+      tCtx.lineWidth = 1.6;
+      tCtx.beginPath();
+      tCtx.ellipse(8, 10, 46, 34, -0.48, 0, Math.PI * 2);
+      tCtx.fill(); tCtx.stroke();
+
+      // Aort Arkı
+      tCtx.strokeStyle = '#ef4444';
+      tCtx.lineWidth = 9;
+      tCtx.beginPath();
+      tCtx.moveTo(-6, -15);
+      tCtx.quadraticCurveTo(-8, -55, 18, -50);
+      tCtx.stroke();
+
+      // Vena Kava (IVC & SVC)
+      tCtx.strokeStyle = '#3b82f6';
+      tCtx.lineWidth = 7;
+      tCtx.beginPath();
+      tCtx.moveTo(-26, -48); tCtx.lineTo(-24, 58);
+      tCtx.stroke();
+      tCtx.restore();
+
+      // 3) Akciğer Lobları (Opsiyonel Katman)
+      if (state.show3DLungs) {
+        tCtx.fillStyle = 'rgba(148, 163, 184, 0.18)';
+        tCtx.strokeStyle = 'rgba(148, 163, 184, 0.4)';
+        tCtx.lineWidth = 1.2;
+        // Sağ Akciğer
+        tCtx.beginPath();
+        tCtx.ellipse(cx - 64, cy - 8, 36, 68, 0.12, 0, Math.PI * 2);
+        tCtx.fill(); tCtx.stroke();
+        // Sol Akciğer
+        tCtx.beginPath();
+        tCtx.ellipse(cx + 68, cy - 6, 34, 65, -0.12, 0, Math.PI * 2);
+        tCtx.fill(); tCtx.stroke();
+      }
+
+      // 4) Sternum ve Kostalar (Görsel Katman)
+      if (state.show3DRibs) {
+        tCtx.strokeStyle = 'rgba(226, 232, 240, 0.42)';
+        tCtx.lineWidth = 5.5;
+        // Sternum
+        tCtx.beginPath(); tCtx.moveTo(cx, cy - 75); tCtx.lineTo(cx, cy + 32); tCtx.stroke();
+        // Kostalar (İnterkostal aralıklarla)
+        for (let r = -2; r <= 2; r++) {
+          const ry = cy + r * 22 - 12;
+          tCtx.beginPath();
+          tCtx.moveTo(cx - 95, ry + 8);
+          tCtx.quadraticCurveTo(cx, ry - 6, cx + 95, ry + 8);
+          tCtx.stroke();
+        }
+      }
+
+      // 5) Sanal Eko Probu & Ultrason Sektör Düzlemi (Mavi Yelpaze + Turuncu İndeks Kenarı)
+      let px = cx + 18, py = cy - 8;
+      if (state.windowId === 'a4c') { px = cx + 48; py = cy + 32; }
+      else if (state.windowId === 'subx_ivc') { px = cx + 2; py = cy + 48; }
+
+      px += state.rockDeg * 0.35;
+      py += state.slide * 0.22;
+
+      const rotRad = ((state.rotateDeg - 30) * Math.PI) / 180;
+
+      if (state.show3DBeam) {
+        tCtx.save();
+        tCtx.translate(px, py);
+        tCtx.rotate(rotRad * 0.35);
+
+        // Mavi Ultrason Yelpazesi
+        const beamGrad = tCtx.createLinearGradient(0, 0, -45, 75);
+        beamGrad.addColorStop(0, 'rgba(56, 189, 248, 0.55)');
+        beamGrad.addColorStop(1, 'rgba(56, 189, 248, 0.06)');
+        tCtx.fillStyle = beamGrad;
+        tCtx.beginPath();
+        tCtx.moveTo(0, 0);
+        tCtx.lineTo(-52, 68);
+        tCtx.quadraticCurveTo(0, 86, 52, 68);
+        tCtx.closePath();
+        tCtx.fill();
+
+        // Turuncu Index Marker Kenarı (Sağ/Sol yönelim göstergesi)
+        tCtx.strokeStyle = '#fb923c';
+        tCtx.lineWidth = 2.6;
+        tCtx.beginPath();
+        tCtx.moveTo(0, 0);
+        tCtx.lineTo(52, 68);
+        tCtx.stroke();
+        tCtx.restore();
+      }
+
+      // Prob Gövdesi
+      tCtx.save();
+      tCtx.translate(px, py);
+      tCtx.rotate(-0.45 + state.rockDeg * 0.01);
+      tCtx.fillStyle = '#cbd5e1';
+      tCtx.strokeStyle = '#0f172a';
+      tCtx.lineWidth = 1.5;
+      tCtx.beginPath();
+      tCtx.roundRect(-8, -34, 16, 34, 5);
+      tCtx.fill(); tCtx.stroke();
+      // Turuncu Index Marker Noktası
+      tCtx.fillStyle = '#f97316';
+      tCtx.beginPath();
+      tCtx.arc(5, -8, 3.2, 0, Math.PI * 2);
+      tCtx.fill();
+      tCtx.restore();
+    }
+
+    // ============================================================================
+    // 4. ORTA PANEL: GERÇEK ZAMANLI B-MOD ULTRASON SEKTÖR & SPECKLE MOTORU
+    // ============================================================================
+    const bCanvas = document.getElementById('bModeCanvas');
+    const bCtx = bCanvas.getContext('2d');
+    const subCanvas = document.getElementById('subTraceCanvas');
+    const subCtx = subCanvas.getContext('2d');
+
+    const mModeHistory = []; // M-Mod kayan geçmiş sütunları
+
+    function resizeEchoCanvases() {
+      bCanvas.width = bCanvas.clientWidth;
+      bCanvas.height = bCanvas.clientHeight;
+      subCanvas.width = subCanvas.clientWidth;
+      subCanvas.height = subCanvas.clientHeight;
+    }
+    window.addEventListener('resize', resizeEchoCanvases);
+
+    // SDF Geometrik Yardımcıları
+    function sdEllipse(px, py, cx, cy, rx, ry, angle = 0) {
+      const dx = px - cx, dy = py - cy;
+      const ca = Math.cos(angle), sa = Math.sin(angle);
+      const lx = (dx * ca + dy * sa) / rx;
+      const ly = (-dx * sa + dy * ca) / ry;
+      return (Math.hypot(lx, ly) - 1.0) * Math.min(rx, ry);
+    }
+
+    function sdSegment(px, py, x1, y1, x2, y2) {
+      const vx = x2 - x1, vy = y2 - y1;
+      const wx = px - x1, wy = py - y1;
+      const c1 = vx * wx + vy * wy;
+      const c2 = vx * vx + vy * vy;
+      const b = Math.max(0, Math.min(1, c1 / (c2 || 1)));
+      return Math.hypot(px - (x1 + b * vx), py - (y1 + b * vy));
+    }
+
+    // Verilen 2D kesit koordinatında (xCm, zCm) doku reflektivitesini [0..1] hesaplar
+    function evaluateCardiacSliceReflectivity(xCm, zCm, cardiacPhase, respPhase) {
+      const path = ECHO_PATHOLOGIES[state.pathologyId];
+
+      // 180° Prob dönüşü = Sağ/Sol ayna terslenmesi + Marker konvansiyonu
+      const rotMirror = (state.rotateDeg > 135) ? -1 : 1;
+      const markerSign = state.markerOnRight ? 1 : -1;
+      const x = (xCm * rotMirror * markerSign) - (state.rockDeg * 0.06);
+      const z = zCm + (state.tiltDeg * 0.04);
+
+      // Tamponadda "Swinging Heart" (2 atımda bir salınım)
+      const swingX = (state.pathologyId === 'tamponade') ? Math.sin(cardiacPhase * Math.PI) * 0.85 : 0;
+      const swingY = (state.pathologyId === 'tamponade') ? Math.cos(cardiacPhase * Math.PI) * 0.45 : 0;
+
+      // Sistolik Kasılma Faktörü (0 = Diyastol sonu ED, 1 = Sistol sonu ES)
+      const systole = Math.pow(Math.sin(cardiacPhase * Math.PI), 1.6);
+      const efScale = (path.ef / 62) * 0.28; // Düşük EF'de kasılma azalır
+      const contract = 1.0 - systole * efScale;
+      const wallThickCm = (path.wallMm / 10) * (1 + systole * 0.35);
+
+      // Mitral kapak diyastolik açılma açısı (E ve A dalgaları)
+      const diastole = 1.0 - systole;
+      const mvOpen = diastole * (path.id === 'dcmp' ? 0.45 : 0.85);
+      // Aort kapak sistolik açılma (Aort darlığında kısıtlı!)
+      const avOpen = systole * (path.id === 'severe_as' ? 0.22 : 0.78);
+
+      let refl = 0.03; // Kan havuzu bazal anekoik (siyah)
+
+      // Yakın alan (Near-field 0 - 1.2 cm cilt/subkutan doku parlaklığı)
+      if (zCm < 1.2) return 0.55;
+
+      // Aktif Pencereye (veya Rotate açısına) Göre Kesit Geometrisi
+      const effectiveWin = (state.windowId === 'plax' && state.rotateDeg >= 65 && state.rotateDeg <= 125)
+        ? 'psax_mv'
+        : state.windowId;
+
+      if (effectiveWin === 'plax') {
+        // PLAX: Üstte RV (2.5-5 cm), Ortada IVS (5.2 cm), LV Kavitesi (5.5-10 cm), Sağda AO & LA, LA arkasında İnen Aorta (13.5 cm)
+        const rvCollapse = (path.id === 'tamponade' && diastole > 0.5) ? 0.65 : 0;
+        const rvTop = 2.4 + swingY + rvCollapse;
+        const ivsZ  = 5.2 + swingY + systole * 0.45;
+        const lvPostZ = ivsZ + (path.lvEddMm / 10) * contract;
+
+        // Perikardiyal Sıvı (Ön ve Arka - İnen Aortanın Önüne Girer!)
+        const periFluidCm = path.pericardialFluidMm / 10;
+        if (periFluidCm > 0) {
+          if ((z > 1.5 && z < rvTop) || (z > lvPostZ + wallThickCm && z < lvPostZ + wallThickCm + periFluidCm && x < 2.2)) {
+            return 0.01; // Tam siyah efüzyon
+          }
+        }
+
+        // RV Ön Duvarı
+        if (Math.abs(z - rvTop) < 0.32 && x > -3.8 && x < 2.2) refl = 0.68;
+
+        // İnterventriküler Septum (IVS) - x < 1.2 cm
+        const ivsThick = (path.id === 'hocm') ? 1.85 : wallThickCm;
+        if (x > -4.2 && x < 1.3 && Math.abs(z - ivsZ) < ivsThick * 0.55) refl = 0.75;
+
+        // LV Arka Duvar (Posterior Wall) ve Parlak Perikard
+        if (x > -4.2 && x < 0.8 && Math.abs(z - lvPostZ) < wallThickCm * 0.55) refl = 0.72;
+        if (x > -4.2 && x < 1.2 && Math.abs(z - (lvPostZ + wallThickCm * 0.6)) < 0.22) refl = 0.96; // Parlak perikard!
+
+        // Aort Kökü Duvarları (x: 1.2 .. 4.2)
+        if (x >= 1.1 && x <= 4.0) {
+          if (Math.abs(z - (ivsZ - 0.2)) < 0.25 || Math.abs(z - (ivsZ + 2.4)) < 0.25) refl = 0.85;
+          // Aort Kapak Yaprakçıkları
+          const avGap = avOpen * 0.75;
+          const dAv1 = sdSegment(x, z, 1.3, ivsZ + 0.1, 2.2, ivsZ + 0.9 - avGap);
+          const dAv2 = sdSegment(x, z, 1.3, ivsZ + 2.1, 2.2, ivsZ + 1.3 + avGap);
+          if (dAv1 < 0.20 || dAv2 < 0.20) refl = (path.id === 'severe_as') ? 1.0 : 0.88;
+        }
+
+        // Sol Atriyum (LA) Arka Duvarı (x: 0.8 .. 4.2, z ~ 11.2 cm)
+        const laBackZ = ivsZ + 5.6;
+        if (x >= 0.7 && x <= 4.2 && Math.abs(z - laBackZ) < 0.28) refl = 0.82;
+
+        // Mitral Kapak Ön (AML) ve Arka (PML) Yaprakçıkları + HOCM SAM!
+        const samShift = (path.id === 'hocm' && systole > 0.4) ? -0.95 : 0;
+        const amlTipZ = ivsZ + 2.2 - mvOpen * 1.35 + samShift;
+        const pmlTipZ = lvPostZ - 0.4 - mvOpen * 0.55;
+        if (sdSegment(x, z, 1.1, ivsZ + 2.2, -0.8, amlTipZ) < 0.22) refl = 0.92;
+        if (sdSegment(x, z, 0.8, lvPostZ - 0.2, -0.6, pmlTipZ) < 0.22) refl = 0.86;
+
+        // İnen Torasik Aorta (LA Arkasında Yuvarlak Kesit - z ~ 12.8 cm)
+        const dAo = sdEllipse(x, z, 2.1, laBackZ + 1.45, 0.95, 0.95);
+        if (Math.abs(dAo) < 0.24) refl = 0.88;
+
+      } else if (effectiveWin === 'psax_ao') {
+        // PSAX Aort Seviyesi ("Mercedes-Benz" 3 Yaprakçık + Üstte RVOT + Arkada LA)
+        const dRoot = sdEllipse(x, z, 0, 7.2, 1.85, 1.85);
+        if (Math.abs(dRoot) < 0.28) refl = 0.88;
+        // Mercedes-Benz Komissür Hatları (Kapalıyken Y harfi, açıkken üçgen)
+        if (dRoot < 0) {
+          for (let a = 0; a < 3; a++) {
+            const ang = (a * 120 - 30) * Math.PI / 180;
+            const dLeaf = sdSegment(x, z, Math.cos(ang) * avOpen * 0.7, 7.2 + Math.sin(ang) * avOpen * 0.7, Math.cos(ang) * 1.7, 7.2 + Math.sin(ang) * 1.7);
+            if (dLeaf < 0.20) refl = (path.id === 'severe_as') ? 1.0 : 0.90;
+          }
+        }
+        // Üstte RVOT Hilali ve Arkada LA/RA
+        const dRvot = sdEllipse(x, z, 0, 4.2, 3.6, 1.4);
+        if (Math.abs(dRvot) < 0.28) refl = 0.68;
+
+      } else if (effectiveWin === 'psax_mv') {
+        // PSAX Mitral / Papiller Seviye (Balık Ağzı & Pulmoner Embolide "D-Sign"!)
+        const isPe = (path.id === 'pe_rv');
+        const lvRx = (path.lvEddMm / 20) * contract + 0.5;
+        const lvRy = isPe ? lvRx * 0.68 : lvRx * (1 - Math.abs(state.tiltDeg) * 0.005); // D-Sign veya Oblik kesit!
+        const dLvEndo = sdEllipse(x - swingX, z - 8.2, 0.5, 0, lvRx, lvRy);
+        const dLvEpi  = sdEllipse(x - swingX, z - 8.2, 0.5, 0, lvRx + wallThickCm, lvRy + wallThickCm);
+
+        // Septum Düzleşmesi (D-Sign)
+        if (dLvEpi <= 0 && dLvEndo >= 0) refl = 0.74;
+        if (Math.abs(dLvEpi) < 0.22) refl = 0.94;
+
+        // Sağ Ventrikül Hilali (Sol Üstte)
+        const rvScale = isPe ? 1.65 : 1.0;
+        const dRv = sdEllipse(x - swingX, z - 6.2, -1.8, 0, 2.2 * rvScale, 1.5 * rvScale);
+        if (Math.abs(dRv) < 0.28 && dLvEpi > 0) refl = 0.70;
+
+        // Balık Ağzı Mitral Orifis
+        const dMvOrifice = sdEllipse(x - 0.5, z - 8.2, 0, 0, 1.35, 0.35 + mvOpen * 0.65);
+        if (Math.abs(dMvOrifice) < 0.22 && dLvEndo < 0) refl = 0.90;
+
+      } else if (effectiveWin === 'a4c') {
+        // Apikal 4 Boşluk (Apeks Üstte! Foreshortening varsa LV kısalır ve yuvarlaklaşır)
+        const foreshorten = Math.max(0, state.slide / 100); // Slide > 0 ise apeks kesilir!
+        const lvLen = (4.6 - foreshorten * 1.6) * (1 - systole * 0.14);
+        const lvWid = (path.lvEddMm / 22) * contract;
+        const rvWid = lvWid * path.rvRatio;
+
+        // İnterventriküler ve İnteratriyal Septum (Orta Dikey Duvar)
+        if (z > 2.5 && z < 13.5 && Math.abs(x) < 0.35) refl = 0.78;
+        // Kardiyak Kruks ve Atriyoventriküler Kapak Düzlemi (z ~ 8.8 cm)
+        const avPlaneZ = 3.2 + lvLen;
+        if (Math.abs(z - avPlaneZ) < 0.26 && Math.abs(x) < (lvWid + rvWid + 1.2)) {
+          // Kapaklar açılınca orta kısım aralanır
+          if (Math.abs(x - 1.3) > mvOpen * 0.8 && Math.abs(x + 1.2) > mvOpen * 0.7) refl = 0.88;
+        }
+        // LV Yan Duvarı (Sağda: x > 0) ve RV Serbest Duvarı (Solda: x < 0)
+        const dLvChamber = sdEllipse(x, z, 1.4, 3.0 + lvLen * 0.5, lvWid, lvLen * 0.55);
+        if (Math.abs(dLvChamber) < 0.38 && x > 0) refl = 0.74;
+        const dRvChamber = sdEllipse(x, z, -1.3, 3.2 + lvLen * 0.5, rvWid, lvLen * 0.52);
+        if (Math.abs(dRvChamber) < 0.32 && x < 0) refl = 0.68;
+
+        // Sol ve Sağ Atriyum Duvarları (Altta: z > avPlaneZ)
+        const dLa = sdEllipse(x, z, 1.35, avPlaneZ + 2.2, 1.6, 2.0);
+        const dRa = sdEllipse(x, z, -1.35, avPlaneZ + 2.2, 1.5, 2.0);
+        if ((Math.abs(dLa) < 0.28 && x > 0) || (Math.abs(dRa) < 0.28 && x < 0)) refl = 0.72;
+
+      } else if (effectiveWin === 'subx_ivc') {
+        // Subksifoid Karaciğer & Vena Kava İnferior (IVC Solunumsal + Sniff Kollapsı)
+        if (z > 2.0 && z < 6.8) refl = 0.42; // Homojen Karaciğer Parankimi!
+        const sniffFactor = state.sniffTimer > 0 ? (path.ivcCollapsePct / 100) : (0.18 * Math.sin(respPhase));
+        const ivcRadius = Math.max(0.22, (path.ivcCm * 0.5) * (1 - sniffFactor));
+        const ivcCenterZ = 8.4;
+        if (x > -4.5 && x < 2.8) {
+          const distToIvc = Math.abs(z - ivcCenterZ);
+          if (distToIvc < ivcRadius) refl = 0.02; // IVC Lümeni (Siyah)
+          else if (Math.abs(distToIvc - ivcRadius) < 0.25) refl = 0.88; // IVC Duvarı
+        }
+      }
+
+      return refl;
+    }
+
+    // Ana B-Mod Sektör Çizimi (Işın İzleme + Kosta Gölgesi + Focus PSF + TGC/Gain)
+    function renderBModeSector(timeSec, cardiacPhase, respPhase) {
+      const w = bCanvas.width, h = bCanvas.height;
+      bCtx.fillStyle = '#020408';
+      bCtx.fillRect(0, 0, w, h);
+
+      const apexX = w * 0.5, apexY = 26;
+      const maxRadiusPx = Math.min(w * 0.46, h - 42);
+      const depthCm = state.depthCm;
+      const pxPerCm = maxRadiusPx / depthCm;
+      const gainFactor = Math.pow(10, (state.gainDb - 55) / 28);
+
+      // Kosta (Kaburga) Gölgesi Açısı Hesabı (Slide uçlara kaydığında radyal kama gölge!)
+      // A4C'de pozitif slide = bir üst interkostal aralığa kayma (foreshortening); kemik üstü değil, gölge yok.
+      const foreshortSlide = (state.windowId === 'a4c' && state.slide > 0);
+      const ribOverlap = foreshortSlide ? 0 : Math.max(0, (Math.abs(state.slide) - 52) / 48); // 0 .. 1
+      const shadowSide = state.slide > 0 ? 1 : -1;
+      const pathNow = ECHO_PATHOLOGIES[state.pathologyId];
+
+      const nRays = 110;
+      const nSteps = 95;
+      const sectorHalfDeg = 42;
+
+      // M-Mod imleç hattındaki sütunu kaydetmek için dizi
+      const mColumn = new Float32Array(nSteps);
+      const cursorRayIdx = Math.min(nRays - 1, Math.max(0, Math.round(((state.cursorAngleDeg + sectorHalfDeg) / (2 * sectorHalfDeg)) * nRays)));
+
+      // Sektör Işınlarını Çiz
+      for (let rIdx = 0; rIdx < nRays; rIdx++) {
+        const deg = -sectorHalfDeg + (rIdx / (nRays - 1)) * (2 * sectorHalfDeg);
+        const rad = (deg * Math.PI) / 180;
+        const sinA = Math.sin(rad), cosA = Math.cos(rad);
+
+        // Bu ışın kosta gölgesinde mi?
+        const inRibShadow = (ribOverlap > 0.05) &&
+          ((shadowSide > 0 && deg > (42 - ribOverlap * 38)) || (shadowSide < 0 && deg < (-42 + ribOverlap * 38)));
+
+        for (let sIdx = 1; sIdx < nSteps; sIdx++) {
+          const rCm = (sIdx / nSteps) * depthCm;
+          const xCm = rCm * sinA;
+          const zCm = rCm * cosA;
+
+          let intensity = 0;
+          if (inRibShadow) {
+            // Kosta yüzeyi parlak çizgi (rCm ~ 1.8 cm), arkası tam siyah akustik gölge!
+            intensity = (Math.abs(rCm - 1.8) < 0.25) ? 0.98 : 0.02;
+          } else {
+            const baseRefl = evaluateCardiacSliceReflectivity(xCm, zCm, cardiacPhase, respPhase);
+            // Dokuya bağlı (Lagrangian) Speckle
+            const defX = xCm * (1 + 0.08 * Math.sin(cardiacPhase * Math.PI));
+            const defZ = zCm * (1 - 0.06 * Math.sin(cardiacPhase * Math.PI));
+            const spk = sampleTissueSpeckle(defX, defZ);
+
+            // Odak (Focus) Derinliğine Bağlı Keskinlik ve Uzak Alan Atenüasyonu
+            const focusDist = Math.abs(rCm - state.focusCm);
+            const focusBoost = 1.15 - Math.min(0.45, focusDist * 0.04);
+            const attenuation = Math.exp(-0.045 * rCm);
+
+            intensity = baseRefl * spk * focusBoost * attenuation * gainFactor;
+          }
+
+          if (rIdx === cursorRayIdx) mColumn[sIdx] = Math.min(1, intensity);
+
+          const gray = Math.min(255, Math.max(6, Math.round(Math.pow(Math.min(1.2, intensity), 0.75) * 235)));
+          const px = apexX + rCm * pxPerCm * sinA;
+          const py = apexY + rCm * pxPerCm * cosA;
+
+          // Renkli Doppler Kutusu (BART: Kırmızı Proba Doğru, Mavi Uzaklaşan + Nyquist Mozaik)
+          if (state.colorDoppler && Math.abs(deg) < 20 && rCm > 4.2 && rCm < 11.5 && !inRibShadow) {
+            const isSystole = Math.sin(cardiacPhase * Math.PI) > 0.45;
+            if (isSystole && xCm > 0.4) {
+              const alias = (pathNow.id === 'severe_as' || pathNow.id === 'hocm') && Math.sin(rIdx * sIdx) > 0;
+              bCtx.fillStyle = alias ? 'rgba(250, 204, 21, 0.85)' : 'rgba(59, 130, 246, 0.75)';
+            } else if (!isSystole && xCm < 1.2) {
+              bCtx.fillStyle = 'rgba(239, 68, 68, 0.72)';
+            } else {
+              bCtx.fillStyle = `rgb(${gray},${gray + 3},${gray + 8})`;
+            }
+          } else {
+            bCtx.fillStyle = `rgb(${gray},${gray + 3},${gray + 8})`;
+          }
+
+          const dotSize = Math.max(2.5, (rCm / depthCm) * (maxRadiusPx / 28));
+          bCtx.fillRect(px - dotSize * 0.5, py - dotSize * 0.5, dotSize + 1.2, dotSize + 1.2);
+        }
+      }
+
+      // M-Mod Geçmişine Ekle
+      if (!state.frozen) {
+        mModeHistory.push({ col: mColumn, phase: cardiacPhase });
+        if (mModeHistory.length > subCanvas.width) mModeHistory.shift();
+      }
+
+      // Sektör Çerçevesi, Derinlik Cetveli (cm), Odak Üçgeni ve Index Marker Noktası
+      bCtx.strokeStyle = 'rgba(148, 163, 184, 0.35)';
+      bCtx.lineWidth = 1.2;
+      bCtx.beginPath();
+      bCtx.moveTo(apexX, apexY);
+      bCtx.arc(apexX, apexY, maxRadiusPx, (90 - sectorHalfDeg) * Math.PI / 180, (90 + sectorHalfDeg) * Math.PI / 180);
+      bCtx.closePath();
+      bCtx.stroke();
+
+      // Index Marker Noktası (Kardiyoloji Sağda / Abdominal Solda)
+      const markerX = state.markerOnRight ? (apexX + 55) : (apexX - 55);
+      bCtx.fillStyle = '#fb923c';
+      bCtx.beginPath(); bCtx.arc(markerX, apexY + 14, 5.5, 0, Math.PI * 2); bCtx.fill();
+      bCtx.font = '800 10px ui-monospace, monospace';
+      bCtx.fillText('P', markerX + (state.markerOnRight ? 9 : -15), apexY + 18);
+
+      // Derinlik Cetveli (Her 2 cm'de işaret + Focus Üçgeni)
+      const rightEdgeRad = (sectorHalfDeg * Math.PI) / 180;
+      for (let cm = 2; cm <= depthCm; cm += 2) {
+        const rPx = cm * pxPerCm;
+        const tx = apexX + rPx * Math.sin(rightEdgeRad) + 8;
+        const ty = apexY + rPx * Math.cos(rightEdgeRad);
+        bCtx.fillStyle = '#94a3b8';
+        bCtx.font = '700 9.5px ui-monospace, monospace';
+        bCtx.fillText(`${cm}cm`, tx, ty + 3);
+      }
+
+      // Focus İmleci (Sarı Üçgen)
+      const fPx = state.focusCm * pxPerCm;
+      const fx = apexX + fPx * Math.sin(rightEdgeRad) + 2;
+      const fy = apexY + fPx * Math.cos(rightEdgeRad);
+      bCtx.fillStyle = '#fbbf24';
+      bCtx.beginPath();
+      bCtx.moveTo(fx, fy); bCtx.lineTo(fx + 7, fy - 4); bCtx.lineTo(fx + 7, fy + 4);
+      bCtx.closePath(); bCtx.fill();
+
+      // M-Mod / CW Kesikli İmleç Hattı
+      const curRad = (state.cursorAngleDeg * Math.PI) / 180;
+      bCtx.strokeStyle = 'rgba(251, 191, 36, 0.65)';
+      bCtx.setLineDash([5, 4]);
+      bCtx.beginPath();
+      bCtx.moveTo(apexX, apexY);
+      bCtx.lineTo(apexX + maxRadiusPx * Math.sin(curRad), apexY + maxRadiusPx * Math.cos(curRad));
+      bCtx.stroke();
+      bCtx.setLineDash([]);
+
+      // Anatomik Kılavuz Etiketleri (Overlay Açık İse)
+      if (state.showLabels && ribOverlap < 0.4) {
+        drawAnatomicalLabelsOverlay(apexX, apexY, pxPerCm);
+      }
+    }
+
+    function drawAnatomicalLabelsOverlay(apexX, apexY, pxPerCm) {
+      const rotMirror = (state.rotateDeg > 135) ? -1 : 1;
+      const mSign = state.markerOnRight ? 1 : -1;
+      const mapPt = (xCm, zCm) => ({
+        x: apexX + (xCm * rotMirror * mSign) * pxPerCm,
+        y: apexY + zCm * pxPerCm
+      });
+
+      const effectiveWin = (state.windowId === 'plax' && state.rotateDeg >= 65 && state.rotateDeg <= 125)
+        ? 'psax_mv' : state.windowId;
+
+      const tags = [];
+      if (effectiveWin === 'plax') {
+        tags.push({ txt: 'RV', x: -0.8, z: 3.8, col: '#38bdf8' });
+        tags.push({ txt: 'IVS (Septum)', x: -1.6, z: 5.3, col: '#fbbf24' });
+        tags.push({ txt: 'LV', x: -1.6, z: 7.8, col: '#f43f5e' });
+        tags.push({ txt: 'AO', x: 2.3, z: 6.2, col: '#fde047' });
+        tags.push({ txt: 'MV', x: 0.2, z: 7.4, col: '#10b981' });
+        tags.push({ txt: 'LA', x: 2.3, z: 9.2, col: '#38bdf8' });
+        if (state.depthCm >= 14) tags.push({ txt: 'İnen Aort', x: 2.1, z: 12.6, col: '#fb923c' });
+      } else if (effectiveWin === 'psax_ao') {
+        tags.push({ txt: 'RVOT', x: 0, z: 3.4, col: '#38bdf8' });
+        tags.push({ txt: 'Aort Kapak (Mercedes)', x: 0, z: 7.2, col: '#fbbf24' });
+        tags.push({ txt: 'LA', x: 0, z: 10.2, col: '#38bdf8' });
+      } else if (effectiveWin === 'psax_mv') {
+        tags.push({ txt: 'RV', x: -1.8, z: 5.8, col: '#38bdf8' });
+        tags.push({ txt: 'LV (Kısa Eksen)', x: 0.6, z: 8.2, col: '#f43f5e' });
+      } else if (effectiveWin === 'a4c') {
+        tags.push({ txt: 'LV', x: 1.5, z: 5.8, col: '#f43f5e' });
+        tags.push({ txt: 'RV', x: -1.4, z: 5.8, col: '#38bdf8' });
+        tags.push({ txt: 'LA', x: 1.4, z: 9.8, col: '#fbbf24' });
+        tags.push({ txt: 'RA', x: -1.4, z: 9.8, col: '#10b981' });
+      } else if (effectiveWin === 'subx_ivc') {
+        tags.push({ txt: 'Karaciğer', x: -0.5, z: 4.5, col: '#fb923c' });
+        tags.push({ txt: 'IVC (Vena Kava)', x: -0.5, z: 8.4, col: '#38bdf8' });
+      }
+
+      bCtx.font = '800 11px -apple-system, sans-serif';
+      tags.forEach(t => {
+        const pt = mapPt(t.x, t.z);
+        bCtx.fillStyle = 'rgba(4, 8, 18, 0.78)';
+        const tw = bCtx.measureText(t.txt).width;
+        bCtx.fillRect(pt.x - tw * 0.5 - 5, pt.y - 10, tw + 10, 16);
+        bCtx.fillStyle = t.col;
+        bCtx.fillText(t.txt, pt.x - tw * 0.5, pt.y + 2);
+      });
+    }
+
+    // ============================================================================
+    // 5. ALT PANEL: GERÇEK ZAMANLI M-MOD VEYA CW SPEKTRAL DOPPLER + SENKRON EKG
+    // ============================================================================
+    function renderSubTrace(timeSec, cardiacPhase) {
+      const w = subCanvas.width, h = subCanvas.height;
+      subCtx.fillStyle = '#040811';
+      subCtx.fillRect(0, 0, w, h);
+
+      const path = ECHO_PATHOLOGIES[state.pathologyId];
+
+      if (state.subMode === 'mmode') {
+        // M-Mod Kaydırmalı Görüntü (Seçilen Işın Hattının Zaman Geçmişi)
+        const len = mModeHistory.length;
+        for (let x = 0; x < len; x++) {
+          const col = mModeHistory[x].col;
+          const steps = col.length;
+          for (let s = 1; s < steps; s += 2) {
+            const val = col[s];
+            const g = Math.min(245, Math.round(Math.pow(val, 0.75) * 230));
+            const y = (s / steps) * (h - 26);
+            subCtx.fillStyle = `rgb(${g},${g + 4},${g + 10})`;
+            subCtx.fillRect(w - len + x, y, 2, 3);
+          }
+        }
+        subCtx.fillStyle = '#fbbf24';
+        subCtx.font = '800 10.5px ui-monospace, monospace';
+        subCtx.fillText(`📈 M-MOD ZAMAN KAYDI | EPSS: ${path.epssMm} mm | TAPSE: ${path.tapseMm} mm`, 10, 15);
+      } else {
+        // CW Spektral Doppler (Bernoulli ΔP = 4v² ve cos²θ Açı Etkisi!)
+        const thetaRad = (Math.abs(state.rockDeg) * Math.PI) / 180;
+        const cosTheta = Math.cos(thetaRad);
+        const vMeas = path.aorticVmax * cosTheta;
+        const pGrad = 4 * vMeas * vMeas;
+
+        const baseY = h * 0.35;
+        subCtx.strokeStyle = 'rgba(148,163,184,0.3)';
+        subCtx.beginPath(); subCtx.moveTo(0, baseY); subCtx.lineTo(w, baseY); subCtx.stroke();
+
+        // Spektral Zarf Çizimi (HOCM -> Hançer şekli, AS -> Simetrik Parabolik)
+        subCtx.fillStyle = 'rgba(251, 191, 36, 0.32)';
+        subCtx.strokeStyle = '#fbbf24';
+        subCtx.lineWidth = 2;
+        subCtx.beginPath();
+        const rrSec = 60 / path.hr;
+        for (let x = 0; x < w; x++) {
+          const t = timeSec - ((w - x) / w) * 3.2;
+          const ph = ((t % rrSec) + rrSec) % rrSec / rrSec;
+          let vel = 0;
+          if (ph > 0.12 && ph < 0.46) {
+            const sNorm = (ph - 0.12) / 0.34;
+            vel = (path.id === 'hocm')
+              ? Math.pow(sNorm, 2.2) * Math.sin(sNorm * Math.PI) * vMeas * 1.35 // Hançer (Dagger)
+              : Math.sin(sNorm * Math.PI) * vMeas;
+          }
+          const y = baseY + (vel / 5.0) * (h * 0.52);
+          if (x === 0) subCtx.moveTo(x, y); else subCtx.lineTo(x, y);
+        }
+        subCtx.stroke();
+
+        subCtx.fillStyle = '#38bdf8';
+        subCtx.font = '800 10.5px ui-monospace, monospace';
+        subCtx.fillText(
+          `🌊 CW DOPPLER | Açı θ: ${Math.abs(state.rockDeg)}° | v_ölçülen: ${vMeas.toFixed(2)} m/sn | Pik ΔP (4v²): ${pGrad.toFixed(1)} mmHg`,
+          10, 15
+        );
+      }
+
+      // En Altta Senkron Yeşil EKG Trasesi (Tamponadda Elektriksel Alternans ile!)
+      const ecgY = h - 12;
+      subCtx.strokeStyle = '#10b981';
+      subCtx.lineWidth = 1.6;
+      subCtx.beginPath();
+      const rr = 60 / path.hr;
+      for (let x = 0; x < w; x++) {
+        const t = timeSec - ((w - x) / w) * 3.2;
+        const bNum = Math.floor(t / rr);
+        const ph = ((t % rr) + rr) % rr / rr;
+        const alternans = (path.id === 'tamponade' && bNum % 2 === 1) ? 0.55 : 1.0;
+        const rPeak = Math.exp(-Math.pow((ph - 0.10) / 0.018, 2)) * 14 * alternans;
+        const tWave = Math.exp(-Math.pow((ph - 0.34) / 0.045, 2)) * 4.5;
+        const py = ecgY - rPeak - tWave;
+        if (x === 0) subCtx.moveTo(x, py); else subCtx.lineTo(x, py);
+      }
+      subCtx.stroke();
+    }
+
+    // ============================================================================
+    // 6. AKILLI PROB VE ÖLÇÜM JÜRİSİ (SIFIR API MALİYETLİ GERÇEK ZAMANLI DENETİM)
+    // ============================================================================
+    // Kural tabanlı prob/ölçüm denetimi: her kural {k, label, ok, why, penalty}. Sonuç hem bu panelde
+    // gösterilir hem de (suite içindeyse) DuctusLab Jüri çekmecesine olay olarak iletilir.
+    function computeEchoJuryChecks() {
+      const fore = (state.windowId === 'a4c' && state.slide > 55);
+      const onRib = (Math.abs(state.slide) > 55) && !fore;
+      const thetaRad = (Math.abs(state.rockDeg) * Math.PI) / 180;
+      const lossPct = Math.round((1 - Math.pow(Math.cos(thetaRad), 2)) * 100);
+      const checks = [
+        { k: 'rib', label: 'Prob interkostal aralıkta (kosta gölgesi yok)', fail: 'Kosta Akustik Gölgesi', ok: !onRib, penalty: 42,
+          why: 'Prob kaburga kemiği üzerine bindi! Kemiğin arkasındaki radyal sektör kama şeklinde karardı; Slide ile interkostal aralığa dönün.' },
+        { k: 'fore', label: 'Gerçek apeks kesitte (foreshortening yok)', fail: 'Foreshortening (Yalancı Apeks)', ok: !fore, penalty: 42, na: state.windowId !== 'a4c',
+          why: 'Prob bir üst interkostal aralığa kaydı! Gerçek apeks kesitten çıktı, LV yuvarlaklaştı ve EF olduğundan yüksek görünüyor.' },
+        { k: 'depth', label: 'Derinlik yeterli (PLAX ≥ 13 cm, inen aorta kadrajda)', fail: 'Yetersiz Derinlik (< 13 cm)', ok: !(state.windowId === 'plax' && state.depthCm < 13), penalty: 20, na: state.windowId !== 'plax',
+          why: 'Sol Atriyum arkasındaki İnen Torasik Aorta kadrajdan çıktı! Perikardiyal vs plevral efüzyon ayrımı yapılamaz.' },
+        { k: 'gain_hi', label: 'Gain aşırı değil (kan havuzu anekoik)', fail: 'Aşırı Gain (Kazanç)', ok: !(state.gainDb > 78), penalty: 18,
+          why: 'Odacık içi kan havuzu yapay olarak beyazlaştı (sahte trombüs/kitle görünümü).' },
+        { k: 'gain_lo', label: 'Gain yeterli (endokart sınırı seçiliyor)', fail: 'Düşük Gain', ok: !(state.gainDb < 34), penalty: 18,
+          why: 'Endokardiyal sınırlar silikleşti, duvar kalınlığı ve EF ölçümü yanıltıcı olur.' },
+        { k: 'angle', label: 'CW Doppler ışını jete paralel (θ ≤ 20°)', fail: `Doppler Açı Hatası (θ = ${Math.abs(state.rockDeg)}° > 20°)`, ok: !(state.subMode === 'cw' && Math.abs(state.rockDeg) > 20), penalty: 30, na: state.subMode !== 'cw',
+          why: `Işın jete paralel değil (θ = ${Math.abs(state.rockDeg)}°)! Basınç gradyentini (ΔP = 4v²) gerçek değerinden %${lossPct} eksik ölçüyorsunuz.` },
+        { k: 'mirror', label: 'Prob yönelimi doğru (ayna görüntüsü yok)', fail: '180° Ters Prob (Ayna Görüntüsü)', ok: !(state.rotateDeg > 135), penalty: 25,
+          why: 'Prob 180° döndü; indeks işareti ters yöne baktığı için sağ ve sol yapılar ekranda yer değiştirdi.' }
+      ];
+      let score = 98;
+      checks.forEach(c => { if (!c.ok) score -= c.penalty; });
+      return { score: Math.max(15, score), checks };
+    }
+
+    let lastJurySig = null;
+    function evaluateSmartEchoJury() {
+      const { score, checks } = computeEchoJuryChecks();
+      const failed = checks.filter(c => !c.ok);
+      const badge = document.getElementById('qualityScoreBadge');
+      const box = document.getElementById('juryFeedbackBox');
+      badge.textContent = `Kalite: %${score}`;
+      badge.style.color = score >= 80 ? 'var(--emerald)' : (score >= 55 ? 'var(--amber)' : 'var(--rose)');
+
+      if (failed.length === 0) {
+        box.innerHTML = '✅ <strong>Optimal Akustik Pencere:</strong> İnterkostal aralık, derinlik, odak ve açı fizyolojik standartlarda.';
+      } else {
+        box.innerHTML = failed.map(c => `⚠️ <strong>${c.fail}:</strong> ${c.why}`).join('<br>');
+      }
+
+      // Suite jürisine yalnızca ihlal kümesi değiştiğinde bildir (kaydırıcı sürüklenirken spam yok)
+      const sig = state.windowId + '|' + failed.map(c => c.k).join(',');
+      if (sig !== lastJurySig) {
+        lastJurySig = sig;
+        suiteTrack('jury', { score, window: state.windowId, pathology: state.pathologyId, checks: checks.filter(c => !c.na).map(c => ({ k: c.k, label: c.label, fail: c.fail, ok: c.ok, why: c.why })) });
+      }
+    }
+
+    // ============================================================================
+    // 7. KULLANICI ETKİLEŞİMLERİ VE SENARYO FONKSİYONLARI
+    // ============================================================================
+    const WINDOW_GUIDES = {
+      plax: {
+        badge: 'PLAX (Sol 3. İKA)',
+        coach: '🎯 PLAX Kesiti: RV Önde → Septum → LV / AO / MV → LA → Arkada İnen Aorta',
+        note: '<strong>Parasternal Uzun Eksen (PLAX):</strong> Sol 3–4. interkostal aralık, prob işareti hastanın <strong>sağ omzuna (saat 10)</strong> bakar.'
+      },
+      psax_ao: {
+        badge: 'PSAX · Aort (Mercedes)',
+        coach: '🎯 PSAX Aort Seviyesi: Ortada 3 Yaprakçıklı Aort ("Mercedes-Benz") · Üstte RVOT · Arkada LA',
+        note: '<strong>PSAX Aort Seviyesi:</strong> PLAX’tan prob saat yönünde 90° (sol omuza) döndürülür ve hafifçe kalp tabanına (yukarı) eğilir.'
+      },
+      psax_mv: {
+        badge: 'PSAX · Mitral/Papiller',
+        coach: '🎯 PSAX Kısa Eksen: Dairesel Sol Ventrikül ("Balık Ağzı" Mitral) ve Sağ Ventrikül Hilali',
+        note: '<strong>PSAX Mitral / Papiller Seviye:</strong> Akut Pulmoner Embolide sağ ventrikül basıncı artınca septum düzleşir ve LV <strong>"D-Sign"</strong> olur.'
+      },
+      a4c: {
+        badge: 'Apikal 4 Boşluk (A4C)',
+        coach: '🎯 Apikal 4 Boşluk: Apeks Üstte! Sağda LV & LA, Solda RV & RA (Foreshortening’e Dikkat!)',
+        note: '<strong>Apikal 4 Boşluk (A4C):</strong> Prob apeks vurusuna (5. İKA ön aksiller hat) konur, işaret hastanın soluna bakar.'
+      },
+      subx_ivc: {
+        badge: 'Subksifoid & IVC',
+        coach: '🎯 Subksifoid IVC: Üstte Akustik Pencere Karaciğer · Altta Vena Kava İnferior (Sniff Testi Yapın!)',
+        note: '<strong>Subksifoid IVC:</strong> Ksifoid çıkıntı altından karaciğer penceresi kullanılır. Santral venöz basınç (RAP) ve sıvı yanıtı değerlendirilir.'
+      }
+    };
+
+    function setEchoWindow(winId) {
+      state.windowId = winId;
+      state.slide = 0;
+      state.rotateDeg = (winId === 'psax_ao' || winId === 'psax_mv') ? 90 : 0;
+      state.tiltDeg = 0;
+      state.rockDeg = 0;
+
+      document.getElementById('sliderSlide').value = 0;
+      document.getElementById('sliderRotate').value = state.rotateDeg;
+      document.getElementById('sliderTilt').value = 0;
+      document.getElementById('sliderRock').value = 0;
+
+      ['plax', 'psax_ao', 'psax_mv', 'a4c', 'subx_ivc'].forEach(w => {
+        document.getElementById(`winBtn-${w}`).className = (w === winId) ? 'active-sky' : '';
+      });
+
+      const g = WINDOW_GUIDES[winId];
+      document.getElementById('probeWindowBadge').textContent = g.badge;
+      document.getElementById('coachText').textContent = g.coach;
+      document.getElementById('windowGuideNote').innerHTML = g.note;
+      suiteTrack('window', { id: winId, name: g.badge });
+      onProbeChange();
+    }
+
+    function onProbeChange() {
+      state.slide = parseInt(document.getElementById('sliderSlide').value, 10);
+      state.rotateDeg = parseInt(document.getElementById('sliderRotate').value, 10);
+      state.tiltDeg = parseInt(document.getElementById('sliderTilt').value, 10);
+      state.rockDeg = parseInt(document.getElementById('sliderRock').value, 10);
+
+      document.getElementById('lblSlide').textContent = `${(state.slide / 50).toFixed(1)} cm ${Math.abs(state.slide) > 55 ? ((state.windowId === 'a4c' && state.slide > 0) ? '⚠️(APEKS KAÇTI)' : '⚠️(KOSTA ÜSTÜ)') : '(İKA içi)'}`;
+      document.getElementById('lblRotate').textContent = `${state.rotateDeg}°`;
+      document.getElementById('lblTilt').textContent = `${state.tiltDeg}°`;
+      document.getElementById('lblRock').textContent = `${state.rockDeg}°`;
+
+      // Doppler matematik kutusunu güncelle
+      const path = ECHO_PATHOLOGIES[state.pathologyId];
+      const thetaRad = (Math.abs(state.rockDeg) * Math.PI) / 180;
+      const vMeas = path.aorticVmax * Math.cos(thetaRad);
+      const pGrad = 4 * vMeas * vMeas;
+      const errPct = Math.round((1 - Math.pow(Math.cos(thetaRad), 2)) * 100);
+      document.getElementById('dopplerMathReadout').textContent =
+        `θ = ${Math.abs(state.rockDeg)}° | v = ${vMeas.toFixed(2)} m/sn | ΔP = 4v² = ${pGrad.toFixed(1)} mmHg (Eksik Ölçüm: %${errPct})`;
+
+      evaluateSmartEchoJury();
+    }
+
+    function onMachineChange() {
+      state.depthCm = parseInt(document.getElementById('sliderDepth').value, 10);
+      state.gainDb = parseInt(document.getElementById('sliderGain').value, 10);
+      state.focusCm = parseInt(document.getElementById('sliderFocus').value, 10);
+      state.cursorAngleDeg = parseInt(document.getElementById('sliderCursorAngle').value, 10);
+
+      document.getElementById('lblDepth').textContent = `${state.depthCm} cm`;
+      document.getElementById('lblGain').textContent = `${state.gainDb} dB`;
+      document.getElementById('lblFocus').textContent = `${state.focusCm} cm`;
+      document.getElementById('lblCursorX').textContent = `${state.cursorAngleDeg}°`;
+
+      // Fiziksel Kare Hızı (FR = c / (2 * D * N_lines))
+      const simFps = Math.round(680 / state.depthCm) - (state.colorDoppler ? 14 : 0);
+      document.getElementById('topFps').textContent = `${simFps} FPS`;
+
+      evaluateSmartEchoJury();
+    }
+
+    function loadEchoPathology(id) {
+      const p = ECHO_PATHOLOGIES[id];
+      if (!p) return;
+      state.pathologyId = id;
+
+      document.getElementById('topHr').textContent = p.hr;
+      document.getElementById('topEf').textContent = `%${p.ef}`;
+      document.getElementById('pathUrgencyBadge').textContent = p.urgency;
+      document.getElementById('echoMechanismBox').innerHTML = p.mechanism;
+      document.getElementById('echoPearlBox').innerHTML = p.pearl;
+      document.getElementById('mModeMetricsBox').innerHTML =
+        `• EPSS (E-Septum Mesafesi): <strong>${p.epssMm} mm</strong> (Normal &lt;7 mm)<br>` +
+        `• TAPSE (RV Fonksiyonu): <strong>${p.tapseMm} mm</strong> (Normal &gt;17 mm)<br>` +
+        `• IVC Çapı &amp; Kollaps: <strong>${p.ivcCm} cm / %${p.ivcCollapsePct} Kollaps</strong>`;
+
+      if (id === 'pe_rv') setEchoWindow('psax_mv');
+      else if (id === 'severe_as') { setEchoWindow('plax'); setSubTraceMode('cw'); }
+      lastJurySig = null;
+      suiteTrack('pathology', { id, name: p.name, urgency: p.urgency, hr: p.hr, ef: p.ef });
+      onProbeChange();
+    }
+
+    function resetProbePose() { setEchoWindow(state.windowId); }
+
+    function toggle3DLayer(layer) {
+      if (layer === 'ribs') state.show3DRibs = !state.show3DRibs;
+      else if (layer === 'lungs') state.show3DLungs = !state.show3DLungs;
+      else if (layer === 'beam') state.show3DBeam = !state.show3DBeam;
+      document.getElementById('layerBtn-ribs').className = state.show3DRibs ? 'active-sky' : '';
+      document.getElementById('layerBtn-lungs').className = state.show3DLungs ? 'active-sky' : '';
+      document.getElementById('layerBtn-beam').className = state.show3DBeam ? 'active-emerald' : '';
+    }
+
+    function toggleLabelsOverlay() {
+      state.showLabels = !state.showLabels;
+      const b = document.getElementById('btnOverlay');
+      b.textContent = state.showLabels ? '🏷️ Anatomi Etiketleri: Açık' : '🏷️ Anatomi Etiketleri: Gizli';
+      b.className = state.showLabels ? 'active-sky' : '';
+    }
+
+    function toggleColorDoppler() {
+      state.colorDoppler = !state.colorDoppler;
+      document.getElementById('btnColorDoppler').className = state.colorDoppler ? 'active-rose' : '';
+      onMachineChange();
+    }
+
+    function setSubTraceMode(mode) {
+      state.subMode = mode;
+      document.getElementById('btnSub-mmode').className = mode === 'mmode' ? 'active-amber' : '';
+      document.getElementById('btnSub-cw').className = mode === 'cw' ? 'active-amber' : '';
+      evaluateSmartEchoJury();
+    }
+
+    function toggleMarkerSide() {
+      state.markerOnRight = !state.markerOnRight;
+      const b = document.getElementById('btnMarkerConv');
+      b.textContent = state.markerOnRight ? '📍 Marker: Sağ (Kardiyo)' : '📍 Marker: Sol (Abdominal)';
+    }
+
+    function triggerSniffTest() {
+      setEchoWindow('subx_ivc');
+      state.sniffTimer = 2.4;
+      document.getElementById('topResp').textContent = '👃 SNIFF (İnspiryum)';
+    }
+
+    function toggleFreeze() {
+      state.frozen = !state.frozen;
+      const b = document.getElementById('freezeBtn');
+      b.textContent = state.frozen ? '▶️ Devam Et' : '❄️ Dondur';
+      b.className = state.frozen ? 'active-amber' : '';
+    }
+
+    function switchRightTab(tab) {
+      ['probe', 'pathology', 'labs'].forEach(t => {
+        document.getElementById(`rTabPane-${t}`).classList.toggle('hidden', t !== tab);
+        document.getElementById(`rTabBtn-${t}`).className = (t === tab) ? 'active-sky' : '';
+      });
+    }
+
+    function runDopplerAngleDemo(angleDeg) {
+      document.getElementById('pathologySelect').value = 'severe_as';
+      loadEchoPathology('severe_as');
+      setSubTraceMode('cw');
+      document.getElementById('sliderRock').value = angleDeg;
+      onProbeChange();
+      const p = ECHO_PATHOLOGIES.severe_as;
+      const cosT = Math.cos((angleDeg * Math.PI) / 180);
+      const vMeas = p.aorticVmax * cosT, pMeas = 4 * vMeas * vMeas, pTrue = 4 * p.aorticVmax * p.aorticVmax;
+      suiteTrack('experiment', {
+        id: 'doppler_angle', title: `Doppler açı deneyi · θ = ${angleDeg}°`,
+        chosen: `v = ${vMeas.toFixed(2)} m/sn · ΔP = ${pMeas.toFixed(1)} mmHg (gerçek ${pTrue.toFixed(0)} mmHg)`,
+        correct: angleDeg <= 20,
+        steps: [
+          { k: 'angle', label: 'Işın jete paralel tutuldu (θ ≤ 20°)', ok: angleDeg <= 20, why: 'Doppler yalnızca ışın boyunca hız bileşenini ölçer: v_ölçülen = v·cosθ, gradyent cos²θ ile düşer. 20° üzerinde ağır darlık orta darlık gibi raporlanır.' },
+          { k: 'cw', label: 'Yüksek hızlı jet için CW Doppler seçildi', ok: true, why: 'PW Doppler 1,5–2 m/sn üzerinde aliasing yapar; 4 m/sn üzerindeki aort darlığı jeti ancak CW ile ölçülür.' }
+        ],
+        verdict: angleDeg <= 20
+          ? `<b>Gradyent doğru ölçüldü.</b> Pik ΔP ${pMeas.toFixed(0)} mmHg; ağır aort darlığı (Vmax ≥ 4 m/sn, ΔP ≥ 64 mmHg) tanısı korunur.`
+          : `<b>Gradyent %${Math.round((1 - cosT * cosT) * 100)} eksik ölçüldü.</b> Prob açısı yüzünden ${pTrue.toFixed(0)} mmHg yerine ${pMeas.toFixed(0)} mmHg okundu; hastaya "orta darlık" denip cerrahi kararı gecikebilir.`
+      });
+    }
+
+    function runForeshorteningDemo(foreshortened) {
+      setEchoWindow('a4c');
+      document.getElementById('sliderSlide').value = foreshortened ? 75 : 0;
+      onProbeChange();
+      suiteTrack('experiment', {
+        id: 'foreshortening', title: foreshortened ? 'Foreshortening deneyi · hatalı kesit' : 'Foreshortening deneyi · gerçek apeks',
+        chosen: foreshortened ? 'Prob bir üst interkostal aralıkta' : 'Prob apeks vurusu üzerinde',
+        correct: !foreshortened,
+        steps: [
+          { k: 'fore', label: 'Gerçek apeks kesitte (LV uzun ekseni tam)', ok: !foreshortened, why: 'Apeks kesilince LV kısa ve yuvarlak görünür, apeks sahte hiperkinetik olur; Simpson hacimleri küçülür, EF olduğundan yüksek çıkar.' }
+        ],
+        verdict: foreshortened
+          ? '<b>Apeks kaçtı.</b> EF olduğundan yüksek, LV hacmi olduğundan düşük okunur; bir alt interkostal aralığa inip apeks vurusunu bulun.'
+          : '<b>Doğru apikal pencere.</b> LV uzun ekseni tam, apeks incelmiş ve en uzak noktada; hacim ve EF ölçümü güvenilir.'
+      });
+    }
+
+    // Ana Animasyon Döngüsü
+    let simTime = 0;
+    let lastTs = performance.now();
+
+    function mainEchoLoop(nowTs) {
+      const dt = (nowTs - lastTs) / 1000;
+      lastTs = nowTs;
+
+      const path = ECHO_PATHOLOGIES[state.pathologyId];
+      if (!state.frozen) {
+        simTime += dt;
+        if (state.sniffTimer > 0) {
+          state.sniffTimer = Math.max(0, state.sniffTimer - dt);
+          if (state.sniffTimer === 0) document.getElementById('topResp').textContent = 'Spontan';
+        }
+      }
+
+      const rrSec = 60 / path.hr;
+      const cardiacPhase = ((simTime % rrSec) + rrSec) % rrSec / rrSec;
+      const respPhase = (simTime * 1.4) % (Math.PI * 2);
+
+      render3DThoraxAndProbe(simTime, cardiacPhase);
+      renderBModeSector(simTime, cardiacPhase, respPhase);
+      renderSubTrace(simTime, cardiacPhase);
+
+      requestAnimationFrame(mainEchoLoop);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      resizeEchoCanvases();
+      loadEchoPathology('normal');
+      requestAnimationFrame(mainEchoLoop);
+    });
+  </script>
+</body>
+</html>

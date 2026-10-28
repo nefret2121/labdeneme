@@ -16,3 +16,18 @@ Tek dosya: `index.html`. Ses için sayfada "Ses Kapalı" düğmesine basın.
 Klavye kısayolları: `1–6` provokasyon · `S` ses · `D` / `B` diyafram / çan · `R` stüdyo.
 
 > Sesler ve hemodinamik değerler eğitim amaçlı sentetik yaklaşımlardır; klinik karar aracı değildir.
+
+## DuctusLab Klinik Simülasyon Paketi
+
+Tüm modüller tek dosyada: `ductuslab-suite.html` → https://nefret2121.github.io/labdeneme/ductuslab-suite.html
+
+| Modül | Bağımsız sayfa | İçerik |
+|---|---|---|
+| Oskültasyon & Wiggers | `/` | Parametrik ses sentezi, hemodinamik konsol, provokasyon testleri |
+| Mekanik Ventilasyon & Kan Gazı | `/ventilator/` | VC-CMV fizik motoru, oto-PEEP, hold manevraları, ABG |
+| 3D EKG Simülatörü | `/ekg/` | Dower 3B vektör motoru, 12 vaka, elektrot laboratuvarı, pacemaker |
+| 3D Ekokardiyografi & POCUS | `/eko/` | 3D toraks/prob ve kesit düzlemi, SDF ışın izlemeli B-Mod, kosta gölgesi, M-Mod, CW/renkli Doppler (ΔP = 4v²), 6 patoloji, akıllı prob/ölçüm jürisi |
+
+Paket içindeki "Jüri" çekmecesi tamamen çevrimdışı, kural tabanlı çalışır; Eko modülünde prob tutuşu (kosta gölgesi, foreshortening), derinlik/gain ve Doppler açısı ihlallerini canlı izler, Doppler açı ve foreshortening deneylerini kayda geçer.
+
+Modül kaynakları `MODULE_SRC` içine gömülüdür; bir modülün bağımsız dosyası değiştiğinde paket aynı dönüşümle (`JSON.stringify` + `<\script` kaçışı) yeniden üretilmelidir.
