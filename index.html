@@ -260,6 +260,15 @@
     .floating-top-bar > * { pointer-events: auto; }
     .thorax-stage { flex: 1; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; padding-top: 24px; }
     #thoraxSvg { height: 100%; max-height: 560px; width: auto; filter: drop-shadow(0 0 30px rgba(111, 163, 200, 0.10)); }
+    /* 3D toraks sahnesi (Three.js); WebGL yoksa SVG yedeğe dönülür */
+    #thorax3d { position: absolute; inset: 0; z-index: 2; cursor: default; }
+    #thorax3d canvas { width: 100% !important; height: 100% !important; display: block; }
+    .thorax-stage.svg-fallback #thorax3d { display: none; }
+    .thorax-stage:not(.svg-fallback) #thoraxSvg { display: none; }
+    .stage-floats { position: relative; z-index: 5; }
+    .scene-credit { position: absolute; left: 50%; transform: translateX(-50%); bottom: 8px; z-index: 6; font-size: 9.5px; color: var(--ink-3); pointer-events: none; white-space: nowrap; }
+    @media (max-width: 1100px) { .scene-credit { display: none; } }
+    .scene-credit a { color: var(--accent); pointer-events: auto; }
     .hotspot-node { cursor: pointer; transition: filter 0.15s ease; }
     .hotspot-node:hover, .hotspot-node.hover { filter: brightness(1.3) drop-shadow(0 0 7px rgba(111, 163, 200, 0.7)); }
     #stethChestpiece { cursor: grab; }
@@ -564,7 +573,9 @@
         </div>
       </div>
 
-      <div class="thorax-stage">
+      <div class="thorax-stage" id="thoraxStage">
+        <div id="thorax3d"></div>
+        <div class="scene-credit">3D anatomi: BodyParts3D © DBCLS, <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a></div>
         <svg id="thoraxSvg" viewBox="0 0 500 540">
           <defs>
             <radialGradient id="bodySkinGrad" cx="50%" cy="42%" r="55%">
@@ -1024,13 +1035,309 @@
 
   <div id="toastBox"></div>
 
-<script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+// ============================================================================
+//  DuctusLab Oskültasyon — 3D TORAKS & STETOSKOP SAHNESİ (Three.js r128)
+//  Anatomi: BodyParts3D 4.0 © The Database Center for Life Science, CC BY 4.0 (ashemag/human-atlas paketi üzerinden);
+//  akciğer kabukları bronş ağacından türetilmiştir. Hasta çerçevesi: cm; x sol, y kranial, z anterior.
+//  API: create(container, {onSelect, onHover, onDrop}) → S; S.load(base) ; S.setSpots(spots, activeId) ; S.setActive(id) ;
+//       S.setRadiation(from, to[]) ; S.setSide('front'|'back') ; S.setLayer(name,on) ; S.setFilter('bell'|'diaphragm') ;
+//       S.setContact(hard) ; S.setSystem('heart'|'lungs'|'abdomen') ; S.update(beatPhase, respPhase, sysFrac, dt) ; S.resize()
+// ============================================================================
+const Osk3D = (() => {
+  'use strict';
+  const DEG = Math.PI / 180;
+  const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
+  function b64ToBytes(b64) { const bin = atob(b64); const out = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i); return out; }
+  function buildParts(manifest, bytes) {
+    const parts = [];
+    for (const p of manifest.parts) {
+      const nv = p.nv, ni = p.ni;
+      const q = new Int16Array(bytes.buffer, bytes.byteOffset + p.pos, nv * 3); const pos = new Float32Array(nv * 3); for (let i = 0; i < nv * 3; i++) pos[i] = q[i] * 0.01;
+      const qn = new Int8Array(bytes.buffer, bytes.byteOffset + p.nrm, nv * 3); const nrm = new Float32Array(nv * 3); for (let i = 0; i < nv * 3; i++) nrm[i] = qn[i] / 127;
+      const idx = p.idx32 ? new Uint32Array(bytes.buffer, bytes.byteOffset + p.idx, ni) : new Uint16Array(bytes.buffer, bytes.byteOffset + p.idx, ni);
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.BufferAttribute(nrm, 3));
+      g.setIndex(new THREE.BufferAttribute(p.idx32 ? new Uint32Array(idx) : new Uint16Array(idx), 1)); g.computeBoundingSphere(); g.computeBoundingBox();
+      parts.push({ group: p.group, label: p.label, geometry: g, bounds: p.bounds });
+    }
+    return parts;
+  }
+  const MATS = () => ({
+    skin: skinMaterial(),
+    rib: new THREE.MeshPhysicalMaterial({ color: 0xd8ccb4, roughness: 0.78, transparent: true, opacity: 0.68 }),
+    cartilage: new THREE.MeshPhysicalMaterial({ color: 0xe6e1d4, roughness: 0.6, transparent: true, opacity: 0.66 }),
+    bone: new THREE.MeshPhysicalMaterial({ color: 0xd8ccb4, roughness: 0.78, transparent: true, opacity: 0.72 }),
+    heart: new THREE.MeshPhysicalMaterial({ color: 0xc8484a, roughness: 0.42, clearcoat: 0.4, clearcoatRoughness: 0.35 }),
+    atrium: new THREE.MeshPhysicalMaterial({ color: 0xb45a62, roughness: 0.48, clearcoat: 0.35, clearcoatRoughness: 0.4 }),
+    artery: new THREE.MeshPhysicalMaterial({ color: 0xd9403a, roughness: 0.4, clearcoat: 0.45 }),
+    pulm: new THREE.MeshPhysicalMaterial({ color: 0x5a6fd6, roughness: 0.45, clearcoat: 0.4 }),
+    vein: new THREE.MeshPhysicalMaterial({ color: 0x4f66c9, roughness: 0.48, clearcoat: 0.35 }),
+    lung: new THREE.MeshPhysicalMaterial({ color: 0xd0a6b4, transparent: true, opacity: 0.24, roughness: 0.7, clearcoat: 0.2, depthWrite: false, side: THREE.DoubleSide }),
+    airway: new THREE.MeshStandardMaterial({ color: 0xd7dde6, roughness: 0.55 }),
+    liver: new THREE.MeshPhysicalMaterial({ color: 0x9c5a4a, roughness: 0.6, clearcoat: 0.25 }),
+    spleen: new THREE.MeshPhysicalMaterial({ color: 0x6b3a5c, roughness: 0.6, clearcoat: 0.25 }),
+    stomach: new THREE.MeshPhysicalMaterial({ color: 0xcf9b8e, roughness: 0.6, clearcoat: 0.2 }),
+    kidney: new THREE.MeshPhysicalMaterial({ color: 0x8a4b3e, roughness: 0.55, clearcoat: 0.3 }),
+    diaphragm: new THREE.MeshStandardMaterial({ color: 0xc7a39c, transparent: true, opacity: 0.35, roughness: 0.85, depthWrite: false, side: THREE.DoubleSide })
+  });
+  // deri: kesim kenarlarında (boyun, kalça, kol kesitleri) saydamlığa karışan hayalet materyal
+  function skinMaterial() {
+    const m = new THREE.MeshPhysicalMaterial({ color: 0x3b4454, transparent: true, opacity: 0.46, roughness: 0.65, metalness: 0, clearcoat: 0.12, clearcoatRoughness: 0.6, side: THREE.FrontSide, depthWrite: false });
+    m.onBeforeCompile = sh => {
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vWp;').replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\nvWp = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vWp;').replace('#include <color_fragment>', '#include <color_fragment>\n{ float limx = vWp.y > 4.0 ? 23.5 : 20.5; float fx = 1.0 - smoothstep(limx - 3.5, limx, abs(vWp.x)); float fy = smoothstep(-40.0, -34.0, vWp.y) * (1.0 - smoothstep(18.5, 23.5, vWp.y)); diffuseColor.a *= fx * fy; }');
+    };
+    return m;
+  }
+  const LAYER_OF = { skin: 'skin', rib: 'xray', cartilage: 'xray', bone: 'xray', heart: 'organs', atrium: 'organs', artery: 'organs', pulm: 'organs', vein: 'organs', lung: 'organs', airway: 'organs', liver: 'organs', spleen: 'organs', stomach: 'organs', kidney: 'organs', diaphragm: 'organs' };
+  const SYSTEM_TARGET = { heart: [1.5, -3.5, -8], lungs: [0, -2, -8], abdomen: [0, -17, -8] };
+
+  function labelSprite(text, color) {
+    const c = document.createElement('canvas'); c.width = 128; c.height = 64; const x = c.getContext('2d');
+    x.font = '700 34px "JetBrains Mono", "SF Mono", Menlo, monospace'; x.textAlign = 'center'; x.textBaseline = 'middle';
+    x.shadowColor = 'rgba(0,0,0,0.85)'; x.shadowBlur = 8; x.fillStyle = color || '#ffffff'; x.fillText(text, 64, 34);
+    const t = new THREE.CanvasTexture(c); t.minFilter = THREE.LinearFilter;
+    const m = new THREE.SpriteMaterial({ map: t, transparent: true, depthTest: false }); const s = new THREE.Sprite(m); s.scale.set(3.2, 1.6, 1); s.renderOrder = 60; return s;
+  }
+
+  function create(container, opts) {
+    if (typeof THREE === 'undefined') return null;
+    opts = opts || {};
+    let renderer;
+    try { renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' }); } catch (e) { return null; }
+    const S = { container, ready: false, layers: { skin: true, xray: true, organs: true, foci: true }, layerObjs: { skin: [], xray: [], organs: [] }, spots: [], pins: {}, activeId: null, side: 'front', system: 'heart', filter: 'diaphragm', hard: false, drag: null, hoverId: null, camAnim: null, flipAnim: 0, time: 0, radiation: null };
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2)); renderer.setClearColor(0x000000, 0);
+    renderer.outputEncoding = THREE.sRGBEncoding; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
+    container.appendChild(renderer.domElement); Object.assign(renderer.domElement.style, { width: '100%', height: '100%', display: 'block', touchAction: 'none' });
+    const scene = new THREE.Scene(); const camera = new THREE.PerspectiveCamera(27, 1, 1, 400);
+    S.renderer = renderer; S.scene = scene; S.camera = camera;
+    S.orbit = { target: V3(1.5, -3.5, -8), theta: 0, phi: 1.47, dist: 78 };
+    function applyCamera() { const o = S.orbit; camera.position.set(o.target.x + o.dist * Math.sin(o.phi) * Math.sin(o.theta), o.target.y + o.dist * Math.cos(o.phi), o.target.z + o.dist * Math.sin(o.phi) * Math.cos(o.theta)); camera.lookAt(o.target); S.camDirty = true; }
+    // ışıklar: yumuşak stüdyo + rim
+    scene.add(new THREE.HemisphereLight(0xe3e9f4, 0x0f131c, 0.7));
+    const key = new THREE.DirectionalLight(0xffffff, 0.75); key.position.set(22, 34, 48); scene.add(key);
+    const rim = new THREE.DirectionalLight(0x8fb6ff, 0.42); rim.position.set(-34, 14, -30); scene.add(rim);
+    const rim2 = new THREE.DirectionalLight(0xffd8c0, 0.22); rim2.position.set(30, -10, -36); scene.add(rim2);
+    const fill = new THREE.DirectionalLight(0xffe6d2, 0.22); fill.position.set(-18, -14, 34); scene.add(fill);
+
+    // ---- gruplar ----
+    S.ventGroup = new THREE.Group(); S.atrGroup = new THREE.Group(); S.lungGroup = new THREE.Group(); scene.add(S.ventGroup, S.atrGroup, S.lungGroup);
+    S.pinGroup = new THREE.Group(); scene.add(S.pinGroup); S.radGroup = new THREE.Group(); scene.add(S.radGroup);
+    S.skinMesh = null; S.heartC = V3(2.5, -4.5, -7);
+
+    S.load = function (base) {
+      return Promise.all([fetch(base + 'osk.json').then(r => r.json()), fetch(base + 'osk.bin').then(r => r.arrayBuffer())]).then(([mj, bb]) => {
+        S.addParts(buildParts(mj, new Uint8Array(bb))); return S;
+      });
+    };
+    S.loadInline = function (manifest, b64) { S.addParts(buildParts(manifest, b64ToBytes(b64))); return S; };
+    S.addParts = function (parts) {
+      const mats = MATS(); S.mats = mats;
+      for (const p of parts) {
+        const mat = mats[p.group]; if (!mat) continue;
+        const mesh = new THREE.Mesh(p.geometry, mat); mesh.userData.group = p.group; mesh.userData.label = p.label;
+        if (p.group === 'skin') { mesh.renderOrder = 12; S.skinMesh = mesh; }
+        if (p.group === 'lung') mesh.renderOrder = 8; if (p.group === 'diaphragm') mesh.renderOrder = 6;
+        const layer = LAYER_OF[p.group]; if (layer) S.layerObjs[layer].push(mesh);
+        if (p.group === 'heart') S.ventGroup.add(mesh); else if (p.group === 'atrium') S.atrGroup.add(mesh); else if (p.group === 'lung') { const c = p.geometry.boundingSphere.center.clone(); const g = new THREE.Group(); g.position.copy(c); mesh.position.copy(c).negate(); g.add(mesh); g.userData.center = c; S.lungGroup.add(g); } else scene.add(mesh);
+      }
+      // kalp pivotu: ventrikül geometrisinin merkezi (atriyumlar tabanda sabit kalır)
+      const vm = S.ventGroup.children[0]; if (vm) { const c = vm.geometry.boundingSphere.center.clone(); S.heartC.copy(c); S.ventGroup.position.copy(c); vm.position.copy(c).negate(); }
+      const am = S.atrGroup.children[0]; if (am) { const c = am.geometry.boundingSphere.center.clone(); S.atrGroup.position.copy(c); am.position.copy(c).negate(); }
+      S.ready = true; for (const k of Object.keys(S.layers)) S.setLayer(k, S.layers[k]);
+      if (S.pendingSpots) S.setSpots(S.pendingSpots.spots, S.pendingSpots.activeId);
+      if (opts.onReady) opts.onReady();
+    };
+
+    // ---- deri üzerinde nokta bulma (ışın: belirtilen yönden) ----
+    const ray = new THREE.Raycaster();
+    S.skinPoint = function (x, y, z, dir) {
+      if (!S.skinMesh) return null;
+      let o, d;
+      if (dir === 'back') { o = V3(x, y, -60); d = V3(0, 0, 1); } else if (dir === 'left') { o = V3(60, y, z === undefined ? -8 : z); d = V3(-1, 0, 0); } else if (dir === 'right') { o = V3(-60, y, z === undefined ? -8 : z); d = V3(1, 0, 0); } else { o = V3(x, y, 60); d = V3(0, 0, -1); }
+      ray.set(o, d); const hits = ray.intersectObject(S.skinMesh, false);
+      if (!hits.length) return null;
+      const h = hits[0]; const n = h.face.normal.clone(); if (n.dot(d) > 0) n.negate();
+      return { p: h.point.clone(), n };
+    };
+
+    // ---- odak pinleri ----
+    S.setSpots = function (spots, activeId) {
+      if (!S.ready) { S.pendingSpots = { spots, activeId }; return; }
+      S.pendingSpots = null;
+      while (S.pinGroup.children.length) { const c = S.pinGroup.children.pop(); c.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material && o.material.map) o.material.map.dispose(); if (o.material) o.material.dispose(); }); }
+      S.pins = {}; S.spots = spots;
+      for (const sp of spots) {
+        const sk = S.skinPoint(sp.ax, sp.ay, sp.az, sp.dir || sp.side); if (!sk) continue;
+        const g = new THREE.Group(); g.position.copy(sk.p); g.userData.id = sp.id; g.userData.n = sk.n.clone(); g.userData.side = sp.side;
+        const q = new THREE.Quaternion().setFromUnitVectors(V3(0, 1, 0), sk.n); g.quaternion.copy(q);
+        const col = new THREE.Color(sp.color || '#b9545d');
+        const ball = new THREE.Mesh(new THREE.SphereGeometry(0.62, 20, 14), new THREE.MeshPhysicalMaterial({ color: col, emissive: col, emissiveIntensity: 0.55, roughness: 0.35, clearcoat: 0.5 })); ball.position.y = 0.5; ball.userData.pin = sp.id; ball.renderOrder = 40; g.add(ball);
+        const ring = new THREE.Mesh(new THREE.RingGeometry(1.0, 1.35, 40), new THREE.MeshBasicMaterial({ color: 0x6fa3c8, transparent: true, opacity: 0.0, side: THREE.DoubleSide, depthTest: false })); ring.rotation.x = -Math.PI / 2; ring.position.y = 0.08; ring.renderOrder = 41; ring.name = 'ring'; g.add(ring);
+        const halo = new THREE.Mesh(new THREE.CircleGeometry(0.95, 32), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.22, depthTest: false })); halo.rotation.x = -Math.PI / 2; halo.position.y = 0.06; halo.renderOrder = 39; g.add(halo);
+        const lab = labelSprite(sp.code, '#ffffff'); lab.position.set(0, 1.9, 0); lab.userData.pin = sp.id; g.add(lab);
+        g.userData.ball = ball; g.userData.ring = ring; g.userData.lab = lab;
+        S.pinGroup.add(g); S.pins[sp.id] = g;
+      }
+      S.setActive(activeId); S.setLayer('foci', S.layers.foci);
+    };
+    S.setActive = function (id) {
+      S.activeId = id;
+      for (const k of Object.keys(S.pins)) { const g = S.pins[k]; const on = k === id; g.userData.ball.scale.setScalar(on ? 1.25 : 1); g.userData.ring.material.opacity = on ? 0.9 : 0; }
+      if (id && S.pins[id]) S.moveTo(id);
+    };
+    S.setLayer = function (name, on) {
+      S.layers[name] = on;
+      if (name === 'foci') { S.pinGroup.visible = on; S.radGroup.visible = on; return; }
+      (S.layerObjs[name] || []).forEach(m => m.visible = on);
+    };
+    S.setSystem = function (sys) { S.system = sys; const t = SYSTEM_TARGET[sys] || SYSTEM_TARGET.heart; S.targetAnim = { from: S.orbit.target.clone(), to: V3(t[0], t[1], t[2]), t: 0 }; if (S.mats) S.mats.lung.opacity = sys === 'lungs' ? 0.4 : 0.24; };
+    S.setSide = function (side) { S.side = side; const to = side === 'back' ? Math.PI : 0; S.camAnim = { from: S.orbit.theta, to, t: 0 }; };
+    S.setRadiation = function (fromId, toIds) {
+      while (S.radGroup.children.length) { const c = S.radGroup.children.pop(); if (c.geometry) c.geometry.dispose(); if (c.material) c.material.dispose(); }
+      S.radiation = null; if (!fromId || !toIds || !toIds.length || !S.pins[fromId]) return;
+      const from = S.pins[fromId]; const rings = [];
+      for (const tid of toIds) {
+        const to = S.pins[tid]; if (!to) continue;
+        // deri üstünde yay (orta nokta biraz dışarı)
+        const a = from.position.clone(), b = to.position.clone(); const mid = a.clone().add(b).multiplyScalar(0.5).add(from.userData.n.clone().add(to.userData.n).normalize().multiplyScalar(2.2));
+        const pts = new THREE.QuadraticBezierCurve3(a, mid, b).getPoints(40);
+        const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineDashedMaterial({ color: 0xd9a441, dashSize: 0.9, gapSize: 0.5, transparent: true, opacity: 0.85, depthTest: false })); line.computeLineDistances(); line.renderOrder = 45; S.radGroup.add(line);
+        for (let k = 0; k < 3; k++) { const r = new THREE.Mesh(new THREE.RingGeometry(0.9, 1.15, 40), new THREE.MeshBasicMaterial({ color: 0xd9a441, transparent: true, opacity: 0.5, side: THREE.DoubleSide, depthTest: false })); r.position.copy(to.position).add(to.userData.n.clone().multiplyScalar(0.1)); r.quaternion.copy(to.quaternion); r.rotateX(-Math.PI / 2); r.renderOrder = 46; r.userData.k = k; S.radGroup.add(r); rings.push(r); }
+      }
+      S.radiation = { rings };
+    };
+
+    // ---- stetoskop ----
+    const steth = new THREE.Group(); scene.add(steth); S.steth = steth;
+    const headPivot = new THREE.Group(); steth.add(headPivot); // flip pivotu
+    const steel = new THREE.MeshStandardMaterial({ color: 0xcfd6e0, metalness: 0.88, roughness: 0.32 });
+    const steelDark = new THREE.MeshStandardMaterial({ color: 0x8e97a4, metalness: 0.85, roughness: 0.4 });
+    const membrane = new THREE.MeshStandardMaterial({ color: 0x1d2330, metalness: 0.1, roughness: 0.55 });
+    const rubber = new THREE.MeshStandardMaterial({ color: 0x14181f, roughness: 0.75 });
+    const disc = new THREE.Mesh(new THREE.CylinderGeometry(2.05, 2.2, 0.55, 48), steel); disc.position.y = 0.42; headPivot.add(disc);
+    const diaph = new THREE.Mesh(new THREE.CircleGeometry(1.75, 48), membrane); diaph.rotation.x = Math.PI / 2; diaph.position.y = 0.12; headPivot.add(diaph);
+    const rimT = new THREE.Mesh(new THREE.TorusGeometry(1.95, 0.14, 12, 48), steelDark); rimT.rotation.x = Math.PI / 2; rimT.position.y = 0.15; headPivot.add(rimT);
+    const bell = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.35, 0.7, 40, 1, true), steel); bell.position.y = 1.05; headPivot.add(bell);
+    const bellCap = new THREE.Mesh(new THREE.CircleGeometry(1.0, 40), membrane); bellCap.rotation.x = -Math.PI / 2; bellCap.position.y = 1.4; headPivot.add(bellCap);
+    const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 1.6, 12), steelDark); stem.position.set(1.9, 0.75, 0); stem.rotation.z = Math.PI / 2 - 0.5; steth.add(stem);
+    [disc, diaph, rimT, bell, bellCap, stem].forEach(m => { m.userData.steth = true; });
+    S.tube = null;
+    function buildTube() {
+      if (S.tube) { scene.remove(S.tube); S.tube.geometry.dispose(); }
+      // tüp (dünya uzayı): sapın ucundan yukarı ve kameraya doğru kıvrılarak kadraj dışına
+      const start = V3(2.6, 0.9, 0).applyQuaternion(steth.quaternion).add(steth.position);
+      const toCam = camera.position.clone().sub(steth.position).normalize(); const up = V3(0, 1, 0); const lat = V3().crossVectors(up, toCam).normalize();
+      const pts = [start, start.clone().add(toCam.clone().multiplyScalar(2.5)).add(up.clone().multiplyScalar(2.5)).add(lat.clone().multiplyScalar(-1.5)),
+        start.clone().add(toCam.clone().multiplyScalar(9)).add(up.clone().multiplyScalar(11)).add(lat.clone().multiplyScalar(-4)),
+        start.clone().add(toCam.clone().multiplyScalar(20)).add(up.clone().multiplyScalar(26)).add(lat.clone().multiplyScalar(-6)),
+        start.clone().add(toCam.clone().multiplyScalar(34)).add(up.clone().multiplyScalar(44)).add(lat.clone().multiplyScalar(-7))];
+      const tube = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 40, 0.3, 10, false), rubber); tube.userData.steth = true; scene.add(tube); S.tube = tube;
+    }
+    S.stethPose = { p: V3(0, 0, 5), n: V3(0, 0, 1), tp: null, tn: null, settled: true };
+    S.moveTo = function (id) { const g = S.pins[id]; if (!g) return; S.stethPose.tp = g.position.clone(); S.stethPose.tn = g.userData.n.clone(); S.stethPose.settled = false; };
+    function placeSteth(p, n) {
+      const press = S.hard ? 0.3 : 0.05; steth.position.copy(p).sub(n.clone().multiplyScalar(press));
+      steth.quaternion.setFromUnitVectors(V3(0, 1, 0), n);
+      buildTube();
+    }
+    S.setFilter = function (f) { if (f !== S.filter) { S.filter = f; S.flipFrom = headPivot.rotation.x; S.flipTo = f === 'bell' ? Math.PI : 0; S.flipAnim = 0.0001; } };
+    S.setContact = function (hard) { S.hard = !!hard; placeSteth(S.stethPose.p, S.stethPose.n); };
+
+    // ---- etkileşim ----
+    const el = renderer.domElement; const ndc = new THREE.Vector2();
+    function setNdc(e) { const r = el.getBoundingClientRect(); ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(ndc, camera); }
+    function pickSteth(e) { setNdc(e); const objs = []; steth.traverse(o => { if (o.isMesh && o.userData.steth) objs.push(o); }); if (S.tube) objs.push(S.tube); return ray.intersectObjects(objs, false).length > 0; }
+    function pickPin(e) { setNdc(e); const objs = []; S.pinGroup.traverse(o => { if ((o.isMesh || o.isSprite) && o.userData.pin) objs.push(o); }); const h = ray.intersectObjects(objs, false); return h.length ? h[0].object.userData.pin : null; }
+    function skinUnderPointer(e) { setNdc(e); if (!S.skinMesh) return null; const h = ray.intersectObject(S.skinMesh, false); if (!h.length) return null; const n = h[0].face.normal.clone(); return { p: h[0].point.clone(), n }; }
+    function nearestSpot(p, maxD) { let best = null, bd = Infinity; for (const k of Object.keys(S.pins)) { const g = S.pins[k]; if (g.userData.side !== S.side) continue; const d = g.position.distanceTo(p); if (d < bd) { bd = d; best = k; } } return bd <= maxD ? best : null; }
+    el.addEventListener('pointerdown', e => {
+      if (pickSteth(e)) { S.drag = { mode: 'steth', moved: false, lx: e.clientX, ly: e.clientY }; S.stethPose.settled = true; el.style.cursor = 'grabbing'; el.setPointerCapture(e.pointerId); return; }
+      const pin = pickPin(e); if (pin) { S.drag = { mode: 'pin', id: pin, lx: e.clientX, ly: e.clientY, moved: false }; el.setPointerCapture(e.pointerId); return; }
+      S.drag = { mode: 'orbit', lx: e.clientX, ly: e.clientY, moved: false }; el.setPointerCapture(e.pointerId); el.style.cursor = 'grabbing';
+    });
+    el.addEventListener('pointermove', e => {
+      if (!S.drag) { el.style.cursor = pickSteth(e) ? 'grab' : pickPin(e) ? 'pointer' : 'default'; return; }
+      const d = S.drag; const dx = e.clientX - d.lx, dy = e.clientY - d.ly; if (Math.hypot(e.clientX - d.lx, e.clientY - d.ly) > 2) d.moved = true; d.lx = e.clientX; d.ly = e.clientY;
+      if (d.mode === 'orbit' || (d.mode === 'pin' && d.moved)) { const o = S.orbit; S.camAnim = null; o.theta -= dx * 0.007; o.phi = Math.min(2.4, Math.max(0.7, o.phi - dy * 0.007)); applyCamera(); return; }
+      if (d.mode === 'steth') { const sk = skinUnderPointer(e); if (sk) { S.stethPose.p = sk.p; S.stethPose.n = sk.n; placeSteth(sk.p, sk.n); const near = nearestSpot(sk.p, 3.2); if (near !== S.hoverId) { S.hoverId = near; S.highlight(near); if (opts.onHover) opts.onHover(near); } } }
+    });
+    const endDrag = e => {
+      const d = S.drag; if (!d) return; S.drag = null; el.style.cursor = 'default'; try { el.releasePointerCapture(e.pointerId); } catch (x) {}
+      if (d.mode === 'steth') { const near = nearestSpot(S.stethPose.p, 4.0); S.highlight(null); S.hoverId = null; if (opts.onDrop) opts.onDrop(near); }
+      else if (d.mode === 'pin' && !d.moved) { if (opts.onSelect) opts.onSelect(d.id); }
+    };
+    el.addEventListener('pointerup', endDrag); el.addEventListener('pointercancel', endDrag);
+    el.addEventListener('wheel', e => { e.preventDefault(); S.orbit.dist = Math.min(150, Math.max(30, S.orbit.dist * (1 + Math.sign(e.deltaY) * 0.08))); applyCamera(); }, { passive: false });
+    let pinch = 0;
+    el.addEventListener('touchstart', e => { if (e.touches.length === 2) pinch = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY); }, { passive: true });
+    el.addEventListener('touchmove', e => { if (e.touches.length === 2 && pinch) { const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY); S.orbit.dist = Math.min(150, Math.max(30, S.orbit.dist * pinch / d)); pinch = d; applyCamera(); e.preventDefault(); } }, { passive: false });
+    S.highlight = function (id) { for (const k of Object.keys(S.pins)) { const g = S.pins[k]; const on = k === id; g.userData.ball.material.emissiveIntensity = on ? 1.4 : 0.55; g.userData.ball.scale.setScalar(on ? 1.45 : (k === S.activeId ? 1.25 : 1)); } };
+
+    S.resize = function () { const w = container.clientWidth || 300, h = container.clientHeight || 300; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); };
+    const ease = t => t * t * (3 - 2 * t);
+    S.update = function (beatPhase, respPhase, sysFrac, dt, audioOn) {
+      dt = dt || 0.016; S.time += dt;
+      // kamera animasyonları
+      if (S.camAnim) { const a = S.camAnim; a.t = Math.min(1, a.t + dt / 0.9); const s = ease(a.t); S.orbit.theta = a.from + (a.to - a.from) * s; if (a.t >= 1) S.camAnim = null; applyCamera(); }
+      if (S.targetAnim) { const a = S.targetAnim; a.t = Math.min(1, a.t + dt / 0.8); S.orbit.target.copy(a.from).lerp(a.to, ease(a.t)); if (a.t >= 1) S.targetAnim = null; applyCamera(); }
+      // kalp: sistolde ventriküller %8 küçülür (Wiggers fazıyla senkron), atriyumlar hafif dolar
+      const sf = sysFrac || 0.35; const sys = beatPhase < sf ? Math.sin(Math.PI * beatPhase / sf) : 0;
+      const vs = 1 - 0.08 * sys; S.ventGroup.scale.setScalar(vs); S.atrGroup.scale.setScalar(1 + 0.035 * sys);
+      // akciğerler: inspiryumda %3.5 genişler
+      const insp = 0.5 - 0.5 * Math.cos(2 * Math.PI * (respPhase || 0)); S.lungGroup.children.forEach(g => g.scale.setScalar(1 + 0.035 * insp));
+      // stetoskop süzülme
+      const sp = S.stethPose; if (S.camDirty) { S.camDirty = false; placeSteth(sp.p, sp.n); }
+      if (!sp.settled && sp.tp) { const k = 1 - Math.exp(-dt * 7); sp.p.lerp(sp.tp, k); sp.n.lerp(sp.tn, k).normalize(); placeSteth(sp.p, sp.n); if (sp.p.distanceTo(sp.tp) < 0.05) { sp.p.copy(sp.tp); sp.n.copy(sp.tn); sp.settled = true; placeSteth(sp.p, sp.n); } }
+      if (S.flipAnim > 0) { S.flipAnim = Math.min(1, S.flipAnim + dt / 0.45); headPivot.rotation.x = S.flipFrom + (S.flipTo - S.flipFrom) * ease(S.flipAnim); if (S.flipAnim >= 1) S.flipAnim = 0; }
+      // aktif pin halkası nabızla
+      if (S.activeId && S.pins[S.activeId]) { const g = S.pins[S.activeId]; const pulse = beatPhase < 0.12 ? 1 - beatPhase / 0.12 : 0; g.userData.ring.scale.setScalar(1 + 0.35 * pulse); g.userData.ring.material.opacity = 0.55 + 0.4 * pulse; }
+      // yayılım halkaları: sistolde dışa doğru genişleyen 3 halka
+      if (S.radiation) { const ph = beatPhase < sf ? beatPhase / sf : 1; S.radiation.rings.forEach(r => { const t = ((ph + r.userData.k / 3) % 1); r.scale.setScalar(0.6 + 1.6 * t); r.material.opacity = (audioOn === false ? 0.25 : 0.6) * (1 - t); }); }
+      // pin etiketleri kameraya dönük (sprite) — yalnız görünen yüzdekiler
+      for (const k of Object.keys(S.pins)) { const g = S.pins[k]; g.visible = S.layers.foci && (g.userData.side === S.side || Math.abs(Math.cos(S.orbit.theta)) < 0.35); }
+      renderer.render(scene, camera);
+    };
+    S.resize(); applyCamera(); placeSteth(S.stethPose.p, S.stethPose.n);
+    return S;
+  }
+  return { create };
+})();
+
+// Oskültasyon odaklarının anatomik 3B koordinatları (cm; x sol+, y kranial+). dir: ışın yönü (front/back/left/right)
+const SPOT3D = {
+  A: { ax: -2.8, ay: 0.5 }, P: { ax: 2.8, ay: 0.5 }, E: { ax: 3.0, ay: -2.0 }, T: { ax: 2.5, ay: -5.5 }, M: { ax: 8.5, ay: -9.4 }, H: { ax: 0, ay: -11.5 },
+  Cd: { ax: -3.5, ay: 13.5 }, Ci: { ax: 3.5, ay: 13.5 }, Ax: { ax: 14, ay: -7, az: -7, dir: 'left' },
+  RUL: { ax: -6, ay: 3.5 }, LUL: { ax: 6, ay: 3.5 }, RML: { ax: -8.5, ay: -5 }, RLL: { ax: -13.5, ay: -12, az: -8, dir: 'right' }, LLL: { ax: 13.5, ay: -12, az: -8, dir: 'left' },
+  B_RUL: { ax: -3.5, ay: 5, dir: 'back' }, B_LUL: { ax: 3.5, ay: 5, dir: 'back' }, B_RLL: { ax: -7, ay: -9, dir: 'back' }, B_LLL: { ax: 7, ay: -9, dir: 'back' },
+  AA: { ax: 0, ay: -15.5 }, RA_R: { ax: -4, ay: -20 }, RLQ: { ax: -9, ay: -31 }
+};
+
+  </script>
+  <script>
     const MODULE_ID = 'osk';
     // ---- DuctusLab Suite köprüsü (bağımsız çalışırken sessiz) ----
     function suiteTrack(ev, data) { try { if (window.parent !== window && window.parent.DuctusSuite) window.parent.DuctusSuite.track(MODULE_ID, ev, data || {}); } catch (e) {} }
     function inSuite() { try { return window.parent !== window && !!window.parent.DuctusSuite; } catch (e) { return false; } }
     function goPortal() { if (inSuite()) window.parent.DuctusSuite.openPortal(); else window.location.href = '../'; }
-    if (inSuite()) document.addEventListener('DOMContentLoaded', () => { document.head.insertAdjacentHTML('beforeend', '<style>.brand .wordmark, .brand .vsep { display: none !important; } .brand .product { color: var(--ink); font-weight: 600; }</style>'); });
+    // Paket içinde: modülün kendi üst barı gizlenir; alt sekmeler (Kalp/Akciğer/Abdomen) ve Ses/Stüdyo eylemleri paket çubuğuna yansıtılır (tek üst bar)
+    if (inSuite()) document.addEventListener('DOMContentLoaded', () => { document.head.insertAdjacentHTML('beforeend', '<style>body > header { display: none !important; } body.studio-mode #leftViewport { min-height: 100dvh; }</style>'); });
+    function publishModuleBar() {
+      if (!inSuite() || !window.parent.DuctusSuite.setModuleBar) return;
+      const meta = { heart: 'Kalp', lungs: 'Akciğer', abdomen: 'Abdomen' };
+      try {
+        window.parent.DuctusSuite.setModuleBar(MODULE_ID, {
+          tabs: ['heart', 'lungs', 'abdomen'].map(k => ({ id: 'sys:' + k, label: meta[k], count: AUSCULTATION_SPOTS[k].length, active: state.organSystem === k })),
+          actions: [
+            { id: 'audio', label: state.audioRunning ? 'Ses Aktif' : 'Ses Kapalı', cls: 'audio' + (state.audioRunning ? ' on' : ''), title: 'Gerçek zamanlı ses sentezini başlatır / durdurur' },
+            { id: 'studio', label: 'Stüdyo 9:16', cls: document.body.classList.contains('studio-mode') ? 'on' : '', title: '9:16 dikey kayıt düzeni; konsol gizlenir' }
+          ]
+        });
+      } catch (e) {}
+    }
+    window.DuctusModuleBar = { onAction(id) { if (id.indexOf('sys:') === 0) switchOrganSystem(id.slice(4)); else if (id === 'audio') toggleAudioEngine(); else if (id === 'studio') toggleStudioMode(); } };
     const AUSCULTATION_SPOTS = {
       heart: [
         { id: 'A', code: 'A', name: 'Aort Odağı', side: 'front', x: 222, y: 162, color: '#b9545d', anat: 'Sağ 2. interkostal aralık, sternal kenar' },
@@ -1060,6 +1367,26 @@
         { id: 'RLQ', code: 'İÇ', name: 'İleoçekal Odak', side: 'front', x: 190, y: 445, color: '#5a9f7f', anat: 'Sağ alt kadran' }
       ]
     };
+
+    // 3D sahne (Osk3D) — odaklara anatomik 3B koordinatlar eklenir
+    Object.values(AUSCULTATION_SPOTS).forEach(list => list.forEach(sp => { if (SPOT3D[sp.id]) Object.assign(sp, SPOT3D[sp.id]); }));
+    let scene3d = null;
+    function initScene3d() {
+      const stage = document.getElementById('thoraxStage');
+      try { scene3d = Osk3D.create(document.getElementById('thorax3d'), { onSelect: id => selectAuscultationSpot(id), onHover: id => highlightHoverSpot(id), onDrop: id => { if (id && id !== state.activeSpotId) selectAuscultationSpot(id); else if (scene3d) scene3d.setActive(state.activeSpotId); } }); } catch (e) { console.warn('3D sahne kurulamadı', e); scene3d = null; }
+      if (!scene3d) { stage.classList.add('svg-fallback'); return; }
+      scene3d.load('assets/').then(() => { syncScene3d(); scene3d.setSide(state.bodySide); scene3d.setSystem(state.organSystem); scene3d.setFilter(state.stethFilter); scene3d.setContact(state.bellPressedHard); })
+        .catch(e => { console.warn('3D anatomi yüklenemedi, SVG yedeğe dönülüyor', e); scene3d = null; stage.classList.add('svg-fallback'); });
+      window.addEventListener('resize', () => { if (scene3d) requestAnimationFrame(() => scene3d.resize()); });
+    }
+    function syncScene3d() {
+      if (!scene3d || !scene3d.ready) return;
+      scene3d.setSpots(AUSCULTATION_SPOTS[state.organSystem], state.activeSpotId);
+      const path = PATHOLOGIES[state.currentCaseId];
+      if (path && path.radiation && state.layers.foci) scene3d.setRadiation(path.radiation.from, path.radiation.to); else scene3d.setRadiation(null, null);
+      ['xray', 'organs', 'foci'].forEach(k => scene3d.setLayer(k, state.layers[k]));
+      scene3d.resize();
+    }
 
     const PATHOLOGIES = {
       aortic_stenosis: {
@@ -1346,6 +1673,7 @@
       document.getElementById('audioBtnLabel').textContent = state.audioRunning ? 'Ses Aktif' : 'Ses Kapalı';
       btn.classList.toggle('on', state.audioRunning);
       document.body.classList.toggle('listening', state.audioRunning);
+      publishModuleBar();
     }
 
     function computeEffectiveMurmurGain() {
@@ -1531,6 +1859,7 @@
       if (waveHistory.length > MAX_POINTS) waveHistory.shift();
 
       tickStethoscope(dt);
+      if (scene3d && scene3d.ready) scene3d.update(beatPhase, respPhase, systoleFrac(), dt, state.audioRunning);
       updateAmbientPulse(beatPhase);
       drawPhonoCanvas();
       if (state.layers.wiggers) drawWiggersCanvas();
@@ -1591,7 +1920,7 @@
       const fociGroup = document.getElementById('svgLayer-foci');
       const radGroup = document.getElementById('svgLayer-radiation');
       fociGroup.innerHTML = ''; radGroup.innerHTML = '';
-      if (!state.layers.foci) return;
+      if (!state.layers.foci) { syncScene3d(); return; }
 
       const spots = AUSCULTATION_SPOTS[state.organSystem].filter(s => s.side === state.bodySide);
       const path = PATHOLOGIES[state.currentCaseId];
@@ -1645,6 +1974,7 @@
         fociGroup.appendChild(g);
       });
       moveStethoscopeToActiveSpot();
+      syncScene3d();
     }
 
     function selectAuscultationSpot(spotId) {
@@ -1722,6 +2052,7 @@
 
     function highlightHoverSpot(spotId) {
       document.querySelectorAll('.hotspot-node').forEach(g => g.classList.toggle('hover', g.dataset.spot === spotId));
+      if (scene3d && scene3d.ready) scene3d.highlight(spotId);
     }
 
     function initStethoscopeDrag() {
@@ -1976,6 +2307,7 @@
       state.stethFilter = mode;
       document.getElementById('filterBtn-diaphragm').className = mode === 'diaphragm' ? 'active-sky' : '';
       document.getElementById('filterBtn-bell').className = mode === 'bell' ? 'active-amber' : '';
+      if (scene3d) scene3d.setFilter(mode);
       updateFilterNodeSettings();
     }
 
@@ -1985,6 +2317,7 @@
       const btn = document.getElementById('bellPressureBtn');
       btn.className = state.bellPressedHard ? 'active-rose' : '';
       btn.textContent = state.bellPressedHard ? 'Temas: Sıkı' : 'Temas: Hafif';
+      if (scene3d) scene3d.setContact(state.bellPressedHard);
       updateFilterNodeSettings();
     }
 
@@ -1997,6 +2330,7 @@
 
     function switchOrganSystem(sys) {
       state.organSystem = sys;
+      if (scene3d) scene3d.setSystem(sys);
       document.getElementById('caseQuickSearch').value = '';
       if (sys !== 'lungs' && state.bodySide === 'back') setBodySideState('front');
       updateSystemButtonsUI();
@@ -2011,6 +2345,7 @@
         btn.className = (s === state.organSystem) ? 'active-sky' : '';
         btn.innerHTML = `${meta[s]}<span class="cnt">${AUSCULTATION_SPOTS[s].length}</span>`;
       });
+      publishModuleBar();
     }
 
     function setBodySideState(side) {
@@ -2023,6 +2358,7 @@
       document.getElementById('organsFront').style.display = back ? 'none' : 'block';
       document.getElementById('organsBack').style.display = back ? 'block' : 'none';
       document.getElementById('bodySideHint').classList.toggle('hidden', !back);
+      if (scene3d) scene3d.setSide(side);
     }
 
     function setBodySide(side) {
@@ -2041,6 +2377,7 @@
       document.getElementById(`layerBtn-${layerName}`).className = active ? 'active-sky' : '';
       if (layerName === 'xray') document.getElementById('svgLayer-xray').style.display = active ? 'block' : 'none';
       if (layerName === 'organs') document.getElementById('svgLayer-organs').style.display = active ? 'block' : 'none';
+      if (scene3d && scene3d.ready && (layerName === 'xray' || layerName === 'organs')) scene3d.setLayer(layerName, active);
       if (layerName === 'foci') renderHotspotsAndRadiation();
       if (layerName === 'wiggers') document.getElementById('wiggersContainer').style.display = active ? 'flex' : 'none';
     }
@@ -2315,6 +2652,8 @@
 
     function toggleStudioMode() {
       document.body.classList.toggle('studio-mode');
+      publishModuleBar();
+      if (scene3d) { requestAnimationFrame(() => scene3d.resize()); setTimeout(() => scene3d && scene3d.resize(), 200); }
       requestAnimationFrame(() => requestAnimationFrame(resizeCanvases));
       setTimeout(resizeCanvases, 160);
     }
@@ -2342,6 +2681,7 @@
       const facSel = document.getElementById('facultySelector');
       if (savedFac && Array.from(facSel.options).some(o => o.value === savedFac)) facSel.value = savedFac;
       updateSystemButtonsUI();
+      initScene3d();
       setBodySideState('front');
       initStethoscopeDrag();
       selectPathology('aortic_stenosis');
