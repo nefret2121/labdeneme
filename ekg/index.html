@@ -380,7 +380,7 @@
     function suiteTrack(ev, data) { try { if (window.parent !== window && window.parent.DuctusSuite) window.parent.DuctusSuite.track(MODULE_ID, ev, data || {}); } catch (e) {} }
     function inSuite() { try { return window.parent !== window && !!window.parent.DuctusSuite; } catch (e) { return false; } }
     function goPortal() { if (inSuite()) window.parent.DuctusSuite.openPortal(); else window.location.href = '../'; }
-    if (inSuite()) document.addEventListener('DOMContentLoaded', () => { document.head.insertAdjacentHTML('beforeend', '<style>.brand .wordmark, .brand .vsep { display: none !important; } .brand .product { color: var(--ink); font-weight: 600; }</style>'); });
+    if (inSuite()) document.addEventListener('DOMContentLoaded', () => { document.head.insertAdjacentHTML('beforeend', '<style>.brand .wordmark, .brand .vsep, button[onclick="goPortal()"] { display: none !important; } .brand .product { color: var(--ink); font-weight: 600; }</style>'); });
     // ---------------- Dower inverse transfer matrix (Frank X: sol, Y: aşağı, Z: arka) ----------------
     const DOWER = {
       I:  { x: 0.632, y: -0.235, z: 0.059 }, II: { x: 0.235, y: 1.066, z: -0.132 },
@@ -906,12 +906,30 @@
       else if (k === 'p') setPaper(state.paper === 'monitor' ? 'paper' : 'monitor'); else if (k === 'g') toggleGain(); else if (k === 'v') toggleExtraLeads();
     });
 
+    // ---- Modüller arası köprü (Acil Konsol → ritim) ----
+    // p: { scenario (SCENARIOS anahtarı), hr?, k? (mEq/L), label? }
+    window.DuctusBridge = {
+      apply(action, p) {
+        if (action !== 'ekg' || !p || !SCENARIOS[p.scenario]) return false;
+        loadScenario(p.scenario);
+        if (p.hr) document.getElementById('sHr').value = Math.min(185, Math.max(34, Math.round(p.hr)));
+        if (p.k) document.getElementById('sK').value = Math.min(8.4, Math.max(2.3, p.k));
+        onParam();
+        showToast(`Acil Konsol'dan açıldı: ${p.label || SCENARIOS[p.scenario].name}`);
+        suiteTrack('bridge_in', { from: 'acil', scenario: p.scenario, hr: state.hr, k: state.k });
+        return true;
+      }
+    };
+    function applyHashBridge() { // bağımsız sayfada: ../acil/ → #bridge=...
+      try { const m = location.hash.match(/#bridge=(.+)/); if (m) { const d = JSON.parse(decodeURIComponent(m[1])); history.replaceState(null, '', location.pathname); window.DuctusBridge.apply(d.action, d.payload); } } catch (e) {}
+    }
     window.addEventListener('DOMContentLoaded', () => {
       const sel = document.getElementById('scenarioSelect');
       sel.innerHTML = '<option value="" disabled>Gizli vaka</option>' + SCEN_KEYS.map((k, i) => `<option value="${k}">${i + 1}. ${SCENARIOS[k].name}</option>`).join('');
       document.getElementById('scenCount').textContent = `${SCEN_KEYS.length} vaka`;
       resizeAll(); loadScenario('ant_stemi'); onPacer();
       requestAnimationFrame(loop);
+      applyHashBridge();
     });
   </script>
 </body>

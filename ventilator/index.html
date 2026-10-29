@@ -328,7 +328,7 @@
     function suiteTrack(ev, data) { try { if (window.parent !== window && window.parent.DuctusSuite) window.parent.DuctusSuite.track(MODULE_ID, ev, data || {}); } catch (e) {} }
     function inSuite() { try { return window.parent !== window && !!window.parent.DuctusSuite; } catch (e) { return false; } }
     function goPortal() { if (inSuite()) window.parent.DuctusSuite.openPortal(); else window.location.href = '../'; }
-    if (inSuite()) document.addEventListener('DOMContentLoaded', () => { document.head.insertAdjacentHTML('beforeend', '<style>.brand .wordmark, .brand .vsep { display: none !important; } .brand .product { color: var(--ink); font-weight: 600; }</style>'); });
+    if (inSuite()) document.addEventListener('DOMContentLoaded', () => { document.head.insertAdjacentHTML('beforeend', '<style>.brand .wordmark, .brand .vsep, button[onclick="goPortal()"] { display: none !important; } .brand .product { color: var(--ink); font-weight: 600; }</style>'); });
     // ---------------- patient profiles ----------------
     const PROFILES = {
       normal: { name: 'Normal Akciğer', sub: 'Postoperatif, sedatize', C: 60, R: 8, shunt0: 0.04, recruit: 0.10, alvDead: 0.03, vco2: 200, hco3: 24,
@@ -711,6 +711,29 @@
     }
 
     // ---------------- init ----------------
+    // ---- Modüller arası köprü (Acil Konsol → ventilatör reçetesi) ----
+    // p: { vt, rr, peep, fio2, ie (E değeri: 1:E), profile ('normal'|'ards_mod'|'ards_sev'|'copd'|'asthma'), sex ('m'|'f'), height }
+    window.DuctusBridge = {
+      apply(action, p) {
+        if (action !== 'vent' || !p) return false;
+        if (p.profile && PROFILES[p.profile]) setProfile(p.profile, true);
+        if (p.sex === 'm' || p.sex === 'f') { state.sex = p.sex; document.getElementById('sexM').className = p.sex === 'm' ? 'active-sky' : ''; document.getElementById('sexF').className = p.sex === 'f' ? 'active-sky' : ''; }
+        if (p.height) document.getElementById('sHeight').value = Math.min(195, Math.max(150, Math.round(p.height)));
+        const vt = Math.min(700, Math.max(250, Math.round((p.vt || state.vt) / 10) * 10));
+        const rr = Math.min(36, Math.max(8, Math.round(p.rr || state.rr)));
+        // İ:E → akım (VC-CMV): Ti = Ttot/(1+E), akım = Vt / (Ti − pause)
+        let flow = state.flow;
+        if (p.ie) { const ti = (60 / rr) / (1 + p.ie); flow = Math.round(((vt / 1000) / Math.max(0.3, ti - PAUSE)) * 60 / 5) * 5; flow = Math.min(80, Math.max(20, flow)); }
+        applySettings({ vt, rr, flow, peep: Math.min(24, Math.max(0, Math.round(p.peep ?? state.peep))), fio2: Math.min(100, Math.max(21, Math.round(p.fio2 ?? state.fio2))) });
+        state.abg = null; state.abgStale = true; onSettings();
+        showToast(`Acil Konsol reçetesi yüklendi: ${PROFILES[state.profile].name} · Vt ${vt} · RR ${rr} · PEEP ${state.peep} · FiO₂ ${state.fio2} · akım ${flow} L/dk`);
+        suiteTrack('bridge_in', { from: 'acil', vt, rr, peep: state.peep, fio2: state.fio2, profile: state.profile });
+        return true;
+      }
+    };
+    function applyHashBridge() { // bağımsız sayfada: ../acil/ → #bridge=...
+      try { const m = location.hash.match(/#bridge=(.+)/); if (m) { const d = JSON.parse(decodeURIComponent(m[1])); history.replaceState(null, '', location.pathname); window.DuctusBridge.apply(d.action, d.payload); } } catch (e) {}
+    }
     window.addEventListener('DOMContentLoaded', () => {
       const grid = document.getElementById('profileGrid');
       Object.entries(PROFILES).forEach(([k, p]) => {
@@ -719,6 +742,7 @@
       resize();
       setProfile('ards_mod');
       requestAnimationFrame(draw);
+      applyHashBridge();
     });
     window.addEventListener('keydown', e => {
       const tag = (e.target && e.target.tagName) || '';

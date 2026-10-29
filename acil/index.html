@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DuctusLab | Acil Yatak Başı Klinik Konsol (AKG · Ventilatör · EKG · Skor)</title>
+  <style>
+    :root {
+      --bg-main: #04070e;
+      --bg-panel: #080e1a;
+      --bg-card: #0c1526;
+      --bg-sub: #050a14;
+      --border: #192841;
+      --sky: #38bdf8;
+      --emerald: #10b981;
+      --amber: #fbbf24;
+      --rose: #f43f5e;
+      --purple: #a855f7;
+      --text: #f1f5f9;
+      --muted: #8496b0;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg-main);
+      color: var(--text);
+      min-height: 100dvh;
+      width: 100%;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+
+    header {
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .brand-group { display: flex; align-items: center; gap: 10px; }
+    .badge-logo {
+      background: rgba(244, 63, 94, 0.14);
+      border: 1px solid rgba(244, 63, 94, 0.45);
+      color: #fda4af;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 4px 9px;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+    }
+    .nav-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+    button {
+      cursor: pointer;
+      font-family: inherit;
+      background: var(--bg-card);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 7px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      transition: all 0.15s ease;
+    }
+    button:hover { border-color: var(--sky); }
+    button.active-sky { background: var(--sky); color: #04101f; border-color: var(--sky); }
+    button.active-emerald { background: var(--emerald); color: #04101f; border-color: var(--emerald); }
+    button.active-rose { background: var(--rose); color: #fff; border-color: var(--rose); }
+    button.active-amber { background: var(--amber); color: #04101f; border-color: var(--amber); }
+
+    .disclaimer-bar {
+      background: rgba(251, 191, 36, 0.08);
+      border-bottom: 1px solid rgba(251, 191, 36, 0.25);
+      color: #fde68a;
+      font-size: 11px;
+      padding: 6px 16px;
+      text-align: center;
+    }
+
+    .container {
+      max-width: 1380px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 14px;
+      flex: 1;
+    }
+    .grid-main {
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 14px;
+      align-items: start;
+    }
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .card-title {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      padding-bottom: 6px;
+    }
+    .input-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+    .input-grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .field { display: flex; flex-direction: column; gap: 4px; }
+    .field label { font-size: 11px; color: var(--muted); font-weight: 600; display: flex; justify-content: space-between; }
+    input[type="number"], select {
+      width: 100%;
+      background: var(--bg-sub);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 7px 9px;
+      font-size: 13px;
+      font-weight: 700;
+      outline: none;
+    }
+    input[type="number"]:focus, select:focus { border-color: var(--sky); }
+    input[type="range"] { width: 100%; accent-color: var(--sky); cursor: pointer; }
+
+    .preset-row { display: flex; gap: 5px; flex-wrap: wrap; }
+    .preset-btn { font-size: 10.5px; padding: 4px 8px; background: var(--bg-sub); color: #cbd5e1; }
+
+    .result-banner {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.14), rgba(8, 14, 26, 0.95));
+      border: 1px solid rgba(16, 185, 129, 0.45);
+      border-radius: 10px;
+      padding: 12px 14px;
+    }
+    .result-banner.warn {
+      background: linear-gradient(135deg, rgba(244, 63, 94, 0.16), rgba(8, 14, 26, 0.95));
+      border-color: rgba(244, 63, 94, 0.5);
+    }
+    .vent-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+      gap: 8px;
+    }
+    .metric-tile {
+      background: var(--bg-sub);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 9px 10px;
+    }
+    .metric-tile .lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; font-weight: 700; }
+    .metric-tile .val { font-size: 17px; font-weight: 800; color: var(--sky); margin-top: 3px; }
+    .metric-tile .sub { font-size: 10px; color: #94a3b8; margin-top: 2px; }
+
+    .step-list { display: flex; flex-direction: column; gap: 7px; font-size: 12.5px; line-height: 1.5; }
+    .step-item {
+      background: var(--bg-sub);
+      border-left: 3px solid var(--sky);
+      padding: 8px 11px;
+      border-radius: 0 7px 7px 0;
+    }
+    .step-item.red { border-left-color: var(--rose); background: rgba(244, 63, 94, 0.07); }
+    .step-item.amber { border-left-color: var(--amber); background: rgba(251, 191, 36, 0.07); }
+    .step-item.green { border-left-color: var(--emerald); }
+
+    .check-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-sub);
+      border: 1px solid var(--border);
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .check-row input { transform: scale(1.2); accent-color: var(--sky); }
+    .hidden { display: none !important; }
+
+    .bridge-btn {
+      width: 100%; margin-top: 6px; padding: 11px 14px; font-size: 13px; font-weight: 800; border-radius: 10px;
+      background: linear-gradient(135deg, rgba(56,189,248,0.18), rgba(16,185,129,0.14)); border: 1px solid rgba(56,189,248,0.55); color: #e0f2fe;
+      display: flex; align-items: center; justify-content: center; gap: 8px; text-align: center;
+    }
+    .bridge-btn:hover { background: linear-gradient(135deg, rgba(56,189,248,0.3), rgba(16,185,129,0.22)); border-color: var(--sky); }
+    .bridge-btn.ekg { background: linear-gradient(135deg, rgba(168,85,247,0.18), rgba(56,189,248,0.12)); border-color: rgba(168,85,247,0.55); }
+    .bridge-btn.ekg:hover { border-color: var(--purple); }
+    .bridge-note { font-size: 10.5px; color: var(--muted); text-align: center; margin-top: 2px; }
+    .top-link { font-size: 11px; padding: 6px 10px; }
+
+    /* ---- MOBİL (nöbette telefon): paneller alt alta, yatay taşma yok, dikey kaydırma serbest ---- */
+    html { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
+    html, body { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    img, canvas, svg, table { max-width: 100%; }
+    @media (max-width: 920px) {
+      header { padding: 8px 10px; }
+      .nav-tabs { width: 100%; }
+      .nav-tabs button { flex: 1 1 auto; font-size: 11.5px; padding: 8px 6px; }
+      .container { padding: 10px; }
+      .grid-main { grid-template-columns: 1fr; width: 100%; min-width: 0; }
+      .grid-main > * { min-width: 0; width: 100%; }
+      .input-grid-3 { grid-template-columns: repeat(2, 1fr); }
+      input[type="number"], select { font-size: 16px; } /* iOS otomatik yakınlaştırmayı önler */
+      .check-row { font-size: 12.5px; line-height: 1.35; gap: 8px; }
+      .check-row input { flex-shrink: 0; }
+      .vent-grid { grid-template-columns: repeat(2, 1fr); }
+      .metric-tile .val { font-size: 16px; }
+      .card { padding: 12px; }
+      .disclaimer-bar { font-size: 10.5px; text-align: left; }
+    }
+    @media (max-width: 420px) {
+      .input-grid-3 { grid-template-columns: repeat(2, 1fr); }
+      .vent-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand-group">
+      <span class="badge-logo">🚑 DUCTUSLAB ACİL KONSOL</span>
+      <div>
+        <div style="font-size:13px; font-weight:800;">Yatak Başı Karar & Fizyolojik Hesaplama Motoru</div>
+        <div style="font-size:10px; color:var(--muted);">%100 Deterministik Formül · Sıfır API · Çevrimdışı Çalışır</div>
+      </div>
+    </div>
+
+    <div class="nav-tabs">
+      <button id="tabBtn-abg" class="active-sky" onclick="switchModule('abg')">🩸 1. Kan Gazı & Ventilatör Ayarı</button>
+      <button id="tabBtn-ecg" onclick="switchModule('ecg')">⚡ 2. EKG Kriter & Acil İlaç Dozu</button>
+      <button id="tabBtn-score" onclick="switchModule('score')">🧭 3. Ayırıcı Tanı & Skorlama</button>
+      <button class="top-link" onclick="goPortal()" title="Diğer DuctusLab modülleri">Modüller</button>
+    </div>
+  </header>
+
+  <div class="disclaimer-bar">
+    ⚕️ <strong>Klinik Karar Destek Notu:</strong> Bu konsol deterministik fizyoloji denklemleri ve uluslararası kılavuz (ARDSNet, AHA/ERC, ESC) özetlerini sunar; nihai tanı ve tedavi kararı hastayı değerlendiren hekime aittir.
+  </div>
+
+  <div class="container">
+
+    <!-- ===================================================================== -->
+    <!-- MODÜL 1: KAN GAZI ÇÖZÜCÜ & MEKANİK VENTİLATÖR REÇETESİ                -->
+    <!-- ===================================================================== -->
+    <section id="mod-abg" class="grid-main">
+      <!-- SOL GİRİŞ PANELİ -->
+      <div class="card">
+        <div class="card-title">
+          <span>🧪 Hızlı Hazır Acil Vakaları</span>
+          <span style="color:var(--sky);">Tek Tıkla Yükle</span>
+        </div>
+        <div class="preset-row">
+          <button class="preset-btn" onclick="loadAbgPreset('dka_vomit')">DKA + Kusma (Üçlü Bozukluk)</button>
+          <button class="preset-btn" onclick="loadAbgPreset('copd')">KOAH Akut Alevlenme</button>
+          <button class="preset-btn" onclick="loadAbgPreset('ards')">Ağır ARDS (P/F 88)</button>
+          <button class="preset-btn" onclick="loadAbgPreset('sepsis')">Septik Şok + NAGMA</button>
+        </div>
+
+        <div class="card-title" style="margin-top:4px;"><span>1. Kan Gazı & Biyokimya Değerleri</span></div>
+        <div class="input-grid-3">
+          <div class="field"><label>pH</label><input type="number" id="in_ph" step="0.01" value="7.18" oninput="solveABGAndVent()"></div>
+          <div class="field"><label>PaCO₂ <span>mmHg</span></label><input type="number" id="in_paco2" step="1" value="24" oninput="solveABGAndVent()"></div>
+          <div class="field"><label>HCO₃⁻ <span>mEq/L</span></label><input type="number" id="in_hco3" step="0.5" value="9" oninput="solveABGAndVent()"></div>
+          <div class="field"><label>PaO₂ <span>mmHg</span></label><input type="number" id="in_pao2" step="1" value="78" oninput="solveABGAndVent()"></div>
+          <div class="field"><label>FiO₂ <span>%</span></label><input type="number" id="in_fio2" step="5" value="40" oninput="solveABGAndVent()"></div>
+          <div class="field"><label>Laktat <span>mmol/L</span></label><input type="number" id="in_lac" step="0.2" value="4.8" oninput="solveABGAndVent()"></div>
+          <div class="field"><label>Na⁺ <span>mEq/L</span></label><input type="number" id="in_na" step="1" value="138" oninput="solveABGAndVent()"></div>
+          <div class="field"><label>Cl⁻ <span>mEq/L</span></label><input type="number" id="in_cl" step="1" value="100" oninput="solveABGAndVent()"></div>
+          <div class="field"><label>Albümin <span>g/dL</span></label><input type="number" id="in_alb" step="0.1" value="4.0" oninput="solveABGAndVent()"></div>
+        </div>
+
+        <div class="card-title" style="margin-top:4px;"><span>2. Hasta & Klinik Akciğer Profili</span></div>
+        <div class="input-grid">
+          <div class="field">
+            <label>Cinsiyet (PBW İçin)</label>
+            <select id="in_sex" onchange="solveABGAndVent()">
+              <option value="M">Erkek</option>
+              <option value="F">Kadın</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Boy <span>cm</span></label>
+            <input type="number" id="in_height" value="175" oninput="solveABGAndVent()">
+          </div>
+          <div class="field">
+            <label>Yaş</label>
+            <input type="number" id="in_age" value="52" oninput="solveABGAndVent()">
+          </div>
+          <div class="field">
+            <label>Süreç</label>
+            <select id="in_chronicity" onchange="solveABGAndVent()">
+              <option value="acute">Akut (&lt;24–48 saat)</option>
+              <option value="chronic">Kronik / Kr. Zemininde Akut</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Klinik Fenotip (Ventilatör Stratejisini Belirler)</label>
+          <select id="in_phenotype" onchange="solveABGAndVent()">
+            <option value="lung_protective">ARDS / Pnömoni / Sepsis (Akciğer Koruyucu)</option>
+            <option value="obstructive">KOAH / Ağır Astım (Obstrüktif - Oto-PEEP Riski)</option>
+            <option value="metabolic_acidosis">Ağır Metabolik Asidoz (DKA / Salisilat / Toksik)</option>
+            <option value="neuro">KİBAS / Kafa Travması / İntrakraniyal Kanama</option>
+          </select>
+        </div>
+
+        <div class="input-grid">
+          <div class="field">
+            <label>Mevcut Solunum (RR) <span>/dk</span></label>
+            <input type="number" id="in_curr_rr" value="16" oninput="solveABGAndVent()">
+          </div>
+          <div class="field">
+            <label>Hedef PaCO₂ <span>mmHg</span></label>
+            <input type="number" id="in_target_paco2" value="38" oninput="solveABGAndVent()">
+          </div>
+        </div>
+      </div>
+
+      <!-- SAĞ SONUÇ VE VENTİLATÖR REÇETESİ PANELİ -->
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <div id="abgPrimaryBanner" class="result-banner">
+          <div style="font-size:11px; color:var(--emerald); font-weight:800; text-transform:uppercase;">BİRİNCİL VE EŞLİK EDEN TANI SENTEZİ</div>
+          <div id="abgHeadline" style="font-size:18px; font-weight:800; margin-top:4px;">Yükleniyor...</div>
+          <div id="abgConsistency" class="mono" style="font-size:11.5px; color:#cbd5e1; margin-top:4px;"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title"><span>🔬 Adım Adım Asit-Baz & Oksijenasyon Analizi</span></div>
+          <div id="abgSteps" class="step-list"></div>
+        </div>
+
+        <div class="card" style="border-color:rgba(56,189,248,0.4);">
+          <div class="card-title">
+            <span style="color:var(--sky);">🫁 Önerilen Mekanik Ventilatör Başlangıç & Düzeltme Ayarları</span>
+            <span id="pbwBadge" class="mono" style="color:var(--amber);">PBW: 70.6 kg</span>
+          </div>
+          <div id="ventTiles" class="vent-grid"></div>
+          <button class="bridge-btn" id="btnToVent" onclick="sendToVentilator()">🫁 Bu Ayarları Ventilasyon Simülatöründe Canlı Test Et</button>
+          <div class="bridge-note" id="ventBridgeNote">VT · RR · PEEP · FiO₂ · İ:E ve seçilen akciğer fenotipi canlı VC-CMV simülatörüne yüklenir.</div>
+          <div id="ventWarnings" class="step-list" style="margin-top:4px;"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- MODÜL 2: HIZLI EKG KRİTER & ACİL MÜDAHALE / İNFÜZYON SİHİRBAZI        -->
+    <!-- ===================================================================== -->
+    <section id="mod-ecg" class="grid-main hidden">
+      <div class="card">
+        <div class="card-title"><span>⚡ 1. Yatak Başı EKG & Ritim Paterni Seçin</span></div>
+        <div class="field">
+          <label>Baskın EKG / Klinik Senaryo</label>
+          <select id="ecg_pattern" onchange="evaluateECGProtocol()">
+            <option value="wct_reg">Geniş QRS (&ge;120 ms) + Düzenli Taşikardi (VT vs Aberran SVT)</option>
+            <option value="wct_irreg">Geniş QRS + Düzensiz Taşikardi (Pre-eksite AF / Polimorfik VT - Torsades)</option>
+            <option value="nct_reg">Dar QRS (&lt;120 ms) + Düzenli Taşikardi (AVNRT / AVRT / Atriyal Flutter)</option>
+            <option value="nct_irreg">Dar QRS + Düzensiz Taşikardi (Hızlı Ventrikül Yanıtlı AF)</option>
+            <option value="brady">Semptomatik Bradikardi / Yüksek Dereceli AV Blok (Mobitz II / Tam Blok)</option>
+            <option value="hyperk">Hiperkalemi EKG Bulguları (Sivri T, PR uzaması, QRS genişlemesi, Sinüs dalgası)</option>
+          </select>
+        </div>
+        <button class="bridge-btn ekg" id="btnToEkg" onclick="sendToEkg()">📈 Bu Ritmi 12 Derivasyonlu EKG Simülatöründe Aç</button>
+        <div class="bridge-note" id="ekgBridgeNote"></div>
+
+        <div class="card-title" style="margin-top:4px;"><span>🚨 2. Anstabilite Kriterleri (AHA/ERC 5 Kırmızı Bayrak)</span></div>
+        <label class="check-row"><span>1. Hipotansiyon / Şok bulguları (SBP &lt; 90 mmHg, soğuk ekstremite)</span><input type="checkbox" class="instab-chk" onchange="evaluateECGProtocol()"></label>
+        <label class="check-row"><span>2. Akut bilinç değişikliği / Senkop</span><input type="checkbox" class="instab-chk" onchange="evaluateECGProtocol()"></label>
+        <label class="check-row"><span>3. İskemik göğüs ağrısı (Anjina)</span><input type="checkbox" class="instab-chk" onchange="evaluateECGProtocol()"></label>
+        <label class="check-row"><span>4. Akut kalp yetmezliği / Akciğer ödemi</span><input type="checkbox" class="instab-chk" onchange="evaluateECGProtocol()"></label>
+
+        <div id="brugadaBox" style="display:flex; flex-direction:column; gap:6px; margin-top:4px;">
+          <div class="card-title"><span style="color:var(--amber);">🔍 Brugada VT Doğrulama Kriterleri (Herhangi Biri = VT!)</span></div>
+          <label class="check-row"><span>Tüm prekordiyallerde (V1–V6) RS kompleksi YOK (Konkordans)</span><input type="checkbox" class="brug-chk" onchange="evaluateECGProtocol()"></label>
+          <label class="check-row"><span>Herhangi bir V1–V6'da R başlangıcı – S nadiri &gt; 100 ms</span><input type="checkbox" class="brug-chk" onchange="evaluateECGProtocol()"></label>
+          <label class="check-row"><span>AV Disosiasyon, Füzyon veya Yakalama (Capture) vuruları var</span><input type="checkbox" class="brug-chk" onchange="evaluateECGProtocol()"></label>
+        </div>
+
+        <div class="card-title" style="margin-top:4px;"><span>⚖️ Hasta Kilosu (İnfüzyon Pompa Hızı İçin)</span></div>
+        <div class="field">
+          <label>Tahmini Vücut Ağırlığı: <strong id="lblWeight" class="mono" style="color:var(--sky);">75 kg</strong></label>
+          <input type="range" id="in_weight" min="40" max="140" value="75" oninput="evaluateECGProtocol()">
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <div id="ecgActionBanner" class="result-banner">
+          <div style="font-size:11px; font-weight:800; text-transform:uppercase; color:var(--emerald);" id="ecgUrgencyTag">TEDAVİ PROTOKOLÜ</div>
+          <div id="ecgMainDecision" style="font-size:18px; font-weight:800; margin-top:4px;"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title"><span>💉 Adım Adım Müdahale & Ampul Sulandırma Reçetesi</span></div>
+          <div id="ecgSteps" class="step-list"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title"><span style="color:var(--amber);">💧 Acil Vazopressör Enjektomat / İnfüzyon Hızı (Kiloya Göre Canlı)</span></div>
+          <div id="vasopressorTable" class="step-list mono"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- MODÜL 3: KRİTİK AYIRICI TANI & SKORLAMA (HEART + WELLS/PERC/D-DİMER)  -->
+    <!-- ===================================================================== -->
+    <section id="mod-score" class="grid-main hidden">
+      <!-- SOL: GÖĞÜS AĞRISI HEART SKORU -->
+      <div class="card">
+        <div class="card-title"><span style="color:var(--rose);">❤️ Göğüs Ağrısı: HEART Skoru (6 Haftalık MACE Riski)</span></div>
+        <div class="field">
+          <label>H - Hikaye (Anamnez Şüphesi)</label>
+          <select id="h_hist" onchange="calcScores()">
+            <option value="0">0 Puan: Düşük şüpheli (atipik batıcı/pozisyonel)</option>
+            <option value="1" selected>1 Puan: Orta şüpheli (hem tipik hem atipik öğeler)</option>
+            <option value="2">2 Puan: Yüksek şüpheli (tipik baskı, terleme, yayılım)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>E - EKG Bulgusu</label>
+          <select id="h_ecg" onchange="calcScores()">
+            <option value="0">0 Puan: Tamamen normal</option>
+            <option value="1" selected>1 Puan: Non-spesifik repolarizasyon bozukluğu / LBBB / PM</option>
+            <option value="2">2 Puan: Yeni ST depresyonu / anlamlı iskemik sapma</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>A - Yaş (Age)</label>
+          <select id="h_age" onchange="calcScores()">
+            <option value="0">0 Puan: &lt; 45 yaş</option>
+            <option value="1" selected>1 Puan: 45 – 64 yaş</option>
+            <option value="2">2 Puan: &ge; 65 yaş</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>R - Risk Faktörleri (HT, DM, Sigara, Hiperlipidemi, Aile öyküsü, Obezite)</label>
+          <select id="h_risk" onchange="calcScores()">
+            <option value="0">0 Puan: Bilinen risk faktörü yok</option>
+            <option value="1" selected>1 Puan: 1 veya 2 risk faktörü var</option>
+            <option value="2">2 Puan: &ge; 3 risk faktörü VEYA bilinen KAH/MI/Stent/SVO/PAH öyküsü</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>T - Başlangıç Troponin</label>
+          <select id="h_trop" onchange="calcScores()">
+            <option value="0" selected>0 Puan: &le; Normal üst sınır (ULN)</option>
+            <option value="1">1 Puan: 1 – 3 kat × ULN</option>
+            <option value="2">2 Puan: &gt; 3 kat × ULN</option>
+          </select>
+        </div>
+        <div id="heartResultBox" class="step-item green" style="margin-top:4px;"></div>
+      </div>
+
+      <!-- SAĞ: PULMONER EMBOLİ WELLS + YAŞ DÜZELTMELİ D-DİMER + KIRMIZI BAYRAKLAR -->
+      <div class="card">
+        <div class="card-title"><span style="color:var(--sky);">🫁 Pulmoner Emboli: Wells + Yaş Düzeltmeli D-Dimer Eşiği</span></div>
+        <div class="field">
+          <label>Hasta Yaşı (50 Yaş Üstü D-Dimer Eşiği İçin)</label>
+          <input type="number" id="pe_age" value="64" oninput="calcScores()">
+        </div>
+        <label class="check-row"><span>Klinik DVT bulgu ve semptomları (+3.0)</span><input type="checkbox" class="wells-chk" data-pts="3" onchange="calcScores()"></label>
+        <label class="check-row"><span>PE diğer tüm tanılardan daha olası (+3.0)</span><input type="checkbox" class="wells-chk" data-pts="3" checked onchange="calcScores()"></label>
+        <label class="check-row"><span>Kalp hızı &gt; 100 /dk (+1.5)</span><input type="checkbox" class="wells-chk" data-pts="1.5" checked onchange="calcScores()"></label>
+        <label class="check-row"><span>Son 4 haftada cerrahi veya &ge;3 gün immobilizasyon (+1.5)</span><input type="checkbox" class="wells-chk" data-pts="1.5" onchange="calcScores()"></label>
+        <label class="check-row"><span>Önceki kanıtlanmış DVT veya PE öyküsü (+1.5)</span><input type="checkbox" class="wells-chk" data-pts="1.5" onchange="calcScores()"></label>
+        <label class="check-row"><span>Hemoptizi (+1.0)</span><input type="checkbox" class="wells-chk" data-pts="1" onchange="calcScores()"></label>
+        <label class="check-row"><span>Aktif malignite / son 6 ayda tedavi (+1.0)</span><input type="checkbox" class="wells-chk" data-pts="1" onchange="calcScores()"></label>
+
+        <div id="peResultBox" class="step-item amber" style="margin-top:4px;"></div>
+
+        <div class="card-title" style="margin-top:6px;"><span>🚨 Akut Göğüs Ağrısı & Dispne 5 Ölümcül Ayırıcı Tanı Kontrolü</span></div>
+        <div class="step-item red" style="font-size:11.5px;">
+          <strong>Atlanmaması Gereken 5'li:</strong> 1) Akut Koroner Sendrom (Posterior/Sağ V3R-V4R EKG çek!) · 2) Akut Aort Diseksiyonu (Sırt/yırtılır tarzda ağrı + iki kol TA farkı &gt;20 mmHg + Eko'da flep/AY) · 3) Pulmoner Emboli (Eko'da D-Sign / McConnell) · 4) Tansiyon Pnömotoraks (POCUS'ta Lung Sliding kaybı + Barkod işareti) · 5) Özofagus Rüptürü / Tamponad.
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <script>
+    // ============================================================================
+    // DUCTUSLAB PAKET KÖPRÜSÜ (tek üst bar + modüller arası veri aktarımı)
+    // ============================================================================
+    const MODULE_ID = 'acil';
+    function inSuite() { try { return window.parent !== window && !!window.parent.DuctusSuite; } catch (e) { return false; } }
+    function suiteTrack(ev, data) { try { if (inSuite()) window.parent.DuctusSuite.track(MODULE_ID, ev, data || {}); } catch (e) {} }
+    function goPortal() { if (inSuite()) window.parent.DuctusSuite.openPortal(); else window.location.href = '../'; }
+    if (inSuite()) document.addEventListener('DOMContentLoaded', () => { document.head.insertAdjacentHTML('beforeend', '<style>body > header { display: none !important; }</style>'); });
+    const TAB_META = { abg: '🩸 Kan Gazı & Ventilatör', ecg: '⚡ EKG & İlaç Dozu', score: '🧭 Ayırıcı Tanı & Skor' };
+    let currentTab = 'abg';
+    function publishModuleBar() {
+      if (!inSuite() || !window.parent.DuctusSuite.setModuleBar) return;
+      try { window.parent.DuctusSuite.setModuleBar(MODULE_ID, { tabs: Object.keys(TAB_META).map(k => ({ id: 'tab:' + k, label: TAB_META[k], active: currentTab === k })), actions: [] }); } catch (e) {}
+    }
+    window.DuctusModuleBar = { onAction(id) { if (id.indexOf('tab:') === 0) switchModule(id.slice(4)); } };
+    // Modüller arası aktarım: pakette DuctusSuite.sendTo, bağımsız sayfada URL hash ile
+    function bridgeTo(moduleId, action, payload, standaloneHref) {
+      suiteTrack('bridge', { to: moduleId, action, payload });
+      if (inSuite() && window.parent.DuctusSuite.sendTo) { window.parent.DuctusSuite.sendTo(moduleId, action, payload); return; }
+      window.location.href = standaloneHref + '#bridge=' + encodeURIComponent(JSON.stringify({ action, payload }));
+    }
+    let lastVentRx = null;
+
+    // ============================================================================
+    // SEKME GEÇİŞİ
+    // ============================================================================
+    function switchModule(mod) {
+      currentTab = mod;
+      ['abg', 'ecg', 'score'].forEach(m => {
+        document.getElementById(`mod-${m}`).classList.toggle('hidden', m !== mod);
+        document.getElementById(`tabBtn-${m}`).className = (m === mod) ? 'active-sky' : '';
+      });
+      publishModuleBar();
+      suiteTrack('tab', { tab: mod });
+    }
+
+    // ---- Köprü 1: AKG reçetesi → Ventilasyon simülatörü ----
+    function sendToVentilator() {
+      if (!lastVentRx) solveABGAndVent();
+      const rx = lastVentRx;
+      bridgeTo('vent', 'vent', rx, '../ventilator/');
+    }
+    // ---- Köprü 2: EKG paterni → 3B EKG simülatörü ----
+    const ECG_TO_SCENARIO = {
+      wct_reg:   { scenario: 'vtach', hr: 160, label: 'Monomorfik VT' },
+      wct_irreg: { scenario: 'wpw', hr: 150, label: 'WPW (pre-eksitasyon) · düzensiz geniş QRS' },
+      nct_reg:   { scenario: 'flutter_2_1', hr: 150, label: 'Dar QRS düzenli taşikardi (Flutter 2:1 · 150/dk)' },
+      nct_irreg: { scenario: 'afib', hr: 138, label: 'Hızlı ventrikül yanıtlı AF' },
+      brady:     { scenario: 'av_block_3', hr: 38, label: 'Tam AV blok (infranodal kaçış)' },
+      hyperk:    { scenario: 'normal', k: 7.6, label: 'Hiperkalemi (K⁺ 7.6 mEq/L)' }
+    };
+    function sendToEkg() {
+      const pat = document.getElementById('ecg_pattern').value; const m = ECG_TO_SCENARIO[pat] || ECG_TO_SCENARIO.wct_reg;
+      bridgeTo('ekg', 'ekg', Object.assign({ pattern: pat }, m), '../ekg/');
+    }
+    function updateEkgBridgeNote() {
+      const pat = document.getElementById('ecg_pattern').value; const m = ECG_TO_SCENARIO[pat];
+      document.getElementById('ekgBridgeNote').textContent = m ? 'Simülatörde açılacak: ' + m.label : '';
+    }
+
+    // ============================================================================
+    // 1. KAN GAZI & MEKANİK VENTİLATÖR FİZYOLOJİ MOTORU
+    // ============================================================================
+    function loadAbgPreset(id) {
+      const presets = {
+        dka_vomit: { ph: 7.26, paco2: 21, hco3: 9, pao2: 96, fio2: 21, lac: 3.1, na: 136, cl: 88, alb: 4.0, pheno: 'metabolic_acidosis', chr: 'acute', rr: 26, tpco2: 24 },
+        copd:      { ph: 7.24, paco2: 76, hco3: 32, pao2: 54, fio2: 28, lac: 1.4, na: 139, cl: 96, alb: 3.8, pheno: 'obstructive', chr: 'chronic', rr: 14, tpco2: 55 },
+        ards:      { ph: 7.29, paco2: 52, hco3: 24, pao2: 62, fio2: 70, lac: 2.6, na: 140, cl: 104, alb: 2.8, pheno: 'lung_protective', chr: 'acute', rr: 22, tpco2: 45 },
+        sepsis:    { ph: 7.16, paco2: 25, hco3: 9, pao2: 74, fio2: 50, lac: 6.4, na: 137, cl: 109, alb: 2.5, pheno: 'lung_protective', chr: 'acute', rr: 24, tpco2: 32 }
+      };
+      const p = presets[id];
+      document.getElementById('in_ph').value = p.ph;
+      document.getElementById('in_paco2').value = p.paco2;
+      document.getElementById('in_hco3').value = p.hco3;
+      document.getElementById('in_pao2').value = p.pao2;
+      document.getElementById('in_fio2').value = p.fio2;
+      document.getElementById('in_lac').value = p.lac;
+      document.getElementById('in_na').value = p.na;
+      document.getElementById('in_cl').value = p.cl;
+      document.getElementById('in_alb').value = p.alb;
+      document.getElementById('in_phenotype').value = p.pheno;
+      document.getElementById('in_chronicity').value = p.chr;
+      document.getElementById('in_curr_rr').value = p.rr;
+      document.getElementById('in_target_paco2').value = p.tpco2;
+      solveABGAndVent();
+    }
+
+    function solveABGAndVent() {
+      const ph = parseFloat(document.getElementById('in_ph').value) || 7.40;
+      const paco2 = Math.max(8, parseFloat(document.getElementById('in_paco2').value) || 40);
+      const hco3 = Math.max(2, parseFloat(document.getElementById('in_hco3').value) || 24);
+      const pao2 = parseFloat(document.getElementById('in_pao2').value) || 90;
+      const fio2Pct = Math.min(100, Math.max(21, parseFloat(document.getElementById('in_fio2').value) || 21));
+      const lac = parseFloat(document.getElementById('in_lac').value) || 1.0;
+      const na = parseFloat(document.getElementById('in_na').value) || 140;
+      const cl = parseFloat(document.getElementById('in_cl').value) || 104;
+      const alb = parseFloat(document.getElementById('in_alb').value) || 4.0;
+      const sex = document.getElementById('in_sex').value;
+      const heightCm = Math.max(130, parseFloat(document.getElementById('in_height').value) || 170);
+      const age = parseFloat(document.getElementById('in_age').value) || 50;
+      const chr = document.getElementById('in_chronicity').value;
+      const pheno = document.getElementById('in_phenotype').value;
+      const currRR = Math.max(6, parseFloat(document.getElementById('in_curr_rr').value) || 16);
+      const targetPaco2 = Math.max(20, parseFloat(document.getElementById('in_target_paco2').value) || 40);
+
+      // 1) Henderson-Hasselbalch İç Tutarlılık Denetimi
+      const calcPh = 6.10 + Math.log10(hco3 / (0.03 * paco2));
+      const hhDiff = Math.abs(ph - calcPh);
+
+      // 2) Albümin Düzeltmeli Anyon Açığı & Delta-Delta Oranı
+      const rawAG = na - (cl + hco3);
+      const corrAG = rawAG + 2.5 * (4.0 - alb);
+      const hasHAGMA = corrAG > 14;
+      const deltaAG = corrAG - 12;
+      const deltaHCO3 = 24 - hco3;
+
+      const findings = [];
+      const steps = [];
+
+      if (hhDiff > 0.08) {
+        steps.push(`<div class="step-item red">⚠️ <strong>Henderson-Hasselbalch Uyumsuzluğu:</strong> Beklenen pH <strong>${calcPh.toFixed(2)}</strong> iken girilen pH <strong>${ph.toFixed(2)}</strong>. Venöz/arteriyel karışım, enjektörde hava kabarcığı veya yanlış rakam girişini kontrol edin!</div>`);
+      }
+
+      // 3) Birincil Bozukluk ve Kompanzasyon Analizi
+      if (ph < 7.35) {
+        if (hco3 < 22 && paco2 <= 45) {
+          findings.push(hasHAGMA ? 'Yüksek Anyon Açıklı Metabolik Asidoz (HAGMA)' : 'Normal Anyon Açıklı Metabolik Asidoz (NAGMA)');
+          const expPco2 = 1.5 * hco3 + 8;
+          steps.push(`<div class="step-item"><strong>Winter Formülü:</strong> Beklenen PaCO₂ = <code>1.5×${hco3} + 8 = ${expPco2.toFixed(1)} ± 2 mmHg</code> (Ölçülen: <strong>${paco2} mmHg</strong>).</div>`);
+          if (paco2 > expPco2 + 2) findings.push('+ Eşlik Eden Respiratuvar Asidoz (Yetersiz Solunum / Yorulma!)');
+          else if (paco2 < expPco2 - 2) findings.push('+ Eşlik Eden Primer Respiratuvar Alkaloz');
+        } else if (paco2 > 45 && hco3 >= 22) {
+          findings.push(chr === 'chronic' ? 'Kronik Zemininde Akut / Kronik Respiratuvar Asidoz' : 'Akut Respiratuvar Asidoz');
+          const expHco3 = chr === 'chronic' ? 24 + 0.35 * (paco2 - 40) : 24 + 0.1 * (paco2 - 40);
+          steps.push(`<div class="step-item"><strong>Beklenen HCO₃⁻ (${chr === 'chronic' ? 'Kronik' : 'Akut'}):</strong> <code>${expHco3.toFixed(1)} ± 2 mEq/L</code> (Ölçülen: <strong>${hco3} mEq/L</strong>).</div>`);
+          if (hco3 < expHco3 - 2) findings.push('+ Eşlik Eden Metabolik Asidoz');
+          else if (hco3 > expHco3 + 2) findings.push('+ Eşlik Eden Metabolik Alkaloz (Örn: Diüretik/Post-hiperkapnik)');
+        } else {
+          findings.push('Ağır Mikst Asidoz (Metabolik + Respiratuvar Asidoz)');
+        }
+      } else if (ph > 7.45) {
+        if (hco3 > 26 && paco2 >= 35) {
+          findings.push('Primer Metabolik Alkaloz');
+          const expPco2 = 40 + 0.7 * (hco3 - 24);
+          steps.push(`<div class="step-item"><strong>Kompanzasyon:</strong> Beklenen PaCO₂ = <code>${expPco2.toFixed(1)} ± 2 mmHg</code> (Ölçülen: <strong>${paco2} mmHg</strong>).</div>`);
+          if (paco2 < expPco2 - 2) findings.push('+ Eşlik Eden Respiratuvar Alkaloz');
+        } else if (paco2 < 35) {
+          findings.push('Primer Respiratuvar Alkaloz');
+          const expHco3 = chr === 'chronic' ? 24 - 0.4 * (40 - paco2) : 24 - 0.2 * (40 - paco2);
+          steps.push(`<div class="step-item"><strong>Beklenen HCO₃⁻:</strong> <code>${expHco3.toFixed(1)} ± 2 mEq/L</code> (Ölçülen: <strong>${hco3} mEq/L</strong>).</div>`);
+        }
+      } else {
+        // Normal pH (7.35 - 7.45) ama gizli mikst bozukluk olabilir!
+        if (hasHAGMA) findings.push('Kompanze / Mikst Yüksek Anyon Açıklı Metabolik Asidoz');
+        else if (paco2 > 48 && hco3 > 28) findings.push('Kompanze Kronik Respiratuvar Asidoz + Metabolik Alkaloz');
+        else findings.push('Normal Asit-Baz Dengesi');
+      }
+
+      // Delta-Delta Analizi (Gizli 3. Bozukluk!)
+      steps.push(`<div class="step-item ${hasHAGMA ? 'amber' : 'green'}"><strong>Anyon Açığı (Albümin Düzeltmeli):</strong> <code>${corrAG.toFixed(1)} mEq/L</code> (Ham AG: ${rawAG.toFixed(1)}, Laktat: ${lac} mmol/L).</div>`);
+      if (hasHAGMA && deltaHCO3 > 2) {
+        const deltaRatio = deltaAG / deltaHCO3;
+        let dTxt = 'Saf Yüksek Anyon Açıklı Metabolik Asidoz (1.0 – 2.0)';
+        if (deltaRatio < 1.0) {
+          dTxt = 'Eşlik Eden Normal Anyon Açıklı Asidoz - NAGMA (<1.0: İshal / %0.9 SF yükü / RTA)';
+          if (!findings.some(f => f.includes('NAGMA'))) findings.push('+ Gizli NAGMA');
+        } else if (deltaRatio > 2.0) {
+          dTxt = 'Eşlik Eden Gizli Metabolik Alkaloz (>2.0: Kusma / NG drenaj / Diüretik)';
+          findings.push('+ Gizli Metabolik Alkaloz');
+        }
+        steps.push(`<div class="step-item amber"><strong>Delta-Delta Oranı (ΔAG / ΔHCO₃⁻):</strong> <code>${deltaRatio.toFixed(2)}</code> → ${dTxt}</div>`);
+      }
+
+      // 4) Oksijenasyon: P/F Oranı & A-a Gradyenti
+      const fio2 = fio2Pct / 100;
+      const pfRatio = pao2 / fio2;
+      const pAlvO2 = fio2 * (760 - 47) - (paco2 / 0.8);
+      const aaGrad = Math.max(0, pAlvO2 - pao2);
+      const expAa = (age / 4) + 4;
+      let pfClass = 'Normal Oksijenasyon (>300)';
+      if (pfRatio <= 100) pfClass = '🚨 Ağır ARDS Düzeyi Hipoksemi (≤100)';
+      else if (pfRatio <= 200) pfClass = '⚠️ Orta ARDS Düzeyi Hipoksemi (100–200)';
+      else if (pfRatio <= 300) pfClass = '⚠️ Hafif ARDS / Akut Hipoksemi (200–300)';
+
+      steps.push(`<div class="step-item ${pfRatio < 200 ? 'red' : 'green'}"><strong>Horowitz (PaO₂/FiO₂):</strong> <code>${Math.round(pfRatio)} mmHg</code> (${pfClass}) · <strong>A-a Gradyenti:</strong> <code>${aaGrad.toFixed(0)} mmHg</code> (Yaşa göre üst sınır: ~${expAa.toFixed(0)} mmHg).</div>`);
+
+      document.getElementById('abgHeadline').textContent = findings.join(' ');
+      document.getElementById('abgPrimaryBanner').className = (ph < 7.22 || pfRatio < 150 || lac >= 4) ? 'result-banner warn' : 'result-banner';
+      document.getElementById('abgConsistency').textContent =
+        `pH: ${ph.toFixed(2)} (Hesaplanan: ${calcPh.toFixed(2)}) | Düzeltilmiş AG: ${corrAG.toFixed(1)} | P/F: ${Math.round(pfRatio)}`;
+      document.getElementById('abgSteps').innerHTML = steps.join('');
+
+      // 5) İdeal Vücut Ağırlığı (Devine PBW) & Mekanik Ventilatör Ayar Reçetesi
+      const pbw = Math.max(35, (sex === 'M' ? 50 : 45.5) + 0.91 * (heightCm - 152.4));
+      document.getElementById('pbwBadge').textContent = `İdeal Kilo (PBW): ${pbw.toFixed(1)} kg`;
+
+      // ARDSNet Lower PEEP / FiO2 Eşleşmesi
+      let recPeep = 5, recFio2 = Math.max(30, fio2Pct);
+      if (pfRatio <= 100) { recPeep = 14; recFio2 = Math.max(70, fio2Pct); }
+      else if (pfRatio <= 180) { recPeep = 10; recFio2 = Math.max(50, fio2Pct); }
+      else if (pfRatio <= 260) { recPeep = 8; recFio2 = Math.max(40, fio2Pct); }
+
+      let vtPerKg = 6, initRR = 18, ieRatio = '1 : 2', modeStr = 'VC-AC veya PC-AC', warnings = [];
+
+      if (pheno === 'obstructive') {
+        vtPerKg = 7; initRR = 12; ieRatio = '1 : 3.5 – 1 : 4'; recPeep = 5;
+        warnings.push(`<div class="step-item amber">🫁 <strong>Obstrüktif Strateji (KOAH/Astım):</strong> Hava hapsi (Oto-PEEP) ve barotravmayı önlemek için solunum sayısını düşük tutun (10–14/dk), ekspiryum süresini uzatın (İnspiratuvar akım 60–80 L/dk) ve kronik hiperkapnide PaCO₂'yi aniden normalleştirmeyin (bazal değerine indirin).</div>`);
+      } else if (pheno === 'lung_protective') {
+        vtPerKg = (pfRatio < 150 && ph >= 7.20) ? 6 : 6;
+        initRR = ph < 7.25 ? 24 : 18;
+        ieRatio = '1 : 2';
+        warnings.push(`<div class="step-item green">🛡️ <strong>ARDSNet Akciğer Koruyucu Hedef:</strong> Plato Basıncı (Pplat) <strong>≤ 30 cmH₂O</strong> ve Driving Pressure (Pplat − PEEP) <strong>≤ 15 cmH₂O</strong> olmalıdır. Pplat > 30 ise Tidal Volümü 4–5 mL/kg PBW'ye düşürün (Permisif hiperkapni pH ≥ 7.20'ye kadar tolere edilir).</div>`);
+      } else if (pheno === 'metabolic_acidosis') {
+        vtPerKg = 7.5; initRR = 26; ieRatio = '1 : 1.5 – 1 : 2'; recPeep = 5;
+        warnings.push(`<div class="step-item red">🚨 <strong>KRİTİK ENTÜBASYON TUZAĞI (Ağır Metabolik Asidoz):</strong> Hasta Kussmaul solunumuyla PaCO₂'yi ${paco2} mmHg'ye indirerek hayatta kalıyor! RSI/entübasyonda uzun apne veya entübasyon sonrası "normal" (12–14/dk) solunum sayısı verirseniz PaCO₂ aniden 40'a fırlar, pH &lt; 6.90'a çöker ve kardiyak arrest gelişir. Yüksek dakika ventilasyonunu koruyun!</div>`);
+      } else if (pheno === 'neuro') {
+        vtPerKg = 7; initRR = 16; ieRatio = '1 : 2'; recPeep = Math.min(8, recPeep);
+        warnings.push(`<div class="step-item amber">🧠 <strong>Nöroprotektif Hedef (KİBAS):</strong> Serebral vazodilatasyonu ve KİBAS artışını önlemek için sıkı normokapni (<strong>PaCO₂: 35–38 mmHg</strong>) ve SpO₂ &gt; %94 hedefleyin.</div>`);
+      }
+
+      const vtMl = Math.round((pbw * vtPerKg) / 10) * 10;
+      const calcNewRR = Math.min(35, Math.max(8, Math.round(currRR * (paco2 / targetPaco2))));
+
+      document.getElementById('ventTiles').innerHTML = `
+        <div class="metric-tile"><div class="lbl">Önerilen Mod</div><div class="val" style="font-size:14px;">${modeStr}</div><div class="sub">Tam Kontrollü Başlangıç</div></div>
+        <div class="metric-tile"><div class="lbl">Tidal Volüm (VT)</div><div class="val">${vtMl} mL</div><div class="sub">${vtPerKg} mL/kg × PBW</div></div>
+        <div class="metric-tile"><div class="lbl">Başlangıç RR</div><div class="val">${initRR} /dk</div><div class="sub">Fenotip Önerisi</div></div>
+        <div class="metric-tile"><div class="lbl">Hedef PaCO₂ İçin RR</div><div class="val" style="color:var(--emerald);">${calcNewRR} /dk</div><div class="sub">${currRR}×(${paco2}/${targetPaco2})</div></div>
+        <div class="metric-tile"><div class="lbl">PEEP / FiO₂</div><div class="val">${recPeep} / %${recFio2}</div><div class="sub">Hedef SpO₂ %92–96 (%88–92 KOAH)</div></div>
+        <div class="metric-tile"><div class="lbl">İ : E Oranı</div><div class="val">${ieRatio}</div><div class="sub">Pplat ≤ 30 cmH₂O</div></div>
+      `;
+      document.getElementById('ventWarnings').innerHTML = warnings.join('');
+      // Köprü için reçete (ventilatör simülatörü VC-CMV: akım, İ:E'den türetilir)
+      const ieE = parseFloat((ieRatio.split('–')[0].split(':')[1] || '2').trim()) || 2;
+      const profile = pheno === 'obstructive' ? 'copd' : pheno === 'lung_protective' ? (pfRatio <= 100 ? 'ards_sev' : 'ards_mod') : 'normal';
+      lastVentRx = { vt: vtMl, rr: initRR, rrTarget: calcNewRR, peep: recPeep, fio2: recFio2, ie: ieE, ieLabel: ieRatio, profile, phenotype: pheno, sex: sex === 'M' ? 'm' : 'f', height: heightCm, pf: Math.round(pfRatio), ph };
+      document.getElementById('ventBridgeNote').textContent = `Yüklenecek: ${profile === 'copd' ? 'KOAH' : profile === 'ards_sev' ? 'Ağır ARDS' : profile === 'ards_mod' ? 'Orta ARDS' : 'Normal akciğer'} · VT ${vtMl} mL · RR ${initRR}/dk · PEEP ${recPeep} · FiO₂ %${recFio2} · İ:E 1:${ieE}`;
+    }
+
+    // ============================================================================
+    // 2. HIZLI EKG KRİTER & İLAÇ SULANDIRMA / İNFÜZYON MOTORU
+    // ============================================================================
+    function evaluateECGProtocol() {
+      const pat = document.getElementById('ecg_pattern').value;
+      updateEkgBridgeNote();
+      const unstable = Array.from(document.querySelectorAll('.instab-chk')).some(c => c.checked);
+      const brugadaVT = Array.from(document.querySelectorAll('.brug-chk')).some(c => c.checked);
+      const wt = parseInt(document.getElementById('in_weight').value, 10) || 75;
+      document.getElementById('lblWeight').textContent = `${wt} kg`;
+
+      document.getElementById('brugadaBox').classList.toggle('hidden', pat !== 'wct_reg');
+
+      const banner = document.getElementById('ecgActionBanner');
+      const tag = document.getElementById('ecgUrgencyTag');
+      const mainDec = document.getElementById('ecgMainDecision');
+      const steps = [];
+
+      if (unstable && pat !== 'hyperk' && pat !== 'brady') {
+        banner.className = 'result-banner warn';
+        tag.style.color = '#fda4af';
+        tag.textContent = '🚨 ANSTABİL TAŞİARİTMİ — ACİL ELEKTRİKSEL TEDAVİ';
+        const isDefib = (pat === 'wct_irreg');
+        mainDec.textContent = isDefib
+          ? 'Polimorfik VT / Kararsız Geniş Düzensiz → DERHAL DEFİBRİLASYON (Senkronize Değil! 200 J Bifazik)'
+          : 'Sedasyon + ACİL SENKRONİZE KARDİYOVERSİYON (100–200 J Bifazik — SYNC Tuşunu Kontrol Et!)';
+        steps.push(`<div class="step-item red"><strong>1. Havayolu & Sedoanaljezi:</strong> Zaman kaybetmeden O₂ + damaryolu; bilinç açıksa kısa etkili sedasyon (Midazolam 2–3 mg IV veya Etomidat/Ketamin) uygula.</div>`);
+        steps.push(`<div class="step-item red"><strong>2. Enerji Dozu:</strong> Dar düzenli: <strong>50–100 J</strong> · Dar düzensiz (AF): <strong>120–200 J</strong> · Geniş düzenli (Monomorfik VT): <strong>100 J</strong> (Yanıtsızsa kademeli artır).</div>`);
+        steps.push(`<div class="step-item amber"><strong>3. Refrakterse İlaç:</strong> Amiodaron <strong>300 mg IV</strong> (2 ampul = 6 mL + 20 mL %5 Dekstroz içinde 10–20 dk'da) yükle ve tekrar kardiyoversiyon dene.</div>`);
+      } else {
+        banner.className = 'result-banner';
+        tag.style.color = 'var(--emerald)';
+        tag.textContent = 'HEMODİNAMİK STABİL VEYA ÖZEL PROTOKOL';
+
+        if (pat === 'wct_reg') {
+          mainDec.textContent = brugadaVT
+            ? 'Brugada (+) Kesin Monomorfik VT → IV Amiodaron (veya Prokainamid/Lidokain)'
+            : 'Geniş QRS Düzenli Taşikardi → Aksi Kanıtlanana Kadar VT Kabul Et!';
+          steps.push(`<div class="step-item green"><strong>1. İlk Tercih İlaç (Türkiye Acil Pratiği):</strong> <strong>Amiodaron 150 mg (1 ampul)</strong> + 100 mL %5 Dekstroz içinde <strong>10–15 dakikada IV infüzyon</strong>. Gerekirse 10 dk sonra tekrarlanabilir; ardından 1 mg/dk (ilk 6 saat) idame.</div>`);
+          steps.push(`<div class="step-item red"><strong>🚫 KONTRENDİKE:</strong> Geniş QRS taşikardide <strong>Verapamil / Diltiazem KESİNLİKLE VERİLMEZ</strong> (VT ise kardiyovasküler kollaps ve VF tetikler!).</div>`);
+        } else if (pat === 'wct_irreg') {
+          mainDec.textContent = 'Pre-eksite AF (WPW) veya Torsades de Pointes → AV Nod Blokerleri YASAK!';
+          steps.push(`<div class="step-item amber"><strong>Torsades de Pointes (Uzun QT) ise:</strong> <strong>Magnezyum Sülfat 2 g IV</strong> (%15'lik 10 mL ampulden ~1.5 ampul + 100 mL SF içinde 10–15 dk'da) + K⁺ &gt; 4.5 mEq/L tut.</div>`);
+          steps.push(`<div class="step-item red"><strong>🚫 Pre-eksite AF (WPW + AF) Tuzağı:</strong> <strong>Adenozin, Diltiazem, Verapamil, Beta-bloker ve Digoksin ("ABCD") KESİNLİKLE KONTRENDİKEDİR!</strong> Aksesuar yoldan iletimi hızlandırıp VF yapar. Prokainamid/İbutilid yoksa elektif Senkronize Kardiyoversiyon en güvenli seçenektir.</div>`);
+        } else if (pat === 'nct_reg') {
+          mainDec.textContent = 'Stabil Dar QRS Düzenli SVT → Modifiye Valsalva → Adenozin 6 mg / 12 mg';
+          steps.push(`<div class="step-item green"><strong>1. Modifiye Valsalva Manevrası (%43 Başarı!):</strong> Yarı oturur (45°) pozisyonda 15 sn 10 mL enjektöre üflet → anında sırtüstü yatırıp bacaklarını 45° havaya kaldır (15 sn).</div>`);
+          steps.push(`<div class="step-item green"><strong>2. Adenozin Tekniği:</strong> Antekübital geniş damaryolundan üçlü muslukla <strong>6 mg IV hızlı puşe</strong> + arkasından anında <strong>20 mL SF hızlı yıkama</strong>. Dönmezse 1–2 dk sonra <strong>12 mg IV</strong> tekrar. (Astım ve kalp nakilli hastada dikkat!).</div>`);
+          steps.push(`<div class="step-item"><strong>3. Alternatif:</strong> Diltiazem <strong>0.25 mg/kg (~${Math.round(wt * 0.25)} mg) IV</strong> 2 dakikada yavaş uygulama veya Metoprolol 5 mg IV.</div>`);
+        } else if (pat === 'nct_irreg') {
+          mainDec.textContent = 'Stabil Hızlı Ventrikül Yanıtlı AF → Hız Kontrolü + Antikoagülasyon (CHA₂DS₂-VA)';
+          steps.push(`<div class="step-item green"><strong>EF Korunmuşsa (&ge;%40):</strong> <strong>Diltiazem ${Math.round(wt * 0.25)} mg (0.25 mg/kg) IV</strong> 2 dk'da yavaş veya <strong>Metoprolol 2.5–5 mg IV</strong> (5 dk arayla maks 15 mg).</div>`);
+          steps.push(`<div class="step-item amber"><strong>Düşük EF (&lt;%40) / Kalp Yetmezliği Varsa:</strong> Kalsiyum kanal blokeri verme! <strong>Amiodaron 150–300 mg IV infüzyon</strong> veya Digoksin tercih et. Süre &gt;48 saat (veya belirsiz) ise antikoagülasyon/TEE olmadan kardiyoversiyon yapma (inme riski!).</div>`);
+        } else if (pat === 'brady') {
+          mainDec.textContent = unstable
+            ? '🚨 Semptomatik / Anstabil Bradikardi → Atropin 1 mg IV + Transkütan Pacing / Vazopressör'
+            : 'Stabil Bradikardi → Yakın Monitörizasyon, İlaç/Elektrolit/İnferior MI Kontrolü';
+          steps.push(`<div class="step-item ${unstable ? 'red' : 'green'}"><strong>1. Atropin:</strong> <strong>1 mg IV puşe</strong>, 3–5 dakikada bir tekrarlanabilir (Maksimum toplam <strong>3 mg</strong>). <em>Not: Mobitz Tip II ve İnfra-His Tam Blokta Atropin genellikle etkisizdir, zaman kaybetme!</em></div>`);
+          steps.push(`<div class="step-item amber"><strong>2. Yanıtsızsa İkinci Basamak:</strong> Sedoanaljezi ile <strong>Transkütan Pacing</strong> VEYA <strong>Adrenalin infüzyonu (2–10 mcg/dk)</strong> / <strong>Dopamin infüzyonu (${Math.round(wt * 5 * 60 / 1600)}–${Math.round(wt * 15 * 60 / 1600)} mL/saat; 400 mg/250 mL SF)</strong>.</div>`);
+        } else if (pat === 'hyperk') {
+          banner.className = 'result-banner warn';
+          mainDec.textContent = '🚨 EKG Bulgulu Hiperkalemi → 1. Kalbi Koru → 2. Hücre İçine Sok → 3. Vücuttan At!';
+          steps.push(`<div class="step-item red"><strong>1. Miyokard Membran Stabilizasyonu (İlk 1 Dakika!):</strong> <strong>%10 Kalsiyum Glukonat 10–20 mL (1–2 ampul)</strong> + 100 mL SF içinde 5–10 dk'da IV (Potasyumu düşürmez, VF/asistoliyi önler; EKG düzelmezse 5 dk sonra tekrarla!).</div>`);
+          steps.push(`<div class="step-item green"><strong>2. Hücre İçine Şift:</strong> <strong>10 Ünite Kristalize (Regüler) İnsülin</strong> + <strong>25 g Dekstroz</strong> (örn. 250 mL %10 Dekstroz veya 500 mL %5 Dekstroz) 15–30 dk IV + <strong>Salbutamol 10–20 mg nebül</strong> (4–8 nebül peş peşe!).</div>`);
+          steps.push(`<div class="step-item amber"><strong>3. Eliminasyon:</strong> Hipervolemikse Furosemid IV, Potasyum bağlayıcı (Sodyum zirkonyum siklosilikat / Patiromer) ve oligo-anürik veya refrakterse <strong>Acil Hemodiyaliz</strong>.</div>`);
+        }
+      }
+
+      document.getElementById('ecgSteps').innerHTML = steps.join('');
+
+      // Canlı Norepinefrin & Adrenalin Enjektomat/Pompa Hızı (1 Ampul = 4 mg / 100 mL = 40 mcg/mL)
+      const norepLowMlHr = ((0.05 * wt * 60) / 40).toFixed(1);
+      const norepMidMlHr = ((0.15 * wt * 60) / 40).toFixed(1);
+      const norepHighMlHr = ((0.30 * wt * 60) / 40).toFixed(1);
+      document.getElementById('vasopressorTable').innerHTML = `
+        <div class="step-item"><strong>Norepinefrin Hazırlama:</strong> 1 Ampul (<strong>4 mg</strong>) + 100 mL %5 Dekstroz/SF (Konsantrasyon: <strong>40 mcg/mL</strong>)</div>
+        <div class="step-item green">• Başlangıç (0.05 mcg/kg/dk · ${wt} kg): <strong>${norepLowMlHr} mL/saat</strong><br>• Orta Doz (0.15 mcg/kg/dk · ${wt} kg): <strong>${norepMidMlHr} mL/saat</strong><br>• Yüksek Doz (0.30 mcg/kg/dk · ${wt} kg): <strong>${norepHighMlHr} mL/saat</strong></div>
+      `;
+    }
+
+    // ============================================================================
+    // 3. HEART SKORU & WELLS + YAŞ DÜZELTMELİ D-DİMER HESAPLAYICI
+    // ============================================================================
+    function calcScores() {
+      // HEART
+      const hTotal = ['h_hist', 'h_ecg', 'h_age', 'h_risk', 'h_trop']
+        .reduce((s, id) => s + parseInt(document.getElementById(id).value, 10), 0);
+      const hBox = document.getElementById('heartResultBox');
+      if (hTotal <= 3) {
+        hBox.className = 'step-item green';
+        hBox.innerHTML = `<strong>HEART Skoru: ${hTotal} / 10 (Düşük Risk · MACE ~%0.9–1.7):</strong> Seri kontrol troponin (0–1. veya 0–3. saat hs-cTn) de negatifse erken taburculuk ve poliklinik kontrolü değerlendirilebilir.`;
+      } else if (hTotal <= 6) {
+        hBox.className = 'step-item amber';
+        hBox.innerHTML = `<strong>HEART Skoru: ${hTotal} / 10 (Orta Risk · MACE ~%12–16.6):</strong> Gözlem/yatış, seri EKG + seri troponin takibi ve klinik/non-invaziv iskemi değerlendirmesi önerilir.`;
+      } else {
+        hBox.className = 'step-item red';
+        hBox.innerHTML = `<strong>HEART Skoru: ${hTotal} / 10 (Yüksek Risk · MACE ~%50–65):</strong> Erken invaziv strateji, AKS protokolü ve acil Kardiyoloji konsültasyonu önerilir!`;
+      }
+
+      // WELLS PE & YAŞ DÜZELTMELİ D-DİMER
+      const peAge = parseInt(document.getElementById('pe_age').value, 10) || 40;
+      const wells = Array.from(document.querySelectorAll('.wells-chk'))
+        .reduce((s, c) => s + (c.checked ? parseFloat(c.dataset.pts) : 0), 0);
+      const ddimerCutoff = peAge > 50 ? peAge * 10 : 500;
+      const peBox = document.getElementById('peResultBox');
+
+      if (wells > 4) {
+        peBox.className = 'step-item red';
+        peBox.innerHTML = `<strong>Wells Skoru: ${wells.toFixed(1)} (&gt;4.0 → PE Olası!):</strong> D-Dimer beklemeden doğrudan <strong>BT Pulmoner Anjiyografi (BTPA)</strong> (veya anstabilse yatak başı Eko'da RV yüklenmesi) endikedir!`;
+      } else {
+        peBox.className = 'step-item green';
+        peBox.innerHTML = `<strong>Wells Skoru: ${wells.toFixed(1)} (&le;4.0 → PE Olasılığı Düşük):</strong> Önce D-Dimer bakılır. Bu hasta (${peAge} yaş) için <strong>Yaş Düzeltmeli D-Dimer Eşiği: &lt; ${ddimerCutoff} ng/mL (FEU)</strong> ise PE güvenle dışlanır.`;
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      solveABGAndVent();
+      evaluateECGProtocol();
+      calcScores();
+      publishModuleBar();
+    });
+  </script>
+</body>
+</html>
