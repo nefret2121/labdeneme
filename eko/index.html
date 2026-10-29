@@ -68,6 +68,7 @@
     .echo-toolbar button { font-size: 11px; padding: 4px 9px; }
     #echoScreen { flex: 1; position: relative; min-height: 220px; background: #000; overflow: hidden; }
     #bmode { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: auto; }
+    #clipCredit { position: absolute; left: 10px; bottom: 8px; font-family: var(--mono); font-size: 9.5px; color: rgba(200,210,225,0.7); background: rgba(5,8,15,0.55); padding: 2px 6px; border-radius: 5px; opacity: 0; transition: opacity .5s; pointer-events: none; max-width: 70%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     #overlay { position: absolute; inset: 0; cursor: crosshair; touch-action: none; }
     #stripBox { height: 150px; border-top: 1px solid var(--line); position: relative; background: #02040a; flex-shrink: 0; }
     #strip { display: block; width: 100%; height: 100%; }
@@ -154,7 +155,7 @@
         <button id="btnSector" onclick="toggleSector()">Sektör: 90°</button>
         <button id="btnMarker" onclick="toggleMarker()">İşaret: Sağ (Kardiyo)</button>
       </div>
-      <div id="echoScreen"><canvas id="bmode"></canvas><canvas id="overlay"></canvas></div>
+      <div id="echoScreen"><canvas id="bmode"></canvas><canvas id="overlay"></canvas><div id="clipCredit"></div></div>
       <div id="stripBox"><canvas id="strip"></canvas><div id="stripReadout"></div></div>
       <div id="ecgBox"><canvas id="ecg"></canvas></div>
     </section>
@@ -902,11 +903,11 @@ const EchoModel = (() => {
     psax_ao: { id: 'psax_ao', name: 'PSAX · Aort Kapağı', short: 'PSAX-AV', pose: { sx: 4.60, sy: -5.90, rot: 7.5, tilt: 20.0, rock: 26.4, press: 0 }, marker: 'right', depth: 14, focus: 7 },
     psax_mv: { id: 'psax_mv', name: 'PSAX · Mitral', short: 'PSAX-MV', pose: { sx: 4.60, sy: -5.90, rot: 38.6, tilt: 4.3, rock: 4.0, press: 0 }, marker: 'right', depth: 14, focus: 8 },
     psax_pm: { id: 'psax_pm', name: 'PSAX · Papiller', short: 'PSAX-PM', pose: { sx: 4.60, sy: -5.90, rot: 39.6, tilt: -10.8, rock: 4.0, press: 0 }, marker: 'right', depth: 14, focus: 8 },
-    a4c:     { id: 'a4c', name: 'Apikal 4 Boşluk', short: 'A4C', pose: { sx: 7.00, sy: -9.30, rot: 106.3, tilt: 24.8, rock: -25.6, press: 0.3 }, marker: 'right', depth: 17, focus: 10 },
+    a4c:     { id: 'a4c', name: 'Apikal 4 Boşluk', short: 'A4C', pose: { sx: 7.00, sy: -9.30, rot: 106.3, tilt: 24.8, rock: -25.6, press: 0.3 }, marker: 'right', depth: 15, focus: 10 },
     a5c:     { id: 'a5c', name: 'Apikal 5 Boşluk', short: 'A5C', pose: { sx: 7.00, sy: -9.60, rot: 106.3, tilt: 40.8, rock: -35.6, press: 0.6 }, marker: 'right', depth: 17, focus: 10 },
     a3c:     { id: 'a3c', name: 'Apikal Uzun Eksen', short: 'A3C', pose: { sx: 7.00, sy: -9.30, rot: -76.3, tilt: -26.6, rock: 21.9, press: 0.3 }, marker: 'right', depth: 17, focus: 10 },
     subx:    { id: 'subx', name: 'Subkostal 4 Boşluk', short: 'SubX', pose: { sx: 4.65, sy: -11.00, rot: 92.1, tilt: 40.9, rock: 0.0, press: 0.3 }, marker: 'right', depth: 20, focus: 12 },
-    ivc:     { id: 'ivc', name: 'Subkostal IVC', short: 'IVC', pose: { sx: -1.79, sy: -11.00, rot: 0.0, tilt: 0.0, rock: 31.5, press: 0.3 }, marker: 'right', depth: 18, focus: 10 }
+    ivc:     { id: 'ivc', name: 'Subkostal IVC', short: 'IVC', pose: { sx: -1.79, sy: -11.00, rot: 0.0, tilt: 0.0, rock: 31.5, press: 0.3 }, marker: 'right', depth: 15, focus: 10 }
   };
 
   // Jüri için landmark'lar (hasta çerçevesi)
@@ -1457,6 +1458,70 @@ const EchoScene = (() => {
   return { create };
 })();
 
+    // ===== clips.js =====
+// ============================================================================
+//  DuctusLab Eko v2 — GERÇEK KLİP KATMANI
+//  manifest.json: pencere → sprite sheet (WebP), sektör geometrisi (apeks, yarıçap, yarı açı, px/cm), döngü tipi.
+//  Jüri pencereyi tanıdığında (poz toleransta, normal vaka, Doppler kapalı) prosedürel görüntünün üstüne
+//  gerçek klip yumuşakça biner; düzlemden çıkınca prosedürele geri döner. Klip yoksa hiçbir şey değişmez.
+// ============================================================================
+const EchoClips = (() => {
+  'use strict';
+  const DEG = Math.PI / 180;
+  const S = { byWin: {}, base: '', off: null, offCtx: null, active: null, w: 0 };
+  function load(base) {
+    S.base = base;
+    return fetch(base + 'manifest.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).then(m => {
+      if (!m || !m.clips) return S;
+      m.clips.forEach(c => { const img = new Image(); img.onload = () => { c.img = img; c.ready = true; }; img.onerror = () => { c.ready = false; }; img.src = base + c.src; S.byWin[c.window] = c; });
+      return S;
+    }).catch(() => S);
+  }
+  function smooth(a, b, x) { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); }
+  // 0..1: klibin ne kadar görüneceği
+  function weight(winId, off, ctx) {
+    const c = S.byWin[winId]; if (!c || !c.ready) return 0;
+    if (ctx.pathology !== 'normal' || ctx.color || ctx.cw || ctx.tween) return 0;
+    if (c.cycle === 'resp' && ctx.sniff) return 0;
+    const e = Math.max(Math.abs(off.dx) / 1.0, Math.abs(off.dy) / 1.0, Math.abs(off.rot) / 12, Math.abs(off.tilt) / 10, Math.abs(off.rock) / 10, Math.abs(off.press) / 1.5);
+    return 1 - smooth(0.45, 1.0, e);
+  }
+  function frameIndex(c, ctx) {
+    if (c.cycle === 'resp') return Math.floor(((ctx.tResp % 1) + 1) % 1 * c.n) % c.n;
+    return Math.floor((((ctx.tau + (c.phase || 0)) % 1) + 1) % 1 * c.n) % c.n;
+  }
+  // bCtx: B-Mod tuvali; lut: {apexX, apexY, pxPerCm}; w: ağırlık
+  function draw(bCtx, lut, bw, bh, winId, w, ctx) {
+    const c = S.byWin[winId]; if (!c || !c.ready || w <= 0.01) { S.active = null; S.w = 0; return; }
+    S.active = c; S.w = w;
+    if (!S.off || S.off.width !== bw || S.off.height !== bh) { S.off = document.createElement('canvas'); S.off.width = bw; S.off.height = bh; S.offCtx = S.off.getContext('2d'); }
+    const o = S.offCtx; o.clearRect(0, 0, bw, bh);
+    const s = lut.pxPerCm / c.pxPerCm; const R = c.radius * s, h = c.half * DEG;
+    const fr = frameIndex(c, ctx); const sx = (fr % c.cols) * c.fw, sy = Math.floor(fr / c.cols) * c.fh;
+    o.save();
+    o.beginPath(); o.moveTo(lut.apexX, lut.apexY); o.arc(lut.apexX, lut.apexY, R, Math.PI / 2 - h, Math.PI / 2 + h); o.closePath(); o.clip();
+    if (ctx.mirror) { o.translate(lut.apexX * 2, 0); o.scale(-1, 1); }
+    try { o.filter = `brightness(${(1 + ctx.gain / 45).toFixed(2)}) contrast(${(1 + (55 - ctx.dr) / 120).toFixed(2)})`; } catch (e) {}
+    o.drawImage(c.img, sx, sy, c.fw, c.fh, lut.apexX - c.apex[0] * s, lut.apexY - c.apex[1] * s, c.fw * s, c.fh * s);
+    o.restore();
+    // kenar yumuşatma: klip yarıçapının son %12'si ve yan kenarlar saydamlaşır
+    o.save(); o.globalCompositeOperation = 'destination-in';
+    const g = o.createRadialGradient(lut.apexX, lut.apexY, R * 0.86, lut.apexX, lut.apexY, R); g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+    o.fillStyle = g; o.fillRect(0, 0, bw, bh);
+    // yan kenarlar: konik gradyanla açısal yumuşatma (destekleyen tarayıcılarda)
+    if (typeof o.createConicGradient === 'function') {
+      const f = 4 * DEG, a0 = Math.PI / 2 - h, a1 = Math.PI / 2 + h, T = 2 * Math.PI;
+      const cg = o.createConicGradient(0, lut.apexX, lut.apexY);
+      cg.addColorStop(0, 'rgba(0,0,0,0)'); cg.addColorStop(Math.max(0, a0 / T - 1e-4), 'rgba(0,0,0,0)'); cg.addColorStop((a0 + f) / T, 'rgba(0,0,0,1)');
+      cg.addColorStop((a1 - f) / T, 'rgba(0,0,0,1)'); cg.addColorStop(Math.min(1, a1 / T + 1e-4), 'rgba(0,0,0,0)'); cg.addColorStop(1, 'rgba(0,0,0,0)');
+      o.fillStyle = cg; o.fillRect(0, 0, bw, bh);
+    }
+    o.restore();
+    bCtx.save(); bCtx.globalAlpha = w; bCtx.drawImage(S.off, 0, 0); bCtx.restore();
+  }
+  return { load, weight, draw, S };
+})();
+
     // ===== app.js =====
 // ============================================================================
 //  DuctusLab Eko v2 — UYGULAMA (UI, cihaz kromu, M-Mod/CW, EKG, patolojiler, jüri, suite köprüsü)
@@ -1838,6 +1903,16 @@ const EchoScene = (() => {
   window.toast = toast;
 
   // ---- ana döngü ----
+  // ---- gerçek klip katmanı (EchoClips) ----
+  function drawClipLayer(tRespEff) {
+    if (typeof EchoClips === 'undefined') return;
+    const ctx = { pathology: st.pathology, color: st.color, cw: st.cw, tween: !!st.tween, sniff: st.sniffUntil > st.tAbs, tau: st.tau, tResp: tRespEff, gain: E.gain, dr: E.dr, mirror: !E.markerRight };
+    const w = EchoClips.weight(st.win, st.off, ctx);
+    EchoClips.draw(bCtx, st.lut, st.bw, st.bh, st.win, w, ctx);
+    const cr = $('clipCredit'); if (cr) { const c = EchoClips.S.active; const on = c && w > 0.35; cr.style.opacity = on ? 1 : 0; if (on) cr.textContent = 'Gerçek görüntü · ' + c.credit; }
+    if (w > 0.6 && !st.clipSeen) { st.clipSeen = true; suiteTrack('clip', { window: st.win }); }
+    if (w < 0.2) st.clipSeen = false;
+  }
   function loop(now) {
     requestAnimationFrame(loop);
     const dt = Math.min(0.05, (now - lastTime) / 1000); lastTime = now;
@@ -1859,12 +1934,13 @@ const EchoScene = (() => {
       st.lastBmode = now;
       const H = R.renderFrame(E, st.tau, tRespEff, st.tAbs);
       R.paint(E, st.lut, st.rgba); bCtx.putImageData(st.img, 0, 0);
+      drawClipLayer(tRespEff);
       pushStripColumn(H);
       if (st.cw && st.tau < st.lastTau) { st.vmaxHold = st.cycleMax; st.cycleMax = 0; }
       st.lastTau = st.tau;
       $('topFps').textContent = st.fr.toFixed(0) + ' Hz';
     } else if (E.posDirty || E.staticDirty) { // dondurulmuşken poz değişirse yine de güncelle
-      if (st.frozen) { const H = R.renderFrame(E, st.tau, tRespEff, st.tAbs); R.paint(E, st.lut, st.rgba); bCtx.putImageData(st.img, 0, 0); }
+      if (st.frozen) { const H = R.renderFrame(E, st.tau, tRespEff, st.tAbs); R.paint(E, st.lut, st.rgba); bCtx.putImageData(st.img, 0, 0); drawClipLayer(tRespEff); }
     }
     if (E.H) {
       drawOverlay(E.H);
@@ -1902,6 +1978,8 @@ const EchoScene = (() => {
   // ---- başlat ----
   function init() {
     try { st.scene = EchoScene.create($('scene3d'), { onPose: onScenePose }); } catch (e) { console.warn('3D sahne yüklenemedi', e); st.scene = null; }
+    // gerçek klipler (varsa): paket içinde eko/clips/, bağımsız sayfada clips/
+    try { if (typeof EchoClips !== 'undefined' && location.protocol !== 'file:') EchoClips.load(inSuite() ? 'eko/clips/' : 'clips/'); } catch (e) {}
     if (!st.scene) $('scene3d').innerHTML = '<div class="scene-fallback">3D sahne yüklenemedi (Three.js). Ultrason motoru çalışmaya devam ediyor.</div>';
     else if (typeof ECHO_ASSET_MANIFEST !== 'undefined') {
       EchoAssets.load({ manifest: ECHO_ASSET_MANIFEST, b64: ECHO_ASSET_B64 }).then(a => { st.scene.loadAssets(a); }).catch(e => console.warn('anatomi yüklenemedi', e));

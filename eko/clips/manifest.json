@@ -1,0 +1,43 @@
+{
+ "version": 1,
+ "clips": [
+  {
+   "id": "a4c_ge",
+   "window": "a4c",
+   "src": "a4c_ge.webp",
+   "n": 20,
+   "cols": 1,
+   "fw": 278,
+   "fh": 222,
+   "apex": [
+    138.0,
+    12.0
+   ],
+   "half": 33,
+   "radius": 200.0,
+   "pxPerCm": 13.6,
+   "cycle": "cardiac",
+   "fps": null,
+   "credit": "Wikimedia Commons · \"Ultrasound of human heart apical 4-chamber view\" (GE Vivid) · lisans sayfadaki CC lisansı"
+  },
+  {
+   "id": "ivc",
+   "window": "ivc",
+   "src": "ivc.webp",
+   "n": 63,
+   "cols": 2,
+   "fw": 528,
+   "fh": 370,
+   "apex": [
+    275.2,
+    -1.6
+   ],
+   "half": 37,
+   "radius": 368.0,
+   "pxPerCm": 25.6,
+   "cycle": "resp",
+   "fps": 12.5,
+   "credit": "Wikimedia Commons · \"Inferior vena cava ultrasound\" (GE) · lisans sayfadaki CC lisansı"
+  }
+ ]
+}

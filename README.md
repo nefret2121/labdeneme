@@ -30,6 +30,8 @@ Tüm modüller tek dosyada: `ductuslab-suite.html` → https://nefret2121.github
 
 Eko modülündeki 3D anatomi, [BodyParts3D 4.0](https://lifesciencedb.jp/bp3d/) (© The Database Center for Life Science, [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)) verisinden türetilmiş, sadeleştirilip tek dosyaya gömülmüş 69 parçadır.
 
+**Gerçek klip katmanı (`eko/clips/`):** `manifest.json` pencere kimliğini (`a4c`, `ivc`, `plax`, …) bir WebP sprite sheet'e ve sektör geometrisine (apeks, yarıçap, yarı açı, px/cm, döngü tipi `cardiac`/`resp`) bağlar. Jüri pencereyi tanıdığında (poz toleransta, normal vaka, Doppler kapalı) gerçek klip prosedürel görüntünün üstüne yumuşakça biner; prob düzlemden çıkınca prosedürele geri döner. Yeni klip eklemek için sprite sheet + manifest satırı yeterlidir. Mevcut klipler Wikimedia Commons'tan alınmıştır (GE; `manifest.json` içindeki `credit` alanı — lisans satırı Commons sayfasından doğrulanıp güncellenmelidir).
+
 Paket içindeki "Jüri" çekmecesi tamamen çevrimdışı, kural tabanlı çalışır; Eko modülünde prob tutuşu (kosta gölgesi, foreshortening), derinlik/gain ve Doppler açısı ihlallerini canlı izler, Doppler açı ve foreshortening deneylerini kayda geçer.
 
 Modül kaynakları `MODULE_SRC` içine gömülüdür; bir modülün bağımsız dosyası değiştiğinde paket aynı dönüşümle (`JSON.stringify` + `<\script` kaçışı) yeniden üretilmelidir.
