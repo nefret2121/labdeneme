@@ -275,7 +275,7 @@ const EchoModel = (() => {
   const T = { NONE: 0, SKIN: 1, FAT: 2, MUSCLE: 3, BONE: 4, CARTILAGE: 5, LUNG: 6, LIVER: 7, BLOOD: 8, MYO: 9, VALVE: 10, PERI: 11, FLUID: 12, EPIFAT: 13, VESSEL: 14, ATRIUM: 15, DIAPHRAGM: 16, SPINE: 17, PAPILLARY: 18, CALCIUM: 19 };
   const REFL = new Float32Array(32);
   REFL[T.NONE] = 0; REFL[T.SKIN] = 0.9; REFL[T.FAT] = 0.17; REFL[T.MUSCLE] = 0.30; REFL[T.BONE] = 1.2; REFL[T.CARTILAGE] = 0.45; REFL[T.LUNG] = 1.2;
-  REFL[T.LIVER] = 0.30; REFL[T.BLOOD] = 0.012; REFL[T.MYO] = 0.40; REFL[T.VALVE] = 1.0; REFL[T.PERI] = 1.2; REFL[T.FLUID] = 0.0; REFL[T.EPIFAT] = 0.20;
+  REFL[T.LIVER] = 0.30; REFL[T.BLOOD] = 0.005; REFL[T.MYO] = 0.40; REFL[T.VALVE] = 1.0; REFL[T.PERI] = 1.2; REFL[T.FLUID] = 0.0; REFL[T.EPIFAT] = 0.20;
   REFL[T.VESSEL] = 0.8; REFL[T.ATRIUM] = 0.55; REFL[T.DIAPHRAGM] = 1.3; REFL[T.SPINE] = 1.2; REFL[T.PAPILLARY] = 0.45; REFL[T.CALCIUM] = 1.3;
 
   // ---- varsayılan fizyolojik parametreler (patolojiler bunları değiştirir) ----
@@ -461,7 +461,21 @@ const EchoModel = (() => {
     const lvotP0 = add(add(B, d, 0.4), uPlax, 1.2); // LVOT tüpü başlangıcı (her kare bir kez)
     // triküspit anulus
     const tl = HEART.tvLoc; const tvC = add(add(add(B, xh, tl[0]), yh, tl[1]), d, tl[2]);
-    return { cy, c, insp, B, d, yh, xh, uPlax, uA4c, nPlax: norm3(cross(d, uPlax)), dirAo, avC, jetDir, lvotP0,
+    // mitral yaprak uçları (lokal çerçeve; korda hedefleri): anulus R=1.55, uPlax yönü anterior yaprak
+    const mvO = cy.mv * P.mv.openScale;
+    const uxl = uPlax[0] * xh[0] + uPlax[1] * xh[1] + uPlax[2] * xh[2], uyl = uPlax[0] * yh[0] + uPlax[1] * yh[1] + uPlax[2] * yh[2];
+    const phiA = Math.atan2(uxl, uyl); const closedAng = Math.atan2(1.55 * 0.9, 1.1);
+    const mvTips = [];
+    for (let k = 0; k < 2; k++) { const ph = phiA + k * Math.PI; const len = k === 0 ? 2.35 : 1.25; const ang = closedAng - mvO * (k === 0 ? 62 : 55) * DEG;
+      const hx = Math.sin(ph) * 1.55, hy = Math.cos(ph) * 1.55; const dirc = Math.sin(ang), dirz = Math.cos(ang);
+      mvTips.push([hx - Math.sin(ph) * dirc * len, hy - Math.cos(ph) * dirc * len, dirz * len]); }
+    // LA: pulmoner ven ağızları (arka-üst duvardan dışa 2 kısa tüp) ve fossa ovalis merkezi (LA–RA septum ortası)
+    const laRr = P.la.r * P.la.dil * (0.86 + 0.14 * cy.at), raRr = P.ra.r * P.ra.dil * (0.86 + 0.14 * cy.at);
+    const post = [-uPlax[0], -uPlax[1], -uPlax[2]];
+    const pvOst = [];
+    for (let k = -1; k <= 1; k += 2) { const p0 = add(add(add(laC, post, laRr * 0.95), uA4c, -k * laRr * 0.55), d, -0.3); const p1 = add(add(p0, post, 2.2), uA4c, -k * 0.6); pvOst.push([p0[0], p0[1], p0[2], p1[0], p1[1], p1[2]]); }
+    const foC = add(laC, add(raC, laC, -1), laRr / (laRr + raRr));
+    return { cy, c, insp, B, d, yh, xh, uPlax, uA4c, nPlax: norm3(cross(d, uPlax)), dirAo, avC, jetDir, lvotP0, mvTips, pvOst, foC,
       lv: { h, a: aT, b: bT, a0, b0, w: wT, L: L0 - mapse }, rvC, rvA, laC, laR, raC, raR, aoBase, tvC,
       mvOpen: cy.mv * P.mv.openScale, avOpen: cy.av * P.av.openFrac, avTiming: cy.av, tvOpen: cy.tv, mapse, tau, tResp };
   }
@@ -552,6 +566,26 @@ const EchoModel = (() => {
     const g = Math.sqrt((qx / ax) * (qx / ax) + (qy / ay) * (qy / ay) + (qz / az) * (qz / az)) || 1e-6;
     return (q - 1) * q / g;
   }
+  // LV mermi profili: taban yarısı elips (p=2), apikal yarı daha konik (p=1.55); birinci dereceden SDF
+  // apikal yarı için f(u) ve f'(u) tablosu (p = 1.55), u ∈ [0, 1)
+  const LVP_N = 512, LVP_F = new Float32Array(LVP_N + 1), LVP_DF = new Float32Array(LVP_N + 1);
+  for (let i = 0; i <= LVP_N; i++) { const u = Math.min(0.999, i / LVP_N); const p = 1.55; const g = 1 - Math.pow(u, p); LVP_F[i] = Math.pow(g, 1 / p); LVP_DF[i] = -Math.pow(u, p - 1) * Math.pow(g, 1 / p - 1); }
+  function lvSdf(lx, ly, lz, b, a, h) {
+    let u = (lz - h) / a; if (u > 0.999) u = 0.999; if (u < -0.999) u = -0.999;
+    let f, df;
+    if (u <= 0) { const g = 1 - u * u; f = Math.sqrt(g); df = u / f; }               // taban yarısı: elips
+    else { const x = u * LVP_N; const i = x | 0; const t = x - i; f = LVP_F[i] + (LVP_F[i + 1] - LVP_F[i]) * t; df = LVP_DF[i] + (LVP_DF[i + 1] - LVP_DF[i]) * t; } // apikal yarı: konik
+    const R = b * f; const dR = b * df / a;
+    const rad = Math.sqrt(lx * lx + ly * ly);
+    return (rad - R) / Math.sqrt(1 + dR * dR);
+  }
+  // Endokardiyal trabekülasyon: duvarla birlikte deforme olan (Lagrange) hücresel pürüz, apekste belirgin
+  function trabec(lx, ly, lz, b, a, amp, k) {
+    const u = lx / b, v = ly / b, w = lz / a;
+    const n = Math.sin(k * 5.3 * u + 1.7 * w) * Math.sin(k * 4.7 * v - 0.9 * u) * Math.sin(k * 6.1 * w + 2.3 * v);
+    const apical = 0.35 + 0.65 * S((w - 0.25) / 0.6);
+    return amp * apical * n;
+  }
   function segDist(px, py, pz, ax, ay, az, bx, by, bz) {
     const vx = bx - ax, vy = by - ay, vz = bz - az; const wx = px - ax, wy = py - ay, wz = pz - az;
     let t = (vx * wx + vy * wy + vz * wz) / (vx * vx + vy * vy + vz * vz); t = clamp(t, 0, 1);
@@ -615,8 +649,10 @@ const EchoModel = (() => {
     const ezl = (lz - lv.h) / lv.a;
     const bEff = lv.b * dsq;
     const rEndo = Math.sqrt(Math.max(0, 1 - ezl * ezl)) * bEff;        // bu düzeyde endokart yarıçapı
-    const sEndo = (lz < -0.3) ? 99 : ellSdf(lx, ly, lz - lv.h, bEff, bEff, lv.a);  // >0 dışarıda
-    const sEpi = (lz < -0.3) ? 99 : ellSdf(lx, ly, lz - lv.h, bEff + w, bEff + w, lv.a + w);
+    // endokart: mermi profili + trabekülasyon (kaviteye doğru çıkıntılar sEndo'yu büyütür)
+    let sEndo = (lz < -0.3) ? 99 : lvSdf(lx, ly, lz, bEff, lv.a, lv.h);
+    if (sEndo < 0.45 && sEndo > -0.45) sEndo += trabec(lx, ly, lz, bEff, lv.a, 0.16, 1.0) * (lz > 0.8 ? 1 : S((lz + 0.3) / 1.1));
+    const sEpi = (lz < -0.3) ? 99 : lvSdf(lx, ly, lz, bEff + w, lv.a + w, lv.h);
     const inLVcav = lz >= -0.3 && sEndo < 0;
     const inLVwall = !inLVcav && lz >= -0.3 && sEpi < 0;
     // RV dış elipsoidi
@@ -641,11 +677,16 @@ const EchoModel = (() => {
       return true;
     }
     if (inLVcav) {
-      // papiller kaslar
+      // papiller kaslar (anterolateral / posteromedial): duvardan kaviteye uzanan kalın kas başları
       for (let s = -1; s <= 1; s += 2) {
-        const ang = Math.PI + 40 * DEG + s * 50 * DEG; const prx = Math.sin(ang) * rEndo * 0.72, pry = Math.cos(ang) * rEndo * 0.72;
-        const dpm = Math.hypot(lx - prx, ly - pry, Math.max(0, Math.abs(lz - 4.3) - 1.1));
-        if (dpm < 0.5 && lz > 2.6) { o.type = T.PAPILLARY; o.refl = REFL[T.PAPILLARY]; o.edge = dpm - 0.5; o.edgeRefl = 0.7; o.qx = lx; o.qy = ly; o.qz = lz + 100; return true; }
+        const ang = Math.PI + 40 * DEG + s * 50 * DEG; const prx = Math.sin(ang) * rEndo * 0.70, pry = Math.cos(ang) * rEndo * 0.70;
+        const rp = 0.62 * (1 - 0.35 * S((lz - 4.6) / 1.4)); // tabanda kalın, uca doğru incelir
+        const dpm = Math.hypot(lx - prx, ly - pry, Math.max(0, Math.abs(lz - 4.4) - 1.2));
+        if (dpm < rp && lz > 2.3) { o.type = T.PAPILLARY; o.refl = REFL[T.PAPILLARY]; o.edge = dpm - rp; o.edgeRefl = 0.7; o.qx = lx; o.qy = ly; o.qz = lz + 100; return true; }
+        // korda tendinea: papiller baştan yaprak uçlarına ince parlak iplikler
+        if (lz > 0.6 && lz < 3.4) { const hx = prx, hy = pry, hz = 3.2;
+          for (let k = 0; k < 2; k++) { const tip = H.mvTips[k]; const dc = segDist(lx, ly, lz, hx, hy, hz, tip[0], tip[1], tip[2]);
+            if (dc < 0.045) { o.type = T.VALVE; o.refl = 0.55; o.edge = dc - 0.045; o.edgeRefl = 0.6; o.qx = lx; o.qy = ly; o.qz = lz + 150; return true; } } }
       }
       // mitral kapak yaprakları
       const vmv = mitralDist(lx, ly, lz, H, P);
@@ -658,7 +699,7 @@ const EchoModel = (() => {
     // RV
     if (rvMask && rvR < 1 && lz > -0.6) {
       if (sEpi > 0) { // LV epikardı dışında
-        const dFree = -sRvOut; // dış yüzeye uzaklık
+        const dFree = -sRvOut + trabec(lx - RV_XOFF, ly - RV_OFF, lz, 3.0, 4.3, 0.22, 0.8); // dış yüzeye uzaklık (+ kaba RV trabekülasyonu)
         if (dFree < P.rv.wall) { o.type = T.MYO; o.refl = 0.42; o.edge = -dFree; o.edgeRefl = 0.7; o.qx = lx; o.qy = ly * 1.0; o.qz = lz + 200; return true; }
         // triküspit
         const vtv = tricuspidDist(lx, ly, lz, H, P);
@@ -674,22 +715,32 @@ const EchoModel = (() => {
     // RVOT / pulmoner arter (tüp)
     if (rvotTube(lx, ly, lz, H, P, o)) return true;
     // atriyumlar
-    const dla = Math.hypot(x - H.laC[0], y - H.laC[1], (z - H.laC[2]) * 1.15) - H.laR;
-    const dra = Math.hypot(x - H.raC[0], y - H.raC[1], (z - H.raC[2]) * 1.15) - H.raR;
+    // atriyumlar: elipsoid (uzun eksen boyunca basık, sağ-sol geniş); LA'ya arka duvardan giren pulmoner venler
+    const dla = atriumSdf(x, y, z, H.laC, H.laR, H, 1.12, 0.86, 0.95);
+    const dra = atriumSdf(x, y, z, H.raC, H.raR, H, 1.08, 0.92, 1.0);
     const aw = 0.22;
     if (dla < 0 && lz < 0.3) { o.type = T.BLOOD; o.refl = REFL[T.BLOOD]; o.edge = dla; o.edgeRefl = 0.75; o.qx = x; o.qy = y; o.qz = z; flowLA(x, y, z, lx, ly, lz, H, P, o); return true; }
     if (dra < 0 && lz < 1.2) { o.type = T.BLOOD; o.refl = REFL[T.BLOOD]; o.edge = dra; o.edgeRefl = 0.75; o.qx = x; o.qy = y; o.qz = z; flowRA(x, y, z, lx, ly, lz, H, P, o); return true; }
-    if ((dla < aw && lz < 0.5) || (dra < aw && lz < 1.4)) { o.type = T.ATRIUM; o.refl = REFL[T.ATRIUM]; o.edge = -Math.min(dla, dra); o.edgeRefl = 0.8; return true; }
+    // pulmoner ven ağızları (LA arka-üst duvar, iki ağız)
+    for (let k = 0; k < 2; k++) { const pv = H.pvOst[k]; const dpv = segDist(x, y, z, pv[0], pv[1], pv[2], pv[3], pv[4], pv[5]);
+      if (dpv < 0.42 && dla < 1.2) { o.type = T.BLOOD; o.refl = REFL[T.BLOOD]; o.edge = dpv - 0.42; o.edgeRefl = 0.7; o.qx = x; o.qy = y; o.qz = z; return true; } }
+    if ((dla < aw && lz < 0.5) || (dra < aw && lz < 1.4)) {
+      // interatriyal septum: iki duvarın birleştiği yer; fossa ovalis bölgesinde incelme/sönük yansıma
+      const septum = dla < aw && dra < aw;
+      const fo = septum ? Math.hypot(x - H.foC[0], y - H.foC[1], z - H.foC[2]) : 9;
+      const thin = fo < 0.9 ? 1 - 0.7 * (1 - fo / 0.9) : 1;
+      o.type = T.ATRIUM; o.refl = REFL[T.ATRIUM] * thin; o.edge = -Math.min(dla, dra); o.edgeRefl = 0.8 * thin; o.qx = x; o.qy = y; o.qz = z + 50; return true; }
     // perikart / efüzyon / epikardiyal yağ: epikarda uzaklık (LV + RV + atriyum birleşimi)
     const rvOuterD = rvMask ? sRvOut : 99;
     const atrD = Math.min(dla - aw, dra - aw);
     let dEpi = Math.min(lvOuter, rvOuterD, atrD, aorticOuter(x, y, z, H));
     if (lz < -0.5 && !rvMask) dEpi = Math.min(dEpi, atrD);
     if (dEpi < 2.6 + P.effusion) {
-      const fat = 0.2 + (cosRV > 0 ? 0.15 : 0) + (lz > lv.L - 1 ? 0.25 : 0); // epikardiyal yağ önde ve apekste kalın
-      if (dEpi < fat) { o.type = T.EPIFAT; o.refl = 0.22; o.edge = dEpi; o.edgeRefl = 0.6; o.qx = x; o.qy = y; o.qz = z; return true; }
+      const fat = 0.12 + (cosRV > 0 ? 0.12 : 0) + (lz > lv.L - 1 ? 0.2 : 0); // epikardiyal yağ: ince, hipoekoik; önde ve apekste biraz kalın
+      if (dEpi < fat) { o.type = T.EPIFAT; o.refl = 0.26; o.edge = dEpi; o.edgeRefl = 0.5; o.qx = x; o.qy = y; o.qz = z; return true; }
       if (dEpi < fat + P.effusion) { o.type = T.FLUID; o.refl = 0; o.edge = Math.min(dEpi - fat, fat + P.effusion - dEpi); o.edgeRefl = 0.9; return true; }
-      if (dEpi < fat + P.effusion + 0.14) { const ant = cosRV > 0.2 ? 0.45 : 1; o.type = T.PERI; o.refl = ant; o.edge = dEpi - (fat + P.effusion); o.edgeRefl = ant; return true; }
+      // perikart: ince zar; parlaklığı ışına dik geldiği yerde spekülar kenardan gelir (arka duvar arkasında en parlak), yanlarda sönük
+      if (dEpi < fat + P.effusion + 0.1) { const ant = cosRV > 0.2 ? 0.3 : 0.55; o.type = T.PERI; o.refl = ant; o.edge = dEpi - (fat + P.effusion); o.edgeRefl = cosRV > 0.2 ? 0.6 : 1.0; o.qx = x; o.qy = y; o.qz = z; return true; }
     }
     return false;
   }
@@ -719,6 +770,12 @@ const EchoModel = (() => {
     const dd = Math.hypot(vx - sx * t, vy - sy * t, vz - sz * t);
     // EPSS: açık anterior yaprak septuma P.mv.epss kadar yaklaşır (geometri zaten yaklaştırır; ek düzeltme yok)
     return dd;
+  }
+  // Atriyum elipsoidi: eksenler (uA4c: sağ-sol, uPlax: ön-arka, d: uzun eksen) × yarıçap çarpanları
+  function atriumSdf(x, y, z, C, r, H, kLat, kAp, kLong) {
+    const px = x - C[0], py = y - C[1], pz = z - C[2];
+    const a = px * H.uA4c[0] + py * H.uA4c[1] + pz * H.uA4c[2], b = px * H.uPlax[0] + py * H.uPlax[1] + pz * H.uPlax[2], c = px * H.d[0] + py * H.d[1] + pz * H.d[2];
+    return ellSdf(a, b, c, r * kLat, r * kAp, r * kLong);
   }
   function tricuspidDist(lx, ly, lz, H, P) {
     // anulus: RV tabanı, RA yönünde; basit 2 yapraklı koni
@@ -941,16 +998,16 @@ const EchoRender = (() => {
   }
   // benek: doku koordinatında 0.05 cm hücre; iki oktav (ince + kaba) karışımı
   function speckle(qx, qy, qz, seed) {
-    const h1 = hash3(Math.floor(qx * 20) + seed, Math.floor(qy * 20), Math.floor(qz * 20));
-    const h2 = hash3(Math.floor(qx * 7) + 77, Math.floor(qy * 7) + seed, Math.floor(qz * 7));
-    return EXP_TAB[h1 >>> 20] * 0.75 + EXP_TAB[h2 >>> 20] * 0.25;
+    const h1 = hash3(Math.floor(qx * 22) + seed, Math.floor(qy * 22), Math.floor(qz * 22));
+    const h2 = hash3(Math.floor(qx * 6) + 77, Math.floor(qy * 6) + seed, Math.floor(qz * 6));
+    return EXP_TAB[h1 >>> 20] * (0.55 + 0.45 * EXP_TAB[h2 >>> 20]); // Rayleigh (tam gelişmiş) × kaba doku modülasyonu
   }
 
   function createEngine(opts) {
     opts = opts || {};
     const NL = opts.lines || 128, NS = opts.samples || 360;
     const E = {
-      NL, NS, half: 45 * DEG, depth: 16, focus: 9, gain: 0, dr: 55, persist: 0.30, markerRight: true,
+      NL, NS, half: 45 * DEG, depth: 16, focus: 9, gain: 0, dr: 55, persist: 0.22, markerRight: true,
       tgc: new Float32Array(8).fill(0), freq: 2.5, // MHz
       pose: Object.assign({}, M.WINDOWS.plax.pose), P: M.defaultParams(),
       colorBox: { on: false, thMin: -14 * DEG, thMax: 14 * DEG, rMin: 4, rMax: 11, nyq: 0.62 },
@@ -1037,7 +1094,7 @@ const EchoRender = (() => {
     const NL = E.NL, NS = E.NS, dr = E.depth / (NS - 1);
     const seed = E.seed;
     const attDbPerCm = 2 * 0.5 * E.freq; // gidiş-dönüş dB/cm
-    const EW = 0.16; // kenar genişliği (cm)
+    const EW = 0.13; // kenar genişliği (cm)
     const bloodSeed = Math.floor(tAbs * 9);
     for (let i = 0; i < NL; i++) {
       let occ = 0, occR = 0, lungR = -1, cartil = 0, calc = 0;
@@ -1049,7 +1106,7 @@ const EchoRender = (() => {
           const q3 = n * 3;
           // doku beneği
           let sp;
-          if (t === T.BLOOD) sp = 0.4 + 1.2 * speckle(E.q[q3], E.q[q3 + 1], E.q[q3 + 2], seed + bloodSeed);
+          if (t === T.BLOOD) { const s0 = speckle(E.q[q3], E.q[q3 + 1], E.q[q3 + 2], seed + bloodSeed); sp = s0 > 2.2 ? s0 * 2.5 : s0 * 0.5; } // anekoik havuz + seyrek parlak eritrosit kümeleri
           else if (t === T.FLUID) sp = 0.15 + 0.1 * speckle(E.q[q3], E.q[q3 + 1], E.q[q3 + 2], seed + bloodSeed);
           else if (t === T.VALVE || t === T.PERI || t === T.BONE || t === T.DIAPHRAGM || t === T.CALCIUM) sp = 0.65 + 0.45 * speckle(E.q[q3], E.q[q3 + 1], E.q[q3 + 2], seed);
           else sp = speckle(E.q[q3], E.q[q3 + 1], E.q[q3 + 2], seed);
@@ -1059,7 +1116,8 @@ const EchoRender = (() => {
           if (Math.abs(e) < EW && prevEdge < 90) {
             let cosI = Math.abs(e - prevEdge) / dr; if (cosI > 1) cosI = 1;
             const wgt = 1 - Math.abs(e) / EW;
-            I += E.edgeR[n] * wgt * (0.12 + 0.88 * cosI * cosI) * 1.1 * (0.7 + 0.5 * speckle(E.q[q3], E.q[q3 + 1], E.q[q3 + 2], seed + 5));
+            // spekülar yansıma: ışına dik arayüz parlak (cos^2.5), paralel duvarda doğal dropout
+            I += E.edgeR[n] * wgt * (0.04 + 0.96 * Math.pow(cosI, 2.5)) * 1.25 * (0.7 + 0.5 * speckle(E.q[q3], E.q[q3 + 1], E.q[q3 + 2], seed + 5));
           }
           prevEdge = e;
         } else prevEdge = 99;
@@ -1102,15 +1160,15 @@ const EchoRender = (() => {
     // aksiyel
     for (let i = 0; i < NL; i++) {
       const b = i * NS;
-      dst[b] = src[b] * 0.6 + src[b + 1] * 0.4;
-      for (let j = 1; j < NS - 1; j++) dst[b + j] = src[b + j - 1] * 0.25 + src[b + j] * 0.5 + src[b + j + 1] * 0.25;
+      dst[b] = src[b] * 0.7 + src[b + 1] * 0.3;
+      for (let j = 1; j < NS - 1; j++) dst[b + j] = src[b + j - 1] * 0.2 + src[b + j] * 0.6 + src[b + j + 1] * 0.2;
       dst[b + NS - 1] = src[b + NS - 1];
     }
     // yanal: her derinlik satırı için kutu genişliği (hat) = w(r) / (r·dθ)
     const row = new Float32Array(NL + 1);
     for (let j = 1; j < NS; j++) {
       const r = j * dr;
-      const wcm = 0.22 + 0.085 * Math.abs(r - E.focus) + 0.015 * r; // cm
+      const wcm = 0.17 + 0.075 * Math.abs(r - E.focus) + 0.012 * r; // cm (odakta dar, uzaklaştıkça genişler)
       let wl = wcm / (r * dth); if (wl > 40) wl = 40; if (wl < 1.0) wl = 1.0;
       const hw = wl / 2; const hi = Math.floor(hw); const frac = hw - hi;
       // prefix
@@ -1125,18 +1183,20 @@ const EchoRender = (() => {
     // ikinci geçiş (üçgen çekirdek) hafif: 3-tap yanal
     for (let j = 0; j < NS; j++) for (let i = 0; i < NL; i++) {
       const c = src[i * NS + j]; const l = i > 0 ? src[(i - 1) * NS + j] : c; const rr = i < NL - 1 ? src[(i + 1) * NS + j] : c;
-      dst[i * NS + j] = c * 0.5 + l * 0.25 + rr * 0.25;
+      dst[i * NS + j] = c * 0.6 + l * 0.2 + rr * 0.2;
     }
   }
 
   // ---- log sıkıştırma + persistence ----
+  const F32 = new Float32Array(1), U32 = new Uint32Array(F32.buffer);
+  function fastLog2(v) { F32[0] = v; const b = U32[0]; const e = ((b >>> 23) & 255) - 127; const m = (b & 0x7fffff) / 8388608; return e + m * (1.3465 - 0.3465 * m); }
   function compress(E) {
-    const N = E.NL * E.NS, DR = E.dr, p = E.persist;
+    const N = E.NL * E.NS, DR = E.dr, p = E.persist; const K = 20 * 0.30103; // 20·log10(x) = 6.0206·log2(x)
     for (let n = 0; n < N; n++) {
       const v = E.blur[n];
-      let dB = 20 * Math.log10(v / 1.6 + 1e-6); // 0 dB = en parlak spekülar referans
+      let dB = K * fastLog2(v / 1.6 + 1e-6); // 0 dB = en parlak spekülar referans
       let u = (dB + DR) / DR; if (u < 0) u = 0; if (u > 1) u = 1;
-      u = Math.pow(u, 2.0); // gri harita (orta tonlar bastırılır, kan havuzu siyah)
+      u = Math.pow(u, 1.8); // gri harita (kan havuzu siyah, miyokart orta gri, spekülar beyaz)
       const cur = u * 255;
       E.out8[n] = E.frameCount === 0 ? cur : E.prev8[n] * p + cur * (1 - p);
       E.prev8[n] = E.out8[n];
