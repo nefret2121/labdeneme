@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" />
 <style>
-  :root { --bg: #04060a; --ink: #e4e9f1; --ink-2: #a6b1c2; --ink-3: #6c7889; --line: rgba(160,176,196,0.12); --line-2: rgba(160,176,196,0.22); --accent: #6fa3c8; --amber: #d9a441; --ok: #5a9f7f; --alert: #c4565f; --icg: #4ade80; --mono: "JetBrains Mono", ui-monospace, Menlo, monospace; --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  :root { --bg: #04060a; --ink: #e4e9f1; --ink-2: #a6b1c2; --ink-3: #6c7889; --line: rgba(160,176,196,0.12); --line-2: rgba(160,176,196,0.22); --accent: #6fa3c8; --amber: #d9a441; --ok: #5a9f7f; --alert: #c4565f; --icg: #4ade80; --ok-dim: rgba(90,159,127,0.14); --amber-dim: rgba(217,164,65,0.14); --alert-dim: rgba(196,86,95,0.16); --mono: "JetBrains Mono", ui-monospace, Menlo, monospace; --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; }
   body { background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 12px; overflow: hidden; user-select: none; -webkit-font-smoothing: antialiased; }
@@ -63,7 +63,35 @@
   #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
   #loading { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: var(--bg); z-index: 40; font-family: var(--mono); font-size: 12px; color: var(--ink-2); letter-spacing: 0.08em; }
   #loading.hidden { display: none; }
-  @media (max-width: 1100px) { #checklist { width: 220px; } #monitor { width: 200px; } #tools button { min-width: 92px; } }
+  #caseSel { font-family: var(--sans); font-size: 11px; font-weight: 600; color: var(--ink-2); background: rgba(17,26,43,0.8); border: 1px solid var(--line-2); border-radius: 8px; padding: 6px 8px; cursor: pointer; }
+  /* modaller (kapanış beyanı / jüri / post-op) */
+  .overlay { position: fixed; inset: 0; z-index: 50; background: rgba(2,4,8,0.72); backdrop-filter: blur(5px); display: none; align-items: flex-start; justify-content: center; overflow-y: auto; padding: 40px 16px; }
+  .overlay.open { display: flex; }
+  .sheet { width: 760px; max-width: 100%; background: linear-gradient(180deg, #0a1120, #070b14); border: 1px solid var(--line-2); border-radius: 18px; padding: 20px 22px; box-shadow: 0 30px 80px rgba(0,0,0,0.6); }
+  .sheet h2 { font-size: 17px; font-weight: 700; margin-bottom: 4px; } .sheet .sub { font-size: 11.5px; color: var(--ink-3); margin-bottom: 14px; }
+  .q { background: rgba(17,26,43,0.5); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; }
+  .q p { font-size: 12.5px; font-weight: 600; margin-bottom: 8px; } .q .opts { display: flex; flex-direction: column; gap: 6px; }
+  .q label { display: flex; align-items: center; gap: 9px; font-size: 12px; color: var(--ink-2); background: rgba(10,16,28,0.6); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; cursor: pointer; }
+  .q label:hover { border-color: var(--accent); } .q input { accent-color: var(--accent); }
+  .q label.sel { border-color: var(--accent); background: rgba(111,163,200,0.12); color: var(--ink); }
+  .btnrow { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; flex-wrap: wrap; }
+  .btn-pri { background: var(--ok); color: #04101f; border-color: var(--ok); font-weight: 700; } .btn-pri:hover { filter: brightness(1.1); }
+  .btn-amb { background: var(--amber); color: #04101f; border-color: var(--amber); font-weight: 700; }
+  .scoreHead { display: flex; align-items: center; justify-content: space-between; gap: 14px; background: rgba(17,26,43,0.5); border: 1px solid var(--line-2); border-radius: 14px; padding: 14px 16px; margin-bottom: 12px; }
+  .bigscore { font-family: var(--mono); font-size: 34px; font-weight: 700; } .bigscore small { font-size: 14px; color: var(--ink-3); }
+  .verdict { font-size: 13px; font-weight: 700; padding: 8px 12px; border-radius: 10px; text-align: center; max-width: 320px; }
+  .verdict.ok { background: var(--ok-dim); color: #8fe3bf; border: 1px solid rgba(90,159,127,0.5); }
+  .verdict.warn { background: var(--amber-dim); color: #f3d79a; border: 1px solid rgba(217,164,65,0.5); }
+  .verdict.crit { background: var(--alert-dim); color: #f1b0b7; border: 1px solid rgba(196,86,95,0.6); }
+  .cat { background: rgba(10,16,28,0.5); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
+  .cat .top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; } .cat .nm { font-size: 12.5px; font-weight: 600; } .cat .pc { font-family: var(--mono); font-size: 13px; color: var(--accent); }
+  .bar { height: 6px; border-radius: 4px; background: rgba(255,255,255,0.07); overflow: hidden; } .bar i { display: block; height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--alert), var(--amber), var(--ok)); }
+  .cat ul { list-style: none; margin-top: 7px; display: flex; flex-direction: column; gap: 4px; } .cat li { font-size: 11px; color: var(--ink-2); display: flex; gap: 7px; align-items: center; }
+  .badge { font-family: var(--mono); font-size: 9.5px; font-weight: 600; padding: 1px 6px; border-radius: 5px; letter-spacing: 0.03em; white-space: nowrap; }
+  .badge.cf { background: rgba(90,159,127,0.18); color: #8fe3bf; } .badge.ab { background: rgba(196,86,95,0.18); color: #f1b0b7; } .badge.na { background: rgba(217,164,65,0.16); color: #f3d79a; } .badge.nc { background: rgba(108,120,137,0.2); color: var(--ink-3); }
+  .tabs { display: flex; gap: 6px; margin: 10px 0; } .tabs button.on { background: rgba(111,163,200,0.2); color: var(--ink); border-color: var(--accent); }
+  .tl { margin-top: 10px; border-top: 1px solid var(--line); padding-top: 10px; } .tl .row { display: grid; grid-template-columns: 54px 1fr; gap: 10px; font-size: 11px; padding: 3px 0; } .tl .tm { font-family: var(--mono); color: var(--ink-3); } .tl .ev.r { color: #f1b0b7; } .tl .ev.g { color: #8fe3bf; }
+  @media (max-width: 1100px) { #checklist { width: 220px; } #monitor { width: 200px; } #tools button { min-width: 92px; } .actions { flex-wrap: wrap; } }
   @media (max-width: 760px) { #checklist, #hint { display: none; } #monitor { width: 170px; right: 8px; top: 54px; } .title small { display: none; } #tools { width: calc(100vw - 16px); overflow-x: auto; } }
 </style>
 </head>
@@ -76,13 +104,21 @@
 <header>
   <div class="brand">
     <span class="wordmark">Ductus<em>Lab</em> Neuro</span>
-    <div class="title"><small>Bilişsel mikrocerrahi · 1. aşama</small>IC-PC Anevrizma Mikrocerrahi Simülatörü</div>
+    <div class="title"><small id="caseLbl">IC-PC Anevrizma</small>Mikrocerrahi Simülatörü</div>
   </div>
   <div class="actions">
     <span class="mag" id="mag">MAG x4.0</span>
-    <button id="btnPreop" onclick="togglePreop()">Pre-op Hasta & Pupil</button>
+    <select id="caseSel" onchange="switchCase(this.value)" title="Vaka varyantı">
+      <option value="1">Vaka 1 · Standart IC-PC</option>
+      <option value="2">Vaka 2 · Fetal PCom (PCA bağımlı!)</option>
+      <option value="3">Vaka 3 · Boyna bitişik AChA (stenoz riski)</option>
+      <option value="4">Vaka 4 · İnce bleb + CN III yapışıklığı</option>
+    </select>
+    <button id="btnPreop" onclick="togglePreop()">Pre-op</button>
     <button id="btnLabels" class="on" onclick="toggleLabels()">Etiketler</button>
-    <button id="btnIcg" class="icg" onclick="runICG()">ICG Önizleme</button>
+    <button id="btnIcg" class="icg" onclick="runICG()">ICG</button>
+    <button id="btnSound" onclick="toggleSound()" title="WebAudio ses">🔊 Ses</button>
+    <button id="btnFinish" onclick="openClosure()" style="background:linear-gradient(135deg,rgba(90,159,127,0.22),rgba(217,164,65,0.18));border-color:rgba(90,159,127,0.55);color:#d7f0e2;font-weight:700;">Ameliyatı Tamamla & Jüri</button>
   </div>
 </header>
 
@@ -149,6 +185,32 @@
   <button data-tool="6"><span class="k">6</span>ICG Anjiyografi<small>Akım doğrulama</small></button>
 </nav>
 <div id="toast"></div>
+
+<!-- Operatif Kapanış Beyanı -->
+<div id="closure" class="overlay"><div class="sheet">
+  <h2>Operatif Kapanış Beyanı</h2>
+  <div class="sub">Puanı görmeden önce kendi operatif gözleminizi beyan edin. Jüri, beyanınızı sahada gerçekten gördüğünüz kanıtla karşılaştırır.</div>
+  <div class="q" data-q="excl">
+    <p>1) Anevrizma kesesi akımdan tamamen dışlandı mı?</p>
+    <div class="opts">
+      <label><input type="radio" name="excl" value="full"><span>Tam dışlandı</span></label>
+      <label><input type="radio" name="excl" value="dogear"><span>Rezidü boyun — dog-ear şüphesi</span></label>
+      <label><input type="radio" name="excl" value="na"><span>Değerlendirilemedi</span></label>
+    </div>
+  </div>
+  <div class="q" data-q="branch">
+    <p>2) Kritik dallar (PCom ve AChA) açık mı?</p>
+    <div class="opts">
+      <label><input type="radio" name="branch" value="confirmed"><span>İkisi de görülerek doğrulandı ve açık</span></label>
+      <label><input type="radio" name="branch" value="suspect"><span>Dal darlığı veya oklüzyon şüphesi var</span></label>
+      <label><input type="radio" name="branch" value="notseen"><span>Görüş alanı dışında kaldı, tam doğrulayamadım</span></label>
+    </div>
+  </div>
+  <div class="btnrow"><button onclick="closeClosure()">Geri</button><button class="btn-pri" onclick="submitClosure()">Beyanı Onayla & Jüriye Git</button></div>
+</div></div>
+
+<!-- Debrief & Klinik Sonuç -->
+<div id="debrief" class="overlay"><div class="sheet" id="debriefSheet"></div></div>
 
 <script type="importmap">
 { "imports": { "three": "https://unpkg.com/three@0.160.1/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.160.1/examples/jsm/" } }
@@ -389,6 +451,15 @@ let arachGroup; // araknoid lif ağı (diseksiyonla açılır)
 //  6) Damar ağı: merkez eğrileri (mm) → MarchingCubes (ICA, M1, A1, PCom, kese) + ince tüpler (AChA, perforanlar)
 //     Aynı eğriler SDF kapsüllerini üretir.
 // ============================================================================
+// ---- 4 VAKA VARYANTI (?case=N ile tohumlanır) ----
+const CASE_N = (() => { const n = parseInt(new URLSearchParams(location.search).get('case') || '1', 10); return (n >= 1 && n <= 4) ? n : 1; })();
+const CASE = {
+  1: { key: 1, name: 'Vaka 1 · Standart IC-PC', short: 'IC-PC Anevrizma', fetalPCom: false, achaAdjacent: false, cn3Adhesion: false, thinBleb: false },
+  2: { key: 2, name: 'Vaka 2 · Fetal PCom [PCA bağımlı!]', short: 'Fetal PCom Varyantı', fetalPCom: true, achaAdjacent: false, cn3Adhesion: false, thinBleb: false },
+  3: { key: 3, name: 'Vaka 3 · Boyna bitişik AChA', short: 'Boyna Bitişik AChA', fetalPCom: false, achaAdjacent: true, cn3Adhesion: false, thinBleb: false },
+  4: { key: 4, name: 'Vaka 4 · İnce duvarlı bleb + CN III', short: 'İnce Bleb + CN III', fetalPCom: false, achaAdjacent: false, cn3Adhesion: true, thinBleb: true }
+}[CASE_N];
+window.NeuroCase = CASE;
 const CL = {
   ICA:  new THREE.CatmullRomCurve3([V(3, -22, -17), V(2.4, -14, -15), V(2.2, -8.5, -12.5), V(1.6, -3, -9), V(0.6, 2, -6.5), V(0, 4.2, -6)]),
   M1:   new THREE.CatmullRomCurve3([V(0, 4.2, -6), V(5, 3.8, -5.5), V(11, 3, -5), V(17, 2.4, -5.5), V(24, 1.8, -7)]),
@@ -407,6 +478,18 @@ const AN = (() => {
   const blebDir = V(0.55, 0.55, -0.62).normalize(); const blebC = domeC.clone().add(blebDir.clone().multiplyScalar(3.1));
   return { neckBase, dir, neckC, neckR: 2.5, domeC, domeR: 3.9, blebC, blebR: 1.1, blebDir };
 })();
+// ---- vaka varyantı anatomiye uygulanır (mesh/SDF kurulmadan ÖNCE) ----
+if (CASE.fetalPCom) { // PCA bağımlı baskın PCom: kalınlaşır, kapanırsa oksipital infarkt
+  RAD.PCom = 1.35;
+  CL.PCom = new THREE.CatmullRomCurve3([V(2.3, -6.6, -12.4), V(4.6, -8.0, -16.5), V(6.6, -9.4, -22), V(8.4, -10.6, -28), V(10.0, -11.6, -34)]);
+}
+if (CASE.achaAdjacent) { // AChA kökü boyna bitişik: stenoz/sıkışma riski yüksek
+  CL.AChA = new THREE.CatmullRomCurve3([V(2.8, -6.3, -12.1), V(4.4, -5.6, -14.8), V(6.8, -5.4, -19), V(8.8, -6.0, -25), V(10.4, -6.8, -31)]);
+}
+if (CASE.cn3Adhesion) { // CN III keseye yapışık seyreder
+  CL.CN3 = new THREE.CatmullRomCurve3([V(15, -15.5, -36), V(13, -12.6, -29), V(10.8, -10.0, -21.5), V(8.6, -8.7, -15.6), V(9.4, -8.9, -10.5), V(11.4, -11.0, -4.5), V(12.6, -13.3, 1)]);
+}
+if (CASE.thinBleb) { AN.blebR = 1.45; AN.domeR = 4.15; } // ince duvarlı büyük bleb
 // ICG varış zamanları (s): eğri parametresine göre
 const ARR = { ICA: [0, 0.9], M1: [0.9, 1.5], A1: [0.9, 1.45], PCom: [0.55, 1.4], AChA: [0.75, 1.35] };
 
@@ -515,7 +598,7 @@ const LABELS = [
   ['CN II', CL.CN2.getPoint(0.45), ''], ['CN III', CL.CN3.getPoint(0.42), ''], ['Kese boynu', AN.neckC, 'warn'], ['Bleb', AN.blebC, 'warn']
 ].map(([t, p, cls]) => { const el = document.createElement('div'); el.className = 'label3d ' + cls; el.textContent = t; document.body.appendChild(el); return { t, p, el }; });
 let labelsOn = true, preopOpen = false, tool = 1, aspPinned = false;
-const S = { icgStart: -1, clipStart: -1, pupilBlink: 0 };
+const S = { icgStart: -1, clipStart: -1, pupilBlink: 0, icgUsed: false };
 window.toggleLabels = () => { labelsOn = !labelsOn; document.getElementById('btnLabels').classList.toggle('on', labelsOn); LABELS.forEach(l => l.el.style.display = labelsOn ? '' : 'none'); };
 window.togglePreop = () => { preopOpen = !preopOpen; document.getElementById('preop').classList.toggle('open', preopOpen); document.getElementById('btnPreop').classList.toggle('on', preopOpen); };
 function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast.tm); toast.tm = setTimeout(() => t.classList.remove('show'), 2600); }
@@ -523,7 +606,7 @@ const NON_VESSEL_MATS = [MAT.dura, MAT.bone, MAT.nerve, MAT.arachnoid, MAT.csf];
 let cortexBaseColor = null;
 window.runICG = () => {
   if (S.icgStart >= 0) { endICG(); return; }
-  S.icgStart = simTime; icgU.uIcgMode.value = 1; document.getElementById('btnIcg').classList.add('on');
+  S.icgStart = simTime; S.icgUsed = true; icgU.uIcgMode.value = 1; document.getElementById('btnIcg').classList.add('on');
   // parankim ve sinirler kararır (yakın-kızılötesi modu), damarlar boya dalgasıyla parlar
   NON_VESSEL_MATS.forEach(m => { m.userData.col = m.color.clone(); m.color.setRGB(0.05, 0.06, 0.06); });
   cortexBaseColor = MAT.cortex.color.clone(); MAT.cortex.color.setRGB(0.07, 0.07, 0.08); MAT.cortex.clearcoat = 0.1;
@@ -555,6 +638,7 @@ const SURG = (() => {
     damage: {}, ruptures: [], MAP: 88, HR: 72, totalLossMl: 0, fieldMl: 0, clarity: 1,
     tempClip: null, tempClipT: 0, permClip: null, parked: null, jawRoll: 0,
     ident: { AChA: false, PCom: false, CN3: false }, hover: {}, arachOpen: 0, neckDiss: 0,
+    seen: { AChA: false, PCom: false }, seeFrac: { AChA: 0, PCom: 0 },
     steps: [false, false, false, false, false, false], outcome: {}
   };
   window.NeuroSimState = sim; window.NeuroEventLog = [];
@@ -587,17 +671,35 @@ const SURG = (() => {
   const gold = new THREE.MeshStandardMaterial({ color: 0xd8b24a, metalness: 0.9, roughness: 0.28, envMapIntensity: 0.6 });
   const titan = new THREE.MeshStandardMaterial({ color: 0x8fa6bd, metalness: 0.85, roughness: 0.32, envMapIntensity: 0.6 });
   const cyl = (rt, rb, h, m, seg) => new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, seg || 16), m);
+  const PERM_BLADE = 8.5, TEMP_BLADE = 6.5;   // Yaşargil çene (blade) uzunlukları (mm)
+  // Gerçekçi Yaşargil klips: iki ince paralel çene (X ekseni boyunca) + helezon yay gövdesi (spring hub) + aplikatör sapı
+  function makeClipArms(mat, bladeLen, gap, ghost) {
+    const g = new THREE.Group(); const hz = gap / 2; const blades = []; const bx = -bladeLen * 0.42;
+    for (const s of [-1, 1]) {
+      const blade = new THREE.Mesh(new THREE.BoxGeometry(bladeLen, 0.34, 0.4), mat); // çene: tip ucu +X, arka uç -X
+      blade.position.set(0, 0, s * hz); blade.userData.sgn = s; g.add(blade); blades.push(blade);
+      const arm = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1.5, 0.34), mat); arm.position.set(bx, 0.8, s * hz); g.add(arm); // çeneyi gövdeye bağlayan kol
+    }
+    const hub = new THREE.Mesh(new THREE.TorusGeometry(0.6, 0.26, 12, 22), mat); hub.position.set(bx, 1.7, 0); hub.rotation.y = Math.PI / 2; g.add(hub); // helezon yay gövdesi
+    if (!ghost) { const sh = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.36, 8.5, 14), mat); sh.position.set(bx, 6.2, 0); g.add(sh); } // aplikatör sapı (hayalette gizli)
+    g.userData.blades = blades; g.userData.gap = gap; return g;
+  }
   function buildTool(id) {
     const g = new THREE.Group(); g.userData.noray = true;
     if (id === 1) { const sh = cyl(0.34, 0.42, 11, steel); sh.position.y = 5.5; g.add(sh); const tip = cyl(0.3, 0.34, 1.2, steelD); tip.position.y = 0.2; g.add(tip); const hole = cyl(0.19, 0.19, 0.5, new THREE.MeshBasicMaterial({ color: 0x120608 })); hole.position.y = -0.2; g.add(hole); }
     else if (id === 2) { const sh = cyl(0.14, 0.2, 11, steel); sh.position.y = 5.6; g.add(sh); const nub = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 12), steelD); g.add(nub); const b = cyl(0.1, 0.14, 1.4, steelD); b.position.set(0.1, 0.7, 0); b.rotation.z = -0.25; g.add(b); }
     else if (id === 3) { const sh = cyl(0.26, 0.32, 10.6, steel); sh.position.y = 5.8; g.add(sh); for (const s of [-1, 1]) { const pr = cyl(0.09, 0.12, 2.4, steelD); pr.position.set(s * 0.28, 1.0, 0); pr.rotation.z = s * 0.14; g.add(pr); } }
-    else if (id === 4) { const sh = cyl(0.3, 0.36, 10.5, gold); sh.position.y = 5.6; g.add(sh); const head = cyl(0.26, 0.26, 0.8, gold); head.position.y = 0.6; g.add(head); for (const s of [-1, 1]) { const jaw = new THREE.Mesh(new THREE.BoxGeometry(0.22, 1.9, 0.5), gold); jaw.position.set(s * 0.45, -0.2, 0); jaw.rotation.z = s * 0.1; g.add(jaw); } }
-    else if (id === 5) { const sh = cyl(0.3, 0.36, 10.5, titan); sh.position.y = 5.6; g.add(sh); const pivot = new THREE.Group(); g.add(pivot); g.userData.jaws = pivot; for (const s of [-1, 1]) { const jaw = new THREE.Mesh(new THREE.BoxGeometry(0.24, 4.4, 0.55), titan); jaw.position.set(s * 0.5, 0, 0); jaw.geometry.translate(0, -2.2, 0); jaw.rotation.z = s * 0.12; jaw.userData.sgn = s; pivot.add(jaw); } }
+    else if (id === 4) { const clip = makeClipArms(gold, TEMP_BLADE, 1.6); g.add(clip); g.userData.clip = clip; }
+    else if (id === 5) { const clip = makeClipArms(titan, PERM_BLADE, 1.8); g.add(clip); g.userData.clip = clip; }
     g.visible = false; scene.add(g); return g;
   }
   const toolMeshes = { 1: buildTool(1), 2: buildTool(2), 3: buildTool(3), 4: buildTool(4), 5: buildTool(5) };
   const parkedAsp = buildTool(1); parkedAsp.traverse(o => { if (o.material) o.material = steelD; });
+  // ---- hayalet (ghost) klips önizlemesi + çene eksen çizgisi ----
+  const ghostMat = new THREE.MeshStandardMaterial({ color: 0x9fd8ff, metalness: 0.5, roughness: 0.3, transparent: true, opacity: 0.4, depthWrite: false });
+  const ghostClip = new THREE.Group(); ghostClip.userData.noray = true; ghostClip.add(makeClipArms(ghostMat, PERM_BLADE, 1.1, true)); ghostClip.visible = false; ghostClip.renderOrder = 28; scene.add(ghostClip);
+  const axisLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints([V(-5, 0, 0), V(5, 0, 0)]), new THREE.LineDashedMaterial({ color: 0x7dd3fc, dashSize: 0.5, gapSize: 0.3, transparent: true, opacity: 0.8, depthTest: false }));
+  axisLine.computeLineDistances(); axisLine.userData.noray = true; axisLine.renderOrder = 29; axisLine.visible = false; scene.add(axisLine);
 
   // ---- temas görselleri: yaklaşma halkası + temas gölgesi ----
   const ring = new THREE.Mesh(new THREE.RingGeometry(0.9, 1.15, 40), new THREE.MeshBasicMaterial({ color: 0x8fd0ff, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false, depthTest: false }));
@@ -617,11 +719,15 @@ const SURG = (() => {
   const veil = document.createElement('div'); veil.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:9;background:radial-gradient(circle at 50% 56%, rgba(90,8,10,0) 30%, rgba(70,6,8,0.55) 70%);opacity:0;transition:opacity .3s'; document.body.appendChild(veil);
 
   // ---- klips yerleştirme meshleri ----
-  function placeClipMesh(pos, dir, roll, mat, jawLen) {
+  function placeClipMesh(pos, dir, roll, mat, bladeLen, pinch) {
     const g = new THREE.Group(); g.userData.noray = true; g.position.copy(pos);
     const q = new THREE.Quaternion().setFromUnitVectors(V(0, 1, 0), dir); g.quaternion.copy(q); g.rotateY(roll);
-    for (const s of [-1, 1]) { const jaw = new THREE.Mesh(new THREE.BoxGeometry(0.26, jawLen, 0.55), mat); jaw.geometry.translate(0, -jawLen / 2, 0); jaw.position.set(s * 0.5, jawLen / 2, 0); g.add(jaw); }
-    const body = cyl(0.3, 0.3, 2.2, mat); body.position.y = jawLen + 1; g.add(body); scene.add(g); return g;
+    g.add(makeClipArms(mat, bladeLen, 0.32));   // kapalı çene (gerçek yerleştirme)
+    if (pinch) { // boyunda yerel sıkışma/büzülme izi (koyu, yassı halka)
+      const mk = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.26, 8, 16), new THREE.MeshStandardMaterial({ color: 0x5a1518, roughness: 0.6, metalness: 0 }));
+      mk.scale.set(1, 0.4, 1); mk.rotation.z = Math.PI / 2; g.add(mk);
+    }
+    scene.add(g); return g;
   }
 
   // ---- kontrol listesi / monitör ----
@@ -657,8 +763,14 @@ const SURG = (() => {
 
   // ---- alet eylemleri (tıklama anında: klips yerleştir) ----
   function onToolAct() {
-    if (sim.tool === 4 && !sim.tempClip) placeTempClip();
+    if (sim.tool === 4) { if (!sim.tempClip) placeTempClip(); else removeTempClip(); }
     else if (sim.tool === 5) placePermClip();
+  }
+  function removeTempClip() {
+    if (!sim.tempClip) return; scene.remove(sim.tempClip.mesh);
+    logE('tempClipRemoved', { held: +sim.tempClipT.toFixed(1) });
+    toast('Geçici klips çıkarıldı — antegrad akım geri döndü (' + sim.tempClipT.toFixed(0) + ' sn iskemi)');
+    sim.tempClip = null;
   }
   function feedsICA(name) { return name === 'ICA' || name === 'M1' || name === 'neck' || name === 'dome' || name === 'bleb'; }
 
@@ -667,7 +779,7 @@ const SURG = (() => {
     let best = 1e9, bp = null; for (const p of PTS.ICA) { const d = p.distanceTo(sim.tip); if (d < best) { best = d; bp = p; } }
     if (best > 5) { toast('Geçici klips ICA üzerine konmalı (proksimal kontrol)'); return; }
     const dir = CL.ICA.getTangent(0.3); const across = V(-dir.z, 0, dir.x).normalize();
-    const m = placeClipMesh(bp.clone(), across, 0, gold, 3.2);
+    const m = placeClipMesh(bp.clone(), across, 0, gold, TEMP_BLADE, false);
     sim.tempClip = { pos: bp.clone(), mesh: m }; sim.tempClipT = 0;
     markStep(2, 'Proksimal kontrol (geçici klips)'); logE('tempClip', { at: bp.toArray().map(v => +v.toFixed(1)) });
     toast('Geçici klips ICA\'da — antegrad akım durdu (PCom\'dan ~%15 retrograd sızıntı sürer)');
@@ -677,7 +789,8 @@ const SURG = (() => {
     const shaft = dir.clone(); const q = new THREE.Quaternion().setFromUnitVectors(V(0, 1, 0), shaft);
     const roll = new THREE.Quaternion().setFromAxisAngle(V(0, 1, 0), sim.jawRoll); q.multiply(roll);
     const jawDir = V(1, 0, 0).applyQuaternion(q).normalize();                                  // çene çizgisi yönü
-    const jawStart = sim.tip.clone().addScaledVector(jawDir, -2.2), jawTip = sim.tip.clone().addScaledVector(jawDir, 2.2);
+    const jh = PERM_BLADE * 0.46;
+    const jawStart = sim.tip.clone().addScaledVector(jawDir, -jh), jawTip = sim.tip.clone().addScaledVector(jawDir, jh);
     // a) boyun kapanışı: çene çizgisi ile boyun ekseni arası mesafe
     const dNeck = segSeg(jawStart, jawTip, AN.neckBase, AN.domeC);
     const neckClosed = dNeck < 0.8, dogEar = dNeck >= 0.8 && dNeck < 1.9, missed = dNeck >= 1.9;
@@ -690,7 +803,7 @@ const SURG = (() => {
     if (segDistPoly(jawStart, jawTip, PTS.CN3) < 1.0) trapped.push('CN3');
     for (const pp of perfPts) if (segDistPoly(jawStart, jawTip, pp) < 0.6) { if (!trapped.includes('perforan')) trapped.push('perforan'); }
     if (sim.permClip) scene.remove(sim.permClip.mesh);
-    const mesh = placeClipMesh(sim.tip.clone(), shaft, sim.jawRoll, titan, 4.4);
+    const mesh = placeClipMesh(sim.tip.clone(), shaft, sim.jawRoll, titan, PERM_BLADE, neckClosed || dogEar);
     sim.permClip = { pos: sim.tip.clone(), dNeck, neckClosed, dogEar, missed, icaStenosis, trapped, mesh };
     sim.outcome = { neckClosed, dogEar, missed, icaStenosis, trapped: trapped.slice(), neckDissected: sim.neckDiss > 0.55 };
     markStep(4, 'Kalıcı klips yerleştirildi');
@@ -725,15 +838,60 @@ const SURG = (() => {
     // alet modelini göster/yönlendir
     for (const k in toolMeshes) toolMeshes[k].visible = (+k === sim.tool && sim.tool <= 5);
     const tm = toolMeshes[sim.tool <= 5 ? sim.tool : 1];
-    if (tm) { const hand = sim.parked ? -1 : 1; const entry = sim.tip.clone().addScaledVector(cR, hand * 20).addScaledVector(cU, -16).addScaledVector(cF, -4); const d = entry.sub(sim.tip).normalize(); tm.quaternion.setFromUnitVectors(V(0, 1, 0), d); if (sim.tool === 5) { tm.rotateY(sim.jawRoll); if (tm.userData.jaws) tm.userData.jaws.children.forEach(j => j.rotation.z = j.userData.sgn * (0.28 - 0.2 * Math.min(1, sim.press))); } const press = sim.pressing ? sim.press * 0.4 : 0; tm.position.copy(sim.tip).addScaledVector(sim.tipN, -press); }
+    if (tm) { const hand = sim.parked ? -1 : 1; const entry = sim.tip.clone().addScaledVector(cR, hand * 20).addScaledVector(cU, -16).addScaledVector(cF, -4); const d = entry.sub(sim.tip).normalize(); tm.quaternion.setFromUnitVectors(V(0, 1, 0), d); if ((sim.tool === 5 || sim.tool === 4) && tm.userData.clip) { if (sim.tool === 5) tm.rotateY(sim.jawRoll); const bl = tm.userData.clip.userData.blades, g0 = tm.userData.clip.userData.gap; const cl = sim.pressing ? Math.min(1, sim.press / sim.maxPress) : 0; if (bl) bl.forEach(b => b.position.z = b.userData.sgn * (g0 / 2) * (1 - 0.75 * cl)); } const press = sim.pressing ? sim.press * 0.4 : 0; tm.position.copy(sim.tip).addScaledVector(sim.tipN, -press); }
+    previewClip();
     // yaklaşma halkası + temas gölgesi
     const near = clamp(1 - sim.over.d / 6, 0, 1);
     ring.position.copy(sim.tip).addScaledVector(sim.tipN, 0.05); ring.quaternion.copy(camera.quaternion); ring.scale.setScalar(0.5 + (1 - near) * 1.4); ring.material.opacity = sim.over.name ? 0.25 + 0.35 * near : 0;
     shadow.position.copy(sim.tip).addScaledVector(sim.tipN, 0.02); shadow.quaternion.setFromUnitVectors(V(0, 0, 1), sim.tipN); shadow.scale.setScalar(0.6 + (sim.pressing ? sim.press * 0.5 : 0)); shadow.material.opacity = (sim.over.d < 1.5 ? 0.3 : 0) + (sim.pressing ? 0.25 : 0);
   }
 
+  // ---- hayalet klips önizlemesi (4/5 seçiliyken, tıklamadan önce) ----
+  const _gq = new THREE.Quaternion(), _grl = new THREE.Quaternion();
+  function previewClip() {
+    const show = (sim.tool === 4 && !sim.tempClip) || sim.tool === 5;
+    ghostClip.visible = show; axisLine.visible = show;
+    if (!show) return;
+    let pos, dir, roll, bl;
+    if (sim.tool === 4) { // geçici: ICA'ya en yakın nokta, enine
+      let best = 1e9, bp = sim.tip; for (const p of PTS.ICA) { const d = p.distanceTo(sim.tip); if (d < best) { best = d; bp = p; } }
+      const tg = CL.ICA.getTangent(0.3); pos = bp.clone(); dir = V(-tg.z, 0, tg.x).normalize(); roll = 0; bl = TEMP_BLADE;
+    } else {              // kalıcı: bakış ekseni + jawRoll
+      pos = sim.tip.clone(); dir = new THREE.Vector3().subVectors(camera.position, sim.tip).normalize(); roll = sim.jawRoll; bl = PERM_BLADE;
+    }
+    ghostClip.position.copy(pos); _gq.setFromUnitVectors(V(0, 1, 0), dir); _grl.setFromAxisAngle(V(0, 1, 0), roll); _gq.multiply(_grl); ghostClip.quaternion.copy(_gq);
+    ghostClip.scale.setScalar(bl / PERM_BLADE);
+    const jawDir = V(1, 0, 0).applyQuaternion(_gq).normalize(); const jh = bl * 0.46;
+    const a = pos.clone().addScaledVector(jawDir, -jh), b = pos.clone().addScaledVector(jawDir, jh);
+    axisLine.position.copy(pos); axisLine.quaternion.copy(_gq); axisLine.scale.set(jh / 5, 1, 1);
+    // renk ipucu: dal/ICA sıkışacaksa kırmızı, boyun yakalanacaksa yeşil, aksi mavi
+    let danger = false, good = false;
+    if (segDistPoly(a, b, PTS.AChA) < 0.8 || segDistPoly(a, b, PTS.PCom) < 0.9 || segDistPoly(a, b, PTS.CN3) < 1.0 || segDistPoly(a, b, PTS.ICA) < RAD.ICA + 0.2) danger = true;
+    if (sim.tool === 5 && segSeg(a, b, AN.neckBase, AN.domeC) < 0.8) good = true;
+    ghostMat.color.setHex(danger ? 0xff6b6b : good ? 0x6bff9f : 0x9fd8ff);
+    axisLine.material.color.setHex(danger ? 0xff8f8f : good ? 0x8fffb3 : 0x7dd3fc);
+  }
+  // ---- ICG altında dal görünürlüğü (line-of-sight) izleme ----
+  let visTick = 0;
+  function trackVisibility() {
+    if (S.icgStart < 0) return; visTick++; if (visTick % 5 !== 0) return;
+    for (const nm of ['AChA', 'PCom']) {
+      const pts = PTS[nm]; let vis = 0, tot = 0;
+      for (let i = 3; i < pts.length - 3; i += 3) {
+        const p = pts[i]; tot++; const ndcp = p.clone().project(camera);
+        if (Math.abs(ndcp.x) > 0.92 || Math.abs(ndcp.y) > 0.92 || ndcp.z > 1) continue;
+        const dd = p.clone().sub(camera.position); const dist = dd.length(); dd.normalize();
+        ray.set(camera.position, dd); const hs = ray.intersectObjects(targets, false); let occ = false;
+        for (const h of hs) { if (h.object.userData.noray) continue; if (h.distance < dist - 1.2) occ = true; break; }
+        if (!occ) vis++;
+      }
+      const frac = tot ? vis / tot : 0; if (frac > sim.seeFrac[nm]) sim.seeFrac[nm] = frac; if (frac > 0.6) sim.seen[nm] = true;
+    }
+    if (sim.permClip && sim.seen.AChA && sim.seen.PCom) markStep(5, 'ICG doğrulama (AChA/PCom görüş hattında, akım teyit)');
+  }
+
   // ---- 120 Hz fizik adımı ----
-  const RUPT = { bleb: 0.3, dome: 0.65, neck: 1.0, ICA: 1.7, M1: 1.6, A1: 1.6, PCom: 1.3, AChA: 0.9 };
+  const RUPT = { bleb: (window.NeuroCase && window.NeuroCase.thinBleb) ? 0.16 : 0.3, dome: 0.65, neck: 1.0, ICA: 1.7, M1: 1.6, A1: 1.6, PCom: 1.3, AChA: 0.9 };
   const FRAG = n => n === 'bleb' ? 1.0 : n === 'dome' ? 0.5 : n === 'neck' ? 0.25 : n === 'ICA' ? 0.12 : (n === 'M1' || n === 'A1' || n === 'PCom') ? 0.1 : n === 'AChA' ? 0.3 : 0.06;
   function toolEnergy() { if (!sim.pressing) return 0; const b = sim.press / sim.maxPress; return sim.tool === 3 ? 0.5 + b * 3.0 : sim.tool === 2 ? b * 1.0 : sim.tool === 1 ? b * 0.3 : b * 0.6; }
   function step(dt) {
@@ -769,7 +927,13 @@ const SURG = (() => {
     }
     // etkin aspirasyon: aspiratör ucu (aktif veya park) kan gölüne yakınsa fieldMl düşer
     const asp = (sim.tool === 1 && sim.pressing) ? sim.tip : (sim.parked ? sim.parked.pos : null);
-    if (asp && asp.distanceTo(POOL_C) < 7) sim.fieldMl = Math.max(0, sim.fieldMl - 2.2 * dt);
+    const aspEff = asp && asp.distanceTo(POOL_C) < 7;
+    if (aspEff) sim.fieldMl = Math.max(0, sim.fieldMl - 2.2 * dt);
+    // kriz zaman damgaları: ilk etkin aspirasyon (T_yanıt) ve kanama kontrolü (T_kontrol)
+    if (sim.ruptures.length) {
+      if (aspEff && !sim._respLogged) { sim._respLogged = true; logE('aspirationStart', {}); }
+      if (sim._respLogged && !sim._ctrlLogged && sim.fieldMl < 0.25) { sim._ctrlLogged = true; logE('bleedControlled', {}); }
+    }
     sim.fieldMl = Math.max(0, sim.fieldMl);
     sim.clarity = clamp(1 - sim.fieldMl / 7, 0.15, 1);
     // MAP yalnızca büyük kayıplarda düşer
@@ -809,7 +973,7 @@ const SURG = (() => {
   function frame(t, dtReal) {
     sim.time = t;
     if (sim.tool !== lastTool) { lastTool = sim.tool; document.querySelector('[data-tool="1"] small').textContent = sim.parked ? 'SABİT · Sağ Tık: bırak' : 'Sabitle: Sağ Tık'; }
-    updateTool();
+    updateTool(); trackVisibility();
     acc += Math.min(0.1, dtReal); const h = 1 / 120; let n = 0; while (acc >= h && n < 20) { step(h); acc -= h; n++; }
     effects(dtReal); ui();
   }
@@ -856,6 +1020,238 @@ function animate() {
 window.addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); });
 document.getElementById('loading').classList.add('hidden');
 window.NeuroSim = { scene, camera, renderer, controls, vesselMesh, materials: MAT, SDF, state: S, setTool, ready: true };
+
+// ============================================================================
+//  10) 3. AŞAMA: vaka seçici · WebAudio · kapanış beyanı · jüri karnesi · X-Ray · post-op
+// ============================================================================
+// ---- üst bar vaka etiketi + dropdown senkronu ----
+document.getElementById('caseLbl').textContent = CASE.short;
+document.getElementById('caseSel').value = String(CASE.key);
+window.switchCase = v => { const n = parseInt(v, 10); if (n === CASE.key) return; location.search = '?case=' + n; };
+
+// ---- saf WebAudio ses motoru (harici dosya yok) ----
+const AU = { ctx: null, on: false, logLen: 0, beatT: 0 };
+function makeNoise(ctx) { const b = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate); const d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; const s = ctx.createBufferSource(); s.buffer = b; s.loop = true; s.start(); return s; }
+function initAudio() {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const master = ctx.createGain(); master.gain.value = 0.55; master.connect(ctx.destination);
+  const noise = makeNoise(ctx);
+  // aspiratör emiş: bandpass gürültü (kanla gurultuya döner)
+  const sf = ctx.createBiquadFilter(); sf.type = 'bandpass'; sf.frequency.value = 1300; sf.Q.value = 0.7;
+  const sg = ctx.createGain(); sg.gain.value = 0; noise.connect(sf); sf.connect(sg); sg.connect(master);
+  // bipolar cızırtı: highpass gürültü
+  const zf = ctx.createBiquadFilter(); zf.type = 'highpass'; zf.frequency.value = 2200;
+  const zg = ctx.createGain(); zg.gain.value = 0; noise.connect(zf); zf.connect(zg); zg.connect(master);
+  AU.ctx = ctx; AU.master = master; AU.sf = sf; AU.sg = sg; AU.zg = zg; AU.noise = noise;
+}
+function blip(freq, dur, type, vol) { const c = AU.ctx; if (!c) return; const o = c.createOscillator(); const g = c.createGain(); o.type = type || 'triangle'; o.frequency.value = freq; o.connect(g); g.connect(AU.master); const t = c.currentTime; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol || 0.3, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + (dur || 0.08)); o.start(t); o.stop(t + (dur || 0.08) + 0.02); }
+function clickSound() { blip(2600, 0.045, 'square', 0.22); setTimeout(() => blip(1800, 0.05, 'square', 0.18), 55); const c = AU.ctx; if (c) { const n = makeNoise(c); const g = c.createGain(); const f = c.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 3000; n.connect(f); f.connect(g); g.connect(AU.master); const t = c.currentTime; g.gain.setValueAtTime(0.14, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.05); setTimeout(() => { try { n.stop(); } catch (e) { } }, 80); } }
+window.toggleSound = () => {
+  if (!AU.ctx) initAudio(); if (AU.ctx.state === 'suspended') AU.ctx.resume();
+  AU.on = !AU.on; AU.master.gain.value = AU.on ? 0.55 : 0; document.getElementById('btnSound').classList.toggle('on', AU.on);
+  document.getElementById('btnSound').textContent = AU.on ? '🔊 Ses' : '🔇 Ses'; toast(AU.on ? 'Ses açık' : 'Ses kapalı');
+  if (AU.on && !AU._loop) { AU._loop = true; audioLoop(); }
+};
+function audioLoop() {
+  requestAnimationFrame(audioLoop); if (!AU.on || !AU.ctx) return; const s = window.NeuroSimState; if (!s) return; const c = AU.ctx, now = c.currentTime;
+  // monitör nabzı: HR'ye göre kısa bip
+  const beat = 60 / Math.max(40, s.HR); if (now - AU.beatT > beat) { AU.beatT = now; blip(s.MAP < 60 ? 760 : 920, 0.06, 'sine', 0.12); }
+  // aspiratör: aktif + sahadaki kan miktarına göre gürültü
+  const aspActive = (s.tool === 1 && s.pressing) || !!s.parked; const bf = Math.min(1, s.fieldMl / 3);
+  AU.sg.gain.setTargetAtTime(aspActive ? 0.05 + 0.14 * bf : 0, now, 0.08); AU.sf.frequency.setTargetAtTime(1400 - 820 * bf, now, 0.1);
+  // bipolar: tool 3 bası
+  const zap = (s.tool === 3 && s.pressing && s.press > 0.2) ? (0.05 + 0.12 * Math.min(1, s.press / 2)) : 0; AU.zg.gain.setTargetAtTime(zap, now, 0.03);
+  if (zap > 0) AU.zf.frequency.value = 2000 + Math.random() * 1400; // cızırtı modülasyonu
+  // olay sesleri (log'u izle): klips tık, rüptür
+  const log = window.NeuroEventLog; if (log && log.length > AU.logLen) { for (let i = AU.logLen; i < log.length; i++) { const ty = log[i].type; if (ty === 'permClip' || ty === 'tempClip' || ty === 'tempClipRemoved') clickSound(); else if (ty === 'RUPTURE') { const n = makeNoise(c); const g = c.createGain(); const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 600; n.connect(f); f.connect(g); g.connect(AU.master); const t = c.currentTime; g.gain.setValueAtTime(0.3, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.6); setTimeout(() => { try { n.stop(); } catch (e) { } }, 700); } } AU.logLen = log.length; }
+}
+
+// ---- kapanış beyanı penceresi ----
+const ov = id => document.getElementById(id);
+window.openClosure = () => { document.querySelectorAll('#closure input').forEach(r => r.checked = false); document.querySelectorAll('#closure label').forEach(l => l.classList.remove('sel')); ov('closure').classList.add('open'); };
+window.closeClosure = () => ov('closure').classList.remove('open');
+document.querySelectorAll('#closure .q').forEach(q => q.querySelectorAll('label').forEach(l => l.addEventListener('click', () => { q.querySelectorAll('label').forEach(x => x.classList.remove('sel')); l.classList.add('sel'); })));
+window.submitClosure = () => {
+  const excl = (document.querySelector('#closure input[name=excl]:checked') || {}).value;
+  const branch = (document.querySelector('#closure input[name=branch]:checked') || {}).value;
+  if (!excl || !branch) { toast('Her iki beyanı da işaretleyin'); return; }
+  ov('closure').classList.remove('open'); buildDebrief(excl, branch); ov('debrief').classList.add('open');
+};
+
+// ---- jüri karnesi ----
+const RELT0 = () => (window.NeuroEventLog[0] ? window.NeuroEventLog[0].t : 0);
+function findEv(type) { return window.NeuroEventLog.find(e => e.type === type); }
+function buildDebrief(excl, branch) {
+  const s = window.NeuroSimState, C = window.NeuroCase, pc = s.permClip;
+  const trapped = pc ? pc.trapped : [];
+  const achaOccl = trapped.includes('AChA'), pcomClosed = trapped.includes('PCom'), cn3Trap = trapped.includes('CN3'), perfTrap = trapped.includes('perforan');
+  const cn3Thermal = (s.damage.CN3 || 0) > 0.5;
+  const neckClosed = pc && pc.neckClosed, dogEar = pc && pc.dogEar, missed = pc ? pc.missed : true, icaSten = pc && pc.icaStenosis;
+  const tempStillOn = !!s.tempClip;
+  const activeBleed = s.fieldMl > 0.8;
+  const fetalPComClosed = C.fetalPCom && pcomClosed;
+  const bothSeen = s.seen.AChA && s.seen.PCom;
+  // geçici klips iskemi süresi
+  const rem = findEv('tempClipRemoved'); const tempIsch = rem ? rem.held : (tempStillOn ? s.tempClipT : 0);
+  const longIsch = tempIsch > 120;
+  // --- kritik güvenlik kilidi ---
+  const crit = [];
+  if (achaOccl) crit.push('AChA oklüzyonu');
+  if (fetalPComClosed) crit.push('Fetal PCom kapatıldı (PCA bağımlı)');
+  if (cn3Trap) crit.push('CN III klips çenesinde sıkıştı');
+  if (cn3Thermal) crit.push('CN III bipolar termal hasarı');
+  if (activeBleed) crit.push('Sahada aktif kanama sürüyor');
+  if (tempStillOn) crit.push('Geçici klips çıkarılmadı');
+  const locked = crit.length > 0;
+  // --- kanıtı aşan güven beyanı ---
+  const warns = [];
+  if (branch === 'confirmed' && !bothSeen) warns.push({ code: 'CLAIM_EXCEEDS_VISIBLE_EVIDENCE', msg: 'AChA/PCom görüş hattına sokulup (>%60 görünürlük) doğrulanmadığı halde "ikisi de görülerek doğrulandı" beyan edildi. Görünürlük — AChA: %' + Math.round(s.seeFrac.AChA * 100) + ', PCom: %' + Math.round(s.seeFrac.PCom * 100) + '.' });
+  if (branch === 'confirmed' && (achaOccl || pcomClosed)) warns.push({ code: 'FALSE_PATENCY_CLAIM', msg: 'Dal(lar) aslında kapalı olduğu halde "açık ve doğrulandı" beyan edildi.' });
+  if (excl === 'full' && (dogEar || missed)) warns.push({ code: 'OVERCLAIMED_EXCLUSION', msg: 'Kese tam dışlanmadığı halde "tam dışlandı" beyan edildi (' + (missed ? 'boyun kaçtı' : 'dog-ear rezidü') + ').' });
+  const honest = [];
+  if (branch !== 'confirmed' && (achaOccl || pcomClosed || !bothSeen)) honest.push('Belirsiz/anormal dal için dürüst beyan');
+  if (excl === 'dogear' && dogEar) honest.push('Dog-ear rezidü doğru fark edildi');
+  if (excl === 'na' && !neckClosed) honest.push('Değerlendirilemez durum dürüstçe beyan edildi');
+  // --- kategori puanları ---
+  let c1 = neckClosed ? 100 : dogEar ? 55 : missed ? 15 : 0;
+  if (achaOccl) c1 -= 60; if (pcomClosed) c1 -= (C.fetalPCom ? 95 : 40); if (icaSten) c1 -= 30; if (perfTrap) c1 -= 20; c1 = clampN(c1);
+  let c2 = 100; if (cn3Trap) c2 -= 80; if (cn3Thermal) c2 -= 55; if (perfTrap) c2 -= 25;
+  const tissue = (s.damage.cortex || 0) + (s.damage.dome || 0) * 0.3; if (tissue > 0.3) c2 -= Math.min(25, tissue * 20); c2 = clampN(c2);
+  let c3 = 100; const hadRupt = !!findEv('RUPTURE');
+  if (hadRupt) { c3 -= 20; if (s.totalLossMl > 300) c3 -= 45; else if (s.totalLossMl > 150) c3 -= 25; else if (s.totalLossMl > 40) c3 -= 10; if (activeBleed) c3 -= 45; }
+  c3 = clampN(c3);
+  let c4 = 55;
+  if (excl === 'full' && neckClosed) c4 += 18; else if (excl === 'dogear' && dogEar) c4 += 20; else if (excl === 'na' && !neckClosed) c4 += 8; else if (excl === 'full' && !neckClosed) c4 -= 35; else if (excl === 'dogear' && neckClosed) c4 += 4;
+  if (branch === 'confirmed' && bothSeen && !achaOccl && !pcomClosed) c4 += 22;
+  else if (branch === 'confirmed' && !bothSeen) c4 -= 38;
+  else if (branch === 'confirmed' && (achaOccl || pcomClosed)) c4 -= 30;
+  else if (branch === 'suspect' && (achaOccl || pcomClosed || icaSten)) c4 += 22;
+  else if (branch === 'notseen' && !bothSeen) c4 += 12;
+  else if (branch === 'suspect' && bothSeen && !achaOccl && !pcomClosed) c4 += 3;
+  if (!S.icgUsed) c4 -= 15; c4 = clampN(c4);
+  const overall = Math.round(c1 * 0.35 + c2 * 0.20 + c3 * 0.25 + c4 * 0.20);
+  // --- yapı etiketleri ---
+  const BADGE = { cf: ['cf', 'DOĞRULANDI'], ab: ['ab', 'ANORMAL'], na: ['na', 'DEĞERLENDİRİLEMEDİ'], nc: ['nc', 'KONTROL EDİLMEDİ'] };
+  const achaSt = achaOccl ? 'ab' : s.seen.AChA ? 'cf' : (S.icgUsed ? 'na' : 'nc');
+  const pcomSt = pcomClosed ? 'ab' : s.seen.PCom ? 'cf' : (S.icgUsed ? 'na' : 'nc');
+  const cn3St = (cn3Trap || cn3Thermal) ? 'ab' : 'cf';
+  const keseSt = missed ? 'ab' : dogEar ? 'na' : neckClosed ? 'cf' : 'nc';
+  const icaSt2 = icaSten ? 'ab' : (pc ? 'cf' : 'nc');
+  const bg = (k, extra) => '<span class="badge ' + BADGE[k][0] + '">' + BADGE[k][1] + (extra ? ' · ' + extra : '') + '</span>';
+  // --- kriz süreleri ---
+  let crisis = '';
+  if (hadRupt) {
+    const t0 = findEv('RUPTURE').t, ra = findEv('aspirationStart'), rc = findEv('bleedControlled');
+    const tr = ra ? (ra.t - t0).toFixed(1) : '—', tc = rc ? (rc.t - t0).toFixed(1) : (activeBleed ? 'kontrol yok' : '—');
+    crisis = '<div style="font-size:11px;color:var(--ink-2);margin-top:6px">Rüptür krizi · T_yanıt (ilk etkin aspirasyon): <b>' + tr + ' sn</b> · T_kontrol (kanama durdu): <b>' + tc + '</b> · Toplam kayıp: <b>' + s.totalLossMl.toFixed(0) + ' mL</b></div>';
+  }
+  // --- verdict ---
+  let vCls = 'ok', vTxt = 'KABUL EDİLEBİLİR KLİPAJ';
+  if (locked) { vCls = 'crit'; vTxt = 'KRİTİK GÜVENLİK İHLALİ — YENİDEN DEĞERLENDİRME GEREKLİ'; }
+  else if (overall < 55) { vCls = 'warn'; vTxt = 'YETERSİZ — GELİŞTİRİLMELİ'; }
+  else if (overall >= 85) { vCls = 'ok'; vTxt = 'MÜKEMMEL KLİPAJ'; }
+  const cat = (nm, pc2, items) => '<div class="cat"><div class="top"><span class="nm">' + nm + '</span><span class="pc">' + pc2 + '/100</span></div><div class="bar"><i style="width:' + pc2 + '%"></i></div><ul>' + items.map(it => '<li>' + it + '</li>').join('') + '</ul></div>';
+  const warnHtml = (warns.length ? '<div class="cat" style="border-color:rgba(196,86,95,0.5)"><div class="nm" style="color:#f1b0b7;margin-bottom:5px">⚠ Beyan–Kanıt Tutarsızlığı</div><ul>' + warns.map(w => '<li><span class="badge ab">' + w.code + '</span> ' + w.msg + '</li>').join('') + '</ul></div>' : '') +
+    (honest.length ? '<div class="cat" style="border-color:rgba(90,159,127,0.4)"><div class="nm" style="color:#8fe3bf;margin-bottom:5px">✓ Dürüst Belirsizlik Yönetimi (ödüllendirildi)</div><ul>' + honest.map(h => '<li>' + h + '</li>').join('') + '</ul></div>' : '');
+  const sheet = document.getElementById('debriefSheet');
+  sheet.innerHTML =
+    '<h2>Jüri Değerlendirmesi &amp; Klinik Sonuç</h2><div class="sub">' + CASE.name + ' — gözlenen kanıt, beyanınızla ve model gerçeğiyle karşılaştırıldı.</div>' +
+    '<div class="scoreHead"><div><div class="bigscore">' + overall + '<small>/100</small></div><div style="font-size:10.5px;color:var(--ink-3)">ağırlıklı: Dışlanma&Dolaşım %35 · CN III&Doku %20 · Hemostaz %25 · Doğrulama %20</div></div><div class="verdict ' + vCls + '">' + vTxt + '</div></div>' +
+    (locked ? '<div class="cat" style="border-color:rgba(196,86,95,0.6);background:rgba(196,86,95,0.08)"><div class="nm" style="color:#f1b0b7;margin-bottom:5px">🔒 Kritik Güvenlik Kilidi</div><ul>' + crit.map(x => '<li><span class="badge ab">İHLAL</span> ' + x + '</li>').join('') + '</ul></div>' : '') +
+    warnHtml +
+    cat('Anevrizma Dışlanması &amp; Kritik Dolaşım', c1, ['Kese: ' + bg(keseSt, missed ? 'boyun kaçtı' : dogEar ? 'dog-ear rezidü' : neckClosed ? 'boyun kapalı' : 'klips yok'), 'AChA: ' + bg(achaSt), 'PCom: ' + bg(pcomSt) + (C.fetalPCom ? ' <span style="color:#f3d79a">(fetal — PCA bağımlı)</span>' : ''), 'ICA açıklığı: ' + bg(icaSt2, icaSten ? 'stenoz' : '')]) +
+    cat('CN III &amp; Doku Korunması', c2, ['CN III (okülomotor): ' + bg(cn3St, cn3Trap ? 'çenede sıkıştı' : cn3Thermal ? 'termal hasar' : 'korundu'), 'Perforanlar: ' + (perfTrap ? bg('ab', 'sıkıştı') : bg('cf')), 'Komşu doku: ' + (tissue > 0.3 ? bg('na', 'retraksiyon/bası izi') : bg('cf'))]) +
+    cat('Hemostaz &amp; Kriz Yönetimi', c3, [hadRupt ? 'İntraop rüptür yaşandı' + (activeBleed ? ' — ' + bg('ab', 'hâlâ aktif') : rem || !activeBleed ? ' — ' + bg('cf', 'kontrol altına alındı') : '') : 'Rüptür yok — ' + bg('cf', 'temiz saha'), 'Toplam kan kaybı: ' + s.totalLossMl.toFixed(0) + ' mL']) + (crisis ? '<div class="cat">' + crisis + '</div>' : '') +
+    cat('Doğrulama &amp; Belirsizlik Yönetimi', c4, ['ICG kullanımı: ' + (S.icgUsed ? bg('cf') : bg('nc', 'hiç çalıştırılmadı')), 'Dışlanma beyanı: ' + exclLabel(excl), 'Dal beyanı: ' + branchLabel(branch)]) +
+    '<div class="tabs" style="margin-top:14px"><button id="tbBtn" class="on" onclick="xrayToggle()">🔬 Şeffaf Anatomide Klipsi İncele (X-Ray)</button></div>' +
+    '<div id="xrayBox"></div>' +
+    '<div style="margin-top:14px;font-weight:600;font-size:13px">Post-Op Klinik Takip</div>' +
+    '<div class="tabs"><button class="on" onclick="postopTab(1)" id="poT1">1. Gün</button><button onclick="postopTab(2)" id="poT2">3. Ay</button></div>' +
+    '<div id="postopBox"></div>' +
+    '<div class="btnrow" style="margin-top:16px"><button class="btn-amb" onclick="retryClip()">↺ Aynı Vakada Klipsi Düzelt</button><button onclick="newCaseMenu()">Yeni Vaka Başlat</button><button onclick="document.getElementById(\'debrief\').classList.remove(\'open\')">Kapat</button></div>';
+  // post-op verilerini sakla
+  DBG = { achaOccl, pcomClosed, cn3Trap, cn3Thermal, fetalPComClosed: C.fetalPCom && pcomClosed, neckClosed, dogEar, missed, longIsch, tempIsch, activeBleed, icaSten, C };
+  postopTab(1);
+}
+function clampN(x) { return Math.max(0, Math.min(100, Math.round(x))); }
+function exclLabel(e) { const m = { full: ['Tam dışlandı', 'cf'], dogear: ['Dog-ear şüphesi', 'na'], na: ['Değerlendirilemedi', 'nc'] }[e]; return '<span class="badge ' + m[1] + '">' + m[0] + '</span>'; }
+function branchLabel(b) { const m = { confirmed: ['Görülerek doğrulandı', 'cf'], suspect: ['Oklüzyon şüphesi', 'na'], notseen: ['Görüş dışı — doğrulanamadı', 'nc'] }[b]; return '<span class="badge ' + m[1] + '">' + m[0] + '</span>'; }
+let DBG = {};
+
+// ---- post-op sekmeleri ----
+window.postopTab = n => {
+  ov('poT1').classList.toggle('on', n === 1); ov('poT2').classList.toggle('on', n === 2);
+  const d = DBG; let h = '';
+  const li = (txt, cls) => '<li><span class="badge ' + (cls || 'na') + '">' + (cls === 'ab' ? 'DEFİSİT' : cls === 'cf' ? 'İYİ SEYİR' : 'BEKLENİR') + '</span> ' + txt + '</li>';
+  if (n === 1) {
+    h += '<li style="color:var(--ink-2)">Pre-op tablo: sağ pitozis + 6.5 mm fikse-dilate pupil (CN III basısı).</li>';
+    h += li('Kusursuz klipaj olsa bile pitozis ve midriyazis <b>bugün hâlâ sürer</b> — aksonal/miyelin toparlanma anında olmaz.', 'na');
+    if (d.achaOccl) h += li('AChA oklüzyonu → <b>kontralateral hemipleji + hemianestezi + homonim hemianopsi</b> (kapsüla interna/optik traktus infarktı).', 'ab');
+    if (d.fetalPComClosed) h += li('Fetal PCom kapandı → <b>oksipital PCA infarktı</b> (kontralateral homonim hemianopsi, görme alanı kaybı).', 'ab');
+    if (d.longIsch) h += li('Uzun geçici klips iskemisi (' + Math.round(d.tempIsch) + ' sn) → <b>MCA/watershed iskemik defisiti</b> riski.', 'ab');
+    if (d.cn3Trap || d.cn3Thermal) h += li('CN III hasarı → tam okülomotor paralizi (pitoz + "aşağı-dışa" göz + fikse pupil) belirginleşir.', 'ab');
+    if (d.activeBleed) h += li('Sahada hemostaz sağlanamadı → post-op hematom / vazospazm / reoperasyon riski.', 'ab');
+    if (!d.achaOccl && !d.fetalPComClosed && !d.longIsch && !d.cn3Trap && !d.cn3Thermal && !d.activeBleed) h += li('Yeni fokal defisit yok; nörolojik muayene stabil (sadece beklenen CN III bulguları).', 'cf');
+  } else {
+    if (d.neckClosed && !d.cn3Trap && !d.cn3Thermal) h += li('Boyun tam kapandı + CN III korundu → pitozis ve pupil ışık refleksi <b>büyük ölçüde toparlanır</b> (haftalar–aylar).', 'cf');
+    if (d.cn3Trap || d.cn3Thermal) h += li('CN III termal/mekanik hasar → <b>kalıcı okülomotor paralizi</b>, diplopi; cerrahi/prizma gerekebilir.', 'ab');
+    if (d.dogEar) h += li('Dog-ear rezidü boyun → <b>anevrizma rekürrensi / yeniden kanama</b> riski; takip anjiyografi + olası reoperasyon.', 'ab');
+    if (d.missed) h += li('Kese dışlanmadı → anevrizma büyüme ve <b>yüksek rekanama riski</b> sürer; ikinci girişim gerekir.', 'ab');
+    if (d.achaOccl || d.fetalPComClosed) h += li('İnfarkt alanı yerleşti → defisitlerin bir kısmı kalıcı; rehabilitasyonla kısmi düzelme.', 'ab');
+    if (d.neckClosed && !d.dogEar && !d.missed && !d.cn3Trap && !d.cn3Thermal && !d.achaOccl && !d.fetalPComClosed) h += li('Anjiyografi: kese tam dışlanmış, dallar açık; <b>kür</b>. Yıllık görüntüleme ile takip.', 'cf');
+  }
+  ov('postopBox').innerHTML = '<ul style="list-style:none;display:flex;flex-direction:column;gap:6px;margin-top:8px;font-size:11.5px;color:var(--ink-2)">' + h + '</ul>';
+};
+
+// ---- şeffaf X-Ray incelemesi ----
+let xrayOn = false; const xrayMarks = new THREE.Group(); scene.add(xrayMarks); let vesselOpBak = null;
+function curvePts(c, n) { const a = []; for (let i = 0; i <= n; i++) a.push(c.getPoint(i / n)); return a; }
+function nearestOnCurve(c, p) { let best = 1e9, bp = p; const pts = curvePts(c, 40); for (const q of pts) { const d = q.distanceTo(p); if (d < best) { best = d; bp = q; } } return { p: bp, d: best }; }
+window.xrayToggle = () => {
+  xrayOn = !xrayOn; document.getElementById('tbBtn').classList.toggle('on', xrayOn);
+  const vm = vesselMesh.material;
+  if (xrayOn) {
+    vesselOpBak = { t: vm.transparent, o: vm.opacity, dw: vm.depthWrite };
+    vm.transparent = true; vm.opacity = 0.3; vm.depthWrite = false;
+    buildXrayMarks();
+    document.getElementById('xrayBox').innerHTML = xrayTimeline();
+  } else {
+    if (vesselOpBak) { vm.transparent = vesselOpBak.t; vm.opacity = vesselOpBak.o; vm.depthWrite = vesselOpBak.dw; }
+    xrayMarks.clear(); document.getElementById('xrayBox').innerHTML = '';
+  }
+};
+function mark(p, hex, r) { const m = new THREE.Mesh(new THREE.SphereGeometry(r || 0.7, 16, 12), new THREE.MeshBasicMaterial({ color: hex, transparent: true, opacity: 0.92, depthTest: false })); m.position.copy(p); m.renderOrder = 40; xrayMarks.add(m); }
+function buildXrayMarks() {
+  xrayMarks.clear(); const s = window.NeuroSimState, pc = s.permClip; if (!pc) return;
+  const clipP = pc.pos;
+  // boyun düzlemi
+  mark(AN.neckC, pc.neckClosed ? 0x6bff9f : 0xff5a5a, 0.85);
+  // AChA / PCom / CN III — klipse en yakın nokta, sıkışıyorsa kırmızı
+  const aA = nearestOnCurve(CL.AChA, clipP); mark(aA.p, pc.trapped.includes('AChA') ? 0xff5a5a : 0x6bff9f, 0.6);
+  const aP = nearestOnCurve(CL.PCom, clipP); mark(aP.p, pc.trapped.includes('PCom') ? 0xff5a5a : 0x6bff9f, 0.6);
+  const a3 = nearestOnCurve(CL.CN3, clipP); mark(a3.p, (pc.trapped.includes('CN3') || (s.damage.CN3 || 0) > 0.5) ? 0xff5a5a : 0x6bff9f, 0.6);
+  if (pc.dogEar) mark(AN.domeC.clone().lerp(AN.neckC, 0.4), 0xff9f43, 0.7); // dog-ear açık kalan kese
+}
+function xrayTimeline() {
+  const log = window.NeuroEventLog, t0 = RELT0();
+  const NAME = { identify: 'Yapı tanımlandı', step: 'Adım', tempClip: 'Geçici klips kondu', tempClipRemoved: 'Geçici klips çıkarıldı', permClip: 'Kalıcı klips kondu', RUPTURE: 'RÜPTÜR', aspirationStart: 'Etkin aspirasyon başladı', bleedControlled: 'Kanama kontrol altında' };
+  const rows = log.filter(e => NAME[e.type]).map(e => { const red = e.type === 'RUPTURE'; const grn = e.type === 'bleedControlled' || e.type === 'permClip'; const extra = e.struct ? ' — ' + e.struct : e.name ? ' — ' + e.name : e.step ? ' ' + e.step : ''; return '<div class="row"><span class="tm">' + (e.t - t0).toFixed(1) + 's</span><span class="ev ' + (red ? 'r' : grn ? 'g' : '') + '">' + NAME[e.type] + extra + '</span></div>'; }).join('');
+  return '<div class="tl"><div style="font-size:10.5px;color:var(--ink-3);margin-bottom:4px">Yeşil = güvenli ilişki · Kırmızı = sıkışan dal / açık dog-ear · Olay zaman çizelgesi:</div>' + (rows || '<div style="font-size:11px;color:var(--ink-3)">Kayıtlı önemli olay yok.</div>') + '</div>';
+}
+
+// ---- aynı vakada klipsi düzelt / yeni vaka ----
+window.retryClip = () => {
+  const s = window.NeuroSimState;
+  if (xrayOn) xrayToggle();
+  if (s.permClip) { scene.remove(s.permClip.mesh); s.permClip = null; }
+  s.outcome = {}; s.steps[4] = false;
+  if (window.SURG) window.SURG.applyIcgPatency();
+  document.querySelectorAll('#checklist li')[4].classList.remove('done');
+  ov('debrief').classList.remove('open'); setTool(5);
+  toast('Klips öncesi duruma dönüldü — yalnız kalıcı klips açısını (Q/E/R) düzeltip yeniden yerleştirin');
+};
+window.newCaseMenu = () => { const n = prompt('Yeni vaka numarası (1–4):\n1 Standart · 2 Fetal PCom · 3 Boyna bitişik AChA · 4 İnce bleb + CN III', String(CASE.key % 4 + 1)); if (n && /^[1-4]$/.test(n.trim())) location.search = '?case=' + n.trim(); };
+
 animate();
 </script>
 </body>
