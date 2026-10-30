@@ -1598,7 +1598,19 @@ const EchoClips = (() => {
   function inSuite() { try { return window.parent !== window && !!window.parent.DuctusSuite; } catch (e) { return false; } }
   window.goPortal = function () { if (inSuite()) window.parent.DuctusSuite.openPortal(); else window.location.href = '../ductuslab-suite.html'; };
   // Paket içinde: logo ve "Modüller" paket çubuğunda zaten var → modül başlığı tek satıra sadeleşir
-  if (inSuite()) document.addEventListener('DOMContentLoaded', () => { document.head.insertAdjacentHTML('beforeend', '<style>.brand .wordmark, .brand .vsep, #btnPortal { display: none !important; } .brand .product { color: var(--ink); font-weight: 600; } header { height: 40px; }</style>'); });
+  // Paket içinde: modül başlığı gizlenir; Sniff / Dondur ve HR·EF·FR·Kalite paket çubuğuna yansıtılır (tek üst bar)
+  if (inSuite()) document.addEventListener('DOMContentLoaded', () => { document.head.insertAdjacentHTML('beforeend', '<style>body > header { display: none !important; }</style>'); });
+  function publishModuleBar() {
+    if (!inSuite() || !window.parent.DuctusSuite.setModuleBar) return;
+    try {
+      const vit = `HR ${$('topHr').textContent} · EF ${$('topEf').textContent} · FR ${$('topFps').textContent} · Kalite ${$('topQ').textContent}`;
+      window.parent.DuctusSuite.setModuleBar(MODULE_ID, { tabs: [{ id: 'vitals', label: vit, active: false }], actions: [
+        { id: 'sniff', label: 'Sniff', cls: 'on', title: 'Hızlı inspiryum — IVC kollapsı' },
+        { id: 'freeze', label: st.frozen ? '▶ Devam' : '❚❚ Dondur', cls: st.frozen ? 'on' : '' }] });
+    } catch (e) {}
+  }
+  window.DuctusModuleBar = { onAction(id) { if (id === 'sniff') triggerSniffTest(); else if (id === 'freeze') { toggleFreeze(); publishModuleBar(); } } };
+  if (inSuite()) setInterval(publishModuleBar, 1500);
 
   // ---- patolojiler ----
   const PATH = {
