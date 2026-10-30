@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DuctusLab CathLab · Koroner Anjiyografi & Primer PCI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" />
+<style>
+  :root {
+    --bg-0:#05070c; --bg-1:#0a0f1a; --bg-2:#0e1524; --line:rgba(150,170,200,.12); --line-2:rgba(150,170,200,.22);
+    --ink:#e6ecf5; --ink-2:#9fb0c6; --ink-3:#64728a; --accent:#5fa8d8; --amber:#e0a94a; --ok:#59b88a; --alert:#d85f6a;
+    --ecg:#5fe39a; --ao:#e0556a; --mono:"JetBrains Mono",ui-monospace,Menlo,monospace; --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html,body { height:100%; }
+  body { background:var(--bg-0); color:var(--ink); font-family:var(--sans); font-size:12px; overflow:hidden; user-select:none; -webkit-font-smoothing:antialiased; }
+  .mono { font-family:var(--mono); font-variant-numeric:tabular-nums; }
+  #app { display:grid; grid-template-rows:46px 1fr 56px; height:100vh; width:100vw; }
+
+  /* ---- üst bar ---- */
+  header { display:flex; align-items:center; gap:12px; padding:0 14px; background:var(--bg-1); border-bottom:1px solid var(--line); }
+  .brand { display:flex; align-items:center; gap:10px; }
+  .wordmark { font-size:12px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; } .wordmark em { font-style:normal; color:var(--accent); }
+  .title { font-size:11px; color:var(--ink-3); } .title b { color:var(--ink-2); font-weight:600; }
+  header .sp { flex:1; }
+  button { font-family:var(--sans); font-size:11px; font-weight:600; color:var(--ink-2); background:rgba(20,30,48,.7); border:1px solid var(--line-2); border-radius:7px; padding:6px 10px; cursor:pointer; transition:all .14s; }
+  button:hover { color:var(--ink); border-color:var(--accent); }
+  button.on { background:rgba(95,168,216,.18); color:var(--ink); border-color:rgba(95,168,216,.55); }
+  select { font-family:var(--sans); font-size:11px; font-weight:600; color:var(--ink-2); background:rgba(20,30,48,.8); border:1px solid var(--line-2); border-radius:7px; padding:6px 8px; cursor:pointer; }
+  .proj { display:flex; gap:4px; } .proj button { padding:6px 8px; font-size:10.5px; }
+  .counters { display:flex; gap:14px; align-items:center; }
+  .ctr { text-align:right; } .ctr .l { font-size:9px; color:var(--ink-3); text-transform:uppercase; letter-spacing:.06em; } .ctr .v { font-family:var(--mono); font-size:13px; font-weight:600; } .ctr .v.warn { color:var(--amber); } .ctr .v.alert { color:var(--alert); }
+
+  /* ---- orta: floro monitör | cine galeri | hemo panel ---- */
+  main { display:grid; grid-template-columns:1fr 128px 310px; min-height:0; }
+  #fluoro { position:relative; background:#000; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  #fluoro canvas { display:block; }
+  #osd { position:absolute; inset:0; pointer-events:none; font-family:var(--mono); color:#cfe6d6; text-shadow:0 0 4px #000; }
+  #osd .tl { position:absolute; top:10px; left:12px; font-size:11px; line-height:1.5; opacity:.85; }
+  #osd .tr { position:absolute; top:10px; right:12px; font-size:11px; text-align:right; line-height:1.5; opacity:.85; }
+  #osd .bl { position:absolute; bottom:10px; left:12px; font-size:12px; line-height:1.5; }
+  #osd .br { position:absolute; bottom:10px; right:12px; font-size:11px; text-align:right; opacity:.8; }
+  #osd .pedal { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:13px; color:var(--amber); background:rgba(0,0,0,.4); padding:6px 14px; border-radius:20px; border:1px solid rgba(224,169,74,.4); }
+  #osd .rec { color:var(--alert); } #osd .lih { color:var(--amber); }
+  #carmIcon { position:absolute; bottom:12px; right:12px; width:88px; height:88px; }
+  #collim { position:absolute; inset:0; pointer-events:none; }
+
+  #cine { background:var(--bg-1); border-left:1px solid var(--line); border-right:1px solid var(--line); display:flex; flex-direction:column; min-height:0; }
+  #cine .hd { font-size:9.5px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-3); padding:8px 10px 4px; }
+  #cineList { flex:1; overflow-y:auto; padding:4px 8px 8px; display:flex; flex-direction:column; gap:6px; }
+  .cineThumb { border:1px solid var(--line-2); border-radius:6px; overflow:hidden; cursor:pointer; background:#000; }
+  .cineThumb.active { border-color:var(--accent); }
+  .cineThumb canvas,.cineThumb img { display:block; width:100%; height:auto; }
+  .cineThumb .cap { font-family:var(--mono); font-size:9px; color:var(--ink-3); padding:2px 5px; background:var(--bg-2); }
+  .cineThumb .cap b { color:var(--amber); }
+
+  /* ---- hemo panel ---- */
+  #hemo { background:var(--bg-1); border-left:1px solid var(--line); display:flex; flex-direction:column; min-height:0; overflow-y:auto; }
+  .panel { padding:10px 12px; border-bottom:1px solid var(--line); }
+  .eyebrow { font-size:9.5px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3); margin-bottom:6px; }
+  .caseCard .nm { font-size:13px; font-weight:700; } .caseCard .meta { font-size:11px; color:var(--ink-2); margin-top:3px; line-height:1.55; }
+  .caseCard .tgt { margin-top:6px; font-size:11px; color:var(--amber); }
+  .trace { background:#05080e; border:1px solid var(--line); border-radius:7px; margin-top:4px; position:relative; }
+  .trace canvas { display:block; width:100%; }
+  .trace .lbl { position:absolute; top:4px; left:7px; font-family:var(--mono); font-size:10px; }
+  .trace .rd { position:absolute; top:4px; right:7px; font-family:var(--mono); font-size:11px; }
+  .ecgLbl { color:var(--ecg); } .aoLbl { color:var(--ao); }
+  .vit { display:flex; justify-content:space-between; gap:8px; margin-top:6px; }
+  .vit div { text-align:center; flex:1; } .vit .l { font-size:9px; color:var(--ink-3); } .vit .v { font-family:var(--mono); font-size:14px; font-weight:600; }
+
+  /* ---- alt cihaz barı ---- */
+  footer { display:flex; align-items:center; gap:8px; padding:0 14px; background:var(--bg-1); border-top:1px solid var(--line); }
+  .dock { display:flex; gap:6px; align-items:center; }
+  .slot { display:flex; align-items:center; gap:7px; padding:6px 11px; border:1px solid var(--line-2); border-radius:8px; background:rgba(20,30,48,.5); color:var(--ink-3); cursor:not-allowed; opacity:.65; }
+  .slot .k { font-family:var(--mono); font-size:10px; width:16px; height:16px; display:flex; align-items:center; justify-content:center; border:1px solid var(--line-2); border-radius:4px; }
+  .slot .nm { font-size:11px; font-weight:600; } .slot .st { font-size:9px; color:var(--ink-3); }
+  footer .sp { flex:1; }
+  footer .hint { font-family:var(--mono); font-size:10px; color:var(--ink-3); }
+  kbd { font-family:var(--mono); font-size:10px; background:rgba(20,30,48,.9); border:1px solid var(--line-2); border-bottom-width:2px; border-radius:4px; padding:1px 5px; color:var(--ink-2); }
+
+  #loading { position:fixed; inset:0; background:var(--bg-0); display:flex; align-items:center; justify-content:center; flex-direction:column; gap:14px; z-index:100; transition:opacity .4s; }
+  #loading.hidden { opacity:0; pointer-events:none; }
+  .spin { width:34px; height:34px; border:3px solid var(--line-2); border-top-color:var(--accent); border-radius:50%; animation:sp 1s linear infinite; }
+  @keyframes sp { to { transform:rotate(360deg); } }
+  #toast { position:fixed; bottom:70px; left:50%; transform:translateX(-50%); background:rgba(10,16,28,.95); border:1px solid var(--line-2); border-radius:9px; padding:9px 16px; font-size:12px; opacity:0; transition:opacity .25s; pointer-events:none; z-index:60; max-width:70vw; text-align:center; }
+  #toast.show { opacity:1; }
+  @media (max-width:1150px){ main { grid-template-columns:1fr 96px 250px; } }
+</style>
+</head>
+<body>
+<div id="loading"><div class="spin"></div><div style="font-size:11px;color:var(--ink-3)">Kateter laboratuvarı başlatılıyor…</div></div>
+
+<div id="app">
+  <header>
+    <div class="brand">
+      <button id="btnHome" onclick="goHome()" title="DuctusLab anasayfasına dön">← Anasayfa</button>
+      <span class="wordmark">Ductus<em>Lab</em> CathLab</span>
+      <div class="title">Koroner Anjiyografi &amp; Primer PCI · <b id="caseLbl">Vaka 1</b></div>
+    </div>
+    <div class="sp"></div>
+    <select id="caseSel" onchange="switchCase(this.value)" title="Vaka seçimi">
+      <option value="1">Vaka 1 · Anterior STEMI (LAD)</option>
+      <option value="2">Vaka 2 · LAD–D1 Bifurkasyon</option>
+      <option value="3">Vaka 3 · İnferior STEMI (RCA, TIMI 0)</option>
+      <option value="4">Vaka 4 · Kalsifik Orta LAD</option>
+    </select>
+    <div class="proj" id="projBtns">
+      <button data-a="-45" data-b="-30" title="LAO 45 / Caudal 30">Spider</button>
+      <button data-a="-30" data-b="-25" title="RAO 30 / Caudal 25">RAO Caud</button>
+      <button data-a="40" data-b="30" title="LAO 40 / Cranial 30">LAO Cran</button>
+      <button data-a="0" data-b="25" title="AP 0 / Cranial 25">AP Cran</button>
+      <button data-a="30" data-b="0" title="LAO 30 / 0 — RCA">LAO RCA</button>
+    </div>
+    <select id="fpsSel" onchange="setAcqFps(this.value)" title="Edinim hızı">
+      <option value="15">15 fps</option>
+      <option value="7.5">7.5 fps</option>
+    </select>
+    <div class="counters">
+      <div class="ctr"><div class="l">Kontrast</div><div class="v" id="cCon">0 mL</div></div>
+      <div class="ctr"><div class="l">Floro</div><div class="v" id="cFluoro">0.0 s</div></div>
+      <div class="ctr"><div class="l">Cine</div><div class="v" id="cCine">0</div></div>
+      <div class="ctr"><div class="l">Doz İdx</div><div class="v" id="cDose">0.0</div></div>
+    </div>
+  </header>
+
+  <main>
+    <div id="fluoro">
+      <canvas id="xray"></canvas>
+      <svg id="collim" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
+      <div id="osd">
+        <div class="tl mono" id="osdTL"></div>
+        <div class="tr mono" id="osdTR"></div>
+        <div class="bl mono" id="osdBL"></div>
+        <div class="br mono" id="osdBR"></div>
+        <div class="pedal" id="osdPedal">Floro için <b>Boşluk/F</b> · Cine için <b>C</b> · Kontrast <b>I</b></div>
+      </div>
+      <canvas id="carmIcon" width="176" height="176"></canvas>
+    </div>
+
+    <div id="cine">
+      <div class="hd">Cine Runs</div>
+      <div id="cineList"></div>
+    </div>
+
+    <div id="hemo">
+      <div class="panel caseCard">
+        <div class="eyebrow">Vaka</div>
+        <div class="nm" id="hcNm">—</div>
+        <div class="meta" id="hcMeta"></div>
+        <div class="tgt" id="hcTgt"></div>
+      </div>
+      <div class="panel">
+        <div class="eyebrow">Hemodinamik Monitör</div>
+        <div class="trace"><canvas id="ecg" height="86"></canvas><span class="lbl ecgLbl" id="ecgLbl">II</span><span class="rd ecgLbl" id="ecgRd">72</span></div>
+        <div class="trace" style="margin-top:7px"><canvas id="ao" height="86"></canvas><span class="lbl aoLbl">AO</span><span class="rd aoLbl" id="aoRd">124/76</span></div>
+        <div class="vit">
+          <div><div class="l">HR</div><div class="v" id="vHr">72</div></div>
+          <div><div class="l">SpO₂</div><div class="v" id="vSpo2">97</div></div>
+          <div><div class="l">eGFR</div><div class="v" id="vEgfr">—</div></div>
+        </div>
+      </div>
+      <div class="panel" style="flex:1">
+        <div class="eyebrow">Edinim Durumu</div>
+        <div class="mono" id="acqInfo" style="font-size:11px;line-height:1.7;color:var(--ink-2)"></div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="dock" id="dock">
+      <div class="slot"><span class="k">1</span><div><div class="nm">Kılavuz Kateter</div><div class="st">2. aşamada</div></div></div>
+      <div class="slot"><span class="k">2</span><div><div class="nm">Kılavuz Tel</div><div class="st">2. aşamada</div></div></div>
+      <div class="slot"><span class="k">3</span><div><div class="nm">Balon</div><div class="st">2. aşamada</div></div></div>
+      <div class="slot"><span class="k">4</span><div><div class="nm">İlaçlı Stent</div><div class="st">2. aşamada</div></div></div>
+      <div class="slot"><span class="k">Q</span><div><div class="nm">QCA Ölçüm</div><div class="st">2. aşamada</div></div></div>
+    </div>
+    <div class="sp"></div>
+    <div class="hint"><kbd>Boşluk/F</kbd> Floro · <kbd>C</kbd> Cine · <kbd>I</kbd> Kontrast · <kbd>←↑↓→</kbd> C-kolu · sağ-sürükle döndür</div>
+  </footer>
+</div>
+
+<div id="toast"></div>
+
+<script type="importmap">
+{ "imports": { "three": "https://unpkg.com/three@0.160.1/build/three.module.js" } }
+</script>
+<script type="module">
+import * as THREE from 'three';
+const V = (x,y,z)=>new THREE.Vector3(x,y,z);
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+const rad=d=>d*Math.PI/180, lerp=(a,b,t)=>a+(b-a)*t;
+const toast=(m)=>{const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(toast.tm);toast.tm=setTimeout(()=>t.classList.remove('show'),2400);};
+window.goHome = () => { window.location.href='index.html'; };
+
+// =====================================================================
+//  C-KOLU (XA POSITIONER) — LPS hasta koordinatları (x:sol, y:posterior, z:superior)
+// =====================================================================
+const SOD=700, SID=1000, FOV=13;
+const CARM = { alpha:0, beta:0, tAlpha:0, tBeta:0 };     // primary(LAO+/RAO-), secondary(CRA+/CAU-)
+// detektör normali (izo->detektör): LAO+ -> +x(sol), CRA+ -> +z(superior)
+function detectorDir(aDeg,bDeg){ const a=rad(aDeg),b=rad(bDeg); return V(Math.sin(a)*Math.cos(b), -Math.cos(a)*Math.cos(b), Math.sin(b)); }
+
+const fluoroEl=document.getElementById('fluoro');
+const canvas=document.getElementById('xray');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:false,preserveDrawingBuffer:true});
+renderer.setPixelRatio(Math.min(1.5,devicePixelRatio));
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(FOV,1,50,2000);
+camera.up.set(0,0,1);
+function applyCarm(){ const n=detectorDir(CARM.alpha,CARM.beta); camera.position.copy(n.clone().multiplyScalar(-SOD)); camera.lookAt(0,0,0); camera.updateMatrixWorld(); }
+
+let RTW=640, RTH=640;
+function sizeMonitor(){
+  const r=fluoroEl.getBoundingClientRect(); const s=Math.min(r.width,r.height)-8; const px=Math.max(256,Math.floor(s));
+  canvas.style.width=px+'px'; canvas.style.height=px+'px'; renderer.setSize(px,px,false);
+  // RT çözünürlüğü sabit (performans) — ekran CSS ile ölçeklenir
+}
+window.addEventListener('resize',()=>{ sizeMonitor(); drawCollimator(); });
+
+// =====================================================================
+//  KORONER AĞAÇ + 4 VAKA  (LPS mm, izosantr ~ kalp merkezi)
+// =====================================================================
+const HEART_C = V(6,4,-6);
+// segment merkez çizgileri (kontrol noktaları, mm)
+const BASE_TREE = {
+  LM:  [V(5,7,17),V(12,4,13)],
+  LAD: [V(12,4,13),V(18,-4,4),V(16,-10,-14),V(6,-9,-30),V(0,-7,-40)],
+  D1:  [V(16,-6,1),V(27,-8,-6),V(33,-7,-15)],
+  D2:  [V(13,-9,-16),V(23,-11,-22),V(29,-11,-30)],
+  Cx:  [V(12,4,13),V(20,9,8),V(25,15,-6),V(20,17,-20)],
+  OM:  [V(23,12,2),V(31,13,-10),V(31,16,-23)],
+  RCA: [V(-3,7,16),V(-15,2,9),V(-23,6,-7),V(-17,15,-22)],
+  PDA: [V(-17,15,-22),V(-8,11,-31),V(1,7,-39)],
+  PL:  [V(-17,15,-22),V(-15,19,-24),V(-19,21,-18)]
+};
+const BASE_RAD = { LM:2.3, LAD:1.9, D1:1.2, D2:1.0, Cx:1.7, OM:1.1, RCA:2.0, PDA:1.1, PL:1.0 };
+const SEG_ORDER = ['LM','LAD','D1','D2','Cx','OM','RCA','PDA','PL'];
+const SEG_PARENT = { LM:null, LAD:'LM', D1:'LAD', D2:'LAD', Cx:'LM', OM:'Cx', RCA:null, PDA:'RCA', PL:'RCA' };
+const LEFT_SEGS = ['LM','LAD','D1','D2','Cx','OM'], RIGHT_SEGS=['RCA','PDA','PL'];
+
+const CASES = {
+  1:{ name:'Vaka 1 · Anterior STEMI', side:'left', egfr:78, hr:96, ao:[118,72], spo2:94,
+      meta:'58Y erkek · 2 saattir retrosternal basıcı göğüs ağrısı, terleme. V1–V4 ST elevasyonu.', target:'Suçlu: proksimal–orta LAD. Primer PCI planı.',
+      ecgLeads:['V2','II'], stLead:{V2:+0.42,II:0}, flow:{LAD:1}, lesions:{LAD:[{at:0.32,len:0.26,sten:0.9,calc:0.1}]}, culprit:'LAD' },
+  2:{ name:'Vaka 2 · LAD–Diyagonal Bifurkasyon', side:'left', egfr:71, hr:78, ao:[132,80], spo2:97,
+      meta:'63Y kadın · efor anjinası, pozitif iskemi testi. LAD–D1 bifurkasyon lezyonu.', target:'Medina sınıflaması ve dal koruma stratejisi (2. aşama jailing).',
+      ecgLeads:['I','II'], stLead:{}, flow:{LAD:3,D1:3}, lesions:{LAD:[{at:0.30,len:0.14,sten:0.7,calc:0.15}], D1:[{at:0.05,len:0.12,sten:0.65,calc:0.1}]}, culprit:'LAD/D1' },
+  3:{ name:'Vaka 3 · İnferior STEMI', side:'right', egfr:65, hr:52, ao:[104,64], spo2:95,
+      meta:'71Y erkek · inferior göğüs ağrısı, bradikardi, hipotansiyon eğilimi. DII-DIII-aVF ST elevasyonu.', target:'Suçlu: dominant proksimal RCA, trombotik TIMI 0 oklüzyon. Primer PCI.',
+      ecgLeads:['II','III'], stLead:{II:+0.5,III:+0.55}, flow:{RCA:0,PDA:0,PL:0}, lesions:{RCA:[{at:0.22,len:0.1,sten:1.0,calc:0.05,occl:true}]}, culprit:'RCA' },
+  4:{ name:'Vaka 4 · Kalsifik Orta LAD', side:'left', egfr:58, hr:74, ao:[146,84], spo2:96,
+      meta:'69Y erkek · kronik stabil anjina, yoğun koroner kalsifikasyon. Orta LAD ağır kalsifik lezyon.', target:'Lezyon hazırlığı (2. aşama rotablasyon/perforasyon-diseksiyon riski).',
+      ecgLeads:['V4','II'], stLead:{}, flow:{LAD:3}, lesions:{LAD:[{at:0.46,len:0.2,sten:0.75,calc:0.85}]}, culprit:'LAD' }
+};
+let CASE_N=1, CASE=CASES[1];
+
+// ---- segment örnekleme + birleşik damar geometrisi (aTangent/aRadius/aArc/aSeg/aKind) ----
+const NSAMP=64;  // kontrast dokusu genişliği
+let segMeta={};  // name -> {curve, len, pts[], tan[], idx}
+function buildTreeData(){
+  segMeta={};
+  SEG_ORDER.forEach((nm,i)=>{
+    const curve=new THREE.CatmullRomCurve3(BASE_TREE[nm].map(p=>p.clone()),false,'centripetal');
+    const len=curve.getLength();
+    const pts=[],tan=[]; for(let k=0;k<NSAMP;k++){ const t=k/(NSAMP-1); pts.push(curve.getPoint(t)); tan.push(curve.getTangent(t).normalize()); }
+    segMeta[nm]={curve,len,pts,tan,idx:i,rad:BASE_RAD[nm]};
+  });
+}
+let vesselMesh=null;
+function buildVesselMesh(){
+  if(vesselMesh){ scene.remove(vesselMesh); vesselMesh.geometry.dispose(); }
+  const RING=10; const positions=[],tangents=[],rads=[],arcs=[],segs=[],kinds=[],indices=[];
+  let base=0;
+  const addTube=(nm,radFn,kind)=>{
+    const sm=segMeta[nm]; const N=NSAMP;
+    for(let k=0;k<N;k++){
+      const p=sm.pts[k], tg=sm.tan[k]; const r=radFn(k/(N-1));
+      // halka çerçevesi
+      let up=Math.abs(tg.z)<0.9?V(0,0,1):V(1,0,0);
+      const side=new THREE.Vector3().crossVectors(tg,up).normalize();
+      const up2=new THREE.Vector3().crossVectors(side,tg).normalize();
+      for(let j=0;j<RING;j++){ const a=j/RING*Math.PI*2; const dir=side.clone().multiplyScalar(Math.cos(a)).add(up2.clone().multiplyScalar(Math.sin(a)));
+        const vp=p.clone().addScaledVector(dir,r);
+        positions.push(vp.x,vp.y,vp.z); tangents.push(tg.x,tg.y,tg.z); rads.push(r); arcs.push(k/(N-1)); segs.push(sm.idx); kinds.push(kind);
+      }
+    }
+    for(let k=0;k<N-1;k++){ for(let j=0;j<RING;j++){ const a=base+k*RING+j, b=base+k*RING+(j+1)%RING, c=base+(k+1)*RING+j, d=base+(k+1)*RING+(j+1)%RING; indices.push(a,c,b, b,c,d); } }
+    base+=N*RING;
+  };
+  SEG_ORDER.forEach(nm=>{ const les=(CASE.lesions&&CASE.lesions[nm])||[]; addTube(nm,(t)=>{ let r=segMeta[nm].rad; for(const L of les){ if(t>L.at&&t<L.at+L.len){ const u=(t-L.at)/L.len; const prof=Math.sin(u*Math.PI); r*=1-L.sten*prof; } } return Math.max(0.18,r); },0); });
+  // kateter ucu (opak) — kanüle edilen ostiumda
+  const ostSeg = CASE.side==='left'?'LM':'RCA'; const op=segMeta[ostSeg].pts[0].clone(); const ot=segMeta[ostSeg].tan[0].clone();
+  for(let k=0;k<6;k++){ const p=op.clone().addScaledVector(ot,-k*1.4); for(let j=0;j<RING;j++){ const a=j/RING*Math.PI*2; let up=Math.abs(ot.z)<.9?V(0,0,1):V(1,0,0); const side=new THREE.Vector3().crossVectors(ot,up).normalize(); const up2=new THREE.Vector3().crossVectors(side,ot).normalize(); const dir=side.clone().multiplyScalar(Math.cos(a)).add(up2.clone().multiplyScalar(Math.sin(a))); const vp=p.clone().addScaledVector(dir,1.3); positions.push(vp.x,vp.y,vp.z); tangents.push(ot.x,ot.y,ot.z); rads.push(1.3); arcs.push(0); segs.push(99); kinds.push(1);} }
+  for(let k=0;k<5;k++){ for(let j=0;j<RING;j++){ const a=base+k*RING+j,b=base+k*RING+(j+1)%RING,c=base+(k+1)*RING+j,d=base+(k+1)*RING+(j+1)%RING; indices.push(a,c,b,b,c,d);} } base+=6*RING;
+
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+  g.setAttribute('aTangent',new THREE.Float32BufferAttribute(tangents,3));
+  g.setAttribute('aRadius',new THREE.Float32BufferAttribute(rads,1));
+  g.setAttribute('aArc',new THREE.Float32BufferAttribute(arcs,1));
+  g.setAttribute('aSeg',new THREE.Float32BufferAttribute(segs,1));
+  g.setAttribute('aKind',new THREE.Float32BufferAttribute(kinds,1));
+  g.setIndex(indices);
+  vesselMesh=new THREE.Mesh(g,vesselMat); vesselMesh.frustumCulled=false; scene.add(vesselMesh);
+}
+
+// =====================================================================
+//  KONTRAST DOKUSU (c(seg,arc)) + bolus taşınımı
+// =====================================================================
+const NSEG=SEG_ORDER.length;
+const contrast = SEG_ORDER.map(()=>new Float32Array(NSAMP));
+const contrastTexData=new Uint8Array(NSAMP*NSEG);
+const contrastTex=new THREE.DataTexture(contrastTexData,NSAMP,NSEG,THREE.RedFormat,THREE.UnsignedByteType);
+contrastTex.needsUpdate=true;
+const blush={};  // territory blush 0..1
+function resetContrast(){ for(let i=0;i<NSEG;i++) contrast[i].fill(0); SEG_ORDER.forEach(nm=>blush[nm]=0); }
+function timiVel(nm){ const f=(CASE.flow&&CASE.flow[nm]!=null)?CASE.flow[nm]:3; return [0.16,0.28,0.5,0.95][f]; } // arc/sn (TIMI0'da bile proksimal dolum; distal oklüzyonla kesilir)
+function occAt(nm){ const les=(CASE.lesions&&CASE.lesions[nm])||[]; for(const L of les) if(L.occl) return L.at; return 1; }
+let injecting=false;
+function stepContrast(dt){
+  // enjeksiyon: ostiuma kontrast bas
+  const ostSeg=CASE.side==='left'?'LM':'RCA';
+  if(injecting){ contrast[segMeta[ostSeg].idx][0]=1; contrast[segMeta[ostSeg].idx][1]=Math.max(contrast[segMeta[ostSeg].idx][1],0.9); }
+  // ileri taşınım + dispersiyon + yıkanma
+  const next=SEG_ORDER.map(nm=>contrast[segMeta[nm].idx].slice());
+  SEG_ORDER.forEach(nm=>{
+    const i=segMeta[nm].idx, len=segMeta[nm].len, v=timiVel(nm); const adv=v*dt/ (len/40); // normalize
+    const c=contrast[i];
+    for(let k=NSAMP-1;k>0;k--){ const src=k-adv*NSAMP; const kf=Math.floor(src); const fr=src-kf;
+      let val=0; if(kf>=0&&kf<NSAMP-1) val=c[kf]*(1-fr)+c[kf+1]*fr; else if(kf>=NSAMP-1) val=c[NSAMP-1];
+      next[i][k]=Math.max(val*0.998, c[k]*0.94);
+    }
+    // dispersiyon
+    for(let k=1;k<NSAMP-1;k++) next[i][k]=next[i][k]*0.8+(next[i][k-1]+next[i][k+1])*0.1;
+    // yıkanma (enjeksiyon yoksa genel söndürme)
+    if(!injecting) for(let k=0;k<NSAMP;k++) next[i][k]*=0.985;
+  });
+  // bifurkasyon: parent distali -> child proksimali
+  SEG_ORDER.forEach(nm=>{ const par=SEG_PARENT[nm]; if(!par) return; const pc=next[segMeta[par].idx]; // child başlangıç yakını, parent'ın çatal konumundan
+    const les=0; const pv=pc[Math.min(NSAMP-1,Math.floor(NSAMP*0.5))]; next[segMeta[nm].idx][0]=Math.max(next[segMeta[nm].idx][0],pv*0.95);
+  });
+  // oklüzyon: tıkanıklığın distalini bloke et (TIMI 0 → boya kolonu ani kesilir, alt dallar dolmaz)
+  SEG_ORDER.forEach(nm=>{ const oc=occAt(nm); if(oc<1){ const c=next[segMeta[nm].idx]; const cut=Math.floor(oc*NSAMP); for(let k=cut;k<NSAMP;k++) c[k]=0; } });
+  SEG_ORDER.forEach((nm,i)=>{ contrast[segMeta[nm].idx].set(next[segMeta[nm].idx]); });
+  // blush: distal kontrast dolunca territoride hafif birikim (akış TIMI>0)
+  SEG_ORDER.forEach(nm=>{ const c=contrast[segMeta[nm].idx]; const distal=c[NSAMP-1]; const perf=timiVel(nm)>0.2?1:0; blush[nm]=clamp(blush[nm]+(distal*perf*dt*0.5)-dt*0.12,0,0.5); });
+  // doku güncelle
+  for(let s=0;s<NSEG;s++){ const c=contrast[s]; for(let k=0;k<NSAMP;k++) contrastTexData[s*NSAMP+k]=clamp(c[k]*255,0,255); }
+  contrastTex.needsUpdate=true;
+  // kontrast sayacı (mL) enjeksiyon süresine göre
+  if(injecting){ counters.contrastMl+=dt*7; }
+}
+
+// =====================================================================
+//  BEER–LAMBERT İKİ GEÇİŞLİ X-RAY  (RT'ler + kompozit)
+// =====================================================================
+const RT_OPTS={minFilter:THREE.LinearFilter,magFilter:THREE.LinearFilter,format:THREE.RGBAFormat,type:THREE.UnsignedByteType,depthBuffer:true};
+const rtVessel=new THREE.WebGLRenderTarget(RTW,RTH,RT_OPTS);     // damar (MAX blend yoğunluk)
+const rtBG=new THREE.WebGLRenderTarget(RTW,RTH,RT_OPTS);         // anatomi (additive yumuşak doku)
+const rtFrame=new THREE.WebGLRenderTarget(RTW,RTH,{...RT_OPTS,depthBuffer:false}); // edinilen X-ray karesi (LIH)
+let frameId=0, doseMode=0; // 0 floro(düşük doz,çok gren) 1 cine(yüksek doz,az gren)
+
+// damar yoğunluk materyali — Beer-Lambert kalınlık, MAX blend ile çatal lekesiz
+const uMotion={ uCardiac:{value:0}, uResp:{value:0}, uHeart:{value:HEART_C.clone()} };
+const vesselMat=new THREE.ShaderMaterial({
+  uniforms:{ uContrast:{value:contrastTex}, uNSEG:{value:NSEG}, ...uMotion },
+  transparent:true, depthTest:false, depthWrite:false,
+  blending:THREE.CustomBlending, blendEquation:THREE.MaxEquation, blendSrc:THREE.OneFactor, blendDst:THREE.OneFactor,
+  vertexShader:`
+    attribute vec3 aTangent; attribute float aRadius; attribute float aArc; attribute float aSeg; attribute float aKind;
+    uniform float uCardiac, uResp; uniform vec3 uHeart;
+    varying vec3 vTan; varying float vR,vArc,vSeg,vKind; varying vec3 vWorld;
+    void main(){
+      vec3 p=position;
+      // solunum: kranio-kaudal (z) + hafif y kayması
+      p.z += uResp*6.0; p.y += uResp*1.5;
+      // kalp atımı: kalbe doğru kasılma + hafif burulma (apekse doğru artan)
+      vec3 rel=p-uHeart; float apex=clamp((-rel.z)/40.0+0.3,0.0,1.0);
+      p -= rel*uCardiac*0.05*apex;
+      float tw=uCardiac*0.05*apex; float cs=cos(tw),sn=sin(tw);
+      vec3 r2=p-uHeart; p=uHeart+vec3(r2.x*cs-r2.y*sn, r2.x*sn+r2.y*cs, r2.z);
+      vTan=normalize(aTangent); vR=aRadius; vArc=aArc; vSeg=aSeg; vKind=aKind; vWorld=p;
+      gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.0);
+    }`,
+  fragmentShader:`
+    precision highp float;
+    uniform sampler2D uContrast; uniform float uNSEG;
+    varying vec3 vTan; varying float vR,vArc,vSeg,vKind; varying vec3 vWorld;
+    void main(){
+      vec3 viewDir=normalize(cameraPosition-vWorld);
+      float axdv=dot(normalize(vTan),viewDir);
+      float thick=2.0*vR*sqrt(max(0.0,1.0-axdv*axdv));   // silindir kirişi (mm)
+      float dens;
+      if(vKind>1.5){ dens=0.25; }                          // kalsifikasyon silüeti (hafif)
+      else if(vKind>0.5){ dens=0.9; }                      // kateter ucu (opak, kontrasttan bağımsız)
+      else { float c=texture2D(uContrast, vec2(vArc,(vSeg+0.5)/uNSEG)).r; dens=c*thick*0.185; }
+      gl_FragColor=vec4(dens,0.0,0.0,1.0);
+    }`
+});
+
+// anatomi (omurga/kosta/kalp gölgesi/diyafram) — additive yumuşak doku yoğunluğu
+let bgMesh=null;
+const bgMat=new THREE.ShaderMaterial({
+  uniforms:{ uResp:{value:0} },
+  transparent:true, depthTest:true, depthWrite:false,
+  blending:THREE.CustomBlending, blendEquation:THREE.AddEquation, blendSrc:THREE.OneFactor, blendDst:THREE.OneFactor,
+  vertexShader:`attribute float aMu; uniform float uResp; varying float vMu; varying vec3 vN; varying vec3 vW;
+    void main(){ vec3 p=position; if(aMu<0.0){ p.z+=uResp*10.0; } vMu=abs(aMu); vN=normalize(normalMatrix*normal); vW=p; gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.0);} `,
+  fragmentShader:`precision highp float; varying float vMu; varying vec3 vN; varying vec3 vW;
+    void main(){ vec3 vd=normalize(cameraPosition-vW); float edge=1.0-abs(dot(normalize(vN),vd)); float t=vMu*(0.85+edge*0.4); gl_FragColor=vec4(t,0.0,0.0,1.0);} `
+});
+function buildBG(){
+  if(bgMesh){scene.remove(bgMesh);bgMesh.geometry.dispose();}
+  const geos=[];
+  const push=(geo,mu,resp)=>{ geo.deleteAttribute('uv'); const n=geo.attributes.position.count; const a=new Float32Array(n).fill(resp?-mu:mu); geo.setAttribute('aMu',new THREE.Float32BufferAttribute(a,1)); geos.push(geo); };
+  // omurga (vertebra kutuları, posterior)
+  for(let i=0;i<9;i++){ const b=new THREE.BoxGeometry(11,10,6); b.translate(0,34,24-i*7); push(b,0.09,false); }
+  // kostalar (torus yayları, iki yan)
+  for(let s of [-1,1]) for(let i=0;i<6;i++){ const t=new THREE.TorusGeometry(26+i*2,1.8,6,22,Math.PI*0.9); t.rotateY(s*0.5); t.rotateX(Math.PI/2); t.translate(s*6,12,20-i*8); push(t,0.06,false); }
+  // kalp gölgesi (büyük yumuşak elipsoid)
+  const h=new THREE.SphereGeometry(32,24,18); h.scale(1.0,0.95,1.15); h.translate(HEART_C.x,HEART_C.y,HEART_C.z); push(h,0.05,false);
+  // diyafram kubbesi (solunumla oynar)
+  const d=new THREE.SphereGeometry(42,24,12,0,Math.PI*2,0,Math.PI*0.42); d.rotateX(Math.PI); d.translate(4,8,-44); push(d,0.11,true);
+  // basit birleştirme
+  let totP=0,totI=0; geos.forEach(g=>{totP+=g.attributes.position.count; totI+=g.index?g.index.count:0;});
+  const pos=new Float32Array(totP*3), nrm=new Float32Array(totP*3), mu=new Float32Array(totP), idx=[]; let vo=0;
+  geos.forEach(g=>{ const p=g.attributes.position.array,no=g.attributes.normal.array,am=g.attributes.aMu.array,ix=g.index.array;
+    pos.set(p,vo*3); nrm.set(no,vo*3); mu.set(am,vo); for(let k=0;k<ix.length;k++) idx.push(ix[k]+vo); vo+=g.attributes.position.count; });
+  const G=new THREE.BufferGeometry(); G.setAttribute('position',new THREE.Float32BufferAttribute(pos,3)); G.setAttribute('normal',new THREE.Float32BufferAttribute(nrm,3)); G.setAttribute('aMu',new THREE.Float32BufferAttribute(mu,1)); G.setIndex(idx);
+  bgMesh=new THREE.Mesh(G,bgMat); bgMesh.frustumCulled=false; scene.add(bgMesh);
+}
+
+// fullscreen kompozit: I=exp(-(bg+vessel)) + gren(frameId) + vinyet
+const fsScene=new THREE.Scene(), fsCam=new THREE.OrthographicCamera(-1,1,1,-1,0,1);
+const compMat=new THREE.ShaderMaterial({
+  uniforms:{ uVessel:{value:rtVessel.texture}, uBG:{value:rtBG.texture}, uFrame:{value:frameId}, uGrain:{value:0.5}, uBlush:{value:0.0} },
+  vertexShader:`varying vec2 vUv; void main(){ vUv=uv; gl_Position=vec4(position.xy,0.0,1.0);} `,
+  fragmentShader:`precision highp float; varying vec2 vUv; uniform sampler2D uVessel,uBG; uniform float uFrame,uGrain;
+    float hash(vec2 p){ p=fract(p*vec2(123.34,456.21)); p+=dot(p,p+45.32); return fract(p.x*p.y); }
+    void main(){
+      float dv=texture2D(uVessel,vUv).r; float db=texture2D(uBG,vUv).r;
+      // taban gövde/mediasten zayıflatması (ışının geçtiği yumuşak doku) → alan orta-gri
+      float total=0.42 + db*2.6 + dv*3.6;
+      float I=exp(-total);                       // Beer-Lambert: yoğun damar koyu
+      float g=I;
+      // kuantum gren — kareye kilitli (floro'da daha belirgin)
+      float n=hash(vUv*vec2(1280.0,1280.0)+uFrame*7.123)-0.5;
+      g += n*uGrain*0.22*(0.5+g*0.7);
+      // kolimatör vinyeti
+      vec2 c=vUv-0.5; float r=length(c); float vig=smoothstep(0.74,0.46,r); g*=mix(0.12,1.0,vig);
+      g=clamp(g,0.0,1.0);
+      gl_FragColor=vec4(vec3(g),1.0);
+    }`
+});
+const fsQuad=new THREE.Mesh(new THREE.PlaneGeometry(2,2),compMat); fsScene.add(fsQuad);
+
+function acquireFrame(){
+  applyCarm();
+  // pass1: anatomi -> rtBG
+  renderer.setRenderTarget(rtBG); renderer.setClearColor(0x000000,1); renderer.clear();
+  bgMesh.visible=true; vesselMesh.visible=false; renderer.render(scene,camera);
+  // pass2: damar -> rtVessel (MAX)
+  renderer.setRenderTarget(rtVessel); renderer.clear();
+  bgMesh.visible=false; vesselMesh.visible=true; renderer.render(scene,camera);
+  bgMesh.visible=true;
+  // kompozit -> rtFrame (edinilen kare, LIH için saklanır)
+  compMat.uniforms.uFrame.value=frameId;
+  compMat.uniforms.uGrain.value=doseMode===1?0.35:1.0;
+  renderer.setRenderTarget(rtFrame); renderer.render(fsScene,fsCam);
+  renderer.setRenderTarget(null);
+  frameId++;
+}
+// ekrana her zaman rtFrame'i (son edinilen/dondurulan kare) bas
+const showMat=new THREE.MeshBasicMaterial({map:rtFrame.texture});
+const showQuad=new THREE.Mesh(new THREE.PlaneGeometry(2,2),showMat); const showScene=new THREE.Scene(); showScene.add(showQuad);
+function present(){ renderer.setRenderTarget(null); renderer.render(showScene,fsCam); }
+
+// =====================================================================
+//  EKG + AORTİK BASINÇ (2B kanallar)
+// =====================================================================
+const ecgC=document.getElementById('ecg'), aoC=document.getElementById('ao');
+let ecgX,aoX;
+function sizeTraces(){ [ecgC,aoC].forEach(c=>{ c.width=c.parentElement.clientWidth*Math.min(2,devicePixelRatio); c.height=86*Math.min(2,devicePixelRatio);}); ecgX=ecgC.getContext('2d'); aoX=aoC.getContext('2d'); }
+const ecgBuf=[], aoBuf=[]; const BUFN=260;
+let hemoPhase=0;
+function ecgSample(ph,lead){ // ph 0..1 kardiyak
+  const g=(c,w)=>Math.exp(-((ph-c)**2)/(2*w*w));
+  let v=0.08*g(0.12,0.018)-0.12*g(0.19,0.006)+1.0*g(0.21,0.009)-0.25*g(0.235,0.007)+0.3*g(0.42,0.05);
+  const st=(CASE.stLead&&CASE.stLead[lead])||0; v+=st*(g(0.30,0.12)); // ST elevasyonu
+  return v;
+}
+function aoSample(ph){ // aortik dalga, dikrotik çentik
+  const [sys,dia]=CASE.ao; const up=Math.exp(-((ph-0.16)**2)/(2*0.05**2)); const notch=-0.12*Math.exp(-((ph-0.42)**2)/(2*0.012**2)); const dic=0.18*Math.exp(-((ph-0.47)**2)/(2*0.03**2)); const decay=Math.exp(-ph*1.2);
+  const base=dia+(sys-dia)*(up*1.0+notch+dic)*1.0*(0.3+0.7*decay)+ (sys-dia)*up*0.0;
+  return clamp(base,dia-6,sys+4);
+}
+function drawTraces(){
+  if(!ecgX) sizeTraces();
+  const w=ecgC.width,h=ecgC.height;
+  ecgX.fillStyle='#05080e'; ecgX.fillRect(0,0,w,h); ecgX.strokeStyle='rgba(95,227,154,.9)'; ecgX.lineWidth=1.6; ecgX.beginPath();
+  for(let i=0;i<ecgBuf.length;i++){ const x=i/BUFN*w, y=h*0.62-ecgBuf[i]*h*0.4; i?ecgX.lineTo(x,y):ecgX.moveTo(x,y);} ecgX.stroke();
+  const w2=aoC.width,h2=aoC.height; aoX.fillStyle='#05080e'; aoX.fillRect(0,0,w2,h2); aoX.strokeStyle='rgba(224,85,106,.95)'; aoX.lineWidth=1.6; aoX.beginPath();
+  const [sys,dia]=CASE.ao; for(let i=0;i<aoBuf.length;i++){ const x=i/BUFN*w2, y=h2-((aoBuf[i]-(dia-10))/((sys+10)-(dia-10)))*h2*0.92-h2*0.04; i?aoX.lineTo(x,y):aoX.moveTo(x,y);} aoX.stroke();
+}
+
+// =====================================================================
+//  C-KOLU MİNİ İKON + KOLİMATÖR + OSD
+// =====================================================================
+const iconC=document.getElementById('carmIcon'); const iconX=iconC.getContext('2d');
+function drawCarmIcon(){
+  const w=iconC.width,h=iconC.height,cx=w/2,cy=h/2+6,R=52; iconX.clearRect(0,0,w,h);
+  iconX.save(); iconX.translate(cx,cy);
+  // hasta (elips, üstten)
+  iconX.strokeStyle='rgba(159,176,198,.5)'; iconX.lineWidth=2; iconX.beginPath(); iconX.ellipse(0,0,18,30,0,0,7); iconX.stroke();
+  // C-kolu yayı: alpha ekseni
+  const a=rad(CARM.alpha), b=rad(CARM.beta);
+  const n=detectorDir(CARM.alpha,CARM.beta); // detektör yönü (3B) -> 2B izdüşüm (x=sol sağa, z=yukarı)
+  const sx=n.x, sy=-n.z; // ekranda: +x sağ(sol anatomik), +z yukarı
+  iconX.strokeStyle='rgba(95,168,216,.95)'; iconX.lineWidth=3; iconX.beginPath();
+  iconX.arc(0,0,R,Math.atan2(sy,sx)-0.6,Math.atan2(sy,sx)+0.6); iconX.stroke();
+  // detektör (kare) ve kaynak (nokta)
+  iconX.fillStyle='#5fa8d8'; iconX.fillRect(sx*R-6,sy*R-6,12,12);
+  iconX.fillStyle='#e0a94a'; iconX.beginPath(); iconX.arc(-sx*(R-8),-sy*(R-8),4,0,7); iconX.fill();
+  iconX.restore();
+  iconX.fillStyle='rgba(159,176,198,.75)'; iconX.font='10px "JetBrains Mono"'; iconX.textAlign='center';
+  iconX.fillText('C-kolu', cx, 14);
+}
+function drawCollimator(){
+  const svg=document.getElementById('collim'); const vig=18;
+  svg.innerHTML=`<defs><radialGradient id="vg" cx="50%" cy="50%" r="62%"><stop offset="60%" stop-color="rgba(0,0,0,0)"/><stop offset="100%" stop-color="rgba(0,0,0,.85)"/></radialGradient></defs><rect x="0" y="0" width="100" height="100" fill="url(#vg)"/><rect x="${vig/4}" y="${vig/4}" width="${100-vig/2}" height="${100-vig/2}" fill="none" stroke="rgba(120,140,170,.18)" stroke-width="0.6"/>`;
+}
+function angleText(){ const a=CARM.alpha, b=CARM.beta; const pa=a>=0?`LAO ${a.toFixed(0)}°`:`RAO ${(-a).toFixed(0)}°`; const pb=b>=0?`CRA ${b.toFixed(0)}°`:(b<0?`CAU ${(-b).toFixed(0)}°`:'0°'); return `${pa} / ${pb}`; }
+
+// =====================================================================
+//  SAYAÇLAR + DURUM
+// =====================================================================
+const counters={ contrastMl:0, fluoroSec:0, cineFrames:0, dose:0 };
+let acqFps=15, pedal=false; // pedal: floro/cine edinim
+let acqMode=0; // 0 yok, 1 floro, 2 cine
+function setAcqFps(v){ acqFps=parseFloat(v); }
+window.setAcqFps=setAcqFps;
+function doseIndex(){ const steep=1/Math.max(0.35,Math.cos(rad(CARM.alpha))*Math.cos(rad(CARM.beta))); return steep*(doseMode===1?3.4:1.0); }
+function updateHUD(){
+  document.getElementById('cCon').textContent=counters.contrastMl.toFixed(0)+' mL';
+  document.getElementById('cCon').className='v'+(counters.contrastMl>CIN_LIMIT()?' alert':counters.contrastMl>CIN_LIMIT()*0.7?' warn':'');
+  document.getElementById('cFluoro').textContent=counters.fluoroSec.toFixed(1)+' s';
+  document.getElementById('cCine').textContent=counters.cineFrames;
+  document.getElementById('cDose').textContent=counters.dose.toFixed(1);
+  document.getElementById('osdTL').innerHTML=`${CASE.name.split('·')[0].trim()}<br>${CASE.side==='left'?'Sol koroner':'Sağ koroner'} · JL/JR kateter`;
+  document.getElementById('osdTR').innerHTML=`SID 100 cm · ${acqFps} fps<br>${doseMode===1?'CINE':'FLORO'} ${(pedal?'● ':'')}`;
+  document.getElementById('osdBL').innerHTML=`<b style="font-size:14px">${angleText()}</b>`;
+  document.getElementById('osdBR').innerHTML=`Frame ${frameId}`;
+  const pedEl=document.getElementById('osdPedal');
+  if(acqMode===2) pedEl.innerHTML='<span class="rec">● CINE KAYIT</span>';
+  else if(acqMode===1) pedEl.innerHTML='Floroskopi aktif';
+  else pedEl.innerHTML='<span class="lih">LIH — son kare donduruldu</span> · Floro <b>Boşluk/F</b> · Cine <b>C</b> · Kontrast <b>I</b>';
+  document.getElementById('vHr').textContent=Math.round(hr);
+  document.getElementById('ecgRd').textContent=Math.round(hr);
+  document.getElementById('ecgLbl').textContent=CASE.ecgLeads[0];
+  document.getElementById('aoRd').textContent=`${CASE.ao[0]}/${CASE.ao[1]}`;
+  document.getElementById('vSpo2').textContent=CASE.spo2;
+  document.getElementById('vEgfr').textContent=CASE.egfr;
+  document.getElementById('acqInfo').innerHTML=`Floro süresi: <b>${counters.fluoroSec.toFixed(1)} s</b><br>Cine kare: <b>${counters.cineFrames}</b> (${cineRuns.length} run)<br>Kontrast: <b>${counters.contrastMl.toFixed(0)} mL</b> / tahmini sınır ~${CIN_LIMIT()} mL<br>Bağıl doz indeksi: <b>${counters.dose.toFixed(1)}</b><br>Edinim: <b>${acqMode===2?'CINE':acqMode===1?'FLORO':'LIH (beklemede)'}</b>`;
+}
+function CIN_LIMIT(){ return Math.round(3.7*CASE.egfr/ (CASE.ao[1]>0?1:1) ); } // kaba Cigarroa benzeri (3.7*eGFR) ~ üst sınır işareti
+
+// =====================================================================
+//  CINE GALERİ
+// =====================================================================
+const cineRuns=[]; let procedureRevision=1;
+function captureCine(){
+  // rtFrame -> küçük thumbnail
+  const tw=112,th=112; const cv=document.createElement('canvas'); cv.width=tw; cv.height=th; const cx=cv.getContext('2d');
+  // rtFrame'i okuyup çiz: ekrana bas sonra ana canvas'tan al
+  present(); cx.drawImage(canvas,0,0,tw,th);
+  const run={id:cineRuns.length+1, rev:procedureRevision, angle:angleText(), img:cv.toDataURL('image/png'), frameAt:frameId};
+  cineRuns.push(run); renderCineList();
+}
+function renderCineList(){
+  const list=document.getElementById('cineList'); list.innerHTML='';
+  cineRuns.slice().reverse().forEach(r=>{ const d=document.createElement('div'); d.className='cineThumb'; d.innerHTML=`<img src="${r.img}"/><div class="cap">Run #${r.id} · <b>${r.angle}</b> · rev${r.rev}</div>`; d.onclick=()=>toast(`Cine Run #${r.id} — ${r.angle} (rev${r.rev}) · ${CASE.name.split('·')[0].trim()}`); list.appendChild(d); });
+}
+
+// =====================================================================
+//  window.CathMetrics — segment foreshortening% + overlap (gizli, 3. aşama jüri)
+// =====================================================================
+window.CathMetrics={};
+function computeMetrics(){
+  applyCarm(); const proj=p=>{ const v=p.clone().project(camera); return {x:v.x,y:v.y}; };
+  const segScreens={};
+  SEG_ORDER.forEach(nm=>{ const sm=segMeta[nm]; let plen=0,tlen=0; const pr=[]; for(let k=0;k<sm.pts.length;k++){ const s=proj(sm.pts[k]); pr.push(s); if(k){ plen+=Math.hypot(s.x-pr[k-1].x,s.y-pr[k-1].y); tlen+=sm.pts[k].distanceTo(sm.pts[k-1])/ (2*700*Math.tan(rad(FOV/2))) *2; } }
+    segScreens[nm]=pr; const fore=tlen>0?clamp(1-plen/tlen,0,1):0; window.CathMetrics[nm]={foreshorten:+(fore*100).toFixed(1), overlap:0}; });
+  // overlap: segment örnek noktalarının başka segmente yakınlığı (ekran uzayı)
+  SEG_ORDER.forEach(nm=>{ const pr=segScreens[nm]; let ov=0; for(const s of pr){ for(const nm2 of SEG_ORDER){ if(nm2===nm||SEG_PARENT[nm]===nm2||SEG_PARENT[nm2]===nm) continue; for(const s2 of segScreens[nm2]){ if(Math.hypot(s.x-s2.x,s.y-s2.y)<0.025){ ov++; break; } } } }
+    window.CathMetrics[nm].overlap=+(100*ov/pr.length).toFixed(1); });
+  window.CathMetrics._angle=angleText();
+}
+
+// =====================================================================
+//  VAKA YÜKLE
+// =====================================================================
+function loadCase(n){
+  CASE_N=n; CASE=CASES[n]; procedureRevision++;
+  document.getElementById('caseLbl').textContent='Vaka '+n;
+  document.getElementById('caseSel').value=String(n);
+  buildTreeData(); buildVesselMesh(); buildBG();
+  resetContrast(); counters.contrastMl=0; counters.fluoroSec=0; counters.cineFrames=0; counters.dose=0; frameId=0; cineRuns.length=0; renderCineList();
+  hr=CASE.hr;
+  document.getElementById('hcNm').textContent=CASE.name;
+  document.getElementById('hcMeta').textContent=CASE.meta;
+  document.getElementById('hcTgt').textContent='Hedef: '+CASE.target;
+  // başlangıç projeksiyonu
+  const start = CASE.side==='left'? {a:-30,b:-25} : {a:30,b:0};
+  CARM.alpha=start.a; CARM.beta=start.b; CARM.tAlpha=start.a; CARM.tBeta=start.b;
+  acquireFrame(); acquireFrame();
+  toast(CASE.name);
+}
+window.switchCase=v=>loadCase(parseInt(v,10));
+
+// =====================================================================
+//  GİRDİ
+// =====================================================================
+const keys={};
+window.addEventListener('keydown',e=>{ const k=e.key.toLowerCase();
+  if(e.code==='Space'||k==='f'){ e.preventDefault(); pedal=true; doseMode=0; }
+  else if(k==='c'){ pedal=true; doseMode=1; }
+  else if(k==='i'){ injecting=true; }
+  else if(k==='arrowleft'){ CARM.tAlpha=clamp(CARM.tAlpha-5,-60,60);} else if(k==='arrowright'){ CARM.tAlpha=clamp(CARM.tAlpha+5,-60,60);}
+  else if(k==='arrowup'){ CARM.tBeta=clamp(CARM.tBeta+5,-40,40);} else if(k==='arrowdown'){ CARM.tBeta=clamp(CARM.tBeta-5,-40,40);}
+  else if(k>='1'&&k<='4'){ loadCase(parseInt(k,10)); }
+});
+window.addEventListener('keyup',e=>{ const k=e.key.toLowerCase();
+  if(e.code==='Space'||k==='f'||k==='c'){ if(doseMode===1&&acqMode===2) captureCine(); pedal=false; }
+  else if(k==='i'){ injecting=false; }
+});
+// sağ-sürükleme ile C-kolu
+let dragging=false,lastX=0,lastY=0;
+fluoroEl.addEventListener('contextmenu',e=>e.preventDefault());
+fluoroEl.addEventListener('pointerdown',e=>{ if(e.button===2){ dragging=true; lastX=e.clientX; lastY=e.clientY; } });
+window.addEventListener('pointerup',()=>dragging=false);
+window.addEventListener('pointermove',e=>{ if(!dragging)return; CARM.tAlpha=clamp(CARM.tAlpha+(e.clientX-lastX)*0.3,-60,60); CARM.tBeta=clamp(CARM.tBeta-(e.clientY-lastY)*0.3,-40,40); lastX=e.clientX; lastY=e.clientY; });
+document.getElementById('projBtns').querySelectorAll('button').forEach(b=>b.onclick=()=>{ CARM.tAlpha=clamp(+b.dataset.a,-60,60); CARM.tBeta=clamp(+b.dataset.b,-40,40); toast('Projeksiyon: '+b.title); });
+
+// =====================================================================
+//  ANA DÖNGÜ — 3 saat (fizik 120Hz, UI 60fps, edinim 7.5/15fps)
+// =====================================================================
+let hr=72, physAcc=0, acqAcc=0, last=performance.now()/1000, respPh=0, cardPh=0;
+function physics(dt){
+  // C-kolu yumuşak lerp
+  CARM.alpha=lerp(CARM.alpha,CARM.tAlpha,Math.min(1,dt*8)); CARM.beta=lerp(CARM.beta,CARM.tBeta,Math.min(1,dt*8));
+  // kalp & solunum fazı
+  cardPh=(cardPh+dt*hr/60)%1; respPh=(respPh+dt*0.22)%1;
+  const systole=Math.max(0,Math.sin(cardPh*Math.PI*2-0.6)); uMotion.uCardiac.value=systole;
+  uMotion.uResp.value=Math.sin(respPh*Math.PI*2)*0.5+0.5;
+  bgMat.uniforms.uResp.value=uMotion.uResp.value;
+  // kontrast
+  stepContrast(dt);
+  // hemodinamik faz & tampon
+  hemoPhase=(hemoPhase+dt*hr/60)%1;
+  ecgBuf.push(ecgSample(hemoPhase,CASE.ecgLeads[0])); if(ecgBuf.length>BUFN) ecgBuf.shift();
+  aoBuf.push(aoSample(hemoPhase)); if(aoBuf.length>BUFN) aoBuf.shift();
+  // sayaçlar (pedal basılıyken)
+  if(pedal){ if(doseMode===0) counters.fluoroSec+=dt; counters.dose+=doseIndex()*dt; }
+}
+function frame(){
+  requestAnimationFrame(frame);
+  const now=performance.now()/1000; let dt=now-last; last=now; dt=Math.min(0.05,dt);
+  // fizik 120 Hz
+  physAcc+=dt; const h=1/120; let n=0; while(physAcc>=h&&n<12){ physics(h); physAcc-=h; n++; }
+  // edinim saati
+  acqMode = pedal ? (doseMode===1?2:1) : 0;
+  if(pedal){ acqAcc+=dt; const period=1/acqFps; while(acqAcc>=period){ acqAcc-=period; acquireFrame(); if(doseMode===1){ counters.cineFrames++; } } }
+  else { acqAcc=0; } // LIH: edinim yok, rtFrame dondurulur
+  // sunum (her UI karesinde son/dondurulmuş kare) + overlay
+  present();
+  drawTraces(); drawCarmIcon(); updateHUD();
+  computeMetrics();
+}
+
+// =====================================================================
+//  BAŞLAT
+// =====================================================================
+sizeMonitor(); drawCollimator(); sizeTraces();
+loadCase(1);
+frame();
+setTimeout(()=>document.getElementById('loading').classList.add('hidden'),300);
+window.CathLab={ scene,camera,renderer,CARM,CASES,get case(){return CASE;},CathMetrics:window.CathMetrics,ready:true };
+</script>
+</body>
+</html>
