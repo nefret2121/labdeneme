@@ -58,7 +58,7 @@
   .label3d { position: fixed; pointer-events: none; font-family: var(--mono); font-size: 10.5px; color: #e8f1ff; background: rgba(5,8,14,0.72); border: 1px solid rgba(160,176,196,0.3); padding: 2px 7px; border-radius: 6px; transform: translate(-50%, -140%); white-space: nowrap; z-index: 12; letter-spacing: 0.04em; }
   .label3d::after { content: ''; position: absolute; left: 50%; bottom: -9px; width: 1px; height: 9px; background: rgba(200,215,235,0.6); }
   .label3d.warn { color: #fecaca; border-color: rgba(244,63,94,0.55); }
-  #hint { position: fixed; left: 50%; bottom: 84px; transform: translateX(-50%); font-size: 11px; color: var(--ink-3); z-index: 14; text-align: center; pointer-events: none; }
+  #hint { position: fixed; left: 50%; bottom: 96px; transform: translateX(-50%); font-size: 11px; color: var(--ink-2); z-index: 18; text-align: center; pointer-events: none; background: rgba(5,8,14,0.7); border: 1px solid var(--line); padding: 5px 12px; border-radius: 20px; backdrop-filter: blur(6px); white-space: nowrap; max-width: calc(100vw - 20px); overflow: hidden; text-overflow: ellipsis; }
   #toast { position: fixed; left: 50%; top: 58px; transform: translateX(-50%) translateY(-8px); background: #0e1626; border: 1px solid var(--line-2); color: var(--ink); padding: 8px 14px; border-radius: 10px; font-size: 12px; opacity: 0; transition: all .22s; z-index: 30; pointer-events: none; }
   #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
   #loading { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: var(--bg); z-index: 40; font-family: var(--mono); font-size: 12px; color: var(--ink-2); letter-spacing: 0.08em; }
@@ -138,7 +138,7 @@
   <canvas id="ecgStrip" width="420" height="68"></canvas>
 </aside>
 
-<div id="hint">Sürükle: mikroskop açısı · Tekerlek: MAG x2.5–x8 · 1–6: alet · Sağ tık: aspiratörü sabitle</div>
+<div id="hint">Doku üstünde sol tık: bastır · Boşluk+sürükle: mikroskop · Shift+tekerlek: derinlik · Tekerlek: MAG · 1–6: alet · Sağ tık: aspiratörü sabitle · Q/E/R: klips çenesi</div>
 
 <nav id="tools" class="panel">
   <button data-tool="1" class="on"><span class="k">1</span>Aspiratör<small>Sabitle: Sağ Tık</small></button>
@@ -252,24 +252,30 @@ const MAT = {
   csf: new THREE.MeshPhysicalMaterial({ color: 0x2b1a1a, transparent: true, opacity: 0.35, roughness: 0.05, clearcoat: 1, clearcoatRoughness: 0.02, depthWrite: false })
 };
 // Damar materyali: ICG floresan dalgası için vertex özniteliği aArrival (s) ve uniform'lar
-const icgU = { uIcg: { value: -10 }, uIcgMode: { value: 0 } };
+const icgU = { uIcg: { value: -10 }, uIcgMode: { value: 0 }, uDomeFill: { value: 1 }, uPComFill: { value: 1 } };
 function vesselMaterial(baseColor, opts) {
   const m = new THREE.MeshPhysicalMaterial(Object.assign({ color: baseColor, roughness: 0.22, clearcoat: 0.95, clearcoatRoughness: 0.08, vertexColors: true, envMapIntensity: 0.45, sheen: 0.25, sheenColor: new THREE.Color(0xff8a8a) }, opts || {}));
   m.onBeforeCompile = sh => {
-    sh.uniforms.uIcg = icgU.uIcg; sh.uniforms.uIcgMode = icgU.uIcgMode;
-    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aArrival; attribute float aFrag; varying float vArr; varying float vFrag;')
-      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvArr = aArrival; vFrag = aFrag;');
-    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform float uIcg; uniform float uIcgMode; varying float vArr; varying float vFrag;')
+    sh.uniforms.uIcg = icgU.uIcg; sh.uniforms.uIcgMode = icgU.uIcgMode; sh.uniforms.uDomeFill = icgU.uDomeFill; sh.uniforms.uPComFill = icgU.uPComFill;
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aArrival; attribute float aFrag; attribute float aBranch; varying float vArr; varying float vFrag; varying float vBranch; varying vec3 vWN; varying vec3 vWP;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvArr = aArrival; vFrag = aFrag; vBranch = aBranch;')
+      .replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\nvWN = normalize(mat3(modelMatrix) * objectNormal);\nvWP = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform float uIcg; uniform float uIcgMode; uniform float uDomeFill; uniform float uPComFill; varying float vArr; varying float vFrag; varying float vBranch; varying vec3 vWN; varying vec3 vWP;')
       .replace('#include <color_fragment>', `#include <color_fragment>
-        // bleb/ince duvar: daha koyu, morumsu, yarı saydam izlenim
         diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * vec3(0.55, 0.35, 0.5), vFrag * 0.85);
-        // ICG: parankim karartılır, damar içi boya dalgası zamana yayılı floresan
-        float wave = smoothstep(vArr, vArr + 0.45, uIcg) * (1.0 - 0.45 * smoothstep(vArr + 4.0, vArr + 8.0, uIcg));
-        vec3 icgCol = vec3(0.35, 1.0, 0.55) * wave;
-        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.01, 0.012, 0.011) + icgCol * 0.25, uIcgMode);`)
+        // klips sonrası akım ağı: kese (dome) ve PCom dallarının dolumu patansa göre
+        float fill = 1.0; if (vBranch > 1.5) fill = uDomeFill; else if (vBranch > 0.5) fill = uPComFill;
+        float wave = smoothstep(vArr, vArr + 0.45, uIcg) * (1.0 - 0.4 * smoothstep(vArr + 4.5, vArr + 9.0, uIcg)) * fill;
+        float fres = pow(1.0 - abs(dot(normalize(vWN), normalize(cameraPosition - vWP))), 2.2);
+        float lumen = mix(1.0, 0.45, vFrag);
+        vec3 icgCol = mix(vec3(0.10, 0.85, 0.42) * lumen, vec3(0.55, 1.0, 0.70), fres * 0.8) * wave;
+        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.008, 0.012, 0.010) + icgCol * 0.22, uIcgMode);`)
       .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
-        float wave2 = smoothstep(vArr, vArr + 0.45, uIcg) * (1.0 - 0.45 * smoothstep(vArr + 4.0, vArr + 8.0, uIcg));
-        totalEmissiveRadiance += vec3(0.2, 1.0, 0.4) * wave2 * 2.6 * uIcgMode;`);
+        float fillE = 1.0; if (vBranch > 1.5) fillE = uDomeFill; else if (vBranch > 0.5) fillE = uPComFill;
+        float wave2 = smoothstep(vArr, vArr + 0.45, uIcg) * (1.0 - 0.4 * smoothstep(vArr + 4.5, vArr + 9.0, uIcg)) * fillE;
+        float fres2 = pow(1.0 - abs(dot(normalize(vWN), normalize(cameraPosition - vWP))), 2.2);
+        float lum2 = mix(1.0, 0.5, vFrag);
+        totalEmissiveRadiance += (vec3(0.16, 0.95, 0.4) * lum2 + vec3(0.4, 0.5, 0.45) * fres2) * wave2 * 2.3 * uIcgMode;`);
   };
   return m;
 }
@@ -283,9 +289,9 @@ function cortexTexture(seed) {
   const S = 1024; const c = document.createElement('canvas'); c.width = c.height = S; const x = c.getContext('2d');
   const b = document.createElement('canvas'); b.width = b.height = S; const bx = b.getContext('2d');
   // taban: pembe-gri korteks, ince benekli
-  x.fillStyle = '#c99a94'; x.fillRect(0, 0, S, S);
+  x.fillStyle = '#d99a92'; x.fillRect(0, 0, S, S);
   const img = x.getImageData(0, 0, S, S); const d = img.data; const rnd = mulberry(seed);
-  for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) { const k = (j * S + i) * 4; const n = Noise.fbm(i / 90, j / 90, seed * 0.1, 3, 2.1, 0.5); const m = 0.86 + 0.14 * n + (rnd() - 0.5) * 0.06; d[k] = 205 * m; d[k + 1] = 150 * m * (0.95 + 0.1 * n); d[k + 2] = 146 * m; }
+  for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) { const k = (j * S + i) * 4; const n = Noise.fbm(i / 90, j / 90, seed * 0.1, 3, 2.1, 0.5); const m = 0.88 + 0.14 * n + (rnd() - 0.5) * 0.055; d[k] = 222 * m; d[k + 1] = 150 * m * (0.95 + 0.1 * n); d[k + 2] = 142 * m; }
   x.putImageData(img, 0, 0);
   bx.fillStyle = '#808080'; bx.fillRect(0, 0, S, S);
   // dallanan pial arteriyoller (kırmızı) ve venüller (mor-mavi): özyinelemeli ağaç
@@ -319,7 +325,7 @@ function lobe(opts) {
     const nx = nrm.getX(i), ny = nrm.getY(i), nz = nrm.getZ(i);
     pos.setXYZ(i, tmp.x + nx * h, tmp.y + ny * h, tmp.z + nz * h);
     // vertex AO: sulkus dibi koyu bordo, girus tepesi açık
-    const ao = smooth(-1.6, 0.9, h); const base = new THREE.Color(0xd3a39c).lerp(new THREE.Color(0x4a1416), 1 - ao);
+    const ao = smooth(-1.6, 0.9, h); const base = new THREE.Color(0xe0a59a).lerp(new THREE.Color(0x7a2a24), 1 - ao);
     col[i * 3] = base.r; col[i * 3 + 1] = base.g; col[i * 3 + 2] = base.b;
   }
   g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.computeVertexNormals();
@@ -336,6 +342,7 @@ const UPP = V(0, 1, 0).sub(VIEW_DIR.clone().multiplyScalar(VIEW_DIR.y)).normaliz
 const frontal = lobe({ scale: V(36, 24, 30), pos: TARGET.clone().add(UPP.clone().multiplyScalar(33)).add(V(-4, 0, 0)), rot: V(0.2, 0.1, -0.1), seed: 3.1, sulcus: 2.2 });
 const temporal = lobe({ scale: V(38, 22, 32), pos: TARGET.clone().sub(UPP.clone().multiplyScalar(31)).add(V(6, 0, 0)), rot: V(-0.25, -0.15, 0.1), seed: 8.7, sulcus: 2.0 });
 scene.add(frontal, temporal);
+let arachGroup; // araknoid lif ağı (diseksiyonla açılır)
 
 // ============================================================================
 //  5) Kafa tabanı: sfenoid kanat / dura, tentoryum serbest kenarı, araknoid trabeküller
@@ -355,19 +362,26 @@ scene.add(frontal, temporal);
   // BOS birikintileri (ıslak derinlik)
   // araknoid trabeküller: loblar ve damarlar arasında gerili yarı saydam lifli bantlar
   const rnd = mulberry(5);
-  const arachGroup = new THREE.Group(); scene.add(arachGroup);
-  for (let k = 0; k < 11; k++) {
-    const a = V(-14 + rnd() * 30, 2 + rnd() * 4, -16 + rnd() * 18), b = V(-10 + rnd() * 32, -6 - rnd() * 5, -18 + rnd() * 18);
-    const mid = a.clone().lerp(b, 0.5).add(V((rnd() - 0.5) * 4, (rnd() - 0.5) * 2, (rnd() - 0.5) * 4));
+  arachGroup = new THREE.Group(); scene.add(arachGroup);
+  const fiberMat = new THREE.MeshPhysicalMaterial({ color: 0xeef4fb, transparent: true, opacity: 0.30, roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.08, envMapIntensity: 0.4, side: THREE.DoubleSide, depthWrite: false });
+  // kavisli ince araknoid lif ağı: loblar ile damarlar/kese arasında gerili yarı-şeffaf iplikler
+  const anchorsTop = [V(-11, 3, -11), V(-4, 3.5, -14), V(3, 3.6, -16), V(9, 3.2, -12)];
+  const anchorsBot = [V(-8, -6, -13), V(0, -7, -16), V(6, -8, -19), V(10, -6.5, -14), V(3, -7.2, -12.5), V(5.2, -8.4, -15)];
+  for (let k = 0; k < 18; k++) {
+    const a = anchorsTop[(Math.random() * anchorsTop.length) | 0].clone().add(V((rnd() - 0.5) * 4, (rnd() - 0.5) * 2, (rnd() - 0.5) * 4));
+    const b = anchorsBot[(Math.random() * anchorsBot.length) | 0].clone().add(V((rnd() - 0.5) * 3, (rnd() - 0.5) * 2, (rnd() - 0.5) * 3));
+    const mid = a.clone().lerp(b, 0.5).add(V((rnd() - 0.5) * 3, (rnd() - 0.5) * 3, (rnd() - 0.5) * 3));
     const curve = new THREE.CatmullRomCurve3([a, mid, b]);
-    const w = 0.25 + rnd() * 0.9; // bant genişliği
-    const seg = 14; const pts = []; const idx = [];
-    for (let i = 0; i <= seg; i++) { const t = i / seg; const p = curve.getPoint(t); const tan = curve.getTangent(t); const side = V(-tan.z, 0, tan.x).normalize().multiplyScalar(w * (0.6 + 0.4 * Math.sin(Math.PI * t))); pts.push(p.clone().add(side), p.clone().sub(side)); }
-    for (let i = 0; i < seg; i++) { const o = i * 2; idx.push(o, o + 1, o + 2, o + 1, o + 3, o + 2); }
-    const g2 = new THREE.BufferGeometry().setFromPoints(pts); g2.setIndex(idx); g2.computeVertexNormals();
-    arachGroup.add(new THREE.Mesh(g2, MAT.arachnoid));
-    // ince lif
-    if (rnd() < 0.6) arachGroup.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 10, 0.08 + rnd() * 0.08, 5, false), new THREE.MeshPhysicalMaterial({ color: 0xf2f6fb, transparent: true, opacity: 0.35, roughness: 0.3, clearcoat: 1, envMapIntensity: 0.3 })));
+    const r = 0.05 + rnd() * 0.09;
+    const fib = new THREE.Mesh(new THREE.TubeGeometry(curve, 16, r, 5, false), fiberMat);
+    fib.userData.arach = true; fib.userData.cut = false; arachGroup.add(fib);
+    // yer yer ince zar yaprakçığı (çift lif arası)
+    if (rnd() < 0.35) { const seg = 12, pts = [], idx = []; const w = 0.3 + rnd() * 0.5;
+      for (let i = 0; i <= seg; i++) { const t = i / seg; const p = curve.getPoint(t); const tan = curve.getTangent(t); const side = V(-tan.z, 0, tan.x).normalize().multiplyScalar(w * Math.sin(Math.PI * t)); pts.push(p.clone().add(side), p.clone().sub(side)); }
+      for (let i = 0; i < seg; i++) { const o = i * 2; idx.push(o, o + 1, o + 2, o + 1, o + 3, o + 2); }
+      const g2 = new THREE.BufferGeometry().setFromPoints(pts); g2.setIndex(idx); g2.computeVertexNormals();
+      const web = new THREE.Mesh(g2, MAT.arachnoid); web.userData.arach = true; web.userData.cut = false; arachGroup.add(web);
+    }
   }
 }
 
@@ -423,33 +437,32 @@ const vesselMesh = (() => {
   const nv = pos.length / 3;
   // örnek noktalar: (konum, varış zamanı, nabız ağırlığı, kırılganlık)
   const samples = [];
-  const addS = (curve, nS, arr, w) => { for (let i = 0; i <= nS; i++) { const t = i / nS; const p = curve.getPoint(t); samples.push([p.x, p.y, p.z, arr[0] + (arr[1] - arr[0]) * t, w, 0]); } };
-  addS(CL.ICA, 60, ARR.ICA, 0.035); addS(CL.M1, 50, ARR.M1, 0.035); addS(CL.A1, 40, ARR.A1, 0.032); addS(CL.PCom, 60, ARR.PCom, 0.03);
-  for (let i = 0; i <= 10; i++) { const p = AN.neckBase.clone().lerp(AN.neckC, i / 10); samples.push([p.x, p.y, p.z, 1.1 + 0.3 * i / 10, 0.06, 0.1]); }
+  const addS = (curve, nS, arr, w, br) => { for (let i = 0; i <= nS; i++) { const t = i / nS; const p = curve.getPoint(t); samples.push([p.x, p.y, p.z, arr[0] + (arr[1] - arr[0]) * t, w, 0, br]); } };
+  addS(CL.ICA, 60, ARR.ICA, 0.035, 0); addS(CL.M1, 50, ARR.M1, 0.035, 0); addS(CL.A1, 40, ARR.A1, 0.032, 0); addS(CL.PCom, 60, ARR.PCom, 0.03, 1);
+  for (let i = 0; i <= 10; i++) { const p = AN.neckBase.clone().lerp(AN.neckC, i / 10); samples.push([p.x, p.y, p.z, 1.1 + 0.3 * i / 10, 0.06, 0.1, 2]); }
   // kubbe: küre yüzeyi örnekleri; varış 1.6→2.4 s (yavaş dolum, kubbe uzağı geç), bleb 2.6 s
-  for (let i = 0; i < 160; i++) { const u = Math.random() * 2 - 1, ph = Math.random() * Math.PI * 2; const r = Math.sqrt(1 - u * u); const d = V(r * Math.cos(ph), r * Math.sin(ph), u); const p = AN.domeC.clone().add(d.clone().multiplyScalar(AN.domeR)); const far = 0.5 + 0.5 * d.dot(AN.dir); samples.push([p.x, p.y, p.z, 1.6 + 0.8 * far, 0.085 + 0.015 * far, 0.35 + 0.35 * far]); }
-  for (let i = 0; i < 40; i++) { const u = Math.random() * 2 - 1, ph = Math.random() * Math.PI * 2; const r = Math.sqrt(1 - u * u); const p = AN.blebC.clone().add(V(r * Math.cos(ph), r * Math.sin(ph), u).multiplyScalar(AN.blebR)); samples.push([p.x, p.y, p.z, 2.6, 0.11, 1.0]); }
-  const arrival = new Float32Array(nv), pw = new Float32Array(nv), frag = new Float32Array(nv), col = new Float32Array(nv * 3);
+  for (let i = 0; i < 160; i++) { const u = Math.random() * 2 - 1, ph = Math.random() * Math.PI * 2; const r = Math.sqrt(1 - u * u); const d = V(r * Math.cos(ph), r * Math.sin(ph), u); const p = AN.domeC.clone().add(d.clone().multiplyScalar(AN.domeR)); const far = 0.5 + 0.5 * d.dot(AN.dir); samples.push([p.x, p.y, p.z, 1.6 + 0.8 * far, 0.085 + 0.015 * far, 0.35 + 0.35 * far, 2]); }
+  for (let i = 0; i < 40; i++) { const u = Math.random() * 2 - 1, ph = Math.random() * Math.PI * 2; const r = Math.sqrt(1 - u * u); const p = AN.blebC.clone().add(V(r * Math.cos(ph), r * Math.sin(ph), u).multiplyScalar(AN.blebR)); samples.push([p.x, p.y, p.z, 2.6, 0.11, 1.0, 2]); }
+  const arrival = new Float32Array(nv), pw = new Float32Array(nv), frag = new Float32Array(nv), branch = new Float32Array(nv), col = new Float32Array(nv * 3);
   const base = new THREE.Color(0xb3252b), dark = new THREE.Color(0x6e1b2a);
   for (let i = 0; i < nv; i++) {
     const x = pos[i * 3], y = pos[i * 3 + 1], z = pos[i * 3 + 2]; let bd = 1e9, bs = null;
     for (let s = 0; s < samples.length; s++) { const q = samples[s]; const d = (q[0] - x) ** 2 + (q[1] - y) ** 2 + (q[2] - z) ** 2; if (d < bd) { bd = d; bs = q; } }
-    arrival[i] = bs[3]; pw[i] = bs[4]; frag[i] = bs[5];
-    // ince kubbe duvarı: koyu kırmızı-mor; damar gövdesi parlak kırmızı; hafif yüzey benek
+    arrival[i] = bs[3]; pw[i] = bs[4]; frag[i] = bs[5]; branch[i] = bs[6];
     const c = base.clone().lerp(dark, frag[i] * 0.6); const mod = 0.92 + 0.08 * Noise.fbm(x * 0.8, y * 0.8, z * 0.8, 2, 2, 0.5);
     col[i * 3] = c.r * mod; col[i * 3 + 1] = c.g * mod; col[i * 3 + 2] = c.b * mod;
   }
-  g.setAttribute('aArrival', new THREE.BufferAttribute(arrival, 1)); g.setAttribute('aFrag', new THREE.BufferAttribute(frag, 1)); g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  g.setAttribute('aArrival', new THREE.BufferAttribute(arrival, 1)); g.setAttribute('aFrag', new THREE.BufferAttribute(frag, 1)); g.setAttribute('aBranch', new THREE.BufferAttribute(branch, 1)); g.setAttribute('color', new THREE.BufferAttribute(col, 3));
   const mesh = new THREE.Mesh(g, MAT.vessel); mesh.userData.basePos = new Float32Array(pos); mesh.userData.pw = pw; mesh.userData.baseNrm = new Float32Array(g.attributes.normal.array);
   scene.add(mesh); return mesh;
 })();
 // ince damarlar: AChA, PCom talamoperforanları (tüp); ICG varış özniteliğiyle
 function thinVessel(curve, r, arr, segs, radial) {
-  const g = new THREE.TubeGeometry(curve, segs || 40, r, radial || 10, false); const nv = g.attributes.position.count; const a = new Float32Array(nv), f = new Float32Array(nv), c = new Float32Array(nv * 3);
+  const g = new THREE.TubeGeometry(curve, segs || 40, r, radial || 10, false); const nv = g.attributes.position.count; const a = new Float32Array(nv), f = new Float32Array(nv), br = new Float32Array(nv), c = new Float32Array(nv * 3);
   const col = new THREE.Color(0xa8282e);
-  for (let i = 0; i < nv; i++) { const t = i / nv; a[i] = arr[0] + (arr[1] - arr[0]) * t; f[i] = 0; c[i * 3] = col.r; c[i * 3 + 1] = col.g; c[i * 3 + 2] = col.b; }
-  g.setAttribute('aArrival', new THREE.BufferAttribute(a, 1)); g.setAttribute('aFrag', new THREE.BufferAttribute(f, 1)); g.setAttribute('color', new THREE.BufferAttribute(c, 3));
-  const m = new THREE.Mesh(g, MAT.vesselSmall); m.userData.r = r; scene.add(m); return m;
+  for (let i = 0; i < nv; i++) { const t = i / nv; a[i] = arr[0] + (arr[1] - arr[0]) * t; f[i] = 0; br[i] = 0; c[i * 3] = col.r; c[i * 3 + 1] = col.g; c[i * 3 + 2] = col.b; }
+  g.setAttribute('aArrival', new THREE.BufferAttribute(a, 1)); g.setAttribute('aFrag', new THREE.BufferAttribute(f, 1)); g.setAttribute('aBranch', new THREE.BufferAttribute(br, 1)); g.setAttribute('color', new THREE.BufferAttribute(c, 3));
+  const m = new THREE.Mesh(g, MAT.vesselSmall); m.userData.r = r; m.userData.baseArrival = a.slice(); scene.add(m); return m;
 }
 const achaMesh = thinVessel(CL.AChA, RAD.AChA, ARR.AChA, 48, 10);
 const perfs = [];
@@ -458,13 +471,15 @@ const perfs = [];
   for (let k = 0; k < 4; k++) { const t = 0.22 + k * 0.18; const p = CL.PCom.getPoint(t); const tip = p.clone().add(V(-2.5 - rnd() * 2, 5 + rnd() * 3, -1 + rnd() * 2)); const mid = p.clone().lerp(tip, 0.5).add(V(rnd() - 0.5, 0.5, rnd() - 0.5)); perfs.push(thinVessel(new THREE.CatmullRomCurve3([p, mid, tip]), 0.16, [1.0 + t, 1.5 + t], 16, 6)); }
 }
 // kraniyal sinirler: lifli sedefli doku (bump), CN III kubbeye temas eder
+let cn3Mesh;
 {
   const fiber = (() => { const S = 256; const c = document.createElement('canvas'); c.width = c.height = S; const x = c.getContext('2d'); x.fillStyle = '#888'; x.fillRect(0, 0, S, S); const rnd = mulberry(9); for (let k = 0; k < 90; k++) { x.strokeStyle = `rgba(${rnd() < 0.5 ? 255 : 40},${rnd() < 0.5 ? 255 : 40},${rnd() < 0.5 ? 255 : 40},0.35)`; x.lineWidth = 1 + rnd() * 2; x.beginPath(); const y = rnd() * S; x.moveTo(0, y); x.lineTo(S, y + (rnd() - 0.5) * 20); x.stroke(); } const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(1, 6); return t; })();
   MAT.nerve.bumpMap = fiber; MAT.nerve.bumpScale = 0.35;
   const cn2 = new THREE.Mesh(new THREE.TubeGeometry(CL.CN2, 40, RAD.CN2, 14, false), MAT.nerve); scene.add(cn2);
   const chiasm = new THREE.Mesh(new THREE.SphereGeometry(2.3, 24, 16), MAT.nerve); chiasm.position.copy(CL.CN2.getPoint(1)); chiasm.scale.set(1.6, 0.8, 1.1); scene.add(chiasm);
   const cn2c = new THREE.Mesh(new THREE.TubeGeometry(CL.CN2c, 24, RAD.CN2c, 12, false), MAT.nerve); scene.add(cn2c);
-  const cn3 = new THREE.Mesh(new THREE.TubeGeometry(CL.CN3, 70, RAD.CN3, 14, false), MAT.nerve); scene.add(cn3);
+  const cn3 = new THREE.Mesh(new THREE.TubeGeometry(CL.CN3, 70, RAD.CN3, 14, false), MAT.nerve); scene.add(cn3); cn3Mesh = cn3;
+  cn2.userData.struct = 'CN2'; cn3.userData.struct = 'CN3'; cn2c.userData.struct = 'CN2';
 }
 
 // ============================================================================
@@ -508,10 +523,11 @@ const NON_VESSEL_MATS = [MAT.dura, MAT.bone, MAT.nerve, MAT.arachnoid, MAT.csf];
 let cortexBaseColor = null;
 window.runICG = () => {
   if (S.icgStart >= 0) { endICG(); return; }
-  S.icgStart = clock.getElapsedTime(); icgU.uIcgMode.value = 1; document.getElementById('btnIcg').classList.add('on');
+  S.icgStart = simTime; icgU.uIcgMode.value = 1; document.getElementById('btnIcg').classList.add('on');
   // parankim ve sinirler kararır (yakın-kızılötesi modu), damarlar boya dalgasıyla parlar
   NON_VESSEL_MATS.forEach(m => { m.userData.col = m.color.clone(); m.color.setRGB(0.05, 0.06, 0.06); });
   cortexBaseColor = MAT.cortex.color.clone(); MAT.cortex.color.setRGB(0.07, 0.07, 0.08); MAT.cortex.clearcoat = 0.1;
+  if (window.SURG) window.SURG.applyIcgPatency();
   setTool(6); toast('ICG: ICA → PCom / AChA / M1 → kese dolumu izleniyor (yaklaşık 10 s)');
   setTimeout(() => { if (S.icgStart >= 0) endICG(); }, 11000);
 };
@@ -519,32 +535,319 @@ function endICG() { S.icgStart = -1; icgU.uIcgMode.value = 0; icgU.uIcg.value = 
 function setTool(k) { tool = k; document.querySelectorAll('#tools button').forEach(b => b.classList.toggle('on', +b.dataset.tool === k)); if (k === 6 && S.icgStart < 0) runICG(); }
 document.querySelectorAll('#tools button').forEach(b => b.onclick = () => setTool(+b.dataset.tool));
 window.addEventListener('keydown', e => { if (e.key >= '1' && e.key <= '6') setTool(+e.key); else if (e.key === 'l' || e.key === 'L') toggleLabels(); else if (e.key === 'p' || e.key === 'P') togglePreop(); });
-renderer.domElement.addEventListener('contextmenu', e => { e.preventDefault(); if (tool === 1) { aspPinned = !aspPinned; toast(aspPinned ? 'Aspiratör sabitlendi (sağ el serbest)' : 'Aspiratör serbest'); document.querySelector('[data-tool="1"] small').textContent = aspPinned ? 'SABİT · Sağ Tık: bırak' : 'Sabitle: Sağ Tık'; } });
 // EKG şeridi
 const ecgC = document.getElementById('ecgStrip'), ecgX = ecgC.getContext('2d'); let ecgPos = 0; const ecgBuf = new Float32Array(420).fill(0.5);
 function ecgVal(t) { const T = 60 / HR; const ph = ((t % T) + T) % T / T; const g = (c, w) => Math.exp(-((ph - c) ** 2) / (2 * w * w)); return 0.12 * g(0.08, 0.02) - 0.1 * g(0.17, 0.006) + 1.0 * g(0.19, 0.008) - 0.22 * g(0.21, 0.006) + 0.3 * g(0.45, 0.04); }
 function drawEcg(t) { ecgBuf[ecgPos] = ecgVal(t); ecgPos = (ecgPos + 1) % 420; ecgX.fillStyle = 'rgba(0,0,0,0.9)'; ecgX.fillRect(0, 0, 420, 68); ecgX.strokeStyle = '#5a9f7f'; ecgX.lineWidth = 1.5; ecgX.beginPath(); for (let i = 0; i < 420; i++) { const v = ecgBuf[(ecgPos + i) % 420]; const y = 52 - v * 40; if (i === 0) ecgX.moveTo(i, y); else ecgX.lineTo(i, y); } ecgX.stroke(); }
 
 // ============================================================================
-//  9) Döngü: nabız deformasyonu (MC mesh + ince tüpler), ICG zamanı, etiket projeksiyonu, MAG
+//  8.5) CERRAHİ ETKİLEŞİM MOTORU (2. aşama): 3B aletler, 120 Hz fizik, diseksiyon,
+//        D(t) rüptür hasarı, hacim korunumlu kanama, kalıcı klips çene denetimi
 // ============================================================================
 const clock = new THREE.Clock(); let lastEcg = 0; const tmpV = V(0, 0, 0);
+
+const SURG = (() => {
+  const POOL_C = V(3.5, -10.5, -14);          // sahanın bağımlı (en alçak) noktası — kan burada göllenir
+  const sim = {
+    tool: 1, pressing: false, press: 0, maxPress: 2.4, dragRotate: false,
+    tip: V(3, -7, -12), tipN: V(0, 0, 1), prevTip: V(3, -7, -12), tipVel: 0,
+    over: { name: null, d: 1e9, frag: 0 }, contactTime: 0,
+    damage: {}, ruptures: [], MAP: 88, HR: 72, totalLossMl: 0, fieldMl: 0, clarity: 1,
+    tempClip: null, tempClipT: 0, permClip: null, parked: null, jawRoll: 0,
+    ident: { AChA: false, PCom: false, CN3: false }, hover: {}, arachOpen: 0, neckDiss: 0,
+    steps: [false, false, false, false, false, false], outcome: {}
+  };
+  window.NeuroSimState = sim; window.NeuroEventLog = [];
+  const logE = (type, d) => window.NeuroEventLog.push(Object.assign({ t: +(performance.now() / 1000).toFixed(2), type }, d || {}));
+
+  // ---- ray hedefleri (anatomik yüzeyler; aletler/parçacıklar hariç) ----
+  vesselMesh.userData.struct = 'vessel'; frontal.userData.struct = 'cortex'; temporal.userData.struct = 'cortex';
+  achaMesh.userData.struct = 'AChA'; perfs.forEach(p => p.userData.struct = 'perf'); if (cn3Mesh) cn3Mesh.userData.struct = 'CN3';
+  const targets = []; scene.traverse(o => { if (o.isMesh) targets.push(o); });
+
+  // ---- örneklenmiş eğriler (klips/çarpışma denetimi) ----
+  const sample = (c, n) => { const a = []; for (let i = 0; i <= n; i++) a.push(c.getPoint(i / n)); return a; };
+  const PTS = { ICA: sample(CL.ICA, 40), PCom: sample(CL.PCom, 36), AChA: sample(CL.AChA, 30), CN3: sample(CL.CN3, 40), M1: sample(CL.M1, 30) };
+  const perfPts = perfs.map(m => { const p = m.geometry.parameters.path; return sample(p, 12); });
+  function segDistPoly(a, b, pts) { let m = 1e9; for (let i = 0; i < pts.length - 1; i++) m = Math.min(m, segSeg(a, b, pts[i], pts[i + 1])); return m; }
+  function ptPoly(p, pts) { let m = 1e9; for (let i = 0; i < pts.length - 1; i++) m = Math.min(m, segPt(pts[i], pts[i + 1], p)); return m; }
+  function segPt(a, b, p) { const ab = b.clone().sub(a); const t = clamp(p.clone().sub(a).dot(ab) / (ab.lengthSq() || 1e-9), 0, 1); return p.distanceTo(a.clone().addScaledVector(ab, t)); }
+  function segSeg(p1, q1, p2, q2) { // en kısa iki-doğru-parçası mesafesi
+    const d1 = q1.clone().sub(p1), d2 = q2.clone().sub(p2), r = p1.clone().sub(p2);
+    const a = d1.dot(d1), e = d2.dot(d2), f = d2.dot(r); let s, t;
+    const c = d1.dot(r); const b = d1.dot(d2); const den = a * e - b * b;
+    s = den > 1e-9 ? clamp((b * f - c * e) / den, 0, 1) : 0;
+    t = (b * s + f) / (e || 1e-9); if (t < 0) { t = 0; s = clamp(-c / (a || 1e-9), 0, 1); } else if (t > 1) { t = 1; s = clamp((b - c) / (a || 1e-9), 0, 1); }
+    return p1.clone().addScaledVector(d1, s).distanceTo(p2.clone().addScaledVector(d2, t));
+  }
+
+  // ---- metalik alet materyalleri + 3B uç modelleri ----
+  const steel = new THREE.MeshStandardMaterial({ color: 0xc2cad6, metalness: 0.92, roughness: 0.26, envMapIntensity: 0.6 });
+  const steelD = new THREE.MeshStandardMaterial({ color: 0x8b95a3, metalness: 0.88, roughness: 0.4, envMapIntensity: 0.5 });
+  const gold = new THREE.MeshStandardMaterial({ color: 0xd8b24a, metalness: 0.9, roughness: 0.28, envMapIntensity: 0.6 });
+  const titan = new THREE.MeshStandardMaterial({ color: 0x8fa6bd, metalness: 0.85, roughness: 0.32, envMapIntensity: 0.6 });
+  const cyl = (rt, rb, h, m, seg) => new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, seg || 16), m);
+  function buildTool(id) {
+    const g = new THREE.Group(); g.userData.noray = true;
+    if (id === 1) { const sh = cyl(0.34, 0.42, 11, steel); sh.position.y = 5.5; g.add(sh); const tip = cyl(0.3, 0.34, 1.2, steelD); tip.position.y = 0.2; g.add(tip); const hole = cyl(0.19, 0.19, 0.5, new THREE.MeshBasicMaterial({ color: 0x120608 })); hole.position.y = -0.2; g.add(hole); }
+    else if (id === 2) { const sh = cyl(0.14, 0.2, 11, steel); sh.position.y = 5.6; g.add(sh); const nub = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 12), steelD); g.add(nub); const b = cyl(0.1, 0.14, 1.4, steelD); b.position.set(0.1, 0.7, 0); b.rotation.z = -0.25; g.add(b); }
+    else if (id === 3) { const sh = cyl(0.26, 0.32, 10.6, steel); sh.position.y = 5.8; g.add(sh); for (const s of [-1, 1]) { const pr = cyl(0.09, 0.12, 2.4, steelD); pr.position.set(s * 0.28, 1.0, 0); pr.rotation.z = s * 0.14; g.add(pr); } }
+    else if (id === 4) { const sh = cyl(0.3, 0.36, 10.5, gold); sh.position.y = 5.6; g.add(sh); const head = cyl(0.26, 0.26, 0.8, gold); head.position.y = 0.6; g.add(head); for (const s of [-1, 1]) { const jaw = new THREE.Mesh(new THREE.BoxGeometry(0.22, 1.9, 0.5), gold); jaw.position.set(s * 0.45, -0.2, 0); jaw.rotation.z = s * 0.1; g.add(jaw); } }
+    else if (id === 5) { const sh = cyl(0.3, 0.36, 10.5, titan); sh.position.y = 5.6; g.add(sh); const pivot = new THREE.Group(); g.add(pivot); g.userData.jaws = pivot; for (const s of [-1, 1]) { const jaw = new THREE.Mesh(new THREE.BoxGeometry(0.24, 4.4, 0.55), titan); jaw.position.set(s * 0.5, 0, 0); jaw.geometry.translate(0, -2.2, 0); jaw.rotation.z = s * 0.12; jaw.userData.sgn = s; pivot.add(jaw); } }
+    g.visible = false; scene.add(g); return g;
+  }
+  const toolMeshes = { 1: buildTool(1), 2: buildTool(2), 3: buildTool(3), 4: buildTool(4), 5: buildTool(5) };
+  const parkedAsp = buildTool(1); parkedAsp.traverse(o => { if (o.material) o.material = steelD; });
+
+  // ---- temas görselleri: yaklaşma halkası + temas gölgesi ----
+  const ring = new THREE.Mesh(new THREE.RingGeometry(0.9, 1.15, 40), new THREE.MeshBasicMaterial({ color: 0x8fd0ff, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false, depthTest: false }));
+  ring.userData.noray = true; ring.renderOrder = 30; scene.add(ring);
+  const shadow = new THREE.Mesh(new THREE.CircleGeometry(1, 28), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0, depthWrite: false }));
+  shadow.userData.noray = true; shadow.renderOrder = 5; scene.add(shadow);
+
+  // ---- kanama: GPU Points jet + saha kan gölü ----
+  const MAXP = 700; const pGeo = new THREE.BufferGeometry(); const pPos = new Float32Array(MAXP * 3); pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+  const pVel = new Float32Array(MAXP * 3), pLife = new Float32Array(MAXP); let pHead = 0;
+  const pts = new THREE.Points(pGeo, new THREE.PointsMaterial({ color: 0x7e0c10, size: 1.5, sizeAttenuation: true, transparent: true, opacity: 0.85, depthWrite: false }));
+  pts.userData.noray = true; pts.frustumCulled = false; scene.add(pts);
+  for (let i = 0; i < MAXP; i++) { pLife[i] = 0; pPos[i * 3 + 1] = 9999; }
+  function spawn(pos, nrm, n) { for (let k = 0; k < n; k++) { const i = pHead; pHead = (pHead + 1) % MAXP; pPos[i * 3] = pos.x; pPos[i * 3 + 1] = pos.y; pPos[i * 3 + 2] = pos.z; const sp = 10 + Math.random() * 14; pVel[i * 3] = nrm.x * sp + (Math.random() - 0.5) * 6; pVel[i * 3 + 1] = nrm.y * sp + (Math.random() - 0.5) * 6; pVel[i * 3 + 2] = nrm.z * sp + (Math.random() - 0.5) * 6; pLife[i] = 0.5 + Math.random() * 0.4; } }
+  const pool = new THREE.Mesh(new THREE.CircleGeometry(1, 40), new THREE.MeshPhysicalMaterial({ color: 0x5c0a0c, roughness: 0.12, clearcoat: 1, clearcoatRoughness: 0.05, transparent: true, opacity: 0.94, envMapIntensity: 0.5 }));
+  pool.userData.noray = true; pool.rotation.x = -Math.PI / 2; pool.position.copy(POOL_C); pool.visible = false; pool.renderOrder = 4; scene.add(pool);
+  const veil = document.createElement('div'); veil.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:9;background:radial-gradient(circle at 50% 56%, rgba(90,8,10,0) 30%, rgba(70,6,8,0.55) 70%);opacity:0;transition:opacity .3s'; document.body.appendChild(veil);
+
+  // ---- klips yerleştirme meshleri ----
+  function placeClipMesh(pos, dir, roll, mat, jawLen) {
+    const g = new THREE.Group(); g.userData.noray = true; g.position.copy(pos);
+    const q = new THREE.Quaternion().setFromUnitVectors(V(0, 1, 0), dir); g.quaternion.copy(q); g.rotateY(roll);
+    for (const s of [-1, 1]) { const jaw = new THREE.Mesh(new THREE.BoxGeometry(0.26, jawLen, 0.55), mat); jaw.geometry.translate(0, -jawLen / 2, 0); jaw.position.set(s * 0.5, jawLen / 2, 0); g.add(jaw); }
+    const body = cyl(0.3, 0.3, 2.2, mat); body.position.y = jawLen + 1; g.add(body); scene.add(g); return g;
+  }
+
+  // ---- kontrol listesi / monitör ----
+  const liEls = document.querySelectorAll('#checklist li');
+  function markStep(i, name) { if (sim.steps[i]) return; sim.steps[i] = true; if (liEls[i]) { liEls[i].classList.add('done'); liEls[i].classList.remove('active'); const nx = liEls[i + 1]; if (nx) nx.classList.add('active'); } logE('step', { step: i + 1, name }); toast('✓ ' + name); }
+
+  // ---- fare / buton olayları ----
+  const ndc = new THREE.Vector2(0, 0.1); let haveMouse = false;
+  const ray = new THREE.Raycaster();
+  renderer.domElement.addEventListener('pointermove', e => { const r = renderer.domElement.getBoundingClientRect(); ndc.x = ((e.clientX - r.left) / r.width) * 2 - 1; ndc.y = -((e.clientY - r.top) / r.height) * 2 + 1; haveMouse = true; });
+  let spaceHeld = false;
+  window.addEventListener('keydown', e => { if (e.code === 'Space') { spaceHeld = true; e.preventDefault(); } });
+  window.addEventListener('keyup', e => { if (e.code === 'Space') spaceHeld = false; });
+  renderer.domElement.addEventListener('pointerdown', e => {
+    if (e.button === 0) {
+      if (spaceHeld) { sim.dragRotate = true; return; }                 // Boşluk + sürükle: mikroskop
+      if (sim.over.d < 2.5 && sim.over.name) { sim.pressing = true; sim.dragRotate = false; onToolAct(); }  // doku üstünde: bastır
+      else { sim.dragRotate = true; }                                   // boşlukta: mikroskop
+    }
+  });
+  window.addEventListener('pointerup', e => { if (e.button === 0) { sim.pressing = false; sim.dragRotate = false; } });
+  renderer.domElement.addEventListener('contextmenu', e => {
+    e.preventDefault();
+    if (sim.tool === 1) {
+      if (sim.parked) { scene.remove(sim.parked.mesh); sim.parked = null; parkedAsp.visible = false; toast('Aspiratör serbest'); }
+      else { parkedAsp.visible = true; parkedAsp.position.copy(toolMeshes[1].position); parkedAsp.quaternion.copy(toolMeshes[1].quaternion); sim.parked = { pos: sim.tip.clone(), mesh: parkedAsp }; toast('Aspiratör sabitlendi — sol elle 4/5 (klips) alın'); }
+      document.querySelector('[data-tool="1"] small').textContent = sim.parked ? 'SABİT · Sağ Tık: bırak' : 'Sabitle: Sağ Tık';
+    }
+  });
+  // Shift+Tekerlek: bası derinliği; Q/E veya R: kalıcı klips çene/rulon açısı
+  window.addEventListener('wheel', e => { if (e.shiftKey) { e.preventDefault(); sim.press = clamp(sim.press + (e.deltaY < 0 ? 0.3 : -0.3), 0, sim.maxPress); if (sim.press > 0.05 && sim.over.name) { sim.pressing = true; onToolAct(); } else sim.pressing = false; } }, { passive: false });
+  window.addEventListener('keydown', e => { const k = e.key.toLowerCase(); if (k === 'q') sim.jawRoll -= 0.2; else if (k === 'e') sim.jawRoll += 0.2; else if (k === 'r') sim.jawRoll += Math.PI / 2; });
+
+  // ---- alet eylemleri (tıklama anında: klips yerleştir) ----
+  function onToolAct() {
+    if (sim.tool === 4 && !sim.tempClip) placeTempClip();
+    else if (sim.tool === 5) placePermClip();
+  }
+  function feedsICA(name) { return name === 'ICA' || name === 'M1' || name === 'neck' || name === 'dome' || name === 'bleb'; }
+
+  function placeTempClip() {
+    // ICA üzerinde en yakın noktaya otur (proksimal kontrol)
+    let best = 1e9, bp = null; for (const p of PTS.ICA) { const d = p.distanceTo(sim.tip); if (d < best) { best = d; bp = p; } }
+    if (best > 5) { toast('Geçici klips ICA üzerine konmalı (proksimal kontrol)'); return; }
+    const dir = CL.ICA.getTangent(0.3); const across = V(-dir.z, 0, dir.x).normalize();
+    const m = placeClipMesh(bp.clone(), across, 0, gold, 3.2);
+    sim.tempClip = { pos: bp.clone(), mesh: m }; sim.tempClipT = 0;
+    markStep(2, 'Proksimal kontrol (geçici klips)'); logE('tempClip', { at: bp.toArray().map(v => +v.toFixed(1)) });
+    toast('Geçici klips ICA\'da — antegrad akım durdu (PCom\'dan ~%15 retrograd sızıntı sürer)');
+  }
+  function placePermClip() {
+    const dir = new THREE.Vector3().subVectors(camera.position, sim.tip).normalize();        // çene ekseni ~ bakış
+    const shaft = dir.clone(); const q = new THREE.Quaternion().setFromUnitVectors(V(0, 1, 0), shaft);
+    const roll = new THREE.Quaternion().setFromAxisAngle(V(0, 1, 0), sim.jawRoll); q.multiply(roll);
+    const jawDir = V(1, 0, 0).applyQuaternion(q).normalize();                                  // çene çizgisi yönü
+    const jawStart = sim.tip.clone().addScaledVector(jawDir, -2.2), jawTip = sim.tip.clone().addScaledVector(jawDir, 2.2);
+    // a) boyun kapanışı: çene çizgisi ile boyun ekseni arası mesafe
+    const dNeck = segSeg(jawStart, jawTip, AN.neckBase, AN.domeC);
+    const neckClosed = dNeck < 0.8, dogEar = dNeck >= 0.8 && dNeck < 1.9, missed = dNeck >= 1.9;
+    // b) ICA stenozu
+    const dICA = segDistPoly(jawStart, jawTip, PTS.ICA); const icaStenosis = dICA < RAD.ICA + 0.2;
+    // c) sıkışan yapılar
+    const trapped = [];
+    if (segDistPoly(jawStart, jawTip, PTS.AChA) < 0.8) trapped.push('AChA');
+    if (segDistPoly(jawStart, jawTip, PTS.PCom) < 0.9) trapped.push('PCom');
+    if (segDistPoly(jawStart, jawTip, PTS.CN3) < 1.0) trapped.push('CN3');
+    for (const pp of perfPts) if (segDistPoly(jawStart, jawTip, pp) < 0.6) { if (!trapped.includes('perforan')) trapped.push('perforan'); }
+    if (sim.permClip) scene.remove(sim.permClip.mesh);
+    const mesh = placeClipMesh(sim.tip.clone(), shaft, sim.jawRoll, titan, 4.4);
+    sim.permClip = { pos: sim.tip.clone(), dNeck, neckClosed, dogEar, missed, icaStenosis, trapped, mesh };
+    sim.outcome = { neckClosed, dogEar, missed, icaStenosis, trapped: trapped.slice(), neckDissected: sim.neckDiss > 0.55 };
+    markStep(4, 'Kalıcı klips yerleştirildi');
+    logE('permClip', sim.outcome);
+    let msg = neckClosed ? 'Boyun tam kapandı' : dogEar ? 'Boyunda rezidü (dog-ear) kaldı' : 'Boyun kavranamadı (kese dışlanmadı!)';
+    if (icaStenosis) msg += ' · ICA stenozu!'; if (trapped.length) msg += ' · sıkışan: ' + trapped.join(', ');
+    if (sim.neckDiss < 0.55) msg += ' · boyun tam diseke edilmemiş, klips oturmuyor';
+    toast(msg); applyIcgPatency();
+  }
+
+  function applyIcgPatency() {
+    const pc = sim.permClip;
+    if (!pc) { icgU.uDomeFill.value = 1; icgU.uPComFill.value = 1; restoreAcha(false); return; }
+    icgU.uDomeFill.value = pc.neckClosed ? 0.0 : pc.dogEar ? 0.35 : 1.0;   // kapandıysa kese dolmaz; dog-ear → hafif/yavaş; kaçtıysa dolar
+    icgU.uPComFill.value = pc.trapped.includes('PCom') ? 0.08 : 1.0;
+    restoreAcha(pc.trapped.includes('AChA'));
+  }
+  function restoreAcha(dark) { const a = achaMesh.geometry.attributes.aArrival, base = achaMesh.userData.baseArrival; for (let i = 0; i < a.count; i++) a.setX(i, dark ? 999 : base[i]); a.needsUpdate = true; }
+
+  // ---- her kare: ray + alet yerleşimi ----
+  const cR = V(), cU = V(), cF = V();
+  function updateTool() {
+    camera.updateMatrixWorld(); cR.setFromMatrixColumn(camera.matrixWorld, 0); cU.setFromMatrixColumn(camera.matrixWorld, 1); cF.subVectors(controls.target, camera.position).normalize();
+    ray.setFromCamera(ndc, camera);
+    let hit = null; const hits = ray.intersectObjects(targets, false);
+    for (const h of hits) { if (!h.object.userData.noray) { hit = h; break; } }
+    if (hit) { sim.tip.lerp(hit.point, 0.4); sim.tipN.copy(hit.face ? hit.face.normal.clone().transformDirection(hit.object.matrixWorld) : V(0, 0, 1)); sim.overMesh = hit.object; }
+    // SDF ile en yakın yapı (nabızla senkron)
+    const ev = SDF.evaluate(sim.tip, sim.time); sim.over = ev;
+    // doku üstündeyken mikroskop dönmez (Boşluk ile dönülür); boşlukta serbest
+    controls.enableRotate = spaceHeld || sim.dragRotate || !(sim.over.d < 2.5 && sim.over.name);
+    // alet modelini göster/yönlendir
+    for (const k in toolMeshes) toolMeshes[k].visible = (+k === sim.tool && sim.tool <= 5);
+    const tm = toolMeshes[sim.tool <= 5 ? sim.tool : 1];
+    if (tm) { const hand = sim.parked ? -1 : 1; const entry = sim.tip.clone().addScaledVector(cR, hand * 20).addScaledVector(cU, -16).addScaledVector(cF, -4); const d = entry.sub(sim.tip).normalize(); tm.quaternion.setFromUnitVectors(V(0, 1, 0), d); if (sim.tool === 5) { tm.rotateY(sim.jawRoll); if (tm.userData.jaws) tm.userData.jaws.children.forEach(j => j.rotation.z = j.userData.sgn * (0.28 - 0.2 * Math.min(1, sim.press))); } const press = sim.pressing ? sim.press * 0.4 : 0; tm.position.copy(sim.tip).addScaledVector(sim.tipN, -press); }
+    // yaklaşma halkası + temas gölgesi
+    const near = clamp(1 - sim.over.d / 6, 0, 1);
+    ring.position.copy(sim.tip).addScaledVector(sim.tipN, 0.05); ring.quaternion.copy(camera.quaternion); ring.scale.setScalar(0.5 + (1 - near) * 1.4); ring.material.opacity = sim.over.name ? 0.25 + 0.35 * near : 0;
+    shadow.position.copy(sim.tip).addScaledVector(sim.tipN, 0.02); shadow.quaternion.setFromUnitVectors(V(0, 0, 1), sim.tipN); shadow.scale.setScalar(0.6 + (sim.pressing ? sim.press * 0.5 : 0)); shadow.material.opacity = (sim.over.d < 1.5 ? 0.3 : 0) + (sim.pressing ? 0.25 : 0);
+  }
+
+  // ---- 120 Hz fizik adımı ----
+  const RUPT = { bleb: 0.22, dome: 0.5, neck: 0.75, ICA: 0.9, M1: 0.9, A1: 0.9, PCom: 0.8 };
+  const FRAG = n => n === 'bleb' ? 1.0 : n === 'dome' ? 0.55 : n === 'neck' ? 0.3 : n === 'ICA' ? 0.2 : (n === 'M1' || n === 'A1' || n === 'PCom') ? 0.18 : n === 'AChA' ? 0.4 : 0.08;
+  function toolEnergy() { if (!sim.pressing) return 0; const b = sim.press / sim.maxPress; return sim.tool === 3 ? 0.3 + b * 3.0 : sim.tool === 2 ? 0.2 + b * 1.1 : sim.tool === 1 ? b * 0.35 : b * 0.7; }
+  function step(dt) {
+    const name = sim.over.name, d = sim.over.d;
+    const contact = d < (0.5 + (sim.pressing ? sim.press * 0.5 : 0));
+    const depth = Math.max(0, (0.5 + (sim.pressing ? sim.press * 0.5 : 0)) - d);
+    if (contact) sim.contactTime += dt; else sim.contactTime = Math.max(0, sim.contactTime - dt * 2.5);
+    // diseksiyon: mikrodisektör
+    if (sim.tool === 2 && sim.pressing && contact) {
+      if (name === 'neck') { sim.neckDiss = clamp(sim.neckDiss + dt * 0.5, 0, 1); if (sim.neckDiss > 0.55) markStep(3, 'Boyun diseksiyonu (PCom/AChA ayrıldı)'); }
+    }
+    // tanımlama: AChA/PCom/CN3 kısa inceleme
+    if (name && sim.ident[name] === false && d < 1.6 && !sim.pressing) { sim.hover[name] = (sim.hover[name] || 0) + dt; if (sim.hover[name] > 0.6) { sim.ident[name] = true; logE('identify', { struct: name }); if (sim.ident.AChA && sim.ident.PCom && sim.ident.CN3) markStep(0, 'Oryantasyon tamamlandı'); toast(name + ' tanımlandı'); } }
+    // D(t) hasar birikimi (histerezis: >80 ms sürekli temas)
+    if (contact && sim.contactTime > 0.08 && name) {
+      const strain = (0.15 + depth) * (0.25 + toolEnergy()) * FRAG(name) * (1 + sim.tipVel * 1.5);
+      sim.damage[name] = (sim.damage[name] || 0) + strain * dt;
+      if (sim.damage[name] > (RUPT[name] || 1.6)) createRupture(name);
+    }
+    for (const k in sim.damage) if (!(contact && k === name)) sim.damage[k] = Math.max(0, sim.damage[k] - dt * 0.18);
+    if (sim.tempClip) sim.tempClipT += dt;
+    // kanama + hacim dengesi
+    let totalQ = 0;
+    for (const r of sim.ruptures) {
+      const ff = (sim.tempClip && feedsICA(r.name)) ? 0.15 : 1.0;                 // proksimal klips → %15 retrograd
+      const Q = 0.8 * sim.MAP * r.area * ff * 0.01;                                // mL/s (ölçekli)
+      sim.totalLossMl += Q * dt;                                                   // toplam kayıp (aspirasyon AZALTMAZ)
+      sim.fieldMl += Q * dt; totalQ += Q;
+      r.spawn = (r.spawn || 0) + Q * dt * 40;
+    }
+    // etkin aspirasyon: aspiratör ucu (aktif veya park) kan gölüne yakınsa fieldMl düşer
+    const asp = (sim.tool === 1 && sim.pressing) ? sim.tip : (sim.parked ? sim.parked.pos : null);
+    if (asp && asp.distanceTo(POOL_C) < 7) sim.fieldMl = Math.max(0, sim.fieldMl - 2.2 * dt);
+    sim.fieldMl = Math.max(0, sim.fieldMl);
+    sim.clarity = clamp(1 - sim.fieldMl / 7, 0.15, 1);
+    // MAP yalnızca büyük kayıplarda düşer
+    const tgtMAP = sim.totalLossMl > 300 ? Math.max(38, 88 - (sim.totalLossMl - 300) * 0.045) : 88;
+    sim.MAP += (tgtMAP - sim.MAP) * Math.min(1, dt * 0.8); sim.HR = Math.round(72 + (88 - sim.MAP) * 1.7);
+    // hız
+    sim.tipVel = sim.tip.distanceTo(sim.prevTip) / Math.max(dt, 1e-4); sim.prevTip.copy(sim.tip);
+  }
+  function createRupture(name) {
+    for (const r of sim.ruptures) if (r.name === name && r.pos.distanceTo(sim.tip) < 2) return;
+    const area = name === 'bleb' ? 0.55 : name === 'dome' ? 0.7 : name === 'neck' ? 0.45 : 0.4;
+    sim.ruptures.push({ pos: sim.tip.clone(), nrm: sim.tipN.clone(), name, area, start: sim.time, spawn: 0 });
+    logE('RUPTURE', { struct: name, MAP: Math.round(sim.MAP) }); toast('⚠ RÜPTÜR: ' + name + ' — proksimal kontrol ve aspirasyon!');
+  }
+
+  // ---- parçacık + göl + veil güncelle ----
+  function effects(dt) {
+    for (const r of sim.ruptures) { const n = Math.min(20, Math.floor(r.spawn)); if (n > 0) { spawn(r.pos, r.nrm, n); r.spawn -= n; } }
+    for (let i = 0; i < MAXP; i++) { if (pLife[i] > 0) { pLife[i] -= dt; pVel[i * 3 + 1] -= 32 * dt; pPos[i * 3] += pVel[i * 3] * dt; pPos[i * 3 + 1] += pVel[i * 3 + 1] * dt; pPos[i * 3 + 2] += pVel[i * 3 + 2] * dt; if (pLife[i] <= 0) pPos[i * 3 + 1] = 9999; } }
+    pGeo.attributes.position.needsUpdate = true;
+    const lvl = Math.min(1, sim.fieldMl / 7); pool.visible = lvl > 0.01; pool.scale.setScalar(2 + lvl * 9); pool.position.y = POOL_C.y + lvl * 2.2; pool.material.opacity = 0.5 + 0.44 * lvl;
+    veil.style.opacity = (1 - sim.clarity) * 0.9;
+  }
+
+  // ---- monitör UI ----
+  const el = id => document.getElementById(id);
+  function ui() {
+    el('vHr').innerHTML = sim.HR + ' <small>/dk</small>'; el('vMap').innerHTML = Math.round(sim.MAP) + ' <small>mmHg</small>';
+    const vc = Math.round(sim.clarity * 100); el('vView').textContent = '%' + vc; el('vView').className = 'v ' + (vc > 80 ? 'ok' : vc > 50 ? 'amber' : 'alert');
+    el('vBlood').innerHTML = sim.fieldMl.toFixed(1) + ' <small>mL</small>'; el('vBlood').className = 'v ' + (sim.fieldMl > 2 ? 'alert' : sim.fieldMl > 0.3 ? 'amber' : '');
+    el('vLoss').innerHTML = sim.totalLossMl.toFixed(1) + ' <small>mL</small>'; el('vLoss').className = 'v ' + (sim.totalLossMl > 150 ? 'alert' : sim.totalLossMl > 20 ? 'amber' : '');
+    if (sim.tempClip) { const s = Math.floor(sim.tempClipT); el('vClip').textContent = String((s / 60) | 0).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); el('vClip').className = 'v ' + (sim.tempClipT > 180 ? 'alert' : sim.tempClipT > 60 ? 'amber' : 'ok'); }
+  }
+
+  // ---- ana çağrı (animate'ten) ----
+  let acc = 0;
+  function frame(t, dtReal) {
+    sim.time = t;
+    if (sim.tool !== lastTool) { lastTool = sim.tool; document.querySelector('[data-tool="1"] small').textContent = sim.parked ? 'SABİT · Sağ Tık: bırak' : 'Sabitle: Sağ Tık'; }
+    updateTool();
+    acc += Math.min(0.1, dtReal); const h = 1 / 120; let n = 0; while (acc >= h && n < 20) { step(h); acc -= h; n++; }
+    effects(dtReal); ui();
+  }
+  let lastTool = 1;
+  // tool switch senkronu (setTool global 'tool' değişkenini günceller)
+  const syncTool = () => { if (typeof tool !== 'undefined' && tool !== sim.tool) sim.tool = tool; };
+
+  return { frame, sim, applyIcgPatency, syncTool, POOL_C };
+})();
+window.SURG = SURG;
+
+// ============================================================================
+//  9) Ana döngü
+// ============================================================================
+let simTime = 0;
 function animate() {
   requestAnimationFrame(animate);
-  const t = clock.getElapsedTime(); const pulse = getCardiacPulse(t);
-  // damar/kese: tepe normali boyunca ağırlıklı nabız (ICA/M1/PCom %3–4, kubbe %8–10, bleb %11)
+  const dtReal = clock.getDelta(); simTime += dtReal; const t = simTime; const pulse = getCardiacPulse(t);
+  SURG.syncTool();
+  SURG.frame(t, dtReal);
+  const sim = SURG.sim;
+  // damar/kese nabzı + yerel bası çukuru (alet dokuya bastırırsa)
   { const g = vesselMesh.geometry; const P = g.attributes.position.array, B = vesselMesh.userData.basePos, N = vesselMesh.userData.baseNrm, W = vesselMesh.userData.pw;
-    for (let i = 0, n = W.length; i < n; i++) { const a = W[i] * pulse * 2.4; P[i * 3] = B[i * 3] + N[i * 3] * a; P[i * 3 + 1] = B[i * 3 + 1] + N[i * 3 + 1] * a; P[i * 3 + 2] = B[i * 3 + 2] + N[i * 3 + 2] * a; }
+    const press = (sim.pressing && sim.over.name) ? sim.press * 0.5 : 0; const tx = sim.tip.x, ty = sim.tip.y, tz = sim.tip.z;
+    for (let i = 0, n = W.length; i < n; i++) { const a = W[i] * pulse * 2.4; let bx = B[i * 3] + N[i * 3] * a, by = B[i * 3 + 1] + N[i * 3 + 1] * a, bz = B[i * 3 + 2] + N[i * 3 + 2] * a;
+      if (press > 0) { const dd = (bx - tx) ** 2 + (by - ty) ** 2 + (bz - tz) ** 2; if (dd < 4) { const f = press * (1 - dd / 4); bx -= sim.tipN.x * f; by -= sim.tipN.y * f; bz -= sim.tipN.z * f; } }
+      P[i * 3] = bx; P[i * 3 + 1] = by; P[i * 3 + 2] = bz; }
     g.attributes.position.needsUpdate = true; }
-  achaMesh.scale.setScalar(1); const sTh = 1 + 0.025 * pulse; [achaMesh, ...perfs].forEach(m => { m.material.userData.s = sTh; });
-  // ICG
+  const sTh = 1 + 0.025 * pulse; [achaMesh, ...perfs].forEach(m => { m.material.userData.s = sTh; });
   if (S.icgStart >= 0) icgU.uIcg.value = t - S.icgStart;
-  // etiketler
-  if (labelsOn) { const w = innerWidth, h = innerHeight; for (const l of LABELS) { tmpV.copy(l.p).project(camera); const x = (tmpV.x * 0.5 + 0.5) * w, y = (-tmpV.y * 0.5 + 0.5) * h; const vis = tmpV.z < 1 && x > 0 && x < w && y > 0 && y < h; l.el.style.display = vis ? '' : 'none'; if (vis) { l.el.style.left = x + 'px'; l.el.style.top = y + 'px'; } } }
-  // MAG
-  const dist = camera.position.distanceTo(controls.target); const mag = 280 / dist; document.getElementById('mag').textContent = 'MAG x' + mag.toFixed(1);
+  // etiketler: vizör dışında gizle + ekran uzayında dikey çakışma itmesi
+  if (labelsOn) {
+    const w = innerWidth, h = innerHeight, cx = w * 0.5, cy = h * 0.52, R = Math.min(w, h) * 0.41;
+    const vis = [];
+    for (const l of LABELS) { tmpV.copy(l.p).project(camera); const x = (tmpV.x * 0.5 + 0.5) * w, y = (-tmpV.y * 0.5 + 0.5) * h; const inFront = tmpV.z < 1; const inVisor = Math.hypot(x - cx, y - cy) < R - 6; if (inFront && inVisor) vis.push({ l, x, y }); else l.el.style.display = 'none'; }
+    vis.sort((a, b) => a.y - b.y);
+    for (let i = 1; i < vis.length; i++) { for (let j = 0; j < i; j++) { if (Math.abs(vis[i].x - vis[j].x) < 54 && Math.abs(vis[i].y - vis[j].y) < 18) vis[i].y = vis[j].y + 18; } }
+    for (const v of vis) { v.l.el.style.display = ''; v.l.el.style.left = v.x + 'px'; v.l.el.style.top = v.y + 'px'; }
+  }
+  const dist = camera.position.distanceTo(controls.target); document.getElementById('mag').textContent = 'MAG x' + (280 / dist).toFixed(1);
   if (t - lastEcg > 0.016) { lastEcg = t; drawEcg(t); }
-  if (S.clipStart >= 0) { const s = Math.floor(t - S.clipStart); document.getElementById('vClip').textContent = String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); }
   controls.update(); renderer.render(scene, camera);
 }
 window.addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); });
