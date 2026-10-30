@@ -194,6 +194,8 @@
       acil: { ico: '🚑', title: 'Acil Yatak Başı Klinik Konsol', sub: 'Deterministik kan gazı çözücü (Winter, delta-delta, P/F), ARDSNet ventilatör reçetesi → Ventilasyon simülatörüne aktarım; EKG kriter & acil ilaç/infüzyon dozu → 3B EKG simülatöründe aç; HEART ve Wells/D-dimer skorları.' },
       eko: { ico: 'EKO', title: '3D Ekokardiyografi & POCUS', sub: 'Three.js 3D toraks ve deride kayan prob, tek anatomik modelden gerçek zamanlı B-Mod (benek, kosta/akciğer gölgesi), 9 standart pencere, M-Mod, CW ve renkli Doppler, 6 patoloji, akıllı prob/ölçüm jürisi.' }
     };
+    // Bağımsız (ES modül) sayfalar: portalda aktif kart, yeni sekmede açılır
+    const EXTERNAL = [['NRO', 'Nöroşirürji · IC-PC Anevrizma Mikrocerrahisi', 'Ameliyat mikroskobu optiği, giruslu korteks, MarchingCubes damar ağı ve anevrizma (bleb), CN II/III, ICG anjiyografi, pre-op pupil kartı. 1. aşama.', 'ductuslab-neurosurgery.html']];
     const SOON = [
       ['KS', 'Kraniyal Sinir Lezyonları', 'Pupil ışık refleksi ve okülomotor paralizi lokalizasyonu.'],
       ['FND', 'Göz Dibi (Fundoskopi)', 'Papilödem, diyabetik ve hipertansif retinopati.'],
@@ -482,6 +484,10 @@
         <div class="card active ${S.current === id ? 'current' : ''}" onclick="DuctusSuite.switchModule('${id}')">
           <div class="row-between"><span class="mod-ico">${m.ico}</span><span class="tag ok">${S.current === id ? 'Açık' : 'Aktif'}</span></div>
           <span class="card-title">${m.title}</span><span class="fine">${m.sub}</span>
+        </div>`).join('') + EXTERNAL.map(([ico, t, sub, href]) => `
+        <div class="card active" onclick="window.open('${href}', '_blank')">
+          <div class="row-between"><span class="mod-ico">${ico}</span><span class="tag ok">Yeni sekme</span></div>
+          <span class="card-title">${t}</span><span class="fine">${sub}</span>
         </div>`).join('') + SOON.map(([ico, t, sub]) => `
         <div class="card soon" onclick="toast('${t} bu sürümde yok; yol haritasında.')">
           <div class="row-between"><span class="mod-ico">${ico}</span><span class="tag">Yakında</span></div>
