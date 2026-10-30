@@ -57,6 +57,7 @@
   .pedbtn.angio.active { background:linear-gradient(135deg,rgba(224,169,74,.4),rgba(216,95,106,.35)); }
   #carmIcon { position:absolute; bottom:12px; right:12px; width:88px; height:88px; }
   #collim { position:absolute; inset:0; pointer-events:none; }
+  #qcaCv { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); pointer-events:none; z-index:3; }
 
   #cine { background:var(--bg-1); border-left:1px solid var(--line); border-right:1px solid var(--line); display:flex; flex-direction:column; min-height:0; }
   #cine .hd { font-size:9.5px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-3); padding:8px 10px 4px; }
@@ -84,7 +85,10 @@
   /* ---- alt cihaz barı ---- */
   footer { display:flex; align-items:center; gap:8px; padding:0 14px; background:var(--bg-1); border-top:1px solid var(--line); }
   .dock { display:flex; gap:6px; align-items:center; }
-  .slot { display:flex; align-items:center; gap:7px; padding:6px 11px; border:1px solid var(--line-2); border-radius:8px; background:rgba(20,30,48,.5); color:var(--ink-3); cursor:not-allowed; opacity:.65; }
+  .slot { display:flex; align-items:center; gap:7px; padding:6px 11px; border:1px solid var(--line-2); border-radius:8px; background:rgba(20,30,48,.5); color:var(--ink-2); cursor:pointer; transition:all .12s; }
+  .slot:hover { border-color:var(--accent); }
+  .slot.on { background:rgba(95,168,216,.2); border-color:var(--accent); color:var(--ink); }
+  .slot.on .st { color:var(--accent); }
   .slot .k { font-family:var(--mono); font-size:10px; width:16px; height:16px; display:flex; align-items:center; justify-content:center; border:1px solid var(--line-2); border-radius:4px; }
   .slot .nm { font-size:11px; font-weight:600; } .slot .st { font-size:9px; color:var(--ink-3); }
   footer .sp { flex:1; }
@@ -140,6 +144,7 @@
     <div id="fluoro">
       <canvas id="xray"></canvas>
       <svg id="collim" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
+      <canvas id="qcaCv"></canvas>
       <div id="osd">
         <div class="tl mono" id="osdTL"></div>
         <div class="tr mono" id="osdTR"></div>
@@ -187,11 +192,11 @@
 
   <footer>
     <div class="dock" id="dock">
-      <div class="slot"><span class="k">1</span><div><div class="nm">Kılavuz Kateter</div><div class="st">2. aşamada</div></div></div>
-      <div class="slot"><span class="k">2</span><div><div class="nm">Kılavuz Tel</div><div class="st">2. aşamada</div></div></div>
-      <div class="slot"><span class="k">3</span><div><div class="nm">Balon</div><div class="st">2. aşamada</div></div></div>
-      <div class="slot"><span class="k">4</span><div><div class="nm">İlaçlı Stent</div><div class="st">2. aşamada</div></div></div>
-      <div class="slot"><span class="k">Q</span><div><div class="nm">QCA Ölçüm</div><div class="st">2. aşamada</div></div></div>
+      <div class="slot" data-dev="1" onclick="selectDevice(1)"><span class="k">1</span><div><div class="nm">Kılavuz Kateter</div><div class="st">angajman · damping</div></div></div>
+      <div class="slot" data-dev="2" onclick="selectDevice(2)"><span class="k">2</span><div><div class="nm">0.014 Kılavuz Tel</div><div class="st">W/S · Q/E tork</div></div></div>
+      <div class="slot" data-dev="3" onclick="selectDevice(3)"><span class="k">3</span><div><div class="nm">Balon</div><div class="st">NC/SC · atm</div></div></div>
+      <div class="slot" data-dev="4" onclick="selectDevice(4)"><span class="k">4</span><div><div class="nm">İlaçlı Stent</div><div class="st">DES · çap/boy</div></div></div>
+      <div class="slot" data-dev="5" onclick="selectDevice(5)"><span class="k">5</span><div><div class="nm">QCA Ölçüm</div><div class="st">2 nokta · mm</div></div></div>
     </div>
     <div class="sp"></div>
     <div class="hint"><kbd>Boşluk/F</kbd> Floro · <kbd>C</kbd> Cine · <kbd>I</kbd> Kontrast · <kbd>←↑↓→</kbd> C-kolu · sağ-sürükle döndür</div>
@@ -277,6 +282,8 @@ let CASE_N=1, CASE=CASES[1];
 // ---- segment örnekleme + birleşik damar geometrisi (aTangent/aRadius/aArc/aSeg/aKind) ----
 const NSAMP=64;  // kontrast dokusu genişliği
 let segMeta={};  // name -> {curve, len, pts[], tan[], idx}
+const BRANCH = { LM:[{c:'LAD',side:-1},{c:'Cx',side:1}], LAD:[{c:'D1',side:1},{c:'D2',side:1}], RCA:[{c:'PDA',side:-1},{c:'PL',side:1}] };
+let branchArc={};  // child -> parent üzerindeki dal çıkış arkı (0..1)
 function buildTreeData(){
   segMeta={};
   SEG_ORDER.forEach((nm,i)=>{
@@ -285,6 +292,7 @@ function buildTreeData(){
     const pts=[],tan=[]; for(let k=0;k<NSAMP;k++){ const t=k/(NSAMP-1); pts.push(curve.getPoint(t)); tan.push(curve.getTangent(t).normalize()); }
     segMeta[nm]={curve,len,pts,tan,idx:i,rad:BASE_RAD[nm]};
   });
+  branchArc={}; for(const par in BRANCH){ for(const b of BRANCH[par]){ const cp=segMeta[b.c].pts[0], pp=segMeta[par].pts; let best=1e9,ba=1; for(let k=0;k<pp.length;k++){ const d=pp[k].distanceTo(cp); if(d<best){best=d;ba=k/(pp.length-1);} } branchArc[b.c]=ba; } }
 }
 let vesselMesh=null;
 function buildVesselMesh(){
@@ -423,9 +431,13 @@ const vesselMat=new THREE.ShaderMaterial({
       float axdv=dot(normalize(vTan),viewDir);
       float thick=2.0*vR*sqrt(max(0.0,1.0-axdv*axdv));   // silindir kirişi (mm)
       float dens;
-      if(vKind>2.5){ dens=0.5; }                            // radyoopak kateter ucu markeri (yumuşak bant)
-      else if(vKind>1.5){ dens=0.25; }                     // kalsifikasyon silüeti (hafif)
-      else if(vKind>0.5){ dens=0.3; }                      // kateter gövdesi (ince, lümenli)
+      if(vKind>6.5){ dens=0.30; }                           // 7: stent mesh (açılınca hafif)
+      else if(vKind>5.5){ dens=0.14; }                      // 6: şişmiş balon silüeti (çok hafif)
+      else if(vKind>4.5){ dens=0.72; }                      // 5: balon radyoopak markerları (koyu)
+      else if(vKind>3.5){ dens=0.52; }                      // 4: 0.014 kılavuz tel (ince radyoopak)
+      else if(vKind>2.5){ dens=0.5; }                       // 3: radyoopak kateter ucu markeri
+      else if(vKind>1.5){ dens=0.25; }                     // 2: kalsifikasyon silüeti
+      else if(vKind>0.5){ dens=0.3; }                      // 1: kateter gövdesi
       else { float c=texture2D(uContrast, vec2(vArc,(vSeg+0.5)/uNSEG)).r; dens=c*thick*0.185; }
       gl_FragColor=vec4(dens,0.0,0.0,1.0);
     }`
@@ -487,14 +499,16 @@ const compMat=new THREE.ShaderMaterial({
 });
 const fsQuad=new THREE.Mesh(new THREE.PlaneGeometry(2,2),compMat); fsScene.add(fsQuad);
 
+const densityMeshes=[];   // damar + cihazlar (tel/balon/stent) — pass2'de MAX
+function setDensityVisible(v){ if(vesselMesh) vesselMesh.visible=v; densityMeshes.forEach(m=>{ if(m) m.visible=v; }); }
 function acquireFrame(){
   applyCarm();
   // pass1: anatomi -> rtBG
   renderer.setRenderTarget(rtBG); renderer.setClearColor(0x000000,1); renderer.clear();
-  bgMesh.visible=true; vesselMesh.visible=false; renderer.render(scene,camera);
-  // pass2: damar -> rtVessel (MAX)
+  bgMesh.visible=true; setDensityVisible(false); renderer.render(scene,camera);
+  // pass2: damar + cihazlar -> rtVessel (MAX)
   renderer.setRenderTarget(rtVessel); renderer.clear();
-  bgMesh.visible=false; vesselMesh.visible=true; renderer.render(scene,camera);
+  bgMesh.visible=false; setDensityVisible(true); renderer.render(scene,camera);
   bgMesh.visible=true;
   // kompozit -> rtFrame (edinilen kare, LIH için saklanır)
   compMat.uniforms.uFrame.value=frameId;
@@ -522,9 +536,13 @@ function ecgSample(ph,lead){ // ph 0..1 kardiyak
   const st=(CASE.stLead&&CASE.stLead[lead])||0; v+=st*(g(0.30,0.12)); // ST elevasyonu
   return v;
 }
-function aoSample(ph){ // aortik dalga, dikrotik çentik
-  const [sys,dia]=CASE.ao; const up=Math.exp(-((ph-0.16)**2)/(2*0.05**2)); const notch=-0.12*Math.exp(-((ph-0.42)**2)/(2*0.012**2)); const dic=0.18*Math.exp(-((ph-0.47)**2)/(2*0.03**2)); const decay=Math.exp(-ph*1.2);
-  const base=dia+(sys-dia)*(up*1.0+notch+dic)*1.0*(0.3+0.7*decay)+ (sys-dia)*up*0.0;
+function effAo(){ let sys=CASE.ao[0], dia=CASE.ao[1]; if(CS&&CS.tamponade>0){ const t=CS.tamponade; sys=lerp(sys,54,t); dia=lerp(dia,40,t); } return [Math.round(sys),Math.round(dia)]; }
+function aoSample(ph){ // aortik dalga; damping → ventrikülerizasyon, tamponad → düşük basınç
+  let [sys,dia]=effAo();
+  if(CS&&CS.cath&&CS.cath.damped){ const up=Math.exp(-((ph-0.17)**2)/(2*0.065**2)); const decay=Math.exp(-ph*2.4); const lo=dia*0.35;
+    return clamp(lo+(sys*0.72-lo)*up*(0.4+0.6*decay), lo-4, sys); }
+  const up=Math.exp(-((ph-0.16)**2)/(2*0.05**2)); const notch=-0.12*Math.exp(-((ph-0.42)**2)/(2*0.012**2)); const dic=0.18*Math.exp(-((ph-0.47)**2)/(2*0.03**2)); const decay=Math.exp(-ph*1.2);
+  const base=dia+(sys-dia)*(up*1.0+notch+dic)*(0.3+0.7*decay);
   return clamp(base,dia-6,sys+4);
 }
 function drawTraces(){
@@ -597,10 +615,15 @@ function updateHUD(){
   document.getElementById('vHr').textContent=Math.round(hr);
   document.getElementById('ecgRd').textContent=Math.round(hr);
   document.getElementById('ecgLbl').textContent=CASE.ecgLeads[0];
-  document.getElementById('aoRd').textContent=`${CASE.ao[0]}/${CASE.ao[1]}`;
+  const ea=effAo(); document.getElementById('aoRd').textContent=`${ea[0]}/${ea[1]}`+(CS.cath.damped?' ⚠':'');
+  document.getElementById('aoRd').style.color=CS.cath.damped||CS.tamponade>0.2?'#e0a94a':'';
   document.getElementById('vSpo2').textContent=CASE.spo2;
   document.getElementById('vEgfr').textContent=CASE.egfr;
-  document.getElementById('acqInfo').innerHTML=`Floro süresi: <b>${counters.fluoroSec.toFixed(1)} s</b><br>Cine kare: <b>${counters.cineFrames}</b> (${cineRuns.length} run)<br>Kontrast: <b>${counters.contrastMl.toFixed(0)} mL</b> / tahmini sınır ~${CIN_LIMIT()} mL<br>Bağıl doz indeksi: <b>${counters.dose.toFixed(1)}</b><br>Edinim: <b>${acqMode===2?'CINE':acqMode===1?'FLORO':'LIH (beklemede)'}</b>`;
+  const W=CS.wire; const devLine = CS.device?`<b style="color:var(--accent)">${DEVNAME[CS.device]}</b> seçili`:'Cihaz seçilmedi (alt bar)';
+  let wireLine=''; if(W.active){ wireLine=`Tel: <b>${W.path.join('→')}</b>${W.buckle>0.3?` · <span style="color:var(--amber)">buckling ${(W.buckle*100|0)}%</span>`:''}${W.complication?` · <span style="color:var(--alert)">${W.complication==='perforation'?'PERFORASYON':'subintimal'}</span>`:''}`; }
+  const dampLine = CS.cath.damped?`<span style="color:var(--amber)">⚠ Kateter damping (ventrikülerizasyon)</span>`:(CS.cath.depth>0.1?`Angajman derinliği ${(CS.cath.depth*100|0)}%`:'');
+  const tampLine = CS.tamponade>0?`<span style="color:var(--alert)">⚠ Perikardiyal tamponad ${(CS.tamponade*100|0)}%</span>`:'';
+  document.getElementById('acqInfo').innerHTML=`${devLine}<br>${wireLine?wireLine+'<br>':''}${dampLine?dampLine+'<br>':''}${tampLine?tampLine+'<br>':''}Floro: <b>${counters.fluoroSec.toFixed(1)} s</b> · Cine: <b>${counters.cineFrames}</b> (${cineRuns.length} run)<br>Kontrast: <b>${counters.contrastMl.toFixed(0)} mL</b> / ~${CIN_LIMIT()} mL · Doz: <b>${counters.dose.toFixed(1)}</b><br>Edinim: <b>${acqMode===2?'CINE':acqMode===1?'FLORO':'LIH'}</b> · rev ${CS.procedureRevision}`;
 }
 function CIN_LIMIT(){ return Math.round(3.7*CASE.egfr/ (CASE.ao[1]>0?1:1) ); } // kaba Cigarroa benzeri (3.7*eGFR) ~ üst sınır işareti
 
@@ -637,6 +660,89 @@ function computeMetrics(){
 }
 
 // =====================================================================
+//  2. AŞAMA — CİHAZ KİNEMATİĞİ (kılavuz kateter · 0.014 tel · QCA)
+// =====================================================================
+window.CathState = { procedureRevision:1, device:0, cath:{depth:0,damped:false},
+  wire:{active:false,path:[],segArc:0,torque:0,advancing:0,buckle:0,complication:null},
+  balloon:null, stent:null, tamponade:0, noReflow:0, flows:{}, qca:[] };
+window.CathEventLog = [];
+const CS = window.CathState;
+function logEvent(type,d){ window.CathEventLog.push(Object.assign({t:+(performance.now()/1000).toFixed(2), rev:CS.procedureRevision, angle:angleText(), type}, d||{})); }
+const DEVNAME={1:'Kılavuz Kateter',2:'0.014" Kılavuz Tel',3:'Balon',4:'İlaçlı Stent (DES)',5:'QCA Ölçüm'};
+const VIEW_MM = 2*SOD*Math.tan(rad(FOV/2));   // izosantr düzleminde kadraj genişliği (mm) — QCA kalibrasyonu
+
+// ---- ince tüp geometrisi (tel/marker vb.) ----
+function thinTube(pts,r,kind){ const RING=8, positions=[],tangents=[],rads=[],arcs=[],segs=[],kinds=[],indices=[]; let base=0;
+  for(let k=0;k<pts.length;k++){ const p=pts[k]; const tg=(k<pts.length-1?pts[k+1].clone().sub(p):p.clone().sub(pts[k-1])).normalize();
+    let up=Math.abs(tg.z)<.9?V(0,0,1):V(1,0,0); const side=new THREE.Vector3().crossVectors(tg,up).normalize(); const up2=new THREE.Vector3().crossVectors(side,tg).normalize();
+    const rr=(typeof r==='function')?r(k/(pts.length-1)):r; const kk=(typeof kind==='function')?kind(k/(pts.length-1)):kind;
+    for(let j=0;j<RING;j++){ const a=j/RING*Math.PI*2; const dir=side.clone().multiplyScalar(Math.cos(a)).add(up2.clone().multiplyScalar(Math.sin(a))); const vp=p.clone().addScaledVector(dir,rr); positions.push(vp.x,vp.y,vp.z); tangents.push(tg.x,tg.y,tg.z); rads.push(rr); arcs.push(0); segs.push(97); kinds.push(kk); } }
+  for(let k=0;k<pts.length-1;k++) for(let j=0;j<RING;j++){ const a=base+k*RING+j,b=base+k*RING+(j+1)%RING,c=base+(k+1)*RING+j,d=base+(k+1)*RING+(j+1)%RING; indices.push(a,c,b,b,c,d); }
+  const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.Float32BufferAttribute(positions,3)); g.setAttribute('aTangent',new THREE.Float32BufferAttribute(tangents,3)); g.setAttribute('aRadius',new THREE.Float32BufferAttribute(rads,1)); g.setAttribute('aArc',new THREE.Float32BufferAttribute(arcs,1)); g.setAttribute('aSeg',new THREE.Float32BufferAttribute(segs,1)); g.setAttribute('aKind',new THREE.Float32BufferAttribute(kinds,1)); g.setIndex(indices); return g; }
+function setDensityMesh(slot,mesh){ if(densityMeshes[slot]){ scene.remove(densityMeshes[slot]); densityMeshes[slot].geometry.dispose(); } densityMeshes[slot]=mesh||null; if(mesh){ mesh.frustumCulled=false; scene.add(mesh); } }
+
+// ---- kılavuz tel merkez çizgisi (path + segArc + buckling prolapse) ----
+function wireCenterline(){ const W=CS.wire; const out=[]; if(window.__cathTip) out.push(window.__cathTip.clone());
+  for(let i=0;i<W.path.length;i++){ const sm=segMeta[W.path[i]]; const frac=(i===W.path.length-1)?clamp(W.segArc,0,1):1; const N=Math.max(2,Math.floor((sm.pts.length-1)*frac)+1);
+    for(let k=0;k<N;k++){ const idx=Math.round(k/(N-1)*(sm.pts.length-1)*frac); out.push(sm.pts[Math.min(sm.pts.length-1,idx)].clone()); } }
+  if(W.buckle>0.12 && out.length>3){ const tip=out[out.length-1], pr=out[out.length-3]; const dir=tip.clone().sub(pr).normalize(); let up=Math.abs(dir.z)<.9?V(0,0,1):V(1,0,0); const side=new THREE.Vector3().crossVectors(dir,up).normalize(); const R=W.buckle*4.5;
+    for(let a=1;a<=10;a++){ const th=a/10*Math.PI*1.7; out.push(tip.clone().addScaledVector(dir,Math.sin(th)*R*0.7).addScaledVector(side,(1-Math.cos(th))*R)); } }
+  return out; }
+function updateWireMesh(){ const W=CS.wire; if(!W.active||W.path.length===0){ setDensityMesh(0,null); return; } const pts=wireCenterline(); if(pts.length<2){ setDensityMesh(0,null); return; }
+  // ince gövde + yumuşak J-uç (uçta hafif kalın radyoopak)
+  setDensityMesh(0, new THREE.Mesh(thinTube(pts,(t)=>t>0.9?0.42:0.3,4),vesselMat)); }
+
+function stepWire(dt){ const W=CS.wire; if(!W.active) return;
+  if(CS.device===2 && W.advancing>0) advanceWire(W.advancing*dt*0.5);
+  else if(CS.device===2 && W.advancing<0) retractWire(-W.advancing*dt*0.5);
+  else W.buckle=Math.max(0,W.buckle-dt*0.9);
+  updateWireMesh(); }
+function advanceWire(amt){ const W=CS.wire; if(W.path.length===0){ W.path=[CASE.side==='left'?'LM':'RCA']; W.segArc=0; }
+  const cur=W.path[W.path.length-1]; const occ=occAt(cur);
+  for(const b of (BRANCH[cur]||[])){ const ba=branchArc[b.c]; if(ba>W.segArc+0.002 && ba<=W.segArc+amt && ba<0.96){ if(Math.sign(W.torque)===b.side && Math.abs(W.torque)>0.4){ W.path.push(b.c); W.segArc=0; W.buckle=0; logEvent('wire_branch',{into:b.c}); return; } } }
+  let na=W.segArc+amt;
+  if(occ<1 && na>occ-0.015 && W.segArc<occ+0.03){ W.buckle=Math.min(1,W.buckle+amt*2.6);
+    if(W.buckle>0.55){ W.segArc=Math.min(0.99,occ+0.04); W.buckle*=0.4; logEvent('wire_cross',{seg:cur}); }
+    else W.segArc=Math.min(na,occ-0.008);
+    if(W.buckle>0.9) complication(CASE_N===4?'perforation':'subintimal'); return; }
+  if(na>=1){ const ends=(BRANCH[cur]||[]).filter(b=>branchArc[b.c]>0.96); if(ends.length){ const pick=ends.find(b=>Math.sign(W.torque)===b.side)||ends[0]; W.path.push(pick.c); W.segArc=0; logEvent('wire_branch',{into:pick.c}); }
+    else { W.segArc=1; W.buckle=Math.min(1,W.buckle+amt*2.0); if(W.buckle>0.85 && CASE_N===4) complication('perforation'); } }
+  else { W.segArc=na; W.buckle=Math.max(0,W.buckle-amt*0.35); } }
+function retractWire(amt){ const W=CS.wire; W.segArc-=amt; W.buckle=Math.max(0,W.buckle-amt*1.2); if(W.segArc<0){ if(W.path.length>1){ W.path.pop(); W.segArc=0.9; } else W.segArc=0; } }
+function complication(type){ const W=CS.wire; if(W.complication) return; W.complication=type;
+  if(type==='perforation'){ CS.tamponade=0.001; logEvent('COMPLICATION',{sub:'distal_perforation'}); toast('⚠ Distal tel perforasyonu — kontrast ekstravazasyonu! Perikardiyal tamponad gelişiyor'); }
+  else { logEvent('COMPLICATION',{sub:'subintimal'}); toast('⚠ Subintimal geçiş — gerçek lümen dışına çıkıldı'); } }
+
+// ---- kılavuz kateter: angajman derinliği + basınç damping/ventrikülerizasyon ----
+function stepCatheter(dt){ const C=CS.cath; const ostPlaque = (CASE.lesions&&CASE.lesions[CASE.side==='left'?'LM':'RCA']);
+  C.damped = C.depth>0.6 || (C.depth>0.35 && ostPlaque);
+  if(C.damped && injecting && !C._warned){ C._warned=true; logEvent('DAMPING_INJECTION',{}); toast('⚠ Damping varken kontrast puşe — proksimal diseksiyon riski!'); }
+  if(!C.damped) C._warned=false; }
+
+// ---- QCA kalibreli ölçüm (donmuş kare üzerinde 2 nokta) ----
+let qcaPts=[]; const qcaCv=document.getElementById('qcaCv');
+function qcaAddPoint(cx,cy){ const rect=canvas.getBoundingClientRect(); const x=(cx-rect.left), y=(cy-rect.top); if(x<0||y<0||x>rect.width||y>rect.height) return;
+  qcaPts.push({x,y,w:rect.width}); if(qcaPts.length>2) qcaPts=[qcaPts[qcaPts.length-1]];
+  if(qcaPts.length===2){ const a=qcaPts[0],b=qcaPts[1]; const pxd=Math.hypot(a.x-b.x,a.y-b.y); const mm=pxd*(VIEW_MM/rect.width);
+    const label = (CS.qca.length%2===0)?'Lezyon uzunluğu':'Referans çap'; CS.qca.push({label,mm:+mm.toFixed(2),angle:angleText()}); logEvent('QCA',{label,mm:+mm.toFixed(2)});
+    toast(`QCA · ${label}: ${mm.toFixed(2)} mm (2B izdüşüm · 6F kalibrasyon)`); }
+  drawQCA(); }
+function drawQCA(){ const rect=canvas.getBoundingClientRect(); qcaCv.width=rect.width; qcaCv.height=rect.height; qcaCv.style.width=rect.width+'px'; qcaCv.style.height=rect.height+'px'; const x=qcaCv.getContext('2d'); x.clearRect(0,0,qcaCv.width,qcaCv.height);
+  if(CS.device!==5){ return; }
+  x.strokeStyle='#e0a94a'; x.fillStyle='#e0a94a'; x.lineWidth=1.5; x.font='12px "JetBrains Mono"';
+  qcaPts.forEach(p=>{ x.beginPath(); x.arc(p.x,p.y,4,0,7); x.fill(); });
+  if(qcaPts.length===2){ const a=qcaPts[0],b=qcaPts[1]; x.beginPath(); x.moveTo(a.x,a.y); x.lineTo(b.x,b.y); x.stroke(); const pxd=Math.hypot(a.x-b.x,a.y-b.y); const mm=pxd*(VIEW_MM/a.w); x.fillText(mm.toFixed(2)+' mm',(a.x+b.x)/2+6,(a.y+b.y)/2); }
+  // son ölçümler
+  x.fillStyle='rgba(224,169,74,.9)'; CS.qca.slice(-4).forEach((q,i)=>{ x.fillText(`${q.label}: ${q.mm} mm`, 12, qcaCv.height-14-i*15); }); }
+
+// ---- cihaz seçimi (alt dock) ----
+function selectDevice(n){ CS.device=(CS.device===n)?0:n; document.querySelectorAll('#dock .slot').forEach(s=>s.classList.toggle('on', +s.dataset.dev===CS.device));
+  if(CS.device===2 && !CS.wire.active){ CS.wire.active=true; CS.wire.path=[CASE.side==='left'?'LM':'RCA']; CS.wire.segArc=0; }
+  if(CS.device) toast('Cihaz: '+DEVNAME[CS.device]+(CS.device===2?' — W/S ilerlet, Q/E tork, tekerlek ilerlet':CS.device===1?' — tekerlek/W-S angajman derinliği':CS.device===5?' — donmuş kare üzerine 2 nokta tıkla':''));
+  qcaPts=[]; drawQCA(); }
+window.selectDevice=selectDevice;
+
+// =====================================================================
 //  VAKA YÜKLE
 // =====================================================================
 function loadCase(n){
@@ -645,6 +751,10 @@ function loadCase(n){
   document.getElementById('caseSel').value=String(n);
   buildTreeData(); buildVesselMesh(); buildBG();
   resetContrast(); counters.contrastMl=0; counters.fluoroSec=0; counters.cineFrames=0; counters.dose=0; frameId=0; cineRuns.length=0; renderCineList();
+  // cihaz durumları sıfırla
+  CS.procedureRevision++; CS.device=0; CS.cath={depth:0,damped:false}; CS.wire={active:false,path:[],segArc:0,torque:0,advancing:0,buckle:0,complication:null}; CS.balloon=null; CS.stent=null; CS.tamponade=0; CS.noReflow=0; CS.qca=[];
+  setDensityMesh(0,null); setDensityMesh(1,null); setDensityMesh(2,null); setDensityMesh(3,null); qcaPts=[]; if(typeof drawQCA==='function') drawQCA();
+  document.querySelectorAll('#dock .slot').forEach(s=>s.classList.remove('on'));
   hr=CASE.hr;
   document.getElementById('hcNm').textContent=CASE.name;
   document.getElementById('hcMeta').textContent=CASE.meta;
@@ -668,11 +778,16 @@ window.addEventListener('keydown',e=>{ const k=e.key.toLowerCase();
   else if(k==='arrowleft'){ CARM.tAlpha=clamp(CARM.tAlpha-5,-60,60);} else if(k==='arrowright'){ CARM.tAlpha=clamp(CARM.tAlpha+5,-60,60);}
   else if(k==='arrowup'){ CARM.tBeta=clamp(CARM.tBeta+5,-40,40);} else if(k==='arrowdown'){ CARM.tBeta=clamp(CARM.tBeta-5,-40,40);}
   else if(k==='a'){ startAngio(); }
-  else if(k>='1'&&k<='4'){ loadCase(parseInt(k,10)); }
+  // cihaz kontrolleri
+  else if(k==='w'){ if(CS.device===2) CS.wire.advancing=1; else if(CS.device===1) CS.cath.depth=clamp(CS.cath.depth+0.08,0,1); }
+  else if(k==='s'){ if(CS.device===2) CS.wire.advancing=-1; else if(CS.device===1) CS.cath.depth=clamp(CS.cath.depth-0.08,0,1); }
+  else if(k==='q'){ if(CS.device===2) CS.wire.torque=clamp(CS.wire.torque-0.25,-1,1); }
+  else if(k==='e'){ if(CS.device===2) CS.wire.torque=clamp(CS.wire.torque+0.25,-1,1); }
 });
 window.addEventListener('keyup',e=>{ const k=e.key.toLowerCase();
   if(e.code==='Space'||k==='f'||k==='c'){ if(doseMode===1&&acqMode===2&&autoAngio<=0) captureCine(); if(autoAngio<=0) pedal=false; }
   else if(k==='i'){ injecting=false; }
+  else if(k==='w'||k==='s'){ if(CS.device===2) CS.wire.advancing=0; }
 });
 // 🎬 Anjiyo Çek: 3 sn boyunca otomatik Cine + Kontrast birlikte → dolu anjiyogram kaydı
 function startAngio(){ if(autoAngio>0) return; autoAngio=3.0; pedal=true; doseMode=1; injecting=true; toast('🎬 Anjiyo çekiliyor — 3 sn oto Cine + Kontrast'); }
@@ -685,9 +800,15 @@ document.getElementById('pedAngio').addEventListener('pointerdown',e=>{e.prevent
 // sağ-sürükleme ile C-kolu
 let dragging=false,lastX=0,lastY=0;
 fluoroEl.addEventListener('contextmenu',e=>e.preventDefault());
-fluoroEl.addEventListener('pointerdown',e=>{ if(e.button===2){ dragging=true; lastX=e.clientX; lastY=e.clientY; } });
-window.addEventListener('pointerup',()=>dragging=false);
-window.addEventListener('pointermove',e=>{ if(!dragging)return; CARM.tAlpha=clamp(CARM.tAlpha+(e.clientX-lastX)*0.3,-60,60); CARM.tBeta=clamp(CARM.tBeta-(e.clientY-lastY)*0.3,-40,40); lastX=e.clientX; lastY=e.clientY; });
+fluoroEl.addEventListener('pointerdown',e=>{ if(e.button===2){ dragging=true; lastX=e.clientX; lastY=e.clientY; }
+  else if(e.button===0){ if(CS.device===5){ qcaAddPoint(e.clientX,e.clientY); } else if(CS.device===2){ wireDrag=true; lastX=e.clientX; } } });
+window.addEventListener('pointerup',()=>{ dragging=false; wireDrag=false; });
+window.addEventListener('pointermove',e=>{ if(dragging){ CARM.tAlpha=clamp(CARM.tAlpha+(e.clientX-lastX)*0.3,-60,60); CARM.tBeta=clamp(CARM.tBeta-(e.clientY-lastY)*0.3,-40,40); lastX=e.clientX; lastY=e.clientY; }
+  else if(wireDrag){ CS.wire.torque=clamp(CS.wire.torque+(e.clientX-lastX)*0.01,-1,1); lastX=e.clientX; } });
+let wireDrag=false;
+// tekerlek: aktif cihazı ilerlet (tel) / angajman (kateter)
+fluoroEl.addEventListener('wheel',e=>{ if(CS.device===2){ e.preventDefault(); if(e.deltaY<0){ CS.wire.advancing=1; setTimeout(()=>CS.wire.advancing=0,90); } else { CS.wire.advancing=-1; setTimeout(()=>CS.wire.advancing=0,90); } }
+  else if(CS.device===1){ e.preventDefault(); CS.cath.depth=clamp(CS.cath.depth+(e.deltaY<0?0.06:-0.06),0,1); } },{passive:false});
 document.getElementById('projBtns').querySelectorAll('button').forEach(b=>b.onclick=()=>{ CARM.tAlpha=clamp(+b.dataset.a,-60,60); CARM.tBeta=clamp(+b.dataset.b,-40,40); toast('Projeksiyon: '+b.title); });
 
 // =====================================================================
@@ -704,6 +825,13 @@ function physics(dt){
   bgMat.uniforms.uResp.value=uMotion.uResp.value;
   // kontrast
   stepContrast(dt);
+  // cihazlar
+  stepCatheter(dt); stepWire(dt);
+  // perforasyon → perikardiyal tamponad (ilerleyici hipotansiyon + taşikardi)
+  if(CS.tamponade>0){ CS.tamponade=Math.min(1,CS.tamponade+dt*0.05); }
+  // hedef HR (tamponad taşikardisi / reperfüzyon)
+  let tgtHr=CASE.hr + CS.tamponade*55;
+  hr += (tgtHr-hr)*Math.min(1,dt*0.6);
   // hemodinamik faz & tampon
   hemoPhase=(hemoPhase+dt*hr/60)%1;
   ecgBuf.push(ecgSample(hemoPhase,CASE.ecgLeads[0])); if(ecgBuf.length>BUFN) ecgBuf.shift();
@@ -724,7 +852,7 @@ function frame(){
   else { acqAcc=0; } // LIH: edinim yok, rtFrame dondurulur
   // sunum (her UI karesinde son/dondurulmuş kare) + overlay
   present();
-  drawTraces(); drawCarmIcon(); updateHUD();
+  drawTraces(); drawCarmIcon(); updateHUD(); if(CS.device===5) drawQCA();
   computeMetrics();
 }
 
