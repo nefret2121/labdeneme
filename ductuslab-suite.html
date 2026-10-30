@@ -142,6 +142,7 @@
       <button data-mod="acil" onclick="DuctusSuite.switchModule('acil')"><span class="ico">🚑</span>Acil Konsol</button>
       <button data-mod="neuro" onclick="window.open('ductuslab-neurosurgery.html','_blank','noopener')" title="Bağımsız ES-modül sayfası; yeni sekmede açılır"><span class="ico">NŞR</span>Nöroşirürji</button>
       <button data-mod="cathlab" onclick="window.open('ductuslab-cathlab.html','_blank','noopener')" title="Bağımsız ES-modül sayfası; yeni sekmede açılır"><span class="ico">KL</span>CathLab</button>
+      <button data-mod="chain" onclick="window.open('ductuslab-case-chain.html','_blank','noopener')" title="Entegre vaka zinciri; yeni sekmede açılır"><span class="ico">🩺</span>Vaka Zinciri</button>
     </nav>
     <nav class="seg modbar hidden" id="modBar"></nav>
     </div>
@@ -198,6 +199,7 @@
     };
     // Bağımsız (ES modül) sayfalar: portalda aktif kart, yeni sekmede açılır
     const EXTERNAL = [
+      ['🩺', 'Entegre Vaka Zinciri · Akut Göğüs Ağrısından Hasta Devrine', 'Modülleri tek hastada orkestre eden uçtan uca nöbet senaryosu: triyaj → 12-der EKG → (POCUS) → CathLab reperfüzyon → yapılandırılmış hasta devri. Alan-bazlı kanıt tazeliği (stent sonrası eski EKG/anjiyo otomatik "tarihsel") + zincir jürisi (STALE_EVIDENCE_USED). TUS & Girişimsel mod, 2 varyant.', 'ductuslab-case-chain.html'],
       ['NŞR', 'Nöroşirürji · IC-PC Anevrizma Mikrocerrahisi', 'Ameliyat mikroskobu optiği, 120 Hz cerrahi fizik, Yaşargil klips + hayalet önizleme, rüptür/kanama modeli, ICG, 4 vaka varyantı, kanıt-temelli jüri karnesi, şeffaf X-Ray ve post-op takip. 3 aşama tam.', 'ductuslab-neurosurgery.html'],
       ['KL', 'CathLab · Koroner Anjiyografi & Primer PCI', 'DICOM C-kolu, Beer-Lambert floroskopi/cine + LIH, kontrast bolus, 4 vaka; PCI: kılavuz kateter damping, 0.014 tel (buckling/perforasyon), QCA, balon/DES sonuçları (malapozisyon/diseksiyon/carina/no-reflow) + intrakoroner ilaçlar; kapanış beyanı + kanıt kapısı, 4-kategori jüri, 2B↔3B şeffaf stent inceleme. 3 aşama tam.', 'ductuslab-cathlab.html']
     ];
@@ -303,6 +305,8 @@
           document.getElementById('stage').insertBefore(f, document.getElementById('jury')); S.loaded[id] = f;
         }
         Object.keys(S.loaded).forEach(k => S.loaded[k].classList.toggle('active', k === id));
+        // yaşam döngüsü: gizlenen modül iframe'lerini duraklat, aktif olanı sürdür (rAF/AudioContext yükünü azalt)
+        Object.keys(S.loaded).forEach(k => { try { S.loaded[k].contentWindow.postMessage({ ductus: true, type: k === id ? 'suite:resume' : 'suite:pause' }, '*'); } catch (e) { } });
         document.querySelectorAll('#modNav button').forEach(b => b.classList.toggle('active', b.dataset.mod === id));
         S.current = id; document.getElementById('loading').classList.add('hidden');
         renderModuleBar();

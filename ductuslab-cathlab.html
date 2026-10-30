@@ -900,6 +900,7 @@ function evaluateStent(s){
   // ST yanıtı
   if(CASE_N===3 && CS.noReflow>0) CS.stScale=0.55; else CS.stScale=0.18;
   toast('Stent yerleşti · '+(flags.length?flags.join(', '):'iyi genişleme, TIMI '+(CS.liveFlow[seg]||3)));
+  if(window.__chainReport) window.__chainReport();   // entegre vaka zinciri köprüsü
 }
 function giveDrug(name){
   CS.drugs=(CS.drugs||[]); CS.drugs.push(name); logEvent('DRUG',{name});
@@ -1236,8 +1237,18 @@ function audioLoop(){ requestAnimationFrame(audioLoop); if(!AU.on||!AU.ctx) retu
 //  BAŞLAT
 // =====================================================================
 sizeMonitor(); drawCollimator(); sizeTraces();
-loadCase(1);
+const _qc=parseInt(new URLSearchParams(location.search).get('case')||'1',10);
+loadCase((_qc>=1&&_qc<=4)?_qc:1);
 frame();
+// --- Entegre Vaka Zinciri köprüsü (yalnız ?chain=1 ile; standalone'u ETKİLEMEZ) ---
+(function(){ const q=new URLSearchParams(location.search); if(q.get('chain')!=='1') return; const pid=q.get('pid');
+  const sc=document.createElement('script'); sc.src='ductus-core.js';
+  sc.onload=function(){ try{ window.__chainS=DuctusCore.open({patientId:pid}); toast('🩺 Entegre vaka zinciri — bu PCI işlemi paylaşılan hastaya canlı yansıyacak'); }catch(e){} };
+  document.head.appendChild(sc);
+  window.__chainReport=function(){ if(!window.__chainS) return; const o=CS.lastOutcome; const seg=culpritSeg();
+    try{ window.__chainS.dispatch({type:'DeployStent',payload:{timi:(o&&o.timi)||3, noReflow:CS.noReflow>0.2}});
+      window.__chainS.addEvidence({modality:'angiography', summary:'CathLab işlemi: '+seg+' stent '+(o&&o.flags.length?o.flags.join(','):'sorunsuz')+' · final TIMI '+((o&&o.timi)||3)+(CS.noReflow>0.2?' · no-reflow':''), quality:{assessable:true,regionsSeen:[seg]}}); }catch(e){} };
+})();
 setTimeout(()=>document.getElementById('loading').classList.add('hidden'),300);
 window.CathLab={ scene,camera,renderer,CARM,CASES,get case(){return CASE;},CathMetrics:window.CathMetrics,ready:true };
 </script>
