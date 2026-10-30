@@ -140,6 +140,7 @@
       <button data-mod="ekg" onclick="DuctusSuite.switchModule('ekg')"><span class="ico">EKG</span>EKG</button>
       <button data-mod="eko" onclick="DuctusSuite.switchModule('eko')"><span class="ico">EKO</span>Eko &amp; POCUS</button>
       <button data-mod="acil" onclick="DuctusSuite.switchModule('acil')"><span class="ico">🚑</span>Acil Konsol</button>
+      <button data-mod="neuro" onclick="window.open('ductuslab-neurosurgery.html','_blank','noopener')" title="Bağımsız ES-modül sayfası; yeni sekmede açılır"><span class="ico">NŞR</span>Nöroşirürji</button>
     </nav>
     <nav class="seg modbar hidden" id="modBar"></nav>
     </div>
@@ -195,7 +196,7 @@
       eko: { ico: 'EKO', title: '3D Ekokardiyografi & POCUS', sub: 'Three.js 3D toraks ve deride kayan prob, tek anatomik modelden gerçek zamanlı B-Mod (benek, kosta/akciğer gölgesi), 9 standart pencere, M-Mod, CW ve renkli Doppler, 6 patoloji, akıllı prob/ölçüm jürisi.' }
     };
     // Bağımsız (ES modül) sayfalar: portalda aktif kart, yeni sekmede açılır
-    const EXTERNAL = [['NRO', 'Nöroşirürji · IC-PC Anevrizma Mikrocerrahisi', 'Ameliyat mikroskobu optiği, giruslu korteks, MarchingCubes damar ağı ve anevrizma (bleb), CN II/III, ICG anjiyografi, pre-op pupil kartı. 1. aşama.', 'ductuslab-neurosurgery.html']];
+    const EXTERNAL = [['NŞR', 'Nöroşirürji · IC-PC Anevrizma Mikrocerrahisi', 'Ameliyat mikroskobu optiği, 120 Hz cerrahi fizik, Yaşargil klips + hayalet önizleme, rüptür/kanama modeli, ICG, 4 vaka varyantı, kanıt-temelli jüri karnesi, şeffaf X-Ray ve post-op takip. 3 aşama tam.', 'ductuslab-neurosurgery.html']];
     const SOON = [
       ['KS', 'Kraniyal Sinir Lezyonları', 'Pupil ışık refleksi ve okülomotor paralizi lokalizasyonu.'],
       ['FND', 'Göz Dibi (Fundoskopi)', 'Papilödem, diyabetik ve hipertansif retinopati.'],
