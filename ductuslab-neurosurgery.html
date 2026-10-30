@@ -225,7 +225,7 @@ scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture
 const camera = new THREE.PerspectiveCamera(18, innerWidth / innerHeight, 1, 600);
 const TARGET = V(3.5, -4.5, -12);
 const VIEW_DIR = V(16, 34, 58).normalize(); // pterional koridor ekseni (cerrah → saha)
-camera.position.copy(TARGET).add(VIEW_DIR.clone().multiplyScalar(70));
+camera.position.copy(TARGET).add(VIEW_DIR.clone().multiplyScalar(98)); // açılış MAG ≈ x2.9 (genel bakış)
 camera.lookAt(TARGET);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.target.copy(TARGET); controls.enableDamping = true; controls.dampingFactor = 0.08; controls.enablePan = false;
