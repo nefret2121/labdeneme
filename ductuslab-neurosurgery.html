@@ -1082,6 +1082,7 @@ window.submitClosure = () => {
 const RELT0 = () => (window.NeuroEventLog[0] ? window.NeuroEventLog[0].t : 0);
 function findEv(type) { return window.NeuroEventLog.find(e => e.type === type); }
 function buildDebrief(excl, branch) {
+  setTool(1);   // aktif klips/ghost aletini gizle — inceleme sahnesi temiz kalsın
   const s = window.NeuroSimState, C = window.NeuroCase, pc = s.permClip;
   const trapped = pc ? pc.trapped : [];
   const achaOccl = trapped.includes('AChA'), pcomClosed = trapped.includes('PCom'), cn3Trap = trapped.includes('CN3'), perfTrap = trapped.includes('perforan');
@@ -1204,20 +1205,25 @@ window.postopTab = n => {
 };
 
 // ---- şeffaf X-Ray incelemesi ----
-let xrayOn = false; const xrayMarks = new THREE.Group(); scene.add(xrayMarks); let vesselOpBak = null;
+let xrayOn = false; const xrayMarks = new THREE.Group(); scene.add(xrayMarks); let vesselOpBak = null; let xrayHidden = null;
 function curvePts(c, n) { const a = []; for (let i = 0; i <= n; i++) a.push(c.getPoint(i / n)); return a; }
 function nearestOnCurve(c, p) { let best = 1e9, bp = p; const pts = curvePts(c, 40); for (const q of pts) { const d = q.distanceTo(p); if (d < best) { best = d; bp = q; } } return { p: bp, d: best }; }
 window.xrayToggle = () => {
-  xrayOn = !xrayOn; document.getElementById('tbBtn').classList.toggle('on', xrayOn);
-  const vm = vesselMesh.material;
+  xrayOn = !xrayOn; const vm = vesselMesh.material;
+  let panel = document.getElementById('xrayPanel');
   if (xrayOn) {
     vesselOpBak = { t: vm.transparent, o: vm.opacity, dw: vm.depthWrite };
-    vm.transparent = true; vm.opacity = 0.3; vm.depthWrite = false;
-    buildXrayMarks();
-    document.getElementById('xrayBox').innerHTML = xrayTimeline();
+    vm.transparent = true; vm.opacity = 0.3; vm.depthWrite = false; buildXrayMarks();
+    xrayHidden = []; scene.traverse(o => { if (o.isMesh && o.visible && (o.userData.arach || o.material === MAT.dura || o.material === MAT.arachnoid)) { xrayHidden.push(o); o.visible = false; } }); // trabekül/dura gizle — temiz cam anatomi
+    ov('debrief').classList.remove('open');                 // 3B sahneyi aç (karne gizlenir)
+    if (!panel) { panel = document.createElement('div'); panel.id = 'xrayPanel'; document.body.appendChild(panel); }
+    panel.style.cssText = 'position:fixed;top:14px;right:14px;z-index:60;width:340px;max-width:92vw;background:linear-gradient(180deg,#0a1120ee,#070b14ee);border:1px solid var(--line-2);border-radius:14px;padding:14px 16px;box-shadow:0 20px 60px rgba(0,0,0,0.6)';
+    panel.innerHTML = '<div style="font-weight:700;font-size:13px;margin-bottom:4px">🔬 Şeffaf X-Ray İnceleme</div><div style="font-size:10.5px;color:var(--ink-3);margin-bottom:8px">Damar %70 cam yapıldı. Mikroskobu döndürerek (boşlukta sürükle) klips çenelerinin boyun düzlemi, AChA, PCom ve CN III ile ilişkisini inceleyin.</div>' + xrayTimeline() + '<button onclick="xrayToggle()" style="margin-top:12px;width:100%;background:var(--accent);color:#04101f;border:none;border-radius:8px;padding:9px;font-weight:700;cursor:pointer">Karneye Dön</button>';
+    panel.style.display = 'block';
   } else {
     if (vesselOpBak) { vm.transparent = vesselOpBak.t; vm.opacity = vesselOpBak.o; vm.depthWrite = vesselOpBak.dw; }
-    xrayMarks.clear(); document.getElementById('xrayBox').innerHTML = '';
+    if (xrayHidden) xrayHidden.forEach(o => o.visible = true); xrayHidden = null;
+    xrayMarks.clear(); if (panel) panel.style.display = 'none'; ov('debrief').classList.add('open');
   }
 };
 function mark(p, hex, r) { const m = new THREE.Mesh(new THREE.SphereGeometry(r || 0.7, 16, 12), new THREE.MeshBasicMaterial({ color: hex, transparent: true, opacity: 0.92, depthTest: false })); m.position.copy(p); m.renderOrder = 40; xrayMarks.add(m); }
