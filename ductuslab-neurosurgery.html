@@ -103,6 +103,7 @@
 
 <header>
   <div class="brand">
+    <button id="btnHome" onclick="goHome()" title="DuctusLab anasayfasına dön" style="padding:6px 10px;">← Anasayfa</button>
     <span class="wordmark">Ductus<em>Lab</em> Neuro</span>
     <div class="title"><small id="caseLbl">IC-PC Anevrizma</small>Mikrocerrahi Simülatörü</div>
   </div>
@@ -1028,6 +1029,8 @@ window.NeuroSim = { scene, camera, renderer, controls, vesselMesh, materials: MA
 document.getElementById('caseLbl').textContent = CASE.short;
 document.getElementById('caseSel').value = String(CASE.key);
 window.switchCase = v => { const n = parseInt(v, 10); if (n === CASE.key) return; location.search = '?case=' + n; };
+// Anasayfaya dön (bu sayfa kök dizinde; index.html anasayfa). Yeni sekmede açıldıysa da aynı sekmede anasayfaya gider.
+window.goHome = () => { window.location.href = 'index.html'; };
 
 // ---- saf WebAudio ses motoru (harici dosya yok) ----
 const AU = { ctx: null, on: false, logLen: 0, beatT: 0 };
