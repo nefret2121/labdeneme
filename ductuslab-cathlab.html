@@ -385,6 +385,7 @@ function buildVesselMesh(){
   SEG_ORDER.forEach(nm=>{ const les=(CASE.lesions&&CASE.lesions[nm])||[]; const res=(window.CathState&&CathState.residual&&CathState.residual[nm]!=null)?CathState.residual[nm]:null;
     const rp=BASE_RAD[nm], rd=(RAD_DIST[nm]!=null?RAD_DIST[nm]:rp*0.5);
     addTube(nm,(t)=>{ let r=lerp(rp,rd,Math.pow(t,0.85));   // proksimal→distal doğal incelme (tapering)
+      if(SEG_PARENT[nm]===null && t<0.16){ r*=0.52+0.48*Math.sin(t/0.16*Math.PI/2); }   // ostiyal yuvarlak geçiş: kateter ucundan ince başlayıp açılsın (koyu blok yok)
       for(const L of les){ const st=(res!=null)?res:L.sten; if(t>L.at&&t<L.at+L.len){ const u=(t-L.at)/L.len; r*=1-st*Math.sin(u*Math.PI); } }
       if(res!=null && les.length===0 && t<0.22){ const u=t/0.22; r*=1-res*Math.sin(u*Math.PI); }   // carina shift gibi ostiyal rezidü
       return Math.max(0.16,r); },0); });
@@ -403,7 +404,7 @@ function buildVesselMesh(){
   const cpts=[],ctan=[]; for(let k=0;k<CN;k++){ const t=k/(CN-1); cpts.push(cathCurve.getPoint(t)); ctan.push(cathCurve.getTangent(t).normalize()); }
   // gövde hafif, uca yakın (son %12) radyoopak marker halka
   window.__cathTip = cpts[CN-1].clone();
-  extrude(cpts,ctan,(t)=>0.72,(t)=>t>0.955?3:1);   // ince gövde + çok kısa radyoopak uç markeri (manşon yok)
+  extrude(cpts,ctan,(t)=>t>0.97?0.6:0.72,(t)=>t>0.975?3:1);   // ince gövde + uçta inceltilmiş çok kısa radyoopak marker (manşon/blok yok)
 
   const g=new THREE.BufferGeometry();
   g.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
@@ -1095,11 +1096,12 @@ function buildJury(decl){
   if(orthogonal) c1+=15; else c1-=8;
   if(qcaRef) c1+=5;
   c1=clampN(c1);
-  let c2=100; // Kateter/Tel/Stent geometrik
-  if(dampInj) c2-=25; if(subint) c2-=30; if(perf) c2-=35;
-  if(stented){ const ratio=CS.stent.dia/trueRef; if(ratio<0.95) c2-=22; else if(ratio>1.10) c2-=15;
+  let c2; // Kateter/Tel/Stent geometrik — PCI gerektiren vakada stent yoksa tavan 0-15
+  if(stented){ c2=100; if(dampInj) c2-=25; if(subint) c2-=30; if(perf) c2-=35;
+    const ratio=CS.stent.dia/trueRef; if(ratio<0.95) c2-=22; else if(ratio>1.10) c2-=15;
     if(flags.includes('edge_dissection')) c2-=28; if(flags.includes('geographic_miss')) c2-=22; if(flags.includes('underexpansion')) c2-=10;
-    if(flags.includes('carina_shift_D1')&&(CS.liveFlow.D1||3)<3) c2-=18; } else c2-=25;
+    if(flags.includes('carina_shift_D1')&&(CS.liveFlow.D1||3)<3) c2-=18; }
+  else { c2=12 - (dampInj?8:0) - (subint?8:0) - (perf?12:0); }   // tedavi edici PCI uygulanmadı → tavan 0-15
   c2=clampN(c2);
   let c3=60; // Fizyoloji/Komplikasyon/Kanıt
   if(finalTimi>=3 && !noReflowNow) c3+=24; else if(finalTimi===2) c3+=4; else c3-=40;
@@ -1107,10 +1109,12 @@ function buildJury(decl){
   if(perf) c3-=35;
   c3-=warns.length*14; c3+=honest.length*8;
   c3=clampN(c3);
-  let c4=80; // Kontrast/Radyasyon/Verim
-  const lim=CIN_LIMIT(); if(counters.contrastMl>lim) c4-=30; else if(counters.contrastMl>lim*0.8) c4-=12;
-  if(counters.contrastMl<14 && stented && !postEv) c4-=18;  // az kontrast harcayıp görüntülememe ÖDÜLLENDİRİLMEZ
-  if(counters.fluoroSec>120) c4-=15; if(counters.dose>40) c4-=10;
+  // Kontrast/Radyasyon/Verim — tanısal görüntü kanıtı yoksa verimlilik 0 (az kontrast ≠ verimlilik)
+  const anyDiagnostic = cineRuns.some(r=>(r.contrastAdequacy||0)>=0.2);
+  const lim=CIN_LIMIT(); let c4;
+  if(!anyDiagnostic || counters.contrastMl<1){ c4=0; }
+  else { c4=80; if(counters.contrastMl>lim) c4-=30; else if(counters.contrastMl>lim*0.8) c4-=12;
+    if(counters.fluoroSec>120) c4-=15; if(counters.dose>40) c4-=10; }
   c4=clampN(c4);
   const overall=Math.round(c1*0.30+c2*0.25+c3*0.30+c4*0.15);
 
@@ -1136,9 +1140,9 @@ function buildJury(decl){
     (warns.length?`<div class="cat" style="border-color:rgba(216,95,106,.5)"><div class="nm" style="color:#f1b0b7;margin-bottom:5px">⚠ Beyan–Kanıt Tutarsızlığı</div><ul>${warns.map(w=>'<li><span class="badge ab">'+w.c+'</span> '+w.m+'</li>').join('')}</ul></div>`:'')+
     (honest.length?`<div class="cat" style="border-color:rgba(89,184,138,.4)"><div class="nm" style="color:#8fe3bf;margin-bottom:5px">✓ Dürüst Belirsizlik Yönetimi (ödüllendirildi)</div><ul>${honest.map(x=>'<li>'+x+'</li>').join('')}</ul></div>`:'')+
     cat('Görüntüleme, Projeksiyon &amp; QCA Güvenilirliği',c1,[qcaCmp, 'Ortogonal (dik) projeksiyon doğrulaması: '+(orthogonal?'<span class="badge cf">VAR</span>':'<span class="badge na">eksik</span>'), 'Güncel (post-PCI) kontrastlı kayıt: '+(postEv?'<span class="badge cf">VAR</span>':'<span class="badge ab">YOK</span>')])+
-    cat('Kateter, Tel &amp; Stent Geometrik Sonucu',c2,[ (stented?`Stent ${CS.stent.dia}×${CS.stent.len} mm · ref ø${trueRef} mm · oran ${(CS.stent.dia/trueRef).toFixed(2)} (hedef 0.95–1.10)`:'Stent yerleştirilmedi'), 'Kusurlar: '+(flags.length?flags.join(', '):'<span class="badge cf">yok</span>'), 'Tel: '+(perf?'<span class="badge ab">perforasyon</span>':subint?'<span class="badge ab">subintimal</span>':'<span class="badge cf">temiz</span>')+(dampInj?' · <span class="badge ab">damping enjeksiyonu</span>':'')])+
+    cat('Kateter, Tel &amp; Stent Geometrik Sonucu',c2,[ (stented?`Stent ${CS.stent.dia}×${CS.stent.len} mm · ref ø${trueRef} mm · oran ${(CS.stent.dia/trueRef).toFixed(2)} (hedef 0.95–1.10)`:'<span class="badge ab">Tedavi edici PCI uygulanmadı</span> (stent yok)'), (stented?'Kusurlar: '+(flags.length?flags.join(', '):'<span class="badge cf">yok</span>'):'Suçlu lezyon açılmadı — kategori tavanı 0–15'), 'Tel/kateter: '+(perf?'<span class="badge ab">perforasyon</span>':subint?'<span class="badge ab">subintimal</span>':'<span class="badge cf">güvenli</span>')+(dampInj?' · <span class="badge ab">damping enjeksiyonu</span>':'')])+
     cat('Fizyolojik Sonuç, Komplikasyon &amp; Kanıt',c3,['Suçlu damar son akım: '+(finalTimi>=3&&!noReflowNow?'<span class="badge cf">TIMI 3</span>':finalTimi===2||noReflowNow?'<span class="badge na">TIMI '+finalTimi+(noReflowNow?' · no-reflow (MBG düşük)':'')+'</span>':'<span class="badge ab">TIMI '+finalTimi+'</span>'), (CASE_N===3?'No-reflow yönetimi: '+(noReflowNow?'<span class="badge ab">çözülmedi</span>':drugsGiven?'<span class="badge cf">intrakoroner ilaçla düzeldi</span>':'<span class="badge cf">yok</span>'):'Doku reperfüzyonu: '+(noReflowNow?'bozuk':'<span class="badge cf">iyi</span>')), (perf?'<span class="badge ab">Perforasyon/tamponad</span> — tanı/tedavi gerekli':'Komplikasyon: <span class="badge cf">yok</span>')])+
-    cat('Kontrast, Radyasyon &amp; İşlem Verimliliği',c4,['Kontrast: <b>'+counters.contrastMl.toFixed(0)+' mL</b> / eGFR bütçesi ~'+lim+' mL '+(counters.contrastMl>lim?'<span class="badge ab">aşıldı</span>':'<span class="badge cf">uygun</span>'), 'Floro '+counters.fluoroSec.toFixed(0)+' s · Doz '+counters.dose.toFixed(0)+' · '+cineRuns.length+' Cine run'])+
+    cat('Kontrast, Radyasyon &amp; İşlem Verimliliği',c4, (!anyDiagnostic||counters.contrastMl<1)?['<span class="badge ab">Tanısal görüntü alınmadı — sıfır kontrast verimlilik değildir</span>','Kontrast '+counters.contrastMl.toFixed(0)+' mL · '+cineRuns.length+' Cine run · yeterli kontrastlı kayıt: '+(anyDiagnostic?'var':'<span class="badge ab">yok</span>')]:['Kontrast: <b>'+counters.contrastMl.toFixed(0)+' mL</b> / eGFR bütçesi ~'+lim+' mL '+(counters.contrastMl>lim?'<span class="badge ab">aşıldı</span>':'<span class="badge cf">uygun</span>'), 'Floro '+counters.fluoroSec.toFixed(0)+' s · Doz '+counters.dose.toFixed(0)+' · '+cineRuns.length+' Cine run'])+
     `<div class="tabs" style="margin-top:14px"><button onclick="enterReview()">🔬 2B Cine ↔ 3B Şeffaf Damar &amp; Stent Gerçeği</button></div>`+
     `<div class="cat"><div class="nm" style="margin-bottom:5px">Klinik / TUS Sonucu</div><div style="font-size:11.5px;color:var(--ink-2);line-height:1.6">${clinicalSummary()}</div></div>`+
     `<div class="tabs" style="margin-top:8px">`+
@@ -1149,12 +1153,25 @@ function buildJury(decl){
 function clampN(x){ return Math.max(0,Math.min(100,Math.round(x))); }
 window.CATH_JURY=null; let JURY=null; window.CathLab&&(window.CathLab.jury=()=>JURY);
 function CASE_N_GET(){ return CASE_N; } window.CASE_N_GET=CASE_N_GET;
+function finalTimiOf(seg){ return (CS.liveFlow[seg]!=null)?CS.liveFlow[seg]:((CASE.flow&&CASE.flow[seg]!=null)?CASE.flow[seg]:3); }
 function clinicalSummary(){
-  const seg=culpritSeg(); const timi=(CS.liveFlow[seg]!=null)?CS.liveFlow[seg]:((CASE.flow&&CASE.flow[seg])||3);
-  if(CS.tamponade>0) return 'Distal perforasyona bağlı perikardiyal tamponad gelişti: hipotansiyon + taşikardi + pulsus paradoksus. Acil ekokardiyografi ve perikardiyosentez endikasyonu; kanama kontrolü (uzun balon şişirme/kapalı hücre stent/kapsül).';
-  if(CASE_N===3){ if(CS.noReflow>0.2) return 'Epikardiyal damar açık (TIMI '+timi+') ancak No-Reflow: miyokardiyal blush grade 0-1, ST tam gerilemedi. Mikrovasküler obstrüksiyon — intrakoroner adenozin/nitroprussid, trombüs aspirasyonu düşünülür. Reperfüzyon aritmisi (AIVR/bradikardi) sık ve genelde benigndir.'; return 'İnferior STEMI reperfüze edildi (TIMI 3, blush iyi). Reperfüzyon bradikardisi/AIVR beklenir (Bezold-Jarisch); genelde geçici, semptomatikse atropin. TIMI 3 epikardiyal akım ≠ doku perfüzyonu (MBG) — ikisi ayrı değerlendirilmeli.'; }
-  if(timi>=3) return 'Suçlu lezyon başarıyla revaskülarize edildi (TIMI 3). Anterior STEMI için erken reperfüzyon LV fonksiyonunu korur; ikili antiplatelet + statin + takip ekokardiyografi ile duvar hareketi değerlendirilir.';
-  return 'Suçlu damarda rezidü akım kısıtlaması (TIMI '+timi+') sürüyor — ek dilatasyon/stent veya mekanizma (diseksiyon, trombüs, no-reflow) değerlendirmesi gerekir.';
+  const seg=culpritSeg(); const timi=finalTimiOf(seg); const stented=!!(CS.stent&&CS.stent.deployed);
+  // 1) komplikasyon önceliği
+  if(CS.tamponade>0) return 'Distal tel perforasyonuna bağlı perikardiyal tamponad gelişti: hipotansiyon + taşikardi + pulsus paradoksus, boyun venöz dolgunluğu. Acil yatak başı ekokardiyografi (efüzyon/diyastolik kollaps) ve perikardiyosentez; kanama kontrolü (uzun balon oklüzyonu, kaplı stent, reversal). Tedavi edilmezse nabızsız elektriksel aktivite.';
+  // 2) damar hâlâ tıkalı / tedavi edilmedi
+  if(timi<=1 || !stented){
+    if(CASE_N===1) return 'Suçlu LAD açılmadı (TIMI '+timi+(stented?'':', stent konmadı')+'): anteroseptal–apikal transmural infarkt yerleşir → duvar akinezisi, LV sistolik disfonksiyonu ve kalp yetmezliği (KKY), apikal trombüs/anevrizma ve geç remodeling riski. Erken reperfüzyon penceresi kaçırıldı; kurtarıcı PKG/revaskülarizasyon gerekir.';
+    if(CASE_N===3) return 'Dominant RCA açılmadı (TIMI '+timi+(stented?'':', stent konmadı')+'): inferior ± sağ ventrikül transmural infarkt → RV infarktı (hipotansiyon, JVD, berrak akciğer; nitrata duyarlı), AV düğüm iskemisine bağlı bradikardi/AV blok ve kardiyojenik şok riski. Reperfüzyon sağlanamadı.';
+    if(CASE_N===4) return 'Kalsifik orta LAD lezyonu açılmadı/hazırlanmadı (TIMI '+timi+'): iskemi sürüyor. Ağır kalsifikasyonda lezyon hazırlığı (NC balon/rotablasyon/litotripsi) olmadan stent yetersiz genişler; doğrudan stent malapozisyon/restenoz riski taşır.';
+    return 'Suçlu damar tıkalı/akım kısıtlı (TIMI '+timi+') ve tedavi edici PKG tamamlanmadı — reperfüzyon yok, iskemi/nekroz ilerler; ek girişim şart.';
+  }
+  // 3) epikardiyal açık ama doku reperfüzyonu bozuk (no-reflow)
+  if(CASE_N===3 && CS.noReflow>0.2) return 'Epikardiyal RCA açık (TIMI '+timi+') ANCAK No-Reflow: miyokardiyal blush grade 0-1, ST tam gerilemedi — mikrovasküler obstrüksiyon. TIMI 3 ≠ doku reperfüzyonu. İntrakoroner adenozin/nitroprussid, trombüs yükü için aspirasyon düşünülür; kötü prognoz göstergesi. Reperfüzyon aritmisi (AIVR/bradikardi) sık, genelde benign.';
+  if(CS.noReflow>0.2) return 'Epikardiyal damar açık (TIMI '+timi+') ama düşük miyokardiyal blush — mikrovasküler obstrüksiyon sürüyor; epikardiyal açıklık doku perfüzyonunu garantilemez.';
+  // 4) başarılı reperfüzyon
+  if(CASE_N===3) return 'İnferior STEMI başarıyla reperfüze edildi (TIMI 3, blush iyi). Reperfüzyon bradikardisi/AIVR beklenir (Bezold-Jarisch refleksi); genelde geçici, semptomatik bradikardide atropin. Epikardiyal TIMI 3 ile doku perfüzyonu (MBG) ayrı değerlendirilmeli.';
+  if(CASE_N===2) return 'LAD–D1 bifurkasyon lezyonu stentlendi (TIMI 3). Yan dal (D1) açıklığı ve carina shift takip edilmeli; jailed ama akan dala provizyonel yaklaşım yeterli olabilir, ostiyal akım kaybında kissing balon/POT.';
+  return 'Suçlu lezyon başarıyla revaskülarize edildi (TIMI 3, iyi blush). Erken reperfüzyon LV fonksiyonunu korur; ikili antiplatelet + yüksek doz statin + takip ekokardiyografi ile duvar hareketi değerlendirilir.';
 }
 window.retryPrestent=()=>{ CS.residual={}; CS.liveFlow={}; CS.stent=null; CS.balloon=null; CS.lastOutcome=null; CS.noReflow=0; CS.stScale=(CASE.stLead&&Object.keys(CASE.stLead).length)?1:1; setDensityMesh(3,null); buildVesselMesh(); if(reviewMode) exitReview(); ov('debrief').classList.remove('open'); CS.device=3; document.querySelectorAll('#dock .slot').forEach(s=>s.classList.toggle('on',+s.dataset.dev===3)); renderDevPanel(); toast('Stent öncesi duruma dönüldü — balon/stent adımını tekrar deneyin'); };
 
