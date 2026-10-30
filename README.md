@@ -11,6 +11,12 @@ Tarayıcıda çalışan, kayıt değil **parametrik ses sentezi** kullanan klini
 
 Canlı site: https://nefret2121.github.io/labdeneme/
 
+## Platform Entegrasyon Katmanı
+
+**`ductus-core.js`** — sıfır bağımlılıklı ortak klinik durum otoritesi (mevcut standalone modülleri etkilemez; yalnız onu yükleyen sayfalar katılır). `PatientState v1` (demografi, FPS/sekme-gizlenmesinden bağımsız `simTimeMs`, vitaller, alan-bazlı revizyon sayaçları `coronary/rhythm/hemodynamic/respiratory/neuro`, patoloji, tedaviler, eko `historical`/`current` bağlamı). `EvidenceRecord` sözleşmesi `dependsOn` revizyonlarıyla: tek global sayaçla silme yok — CathLab'da stent açılınca `coronary`+`rhythm` artar, böylece stent öncesi anjiyo/EKG otomatik "tarihsel" sayılır, sonrası "güncel". Komut dispatch (`DeployStent`/`AdministerDrug`/`SetVitals`…), `BroadcastChannel` + `sessionStorage` köprüsü (sekmeler/yeni-sekme arası canlı hasta paylaşımı), `suite:pause`/`resume` yaşam döngüsü.
+
+**`ductuslab-case-chain.html`** — Entegre Vaka Zinciri #1 (akut göğüs ağrısı → reperfüzyon → hasta devri), `ductus-core` üzerinde. 2 varyant (A komplikasyonsuz primer PCI / B post-op hipotansiyon-efüzyon → POCUS; ezbere tamponad yok), 2 düzey (TUS/Öğrenci, Asistan/Girişimsel). Hasta Dosyası & İstasyon Çubuğu (Acil · 12-Der EKG · Eko/POCUS · CathLab · Hasta Devri) + zaman damgalı kanıt listesi (güncel/tarihsel rozetli); kılavuz uyarıları (RV tutulumunda nitrat → hipotansiyon; stabil STEMI'de reperfüzyon öncesi gereksiz görüntüleme → kapı-balon gecikmesi; şokta POCUS ödülü). Yapılandırılmış 4-alan devir (serbest metin değil, kanıt bağlama) + zincir jürisi: müdahale öncesi eski kanıt güncel diye bağlanınca `STALE_EVIDENCE_USED`, 4 ağırlıklı kategori + kritik kilit + modül köprüleri (Eko/Acil). Girişimsel modda gerçek CathLab'ı `?chain=1&case=3&pid` ile yeni sekmede açar; PCI sonucu `BroadcastChannel` ile paylaşılan hastaya canlı yansır. Portalda (index + suite) "🩺 Entegre Vaka Zinciri" kartı.
+
 Tek dosya: `index.html`. Ses için sayfada "Ses Kapalı" düğmesine basın.
 
 Klavye kısayolları: `1–6` provokasyon · `S` ses · `D` / `B` diyafram / çan · `R` stüdyo.
