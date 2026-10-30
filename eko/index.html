@@ -412,7 +412,7 @@ const EchoModel = (() => {
     HEART.uA4c = norm3(add(rgt, HEART.d, -dot(rgt, HEART.d)));
     HEART.nPlax = norm3(cross(HEART.d, HEART.uPlax));
     HEART.dirAo = norm3(CAL.heart.aoAxis);
-    HEART.laCoef = [CAL.heart.laCoef[0], 0.35, -0.6]; HEART.raCoef = CAL.heart.raCoef; HEART.avCoef = CAL.heart.avCoef; HEART.tvLoc = CAL.heart.tvLoc; // LA merkezi anulusun hemen arkasına (A4C ve PLAX düzlemlerinin ikisinde de)
+    HEART.laCoef = [CAL.heart.laCoef[0], 0.35, -0.6]; HEART.raCoef = CAL.heart.raCoef; HEART.avCoef = CAL.heart.avCoef; HEART.tvLoc = [CAL.heart.tvLoc[0], CAL.heart.tvLoc[1], 0.7]; // triküspit anulus mitrale göre ~7 mm apikal (normal ofset) // LA merkezi anulusun hemen arkasına (A4C ve PLAX düzlemlerinin ikisinde de)
   })();
 
   const RV_OFF = 3.6, RV_XOFF = 0.6; // RV elipsoid merkezinin y_h (ön) ve x_h (sağ-kaudal) ofseti (mesh RV sınırlarından)
