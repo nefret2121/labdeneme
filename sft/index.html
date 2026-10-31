@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DuctusLab · Spirometri &amp; Akım-Hacim Kalite Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" />
+<style>
+:root{
+  --bg-0:#040812;--bg-1:#070c17;--bg-2:#0b1220;--bg-3:#101829;
+  --glass:rgba(13,20,34,.66);--glass-2:rgba(17,26,43,.55);
+  --line:rgba(160,176,196,.10);--line-2:rgba(160,176,196,.18);
+  --ink:#e4e9f1;--ink-2:#a6b1c2;--ink-3:#6c7889;
+  --accent:#6fa3c8;--accent-2:#4f7fa3;--accent-dim:rgba(111,163,200,.14);
+  --amber:#d9a441;--amber-dim:rgba(217,164,65,.14);
+  --ok:#5a9f7f;--ok-dim:rgba(90,159,127,.16);
+  --alert:#c4565f;--alert-dim:rgba(196,86,95,.16);
+  --violet:#9a86c9;
+  --m1:#6fa3c8;--m2:#5a9f7f;--m3:#d9a441;--m4:#c483c4;--m5:#cf7b57;
+  --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:"JetBrains Mono","SF Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:radial-gradient(1200px 800px at 70% -10%,#0a1424 0%,var(--bg-0) 60%);color:var(--ink);font-family:var(--sans);font-size:14px;overflow:hidden}
+.app{display:flex;flex-direction:column;height:100vh}
+.topbar{display:flex;align-items:center;gap:16px;padding:10px 18px;border-bottom:1px solid var(--line);background:var(--glass);backdrop-filter:blur(12px);flex:0 0 auto;z-index:20}
+.wordmark{font-weight:700;letter-spacing:.04em;font-size:15px}.wordmark em{color:var(--accent);font-style:normal}
+.vsep{width:1px;height:22px;background:var(--line-2)}
+.product{color:var(--ink-2);font-size:12.5px}.spacer{flex:1}
+.btn{font-family:var(--sans);font-size:12.5px;color:var(--ink-2);background:var(--glass-2);border:1px solid var(--line-2);border-radius:9px;padding:7px 12px;cursor:pointer;transition:.15s;white-space:nowrap}
+.btn:hover{color:var(--ink);border-color:var(--accent-2);background:var(--accent-dim)}
+.btn.on{color:#fff;background:var(--accent-dim);border-color:var(--accent)}
+.btn.sm{padding:5px 9px;font-size:11.5px}
+.seg{display:flex;border:1px solid var(--line-2);border-radius:9px;overflow:hidden}
+.seg button{border:0;border-radius:0;background:transparent}.seg button+button{border-left:1px solid var(--line-2)}
+.main{flex:1;display:flex;min-height:0}
+.stage{flex:1.45;min-width:0;display:flex;flex-direction:column;background:#03060d}
+.plots{flex:1;display:flex;min-height:0;gap:2px;padding:10px}
+.plotwrap{flex:1;position:relative;border:1px solid var(--line);border-radius:12px;background:#05090f;overflow:hidden}
+.plotwrap canvas{width:100%;height:100%;display:block}
+.plotttl{position:absolute;top:8px;left:12px;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);z-index:2}
+.stage-foot{flex:0 0 auto;border-top:1px solid var(--line);background:var(--glass);padding:9px 14px}
+.toolrow{display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+.toolgrp{display:flex;align-items:center;gap:5px;padding:4px 7px;border:1px solid var(--line);border-radius:10px;background:var(--glass-2)}
+.toolgrp .lbl{font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3);white-space:nowrap}
+.btn-go{font-size:13px;font-weight:600;color:#06131d;background:linear-gradient(135deg,#7ec0e8,#5a9bc4);border:0;border-radius:9px;padding:8px 14px;cursor:pointer}
+.btn-bd{font-size:12px;font-weight:600;color:#06131d;background:linear-gradient(135deg,#8fd4a8,#5a9f7f);border:0;border-radius:9px;padding:7px 11px;cursor:pointer}
+.console{flex:1;min-width:360px;max-width:460px;border-left:1px solid var(--line);background:var(--bg-1);display:flex;flex-direction:column;min-height:0}
+.console-scroll{overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px}
+.console-scroll::-webkit-scrollbar{width:9px}.console-scroll::-webkit-scrollbar-thumb{background:#1b2638;border-radius:6px}
+.card{border:1px solid var(--line);border-radius:12px;background:var(--glass);padding:12px 13px}
+.card h3{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);font-weight:600;margin-bottom:9px;display:flex;justify-content:space-between;align-items:center}
+.eyebrow{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3)}
+select{width:100%;font-family:var(--sans);font-size:13px;color:var(--ink);background:var(--bg-2);border:1px solid var(--line-2);border-radius:9px;padding:9px 10px;cursor:pointer}
+select:focus{outline:none;border-color:var(--accent-2)}
+.rdg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}
+.rdg .cell{border:1px solid var(--line);border-radius:9px;padding:7px 8px;background:var(--bg-2)}
+.rdg .cell .k{font-size:9.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-3)}
+.rdg .cell .v{font-family:var(--mono);font-size:14px;font-weight:600;margin-top:2px}
+.v.ok{color:#8fe3bf}.v.warn{color:var(--amber)}.v.bad{color:#e88b92}
+.mini{font-size:11.5px;color:var(--ink-2)}
+.manrow{display:flex;align-items:center;gap:8px;font-size:11.5px;padding:6px 0;border-bottom:1px solid var(--line)}
+.swatch{width:11px;height:11px;border-radius:3px;flex:0 0 auto}
+.manrow .chk{display:flex;gap:4px;align-items:center;font-size:10.5px;color:var(--ink-3)}
+.manrow .chk input{accent-color:var(--accent)}
+.tag{font-size:9px;letter-spacing:.04em;text-transform:uppercase;padding:2px 6px;border-radius:999px;border:1px solid var(--line-2);color:var(--ink-3)}
+.tag.ok{color:#8fe3bf;border-color:rgba(90,159,127,.5)}.tag.bad{color:#e88b92;border-color:rgba(196,86,95,.5)}
+.btn-primary{width:100%;font-size:13.5px;font-weight:600;color:#06131d;background:linear-gradient(135deg,#7ec0e8,#5a9bc4);border:0;border-radius:10px;padding:11px;cursor:pointer}
+.btn-primary:hover{filter:brightness(1.08)}
+.btn-bridge{width:100%;font-size:12.5px;font-weight:600;color:#fff;background:linear-gradient(135deg,#8b6fc9,#6f56a8);border:0;border-radius:10px;padding:10px;cursor:pointer;margin-top:8px}
+.jury-cat{margin:8px 0;padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:var(--bg-2)}
+.jury-cat .row{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;font-weight:600}
+.bar{height:6px;border-radius:4px;background:#17202f;margin-top:6px;overflow:hidden}.bar>span{display:block;height:100%;border-radius:4px}
+.flag{font-size:11.5px;padding:7px 9px;border-radius:8px;margin-top:6px;border:1px solid}
+.flag.red{color:#e88b92;border-color:rgba(196,86,95,.45);background:var(--alert-dim)}
+.flag.amber{color:var(--amber);border-color:rgba(217,164,65,.45);background:var(--amber-dim)}
+.flag.green{color:#8fe3bf;border-color:rgba(90,159,127,.45);background:var(--ok-dim)}
+.hint{font-size:11px;color:var(--ink-3);margin-top:6px;line-height:1.45}
+.chkline{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--ink-2);cursor:pointer;padding:4px 0}.chkline input{accent-color:var(--accent)}
+#toastBox{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;z-index:60}
+.toast{background:rgba(10,16,28,.95);border:1px solid var(--line-2);border-left:3px solid var(--accent);border-radius:9px;padding:10px 14px;font-size:12.5px;color:var(--ink);max-width:420px;box-shadow:0 8px 28px rgba(0,0,0,.45);animation:tin .25s}
+.toast.warn{border-left-color:var(--amber)}
+@keyframes tin{from{opacity:0;transform:translateY(8px)}}
+.lln{display:flex;gap:8px;margin-top:8px}
+.lln .box{flex:1;border:1px solid var(--line);border-radius:9px;padding:8px;background:var(--bg-2);text-align:center}
+.lln .box .b{font-family:var(--mono);font-size:15px;font-weight:600}
+@media(max-width:980px){.main{flex-direction:column}.console{max-width:none;border-left:0;border-top:1px solid var(--line)}.plots{flex-direction:column}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <span class="wordmark">Ductus<em>Lab</em></span>
+    <span class="vsep"></span>
+    <span class="product">Spirometri &amp; Akım-Hacim Kalite Lab</span>
+    <span class="spacer"></span>
+    <div class="seg" id="levelSeg">
+      <button class="btn sm on" data-lvl="student">TUS / Öğrenci</button>
+      <button class="btn sm" data-lvl="resident">Asistan / Göğüs</button>
+    </div>
+    <button class="btn sm" id="examToggle">🔒 Gizli Vaka (Sınav)</button>
+    <button class="btn sm" id="homeBtn">← Anasayfa</button>
+  </div>
+
+  <div class="main">
+    <div class="stage">
+      <div class="plots">
+        <div class="plotwrap"><div class="plotttl">Akım–Hacim Halkası · L/s vs L</div><canvas id="fvCanvas"></canvas></div>
+        <div class="plotwrap"><div class="plotttl">Hacim–Zaman · L vs sn (t₀ geri ekstrapolasyon)</div><canvas id="vtCanvas"></canvas></div>
+      </div>
+      <div class="stage-foot">
+        <div class="toolrow">
+          <div class="toolgrp"><span class="lbl">Koçluk</span>
+            <button class="btn sm on" id="cExpl">Patlayıcı başlat</button>
+            <button class="btn sm on" id="cSust">Platoya sürdür</button>
+            <button class="btn sm on" id="cDeep">Derin inspiryum</button>
+          </div>
+          <button class="btn-go" id="doManeuver">▶ Manevra Çek</button>
+          <div class="toolgrp"><span class="lbl">Bronkodilatör</span>
+            <button class="btn-bd" id="giveBD">+400 mcg Salbutamol → Post-BD</button>
+          </div>
+          <button class="btn sm" id="resetSet">Seti sıfırla</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="console">
+      <div class="console-scroll">
+        <div class="card">
+          <h3>Vaka Seçici <span class="eyebrow" id="caseCount"></span></h3>
+          <select id="caseSel"></select>
+          <div class="mini" id="caseStem" style="margin-top:9px"></div>
+          <div class="mini" id="phaseNote" style="margin-top:7px;color:var(--accent)"></div>
+        </div>
+
+        <div class="card">
+          <h3>Son Manevra Ölçümleri <span class="eyebrow">eğriden türetildi</span></h3>
+          <div class="rdg">
+            <div class="cell"><div class="k">FEV1</div><div class="v" id="rFEV1">—</div></div>
+            <div class="cell"><div class="k">FVC</div><div class="v" id="rFVC">—</div></div>
+            <div class="cell"><div class="k">FEV1/FVC</div><div class="v" id="rRatio">—</div></div>
+            <div class="cell"><div class="k">PEF</div><div class="v" id="rPEF">—</div></div>
+            <div class="cell"><div class="k">FEF25-75</div><div class="v" id="rFEF">—</div></div>
+            <div class="cell"><div class="k">FET</div><div class="v" id="rFET">—</div></div>
+            <div class="cell"><div class="k">BEV</div><div class="v" id="rBEV">—</div></div>
+            <div class="cell"><div class="k">EOFE</div><div class="v" id="rEOFE">—</div></div>
+            <div class="cell"><div class="k">Kalite</div><div class="v" id="rQual">—</div></div>
+          </div>
+          <div class="mini" id="qualFlags" style="margin-top:8px"></div>
+        </div>
+
+        <div class="card">
+          <h3>Manevra Seti <span class="eyebrow" id="setCount">0 manevra</span></h3>
+          <div class="mini" style="color:var(--ink-3)">Her manevrada FEV1 ve FVC’yi ayrı kabul/red edin:</div>
+          <div id="manList" style="margin-top:6px"></div>
+          <div class="mini" id="repeatNote" style="margin-top:8px"></div>
+        </div>
+
+        <div class="card">
+          <h3>Yorum <span class="eyebrow">GLI / LLN</span></h3>
+          <div class="lln">
+            <div class="box"><div class="eyebrow">Sabit oran</div><div class="b" id="llnFixed">—</div><div class="mini">0.70 eşiği</div></div>
+            <div class="box"><div class="eyebrow">LLN (z<−1.645)</div><div class="b" id="llnVal">—</div><div class="mini" id="llnAge">yaş/boy</div></div>
+          </div>
+          <div class="mini" id="interpNote" style="margin-top:9px"></div>
+        </div>
+
+        <div class="card">
+          <h3>Tanı Beyanı</h3>
+          <span class="eyebrow">Patern / tanı</span>
+          <select id="dxSel" style="margin-top:5px"></select>
+          <label class="chkline" style="margin-top:7px"><input type="checkbox" id="tlcOrder"> TLC (pletismografi / He dilüsyonu) <b>istedim</b></label>
+          <button class="btn-primary" id="declareBtn" style="margin-top:9px">Beyanı Değerlendir</button>
+          <div id="juryOut" style="margin-top:11px"></div>
+        </div>
+
+        <div class="card" style="border-color:rgba(154,134,201,.25)">
+          <h3>Öğretim Notu</h3>
+          <div class="mini" id="teachNote">Manevra çekin veya tanı beyan edin.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="toastBox"></div>
+
+<script>
+/* ============================================================================
+ *  DuctusLab · SFT — Spirometri & Akım-Hacim Kalite Lab
+ *  Fizyoloji q_exp(V) → manevra (koçluk/artefakt) → q(t) dizisi → ATS/ERS teğet
+ *  geri ekstrapolasyon ölçümü. Değerler ELLE YAZILMAZ; eğrinin integralinden türer.
+ * ========================================================================== */
+(function(){
+'use strict';
+var $=function(id){return document.getElementById(id);};
+function clamp(x,a,b){return x<a?a:x>b?b:x;}
+
+/* ======================= VAKALAR ======================= */
+var CASES={
+ 1:{id:1,name:'Normal (sağlıklı)', FVC:4.8,PEF:9.5,a:1.25,shape:'normal',predFVC:4.7,predFEV1:3.7,lln:0.70,age:35,postBDa:1.25,truthDx:'normal',
+    stem:'35 y sağlıklı erkek. Rutin spirometri. Sabit 0.70 ile yaşa/boya göre LLN nüansını değerlendirin.',
+    teach:'Normal: FEV1/FVC ≥ LLN, akım-hacim halkası dışbükey, hızlı tepe. Sabit 0.70 yaşlıda obstrüksiyonu abartır (LLN ~0.68 normal olabilir), gençte kaçırır (0.72 anormal olabilir).'},
+ 2:{id:2,name:'KOAH', FVC:4.2,PEF:6.4,a:3.0,shape:'obstructive',predFVC:4.4,predFEV1:3.3,lln:0.69,age:66,postBDa:2.8,truthDx:'obstruction',
+    stem:'66 y, 40 paket-yıl sigara, eforla nefes darlığı. Ekspiratuvar eğriyi ve post-BD yanıtını değerlendirin.',
+    teach:'KOAH: konkav "kaşık" ekspiratuvar eğri, FEV1/FVC < LLN, uzamış FET (hava hapsi). Post-BD reversibilite minimal (beklenenin <%10 artışı).'},
+ 3:{id:3,name:'Astım (reversibl)', FVC:4.3,PEF:6.2,a:2.5,shape:'obstructive',predFVC:4.5,predFEV1:3.6,lln:0.72,age:28,postBDa:1.35,truthDx:'obstruction_reversible',
+    stem:'28 y, epizodik hışıltı. Obstrüksiyon var mı, reversibl mi? Salbutamol sonrası tekrarlayın.',
+    teach:'Astım: obstrüksiyon + belirgin post-BD yanıt (ATS/ERS 2022: FEV1 veya FVC’de beklenenin >%10 artışı; eski kural >%12 ve 200 mL).'},
+ 4:{id:4,name:'İAH — Restriktif Patern Şüphesi', FVC:2.9,PEF:7.0,a:0.9,shape:'restrictive',predFVC:4.6,predFEV1:3.7,lln:0.72,age:52,postBDa:0.9,truthDx:'restriction_suspect',
+    stem:'52 y, ilerleyici nefes darlığı, inspiratuvar raller. Dar-dik halka. Paterni yorumlayın.',
+    teach:'Düşük FVC + normal/yüksek FEV1/FVC → restriktif PATERN; ancak spirometri restriksiyonu KESİNLEŞTİRMEZ (psödorestriksiyon/hava hapsi dışlanamaz). Kesin tanı için TLC (pletismografi/He dilüsyonu) gerekir.'},
+ 5:{id:5,name:'Değişken Ekstratorasik UAO', FVC:4.6,PEF:8.2,a:1.1,shape:'normal',inspPlateau:2.5,age:45,predFVC:4.7,predFEV1:3.7,lln:0.70,postBDa:1.1,truthDx:'uao_extrathoracic',
+    stem:'45 y, inspiratuvar stridor (vokal kord disfonksiyonu şüphesi). Halkanın hangi kolu düzleşiyor?',
+    teach:'Değişken ekstratorasik obstrüksiyon (ör. vokal kord paralizisi): YALNIZ İNSPİRATUVAR kol düzleşir (MEF50/MIF50 > 1).'},
+ 6:{id:6,name:'Değişken İntratorasik UAO', FVC:4.6,PEF:8.2,a:1.1,shape:'normal',expPlateau:2.5,age:48,predFVC:4.7,predFEV1:3.7,lln:0.70,postBDa:1.1,truthDx:'uao_intrathoracic',
+    stem:'48 y, ekspiratuvar hışıltı (trakeomalazi şüphesi). Hangi kol kutu gibi düzleşiyor?',
+    teach:'Değişken intratorasik obstrüksiyon (ör. trakeomalazi): YALNIZ EKSPİRATUVAR kol düzleşir (MEF50/MIF50 < 1).'},
+ 7:{id:7,name:'Sabit Üst Havayolu Obstrüksiyonu', FVC:4.5,PEF:8.2,a:1.1,shape:'normal',expPlateau:2.5,inspPlateau:2.5,age:50,predFVC:4.6,predFEV1:3.6,lln:0.70,postBDa:1.1,truthDx:'uao_fixed',
+    stem:'50 y, bifazik stridor (trakeal stenoz). İki kol da düzleşiyor mu?',
+    teach:'Sabit obstrüksiyon (ör. trakeal stenoz): HEM inspiratuvar HEM ekspiratuvar plato (MEF50/MIF50 ≈ 1, ikisi de düşük).'},
+ 8:{id:8,name:'Artefakt & Kalite Tuzağı', FVC:4.7,PEF:9.0,a:1.25,shape:'normal',predFVC:4.7,predFEV1:3.7,lln:0.70,age:40,postBDa:1.25,truthDx:'normal',artifact:true,
+    stem:'40 y, teknisyen hastayı "hasta" sanıyor. İlk manevralar artefaktlı — koçlukla düzgün manevra aldırın, kötü manevraları reddedin.',
+    teach:'Hasta hasta değil, manevra kötü. 1. sn öksürük → FEV1 geçersiz/FVC kullanılabilir; erken kesme → FEV1 kullanılabilir/FVC geçersiz. Koçlukla (patlayıcı başlat, platoya sürdür) kabul edilebilir+tekrarlanabilir set alın.'}
+};
+var DX=[['normal','Normal spirometri'],['obstruction','Obstrüktif patern (reversibilite yok/minimal)'],
+  ['obstruction_reversible','Reversibl obstrüksiyon (astım)'],['restriction','Kesin restriktif akciğer hastalığı'],
+  ['restriction_suspect','Restriksiyon şüphesi — TLC gerekli'],['uao_extrathoracic','Değişken ekstratorasik UAO'],
+  ['uao_intrathoracic','Değişken intratorasik UAO'],['uao_fixed','Sabit UAO'],['nondiagnostic','Kalitesiz / tanısal değil']];
+
+/* ======================= FİZİK MOTORU ======================= */
+function qExp(V,C){ var u=clamp(V/C.FVC,0,1); var base=C.PEF*Math.pow(1-u,C.a); if(C.expPlateau) base=Math.min(base,C.expPlateau); return Math.max(base,0); }
+function qInsp(V,C){ var u=clamp(V/C.FVC,0,1); var base=C.PEF*0.92*Math.sqrt(Math.max(1-Math.pow(2*u-1,2),0)); if(C.inspPlateau) base=Math.min(base,C.inspPlateau); return Math.max(base,0); }
+function simulate(C,opt){
+  opt=opt||{}; if(opt.postBD){ C=Object.assign({},C,{a:C.postBDa!=null?C.postBDa:C.a}); }
+  var dt=0.01,t=0,V=0,out={t:[],q:[],v:[],insp:[]};
+  var riseTime=opt.hesitant?0.40:0.08;
+  var coughT=opt.cough?(opt.coughTime!=null?opt.coughTime:0.5):-1;
+  var termT=opt.earlyTerm?(opt.termTime!=null?opt.termTime:2.5):999;
+  var effort=opt.effort!=null?opt.effort:1.0;
+  var plateauHold=0;
+  // inspiratuvar kol (halka için) — tam ekspirasyondan geri (V: FVC→0 görsel)
+  for(var vi=0;vi<=40;vi++){ var vv=C.FVC*vi/40; out.insp.push({v:vv,q:-qInsp(vv,C)}); }
+  while(t<16){
+    var qv=qExp(V,C)*effort;
+    if(t<riseTime) qv*=(t/riseTime);
+    if(coughT>0 && Math.abs(t-coughT)<0.06){ qv*=(t<coughT?0.2:1.9); }
+    var q=Math.max(qv,0); V+=q*dt;
+    out.t.push(+t.toFixed(3)); out.q.push(q); out.v.push(V);
+    if(t>termT) break;
+    if(V>=C.FVC*0.995){ plateauHold+=dt; if(plateauHold>1.2) break; }
+    t+=dt;
+  }
+  out._coughT=coughT; return out;
+}
+function interpV(arr,tt){ var t=arr.t,v=arr.v; if(tt<=t[0])return v[0]; for(var i=1;i<t.length;i++){ if(t[i]>=tt){ var f=(tt-t[i-1])/(t[i]-t[i-1]); return v[i-1]+f*(v[i]-v[i-1]); } } return v[v.length-1]; }
+function measure(arr){
+  var t=arr.t,q=arr.q,v=arr.v,n=t.length;
+  var PEF=0,ip=0; for(var i=0;i<n;i++){ if(q[i]>PEF){PEF=q[i];ip=i;} }
+  var tp=t[ip],qp=q[ip],Vtp=v[ip];
+  var t0=tp-Vtp/qp; if(t0<0)t0=0;
+  var BEV=interpV(arr,t0), FVC=v[n-1], FEV1=interpV(arr,t0+1.0), FET=t[n-1]-t0;
+  var V25=FVC*0.25,V75=FVC*0.75,t25=null,t75=null;
+  for(var j=1;j<n;j++){ if(t25==null&&v[j]>=V25){ var f=(V25-v[j-1])/(v[j]-v[j-1]); t25=t[j-1]+f*(t[j]-t[j-1]); } if(t75==null&&v[j]>=V75){ var f2=(V75-v[j-1])/(v[j]-v[j-1]); t75=t[j-1]+f2*(t[j]-t[j-1]); } }
+  var FEF=(t75&&t25&&t75>t25)?(V75-V25)/(t75-t25):0;
+  var vEnd=v[n-1],tEnd=t[n-1],vM1=interpV(arr,tEnd-1.0),lastSecDV=vEnd-vM1;
+  var EOFE=(lastSecDV<=0.025)||(FET>=15);
+  return {PEF:PEF,FVC:FVC,FEV1:FEV1,ratio:FEV1/FVC,FEF2575:FEF,FET:FET,BEV:BEV,t0:t0,tp:tp,qp:qp,Vtp:Vtp,
+    lastSecDV:lastSecDV,EOFE:EOFE,coughFirstSec:(arr._coughT>0 && arr._coughT<(t0+1.0))}; }
+function quality(m,opt){
+  var bevLimit=Math.max(0.05*m.FVC,0.100), bevOk=m.BEV<=bevLimit;
+  var cough=m.coughFirstSec, earlyTerm=!m.EOFE;
+  var flags=[];
+  if(!bevOk) flags.push('HESITANT_START');
+  if(cough) flags.push('COUGH_1ST_SEC');
+  if(earlyTerm) flags.push('EARLY_TERMINATION');
+  return {bevLimit:bevLimit,bevOk:bevOk,cough:cough,earlyTerm:earlyTerm,
+    fev1Usable:(bevOk&&!cough), fvcUsable:(bevOk&&m.EOFE), flags:flags}; }
+function repeatability(list){ function md(k){ var a=list.map(function(x){return x[k];}).sort(function(p,q){return q-p;}); return a.length>=2?a[0]-a[1]:0; }
+  var dF=md('FVC'),dE=md('FEV1'); return {maxDiffFVC:dF,maxDiffFEV1:dE,fvcOk:dF<=0.150,fev1Ok:dE<=0.150,repeatable:(dF<=0.150&&dE<=0.150)}; }
+function uaoRatios(C){ var FEF50=qExp(C.FVC*0.5,C),MIF50=qInsp(C.FVC*0.5,C); return {FEF50:FEF50,MIF50:MIF50,ratio:FEF50/MIF50}; }
+
+/* ======================= DURUM ======================= */
+var ENG={ idx:1, cas:CASES[1], level:'student', examMode:false, coach:{expl:true,sust:true,deep:true},
+  set:[], lastArr:null, lastM:null, lastQ:null, bdPhase:false, anim:null };
+
+/* ======================= ÇİZİM ======================= */
+var fv=$('fvCanvas'),fvx=fv.getContext('2d'),vt=$('vtCanvas'),vtx=vt.getContext('2d'),DPR=Math.max(1,Math.min(2,window.devicePixelRatio||1));
+function resize(){ [fv,vt].forEach(function(c){ var r=c.parentElement.getBoundingClientRect(); c.width=r.width*DPR;c.height=r.height*DPR;c.style.width=r.width+'px';c.style.height=r.height+'px'; c.getContext('2d').setTransform(DPR,0,0,DPR,0,0); }); draw(); }
+window.addEventListener('resize',resize);
+var COLORS=['#6fa3c8','#5a9f7f','#d9a441','#c483c4','#cf7b57'];
+
+function draw(){ drawFV(); drawVT(); }
+function drawFV(animFrac){
+  var r=fv.getBoundingClientRect(),W=r.width,H=r.height; fvx.clearRect(0,0,W,H);
+  var padL=46,padB=34,padT=20,padR=14, plotW=W-padL-padR, plotH=H-padT-padB;
+  var maxV=6, maxQp=12, maxQn=6;  // L, L/s exp+, insp-
+  function X(v){ return padL + (v/maxV)*plotW; }
+  function Y(q){ var zeroY=padT + (maxQp/(maxQp+maxQn))*plotH; return zeroY - (q/maxQp)*(maxQp/(maxQp+maxQn))*plotH * (q>=0?1:(maxQp/maxQn)); }
+  // grid
+  fvx.strokeStyle='rgba(160,176,196,.08)';fvx.lineWidth=1;fvx.font='9px "JetBrains Mono",monospace';fvx.fillStyle='rgba(108,120,137,.8)';
+  for(var vv=0;vv<=maxV;vv++){ var x=X(vv); fvx.beginPath();fvx.moveTo(x,padT);fvx.lineTo(x,padT+plotH);fvx.stroke(); fvx.fillText(vv+'',x-3,padT+plotH+12); }
+  for(var qq=-maxQn;qq<=maxQp;qq+=3){ var y=Y(qq); fvx.beginPath();fvx.moveTo(padL,y);fvx.lineTo(padL+plotW,y);fvx.stroke(); fvx.fillText(qq+'',padL-20,y+3); }
+  fvx.strokeStyle='rgba(160,176,196,.25)'; fvx.beginPath();fvx.moveTo(padL,Y(0));fvx.lineTo(padL+plotW,Y(0));fvx.stroke();
+  fvx.fillStyle='rgba(108,120,137,.9)';fvx.fillText('Akım L/s',padL-40,padT+10);fvx.fillText('Hacim L',padL+plotW-40,padT+plotH+22);
+  // kabul edilen/geçmiş manevralar
+  ENG.set.forEach(function(man,i){ plotLoop(man.arr,COLORS[i%5],0.5,X,Y,1); });
+  // son manevra (animasyonlu)
+  if(ENG.lastArr){ plotLoop(ENG.lastArr,'#eaf2fb',0.95,X,Y, animFrac==null?1:animFrac); }
+}
+function plotLoop(arr,color,alpha,X,Y,frac){
+  fvx.save();fvx.globalAlpha=alpha;fvx.strokeStyle=color;fvx.lineWidth=2;
+  // ekspiratuvar
+  var n=Math.max(2,Math.floor(arr.v.length*frac));
+  fvx.beginPath(); for(var i=0;i<n;i++){ var x=X(arr.v[i]),y=Y(arr.q[i]); if(i===0)fvx.moveTo(x,y);else fvx.lineTo(x,y); } fvx.stroke();
+  // inspiratuvar kol (halkayı kapat) — tam çizim
+  if(frac>=1 && arr.insp){ fvx.beginPath(); for(var j=arr.insp.length-1;j>=0;j--){ var p=arr.insp[j]; var xx=X(p.v),yy=Y(p.q); if(j===arr.insp.length-1)fvx.moveTo(xx,yy);else fvx.lineTo(xx,yy); } fvx.stroke(); }
+  fvx.restore();
+}
+function drawVT(animFrac){
+  var r=vt.getBoundingClientRect(),W=r.width,H=r.height; vtx.clearRect(0,0,W,H);
+  var padL=42,padB=34,padT=20,padR=14,plotW=W-padL-padR,plotH=H-padT-padB;
+  var maxT=8,maxVol=6;
+  function X(t){ return padL+(t/maxT)*plotW; } function Y(v){ return padT+plotH-(v/maxVol)*plotH; }
+  vtx.strokeStyle='rgba(160,176,196,.08)';vtx.lineWidth=1;vtx.font='9px "JetBrains Mono",monospace';vtx.fillStyle='rgba(108,120,137,.8)';
+  for(var tt=0;tt<=maxT;tt++){ var x=X(tt);vtx.beginPath();vtx.moveTo(x,padT);vtx.lineTo(x,padT+plotH);vtx.stroke();vtx.fillText(tt+'',x-3,padT+plotH+12);}
+  for(var vv=0;vv<=maxVol;vv++){ var y=Y(vv);vtx.beginPath();vtx.moveTo(padL,y);vtx.lineTo(padL+plotW,y);vtx.stroke();vtx.fillText(vv+'',padL-18,y+3);}
+  vtx.fillStyle='rgba(108,120,137,.9)';vtx.fillText('Hacim L',padL-34,padT+10);vtx.fillText('sn',padL+plotW-6,padT+plotH+22);
+  ENG.set.forEach(function(man,i){ plotVT(man.arr,man.m,COLORS[i%5],0.45,X,Y,1,false); });
+  if(ENG.lastArr && ENG.lastM){ plotVT(ENG.lastArr,ENG.lastM,'#eaf2fb',0.95,X,Y,animFrac==null?1:animFrac,true); }
+}
+function plotVT(arr,m,color,alpha,X,Y,frac,showT0){
+  vtx.save();vtx.globalAlpha=alpha;vtx.strokeStyle=color;vtx.lineWidth=2;
+  var n=Math.max(2,Math.floor(arr.t.length*frac));
+  vtx.beginPath(); for(var i=0;i<n;i++){ var x=X(arr.t[i]),y=Y(arr.v[i]); if(i===0)vtx.moveTo(x,y);else vtx.lineTo(x,y);} vtx.stroke();
+  if(showT0 && frac>=1 && m){ // t0 geri ekstrapolasyon üçgeni: tepe eğimiyle hacim eksenine teğet
+    vtx.strokeStyle='rgba(217,164,65,.9)';vtx.setLineDash([4,3]);vtx.lineWidth=1.5;
+    var x0=X(m.t0),y0=Y(0), xp=X(m.tp),yp=Y(m.Vtp);
+    vtx.beginPath();vtx.moveTo(x0,y0);vtx.lineTo(xp,yp);vtx.stroke();
+    vtx.setLineDash([]);
+    vtx.fillStyle='rgba(217,164,65,.95)';vtx.font='10px Inter';vtx.fillText('t₀='+m.t0.toFixed(2)+'s',x0-4,y0+13);
+    // FEV1 işareti
+    var xf=X(m.t0+1), yf=Y(m.FEV1); vtx.strokeStyle='rgba(143,227,191,.8)';vtx.beginPath();vtx.moveTo(xf,Y(0));vtx.lineTo(xf,yf);vtx.stroke();
+    vtx.fillStyle='rgba(143,227,191,.95)';vtx.fillText('FEV1',xf+2,yf-4);
+  }
+  vtx.restore();
+}
+
+/* ======================= MANEVRA ======================= */
+function maneuverOpts(){
+  var o={ hesitant:!ENG.coach.expl, earlyTerm:!ENG.coach.sust, effort:ENG.coach.deep?1.0:0.86 };
+  // artefakt vakası: ilk 2 manevra zorlu hasta (koçluğa rağmen), 3+ düzelir
+  if(ENG.cas.artifact){ var k=ENG.set.length; if(k===0){ o.cough=true;o.coughTime=0.5; } else if(k===1){ o.earlyTerm=true;o.termTime=2.3; } }
+  if(ENG.bdPhase) o.postBD=true;
+  return o;
+}
+function runManeuver(forceOpt){
+  var opt=forceOpt||maneuverOpts();
+  var arr=simulate(ENG.cas,opt), m=measure(arr), q=quality(m,opt);
+  ENG.lastArr=arr; ENG.lastM=m; ENG.lastQ=q;
+  var man={arr:arr,m:m,q:q,bd:!!opt.postBD,acceptFEV1:q.fev1Usable,acceptFVC:q.fvcUsable};
+  ENG.set.push(man);
+  renderMeasures(); renderSet(); renderInterp();
+  animatePlay();
+  return {m:m,q:q};
+}
+function animatePlay(){
+  if(ENG.anim) cancelAnimationFrame(ENG.anim);
+  var dur=1100, t0=performance.now();
+  function step(now){ var f=clamp((now-t0)/dur,0,1); drawFV(f); drawVT(f); if(f<1) ENG.anim=requestAnimationFrame(step); else draw(); }
+  ENG.anim=requestAnimationFrame(step);
+}
+
+/* ======================= RENDER ======================= */
+function fmt(x,u){ return (x==null||isNaN(x))?'—':(x.toFixed(2)+(u?' '+u:'')); }
+function renderMeasures(){
+  var m=ENG.lastM,q=ENG.lastQ; if(!m){ return; }
+  $('rFEV1').textContent=fmt(m.FEV1,'L'); $('rFVC').textContent=fmt(m.FVC,'L'); $('rRatio').textContent=m.ratio.toFixed(2);
+  $('rPEF').textContent=fmt(m.PEF,'L/s'); $('rFEF').textContent=fmt(m.FEF2575,'L/s'); $('rFET').textContent=fmt(m.FET,'s');
+  $('rBEV').textContent=fmt(m.BEV,'L'); var be=$('rBEV'); be.className='v '+(q.bevOk?'ok':'bad');
+  $('rEOFE').textContent=m.EOFE?'Var':'Yok'; $('rEOFE').className='v '+(m.EOFE?'ok':'bad');
+  var acc=q.fev1Usable&&q.fvcUsable; $('rQual').textContent=acc?'Kabul':(q.flags.length?'Kusurlu':'—'); $('rQual').className='v '+(acc?'ok':'warn');
+  var rr=$('rRatio'); var lln=ENG.cas.lln||0.70; rr.className='v '+(m.ratio<lln?'bad':'ok');
+  $('qualFlags').innerHTML = q.flags.length? q.flags.map(function(f){ return '<span class="tag bad">'+flagTR(f)+'</span>'; }).join(' ') : '<span class="tag ok">Kabul edilebilir manevra</span>';
+}
+function flagTR(f){ return {HESITANT_START:'Tereddütlü başlangıç (BEV↑)',COUGH_1ST_SEC:'1. sn öksürük → FEV1 geçersiz',EARLY_TERMINATION:'Erken sonlandırma → FVC geçersiz'}[f]||f; }
+function renderSet(){
+  $('setCount').textContent=ENG.set.length+' manevra';
+  $('manList').innerHTML=ENG.set.map(function(man,i){
+    return '<div class="manrow"><span class="swatch" style="background:'+COLORS[i%5]+'"></span><b>#'+(i+1)+(man.bd?' (post-BD)':'')+'</b>'+
+      '<span class="mini">FEV1 '+man.m.FEV1.toFixed(2)+' · FVC '+man.m.FVC.toFixed(2)+'</span>'+
+      '<span style="flex:1"></span>'+
+      '<label class="chk"><input type="checkbox" data-k="fev1" data-i="'+i+'"'+(man.acceptFEV1?' checked':'')+'>FEV1</label>'+
+      '<label class="chk"><input type="checkbox" data-k="fvc" data-i="'+i+'"'+(man.acceptFVC?' checked':'')+'>FVC</label></div>';
+  }).join('');
+  [].forEach.call($('manList').querySelectorAll('input'),function(cb){ cb.onchange=function(){ var i=+cb.dataset.i; if(cb.dataset.k==='fev1')ENG.set[i].acceptFEV1=cb.checked; else ENG.set[i].acceptFVC=cb.checked; renderRepeat(); }; });
+  renderRepeat();
+}
+function acceptedFVC(){ return ENG.set.filter(function(m){return m.acceptFVC && !m.bd;}).map(function(m){return {FVC:m.m.FVC,FEV1:m.m.FEV1};}); }
+function acceptedFEV1(){ return ENG.set.filter(function(m){return m.acceptFEV1 && !m.bd;}).map(function(m){return {FVC:m.m.FVC,FEV1:m.m.FEV1};}); }
+function renderRepeat(){
+  var af=ENG.set.filter(function(m){return (m.acceptFEV1||m.acceptFVC)&&!m.bd;}).map(function(m){return {FVC:m.m.FVC,FEV1:m.m.FEV1};});
+  if(af.length<2){ $('repeatNote').innerHTML='<span class="mini" style="color:var(--ink-3)">Tekrarlanabilirlik için ≥2 kabul edilebilir manevra gerekir.</span>'; return; }
+  var rp=repeatability(af);
+  $('repeatNote').innerHTML='<span class="mini">Tekrarlanabilirlik: ΔFVC '+(rp.maxDiffFVC*1000).toFixed(0)+' mL · ΔFEV1 '+(rp.maxDiffFEV1*1000).toFixed(0)+' mL → '+
+    (rp.repeatable?'<span class="tag ok">tekrarlanabilir (≤150 mL)</span>':'<span class="tag bad">tekrarlanamaz (>150 mL)</span>')+'</span>';
+}
+function renderInterp(){
+  var C=ENG.cas, m=ENG.lastM; if(!m) return;
+  $('llnFixed').textContent='0.70'; $('llnVal').textContent=(C.lln||0.70).toFixed(2); $('llnAge').textContent=C.age+' y';
+  var lln=C.lln||0.70;
+  var txt=[];
+  if(m.ratio<lln){ txt.push('FEV1/FVC ('+m.ratio.toFixed(2)+') < LLN ('+lln.toFixed(2)+') → obstrüktif patern.'); }
+  else if(m.FVC < C.predFVC*0.80){ txt.push('FEV1/FVC normal ama FVC düşük (ölçülen '+m.FVC.toFixed(2)+' / beklenen '+C.predFVC+') → restriktif PATERN; TLC ile doğrulanmalı.'); }
+  else txt.push('FEV1/FVC ve FVC normal sınırlarda.');
+  // BD
+  var pre=ENG.set.filter(function(x){return !x.bd;}),post=ENG.set.filter(function(x){return x.bd;});
+  if(pre.length&&post.length){ var bFE=Math.max.apply(null,post.map(function(x){return x.m.FEV1;}))-Math.max.apply(null,pre.map(function(x){return x.m.FEV1;}));
+    var pct=bFE/C.predFEV1*100; txt.push('Post-BD ΔFEV1 = '+(bFE*1000).toFixed(0)+' mL (beklenenin %'+pct.toFixed(0)+'’i) → '+(pct>10?'ANLAMLI reversibilite (ATS/ERS 2022: >%10 beklenen)':'anlamlı değil')+'. (Eski kural: >%12 ve 200 mL.)'); }
+  $('interpNote').innerHTML=txt.join('<br>');
+}
+
+/* ======================= JÜRİ ======================= */
+function evaluate(){
+  var C=ENG.cas,dx=$('dxSel').value,tlc=$('tlcOrder').checked,flags=[],cats=[];
+  var truth=C.truthDx;
+  var accFVC=acceptedFVC(),accFEV1=acceptedFEV1();
+  var rp=repeatability(ENG.set.filter(function(m){return (m.acceptFEV1||m.acceptFVC)&&!m.bd;}).map(function(m){return {FVC:m.m.FVC,FEV1:m.m.FEV1};}));
+  // --- kanıt kapıları ---
+  if(dx==='restriction' && !tlc){ flags.push({cls:'red',t:'CLAIM_EXCEEDS_SPIROMETRY: Spirometri tek başına restriksiyonu KESİNLEŞTİRMEZ (psödorestriksiyon / hava hapsi dışlanamaz). Doğrulama için TLC (pletismografi / He dilüsyonu) gerekir.'}); }
+  var nAcc=ENG.set.filter(function(m){return (m.acceptFEV1&&m.acceptFVC)&&!m.bd;}).length;
+  if(nAcc<3 && !C.artifact){ flags.push({cls:'amber',t:'ATS/ERS: en az 3 kabul edilebilir manevra önerilir ('+nAcc+' kabul edildi).'}); }
+  if(ENG.set.length>=2 && !rp.repeatable && dx!=='nondiagnostic'){ flags.push({cls:'amber',t:'Tekrarlanabilirlik sağlanmadı (ΔFVC '+(rp.maxDiffFVC*1000).toFixed(0)+' / ΔFEV1 '+(rp.maxDiffFEV1*1000).toFixed(0)+' mL > 150 mL).'}); }
+  // kötü manevrayı kabul etme (kalite)
+  var badAccepted=ENG.set.some(function(m){ return (m.acceptFVC&&!m.q.fvcUsable)||(m.acceptFEV1&&!m.q.fev1Usable); });
+  if(badAccepted){ flags.push({cls:'red',t:'Geçersiz ölçüm kabul edildi: 1. sn öksürükte FEV1, erken kesmede FVC KABUL EDİLMEMELİ.'}); }
+
+  // --- kategoriler ---
+  var dxOk=(dx===truth);
+  var partial = (!dxOk) && ((truth==='restriction_suspect'&&dx==='restriction')||(truth==='obstruction'&&dx==='obstruction_reversible')||(truth==='obstruction_reversible'&&dx==='obstruction'));
+  var interp=dxOk?100:partial?55:15;
+  var quality=100; if(nAcc<3&&!C.artifact)quality-=25; if(ENG.set.length>=2&&!rp.repeatable&&dx!=='nondiagnostic')quality-=20; if(badAccepted)quality-=30; quality=clamp(quality,0,100);
+  var mgmt=100; if(dx==='restriction'&&!tlc)mgmt=10; else if(truth==='restriction_suspect'&&dx==='restriction_suspect'&&tlc)mgmt=100; else if(!dxOk&&!partial)mgmt=40;
+  var crit=100; flags.forEach(function(f){ crit-=f.cls==='red'?40:15; }); crit=clamp(crit,0,100);
+  interp=clamp(interp-(badAccepted?25:0),0,100);
+  var overall=Math.round(quality*0.30+interp*0.35+mgmt*0.20+crit*0.15);
+  cats.push(['Manevra Kalitesi & Kabul',Math.round(quality), nAcc+' kabul edilebilir · '+(rp.repeatable?'tekrarlanabilir':'tekrarlanamaz')]);
+  cats.push(['Patern Yorumu',Math.round(interp), dxOk?('Doğru: '+label(DX,truth)):(partial?'Yakın; gerçek: '+label(DX,truth):'Hatalı; gerçek: '+label(DX,truth))]);
+  cats.push(['Yönetim / Doğrulama',Math.round(mgmt), (truth==='restriction_suspect')?(tlc?'TLC istendi — doğru':'TLC istenmedi'):'—']);
+  cats.push(['Kritik Kurallar',Math.round(crit), flags.length?(flags.length+' uyarı'):'ihlal yok']);
+  renderJury(overall,cats,flags);
+  $('teachNote').textContent=C.teach;
+  if(ENG.examMode) $('caseStem').textContent=C.stem;
+  reportChain(dx,dxOk,overall,flags.length);
+  beep(overall>=70?700:300,0.12);
+}
+function label(arr,k){ var r=arr.find(function(x){return x[0]===k;}); return r?r[1]:k; }
+function renderJury(overall,cats,flags){
+  var col=overall>=75?'#8fe3bf':overall>=55?'#d9a441':'#e88b92';
+  var h='<div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:13px">SFT Jüri Karnesi</b><span class="mono" style="font-size:22px;font-weight:700;color:'+col+'">'+overall+'</span></div>';
+  cats.forEach(function(c){ var cc=c[1]>=75?'#8fe3bf':c[1]>=55?'#d9a441':'#e88b92';
+    h+='<div class="jury-cat"><div class="row"><span>'+c[0]+'</span><span class="mono" style="color:'+cc+'">'+c[1]+'</span></div><div class="bar"><span style="width:'+c[1]+'%;background:'+cc+'"></span></div><div class="hint">'+c[2]+'</div></div>'; });
+  flags.forEach(function(f){ h+='<div class="flag '+f.cls+'">'+f.t+'</div>'; });
+  if(!flags.length) h+='<div class="flag green">Kalite kuralları ve yorum tutarlı.</div>';
+  $('juryOut').innerHTML=h;
+}
+
+/* ======================= CORE ZİNCİRİ ======================= */
+function reportChain(dx,dxOk,score,nflags){ try{ if(!window.__chainS)return;
+  window.__chainS.addEvidence({modality:'spirometry',summary:'Spirometri: '+label(DX,dx)+' (skor '+score+')',claims:['lung_function'],quality:{assessable:nflags===0,regionsSeen:['akım-hacim']}}); }catch(e){} }
+(function initChain(){ var qs=new URLSearchParams(location.search); if(qs.get('chain')!=='1')return;
+  var sc=document.createElement('script');sc.src='../ductus-core.js';
+  sc.onload=function(){ try{ window.__chainS=DuctusCore.open({patientId:qs.get('pid')}); toast('🩺 Entegre vaka zinciri — spirometri bulgusu paylaşılan hastaya yansıyacak.');
+    DuctusCore.connectLifecycle({onDeactivate:function(){stopLoop();},onActivate:function(){startLoop();}}); }catch(e){} };
+  document.head.appendChild(sc); })();
+window.addEventListener('message',function(e){ var d=e.data; if(!d||!d.ductus)return;
+  if(d.type==='suite:pause'||d.type==='suite:module:deactivate') stopLoop();
+  else if(d.type==='suite:resume'||d.type==='suite:module:activate') startLoop(); });
+var loopOn=true; function stopLoop(){loopOn=false;} function startLoop(){loopOn=true;}
+
+/* ======================= AUDIO/TOAST ======================= */
+var AC=null,soundOn=true; function beep(f,d){ if(!soundOn)return; try{ AC=AC||new (window.AudioContext||window.webkitAudioContext)(); if(AC.state!=='running'&&AC.resume)AC.resume(); var o=AC.createOscillator(),g=AC.createGain();o.frequency.value=f;o.type='sine';g.gain.value=0.0001;o.connect(g);g.connect(AC.destination);var t=AC.currentTime;g.gain.exponentialRampToValueAtTime(0.05,t+0.01);g.gain.exponentialRampToValueAtTime(0.0001,t+d);o.start(t);o.stop(t+d+0.02);}catch(e){} }
+function toast(msg,kind){ var t=document.createElement('div');t.className='toast'+(kind?' '+kind:'');t.textContent=msg;$('toastBox').appendChild(t);setTimeout(function(){t.style.opacity='0';t.style.transition='.4s';setTimeout(function(){t.remove();},420);},3400); }
+
+/* ======================= VAKA YÜKLE ======================= */
+function loadCase(i){
+  ENG.idx=i; ENG.cas=CASES[i]; ENG.set=[]; ENG.lastArr=null; ENG.lastM=null; ENG.lastQ=null; ENG.bdPhase=false;
+  $('caseSel').value=i; $('caseStem').textContent=ENG.examMode?'🔒 Gizli vaka: manevra çekip paterni çözün.':ENG.cas.stem;
+  $('teachNote').textContent=ENG.examMode?'Sınav modunda öğretim notu gizli.':ENG.cas.teach;
+  $('phaseNote').textContent='Pre-bronkodilatör faz'; $('tlcOrder').checked=false; $('juryOut').innerHTML='';
+  ['rFEV1','rFVC','rRatio','rPEF','rFEF','rFET','rBEV','rEOFE','rQual'].forEach(function(id){$(id).textContent='—';$(id).className='v';});
+  $('qualFlags').innerHTML=''; renderSet(); $('interpNote').textContent=''; $('llnFixed').textContent='0.70'; $('llnVal').textContent=(ENG.cas.lln||0.70).toFixed(2); $('llnAge').textContent=ENG.cas.age+' y';
+  draw();
+}
+
+/* ======================= UI ======================= */
+function bindUI(){
+  var cs=$('caseSel'); Object.keys(CASES).forEach(function(k){ var o=document.createElement('option');o.value=k;o.textContent=k+'. '+CASES[k].name;cs.appendChild(o); });
+  $('caseCount').textContent='8 aile'; cs.onchange=function(){ loadCase(+cs.value); };
+  var ds=$('dxSel'); DX.forEach(function(d){ var o=document.createElement('option');o.value=d[0];o.textContent=d[1];ds.appendChild(o); });
+  [].forEach.call($('levelSeg').children,function(b){ b.onclick=function(){ [].forEach.call($('levelSeg').children,function(x){x.classList.remove('on');}); b.classList.add('on'); ENG.level=b.dataset.lvl; }; });
+  $('examToggle').onclick=function(){ ENG.examMode=!ENG.examMode; this.classList.toggle('on',ENG.examMode); loadCase(ENG.idx); };
+  $('homeBtn').onclick=function(){ location.href='../index.html'; };
+  function tog(id,key){ $(id).onclick=function(){ ENG.coach[key]=!ENG.coach[key]; this.classList.toggle('on',ENG.coach[key]); }; }
+  tog('cExpl','expl'); tog('cSust','sust'); tog('cDeep','deep');
+  $('doManeuver').onclick=function(){ runManeuver(); };
+  $('giveBD').onclick=function(){ if(acceptedFEV1().length<1){ toast('Önce en az 1 kabul edilebilir pre-BD manevra alın.','warn'); return; } ENG.bdPhase=true; $('phaseNote').textContent='Post-bronkodilatör faz (15 dk sonra)'; toast('400 mcg salbutamol verildi — 15 dk sonra post-BD set.'); };
+  $('resetSet').onclick=function(){ ENG.set=[];ENG.lastArr=null;ENG.lastM=null;ENG.bdPhase=false;$('phaseNote').textContent='Pre-bronkodilatör faz';renderSet();renderMeasures();draw(); };
+  $('declareBtn').onclick=evaluate;
+}
+
+/* ======================= TEST API ======================= */
+window.SFT={
+  loadCase:function(n){ loadCase(n); },
+  setCoach:function(c){ Object.assign(ENG.coach,c||{}); },
+  runManeuver:function(opt){ return runManeuver(opt||maneuverOpts()); },
+  measureArr:function(arr){ return measure(arr); },
+  simulate:function(opt){ return simulate(ENG.cas,opt||{}); },
+  repeatabilityOf:function(list){ return repeatability(list); },
+  uaoRatios:function(n){ return uaoRatios(n?CASES[n]:ENG.cas); },
+  qualityOf:function(opt){ var a=simulate(ENG.cas,opt||{}); var m=measure(a); return {m:m,q:quality(m,opt||{})}; },
+  declare:function(o){ if(o&&o.dx)$('dxSel').value=o.dx; $('tlcOrder').checked=!!(o&&o.tlc); evaluate(); return $('juryOut').innerText; },
+  juryFlags:function(o){ if(o&&o.dx)$('dxSel').value=o.dx; $('tlcOrder').checked=!!(o&&o.tlc); evaluate(); return [].slice.call($('juryOut').querySelectorAll('.flag')).map(function(f){return f.className+'|'+f.textContent;}); },
+  set:function(){ return ENG.set; }, _eng:ENG, CASES:CASES
+};
+
+/* ======================= INIT ======================= */
+function init(){ resize(); bindUI(); loadCase(1); }
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
+})();
+</script>
+</body>
+</html>

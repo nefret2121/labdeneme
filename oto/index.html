@@ -209,7 +209,16 @@ const $=id=>document.getElementById(id);
 const clamp=(x,a,b)=>x<a?a:x>b?b:x;
 
 // ---- TEK KAYNAK yükseklik-alanı sabitleri (Node'da kalibre edildi) ----
-const HF={ umbo:[0.08,-0.10], cone:0.95, bulgeAmp:0.80, retrAmp:0.45, power:40.0, hb:[-0.30,0.44,1.25] };
+// cone* : Politzer ışık üçgeni çukuru (umbodan antero-inferiora açılan kama)
+const HF={ umbo:[0.08,-0.10], cone:0.95, bulgeAmp:0.80, retrAmp:0.45, power:40.0, hb:[-0.30,0.44,1.25],
+  coneDir:[0.42,-0.86], coneLen:0.82, coneHalf0:0.05, coneHalfK:0.40, coneDepth:0.17 };
+function smoothstepJS(a,b,x){ var t=Math.max(0,Math.min(1,(x-a)/(b-a))); return t*t*(3-2*t); }
+function wedgeWJS(px,py){ var m=mirror();
+  var ux=HF.umbo[0]*m, uy=HF.umbo[1], d0=HF.coneDir[0]*m, d1=HF.coneDir[1];
+  var sx=px-ux, sy=py-uy, s=sx*d0+sy*d1, tt=-sx*d1+sy*d0;
+  var halfW=HF.coneHalf0+HF.coneHalfK*Math.max(s,0);
+  var w=smoothstepJS(0,0.07,s)*smoothstepJS(HF.coneLen,HF.coneLen*0.4,s)*smoothstepJS(halfW,halfW*0.15,Math.abs(tt));
+  return w*(1-Math.min(1,ENG.cas.bulge*1.4)); }
 
 /* ======================= VAKA AİLESİ (8) ======================= */
 // hyper: hiperemi, bulge: bombeleşme, retract, fluid: efüzyon(menisküs), scler: timpanoskleroz,
@@ -254,7 +263,7 @@ const PIN_STRUCTS=[['umbo','Umbo'],['malleus','Malleus sapı'],['reflex','Işık
 
 /* ======================= MOTOR DURUMU ======================= */
 const ENG={ idx:0, cas:CASES[0], speculum:4.0, traction:'none', depth:45, otoX:0, otoY:0,
-  pneu:0, pneuTarget:0, pneuBadge:'', examMode:false, pins:[], activeStruct:null,
+  pneu:0, pneuTarget:0, pneuBadge:'', examMode:false, level:'student', pins:[], activeStruct:null,
   look:{x:0,y:0}, dragging:false, painCount:0, pneuUsed:false, t:0 };
 
 function requiredTraction(){ return ENG.cas.age==='child' ? 'down-back' : 'up-back'; }
@@ -283,7 +292,8 @@ function heightJS(px,py){
   var r2=px*px+py*py;
   var zb=P.bulge*HF.bulgeAmp*(1.0-r2);
   var zr=-P.retract*HF.retrAmp*(1.0-du);
-  return zc+zb+zr + ENG.pneu*0.12*(1.0-r2);
+  var zt=-HF.coneDepth*wedgeWJS(px,py);     // Politzer ışık üçgeni çukuru
+  return zc+zb+zr+zt + ENG.pneu*0.12*(1.0-r2);
 }
 function normalJS(px,py){ var e=0.01;
   var zx=heightJS(px+e,py)-heightJS(px-e,py);
@@ -301,9 +311,9 @@ function specularScan(){
   }
   var above=0; for(var i=0;i<ss.length;i++) if(ss[i]>0.5*peak) above++;
   var spread=above/cnt, ecc=Math.hypot(ppx,ppy);
-  // bombeleşme dağıtır; perforasyon/serümen refleksi bozar
-  var dispersed=(ecc<0.22)||(spread>0.16)||(peak<0.30)||ENG.cas.bulge>0.5;
-  return { peak:+peak.toFixed(2), clock:clockOf(ppx,ppy), ecc:+ecc.toFixed(2), spread:+spread.toFixed(3), dispersed:dispersed };
+  // bombeleşme (koni tersine döner) dağıtır; perforasyon/serümen refleksi bozar
+  var dispersed=(ecc<0.18)||(peak<0.28)||ENG.cas.bulge>0.5;
+  return { peak:+peak.toFixed(2), clock:clockOf(ppx,ppy), px:+ppx.toFixed(2), py:+ppy.toFixed(2), ecc:+ecc.toFixed(2), spread:+spread.toFixed(3), dispersed:dispersed };
 }
 
 /* ======================= THREE.JS SAHNE ======================= */
@@ -317,14 +327,27 @@ const float CONE=${HF.cone.toFixed(3)};
 const float BULGEA=${HF.bulgeAmp.toFixed(3)};
 const float RETRA=${HF.retrAmp.toFixed(3)};
 const float POWER=${HF.power.toFixed(1)};
+const float CONELEN=${HF.coneLen.toFixed(3)};
+const float CONEH0=${HF.coneHalf0.toFixed(3)};
+const float CONEHK=${HF.coneHalfK.toFixed(3)};
+const float CONEDEPTH=${HF.coneDepth.toFixed(3)};
 vec2 UMBO(){ return vec2(${HF.umbo[0].toFixed(3)}*uMirror, ${HF.umbo[1].toFixed(3)}); }
+vec2 CONEDIR(){ return vec2(${HF.coneDir[0].toFixed(3)}*uMirror, ${HF.coneDir[1].toFixed(3)}); }
+float wedgeW(vec2 p){
+  vec2 u=UMBO(); vec2 d=CONEDIR(); vec2 s=p-u;
+  float ss=dot(s,d); float tt=-s.x*d.y+s.y*d.x;
+  float halfW=CONEH0+CONEHK*max(ss,0.0);
+  float w=smoothstep(0.0,0.07,ss)*smoothstep(CONELEN,CONELEN*0.4,ss)*smoothstep(halfW,halfW*0.15,abs(tt));
+  return w*(1.0-min(1.0,uBulge*1.4));
+}
 float hf(vec2 p){
   vec2 u=UMBO(); vec2 d=p-u; float du2=dot(d,d); float du=sqrt(du2);
   float zc=CONE*du2;
   float r2=dot(p,p);
   float zb=uBulge*BULGEA*(1.0-r2);
   float zr=-uRetract*RETRA*(1.0-du);
-  return zc+zb+zr + uPneu*0.12*(1.0-r2);
+  float zt=-CONEDEPTH*wedgeW(p);          // Politzer ışık üçgeni çukuru
+  return zc+zb+zr+zt + uPneu*0.12*(1.0-r2);
 }
 vec3 nrm(vec2 p){ float e=0.01;
   float zx=hf(p+vec2(e,0.))-hf(p-vec2(e,0.));
@@ -362,8 +385,9 @@ void main(){
   vec3 col=pearl;
   // kollajen lif dokusu (radyal+sirküler)
   float ang=atan(uv.y,uv.x);
-  float fib=0.5+0.5*sin(ang*46.0)*0.12 + 0.06*sin(r*40.0);
-  col*=(0.92+0.08*fib);
+  float radialFib=sin(ang*64.0);                 // pars tensa radyal kollajen lifleri
+  float circFib=sin(r*32.0);                     // sirküler lifler
+  col*=(0.90+0.075*radialFib*smoothstep(0.12,0.72,r)+0.03*circFib);
   // hiperemi (damarlanma — radyal kızarıklık, malleus boyunca)
   float vasc=uHyper*(0.5+0.5*noise(vec2(ang*3.0,r*6.0)));
   col=mix(col,vec3(0.86,0.30,0.26),clamp(uHyper*0.5+vasc*0.4,0.0,0.75));
@@ -378,6 +402,10 @@ void main(){
   // lateral çıkıntı (malleus üst ucunda nokta)
   float latP=smoothstep(0.09,0.0,length(uv-(u+msDir*0.6)))*uLandmark;
   col=mix(col,vec3(0.93,0.90,0.84),latP*0.7);
+  // vasküler stria — malleus sapı boyunca inen ince damarlar
+  float striaBand=smoothstep(0.16,0.0,perp)*step(0.0,along)*step(along,0.60)*uLandmark;
+  float stria=striaBand*(0.5+0.5*sin(along*70.0+2.0));
+  col=mix(col,vec3(0.80,0.34,0.30),stria*0.18*(0.6+uHyper*0.6));
   // umbo (merkez çöküntü koyu)
   col*=1.0-0.25*smoothstep(0.10,0.0,length(uv-u));
   // --- yarı saydam derin yapı (promontoryum/inkus) gölgesi ---
@@ -563,7 +591,8 @@ function updateReadouts(){
   var mob=mobilityObserved(); var mobTxt= !pneumaticValid()?'Geçersiz': mob>0.6?'Belirgin':mob>0.25?'Azalmış':'Yok';
   $('mobRead').textContent=mobTxt; $('mobRead').className='v '+(!pneumaticValid()?'warn':mob>0.6?'ok':mob>0.25?'warn':'bad');
   var vis=Math.round(visibleFrac()*100); $('visRead').textContent='%'+vis; $('visRead').className='v '+(vis>70?'ok':vis>45?'warn':'bad');
-  var rf=specularScan(); $('reflexRead').textContent= rf.dispersed?'Dağınık':('Saat '+Math.round(rf.clock)); $('reflexRead').className='v '+(rf.dispersed?'bad':'ok');
+  var rf=specularScan(); var showClock=(ENG.level==='resident' && !ENG.examMode);
+  $('reflexRead').textContent= rf.dispersed?'Dağınık':(showClock?('Saat '+Math.round(rf.clock)):'Konsantre'); $('reflexRead').className='v '+(rf.dispersed?'bad':'ok');
   $('pneuBadge').textContent=ENG.pneuBadge||( 'Spekulum '+ENG.speculum.toFixed(1)+' mm · '+(tractionCorrect()?'traksiyon ✓':'traksiyon —'));
   var tn=[]; if(!tractionCorrect()&&ENG.traction!=='none') tn.push('traksiyon yönü hatalı');
   if(ENG.speculum<4) tn.push('küçük spekulum (sızdırmazlık zor)');
@@ -690,7 +719,7 @@ function bindUI(){
   $('caseCount').textContent='8 aile'; cs.onchange=function(){ loadCase(+cs.value); };
   var ds=$('dxSel'); DX.forEach(function(d){ var o=document.createElement('option'); o.value=d[0]; o.textContent=d[1]; ds.appendChild(o); });
   var ms=$('mgSel'); MG.forEach(function(m){ var o=document.createElement('option'); o.value=m[0]; o.textContent=m[1]; ms.appendChild(o); });
-  [].forEach.call($('levelSeg').children,function(b){ b.onclick=function(){ [].forEach.call($('levelSeg').children,function(x){x.classList.remove('on');}); b.classList.add('on'); }; });
+  [].forEach.call($('levelSeg').children,function(b){ b.onclick=function(){ [].forEach.call($('levelSeg').children,function(x){x.classList.remove('on');}); b.classList.add('on'); ENG.level=b.dataset.lvl; }; });
   $('examToggle').onclick=function(){ ENG.examMode=!ENG.examMode; this.classList.toggle('on',ENG.examMode); loadCase(ENG.idx); toast(ENG.examMode?'Gizli vaka modu açık.':'Sınav modu kapalı.'); };
   $('homeBtn').onclick=function(){ location.href='../index.html'; };
   // traction
