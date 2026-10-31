@@ -15,8 +15,7 @@
   --accent:#6fa3c8;--accent-2:#4f7fa3;--accent-dim:rgba(111,163,200,.14);
   --amber:#d9a441;--amber-dim:rgba(217,164,65,.14);
   --ok:#5a9f7f;--ok-dim:rgba(90,159,127,.16);
-  --alert:#c4565f;--alert-dim:rgba(196,86,95,.16);
-  --violet:#9a86c9;
+  --alert:#c4565f;--alert-dim:rgba(196,86,95,.16);--violet:#9a86c9;
   --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   --mono:"JetBrains Mono","SF Mono",ui-monospace,monospace;
 }
@@ -32,10 +31,12 @@ body{background:radial-gradient(1200px 800px at 70% -10%,#0a1424 0%,var(--bg-0) 
 .seg{display:flex;border:1px solid var(--line-2);border-radius:9px;overflow:hidden}.seg button{border:0;border-radius:0;background:transparent}.seg button+button{border-left:1px solid var(--line-2)}
 .main{flex:1;display:flex;min-height:0}
 .stage{flex:1.3;min-width:0;position:relative;display:flex;flex-direction:column;background:#05080f}
-.canvas-wrap{flex:1;position:relative;min-height:0}#gl{position:absolute;inset:0;width:100%;height:100%;display:block}
-.modebar{position:absolute;top:12px;left:12px;display:flex;gap:6px;z-index:5}
-.badge{position:absolute;top:12px;right:12px;font-family:var(--mono);font-size:11px;color:var(--ink-2);background:rgba(8,12,20,.7);border:1px solid var(--line-2);border-radius:8px;padding:6px 10px;z-index:5}
-.stage-foot{flex:0 0 auto;border-top:1px solid var(--line);background:var(--glass);padding:9px 14px;min-height:56px}
+.canvas-wrap{flex:1;position:relative;min-height:0}#gl{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab}
+.modebar{position:absolute;top:12px;left:12px;display:flex;gap:6px;z-index:5;flex-wrap:wrap;max-width:60%}
+.cambar{position:absolute;top:12px;right:12px;display:flex;gap:6px;z-index:5}
+#cop{position:absolute;right:14px;bottom:14px;width:130px;height:130px;background:rgba(6,10,18,.8);border:1px solid var(--line-2);border-radius:10px;z-index:5;display:none}
+.coplbl{position:absolute;right:14px;bottom:148px;font-size:10px;color:var(--ink-3);z-index:5;display:none}
+.stage-foot{flex:0 0 auto;border-top:1px solid var(--line);background:var(--glass);padding:9px 14px;min-height:50px}
 .toolrow{display:flex;flex-wrap:wrap;gap:7px;align-items:center}
 .toolgrp{display:flex;align-items:center;gap:5px;padding:4px 7px;border:1px solid var(--line);border-radius:10px;background:var(--glass-2)}
 .toolgrp .lbl{font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3);white-space:nowrap}
@@ -49,18 +50,15 @@ select{width:100%;font-family:var(--sans);font-size:13px;color:var(--ink);backgr
 select:focus{outline:none;border-color:var(--accent-2)}
 .mini{font-size:11.5px;color:var(--ink-2)}
 .reflexgrid{display:grid;grid-template-columns:auto 1fr 1fr;gap:5px;align-items:center;margin-top:7px}
-.reflexgrid .h{font-size:9.5px;color:var(--ink-3);text-transform:uppercase}
-.reflexgrid button{font-size:11px;padding:6px 4px;border:1px solid var(--line-2);background:var(--bg-2);color:var(--ink-2);border-radius:7px;cursor:pointer}
+.reflexgrid .h{font-size:9.5px;color:var(--ink-3);text-transform:uppercase;text-align:center}
+.reflexgrid button{font-size:10.5px;padding:6px 3px;border:1px solid var(--line-2);background:var(--bg-2);color:var(--ink-2);border-radius:7px;cursor:pointer}
 .reflexgrid button:hover{border-color:var(--accent-2)}
-.grade{font-family:var(--mono);font-weight:600;text-align:center;font-size:13px}
 .rdg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .cell{border:1px solid var(--line);border-radius:9px;padding:8px 9px;background:var(--bg-2)}
 .cell .k{font-size:10px;color:var(--ink-3);text-transform:uppercase}.cell .v{font-family:var(--mono);font-size:14px;font-weight:600;margin-top:2px}
 .v.ok{color:#8fe3bf}.v.warn{color:var(--amber)}.v.bad{color:#e88b92}
 .chkline{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--ink-2);cursor:pointer;padding:4px 0}.chkline input{accent-color:var(--accent)}
 .btn-primary{width:100%;font-size:13.5px;font-weight:600;color:#06131d;background:linear-gradient(135deg,#7ec0e8,#5a9bc4);border:0;border-radius:10px;padding:11px;cursor:pointer}
-.btn-primary:hover{filter:brightness(1.08)}
-.btn-bridge{width:100%;font-size:12.5px;font-weight:600;color:#fff;background:linear-gradient(135deg,#8b6fc9,#6f56a8);border:0;border-radius:10px;padding:10px;cursor:pointer;margin-top:8px}
 .jury-cat{margin:8px 0;padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:var(--bg-2)}
 .jury-cat .row{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;font-weight:600}
 .bar{height:6px;border-radius:4px;background:#17202f;margin-top:6px;overflow:hidden}.bar>span{display:block;height:100%;border-radius:4px}
@@ -69,9 +67,9 @@ select:focus{outline:none;border-color:var(--accent-2)}
 .flag.amber{color:var(--amber);border-color:rgba(217,164,65,.45);background:var(--amber-dim)}
 .flag.green{color:#8fe3bf;border-color:rgba(90,159,127,.45);background:var(--ok-dim)}
 .hint{font-size:11px;color:var(--ink-3);margin-top:6px;line-height:1.45}
-#toastBox{position:fixed;top:64px;right:20px;display:flex;flex-direction:column;gap:8px;z-index:60;align-items:flex-end}
-.toast{background:rgba(10,16,28,.95);border:1px solid var(--line-2);border-left:3px solid var(--accent);border-radius:9px;padding:10px 14px;font-size:12.5px;color:var(--ink);max-width:380px;box-shadow:0 8px 28px rgba(0,0,0,.45)}
-.toast.warn{border-left-color:var(--amber)}
+#toastBox{position:fixed;left:24px;bottom:78px;display:flex;flex-direction:column;gap:8px;z-index:60}
+.toast{background:rgba(10,16,28,.95);border:1px solid var(--line-2);border-left:3px solid var(--accent);border-radius:9px;padding:10px 14px;font-size:12.5px;color:var(--ink);max-width:360px;box-shadow:0 8px 28px rgba(0,0,0,.45)}
+.toast.warn{border-left-color:var(--amber)}.toast.bad{border-left-color:var(--alert)}
 @media(max-width:960px){.main{flex-direction:column}.console{max-width:none;border-left:0;border-top:1px solid var(--line)}}
 </style>
 </head>
@@ -91,12 +89,15 @@ select:focus{outline:none;border-color:var(--accent-2)}
         <canvas id="gl"></canvas>
         <div class="modebar">
           <div class="seg"><button class="btn sm on" id="mGait">Yürüyüş</button><button class="btn sm" id="mRomberg">Romberg</button><button class="btn sm" id="mReflex">Refleks</button></div>
+          <div class="seg" id="subbar"></div>
         </div>
-        <div class="badge" id="badge">Yürüyüş gözlemi</div>
+        <div class="cambar">
+          <div class="seg"><button class="btn sm on" id="camSag">Sagital</button><button class="btn sm" id="camCor">Koronal</button><button class="btn sm" id="camPos">Posterior</button></div>
+        </div>
+        <canvas id="cop" width="130" height="130"></canvas>
+        <div class="coplbl" id="coplbl">CoP salınımı</div>
       </div>
-      <div class="stage-foot">
-        <div class="toolrow" id="footTools"></div>
-      </div>
+      <div class="stage-foot"><div class="toolrow" id="footTools"></div></div>
     </div>
     <div class="console">
       <div class="console-scroll">
@@ -116,8 +117,8 @@ select:focus{outline:none;border-color:var(--accent-2)}
           <div class="mini" id="findNote" style="margin-top:9px;color:var(--ink-3)"></div>
         </div>
         <div class="card" id="reflexCard">
-          <h3>Refleks Muayenesi <span class="eyebrow">0–4+ derece</span></h3>
-          <div class="mini">Hedef refleksi seç, çekiçle vur (taraf karşılaştır):</div>
+          <h3>Refleks Muayenesi <span class="eyebrow">kök · 0–4+</span></h3>
+          <div class="mini">Refleks kökünü seç, taraf karşılaştır. Babinski için "Çiz".</div>
           <div class="reflexgrid" id="reflexGrid"></div>
           <label class="chkline" style="margin-top:8px"><input type="checkbox" id="jendChk"> Jendrassik manevrası (elleri kenetleyip çek)</label>
         </div>
@@ -143,8 +144,8 @@ select:focus{outline:none;border-color:var(--accent-2)}
 import * as THREE from 'three';
 /* ============================================================================
  *  DuctusLab · NRO — Nörolojik Muayene (Yürüyüş · Denge · Refleks)
- *  Procedural kinematics: faz durum makinesi + 2-kemik IK (stance ayak dünyaya
- *  kilitli — kaymaz). Sabit animasyon dosyası YOK; her şey matematiksel.
+ *  Koşu bandı (treadmill) referansı: pelvis sabit merkezde, zemin kayar.
+ *  SERT KEMİK-UZUNLUĞU KİLİDİ: hedef erişimi aşarsa clamp; segment ASLA uzamaz.
  * ========================================================================== */
 const $=id=>document.getElementById(id);
 const clamp=(x,a,b)=>x<a?a:x>b?b:x;
@@ -152,223 +153,233 @@ const lerp=(a,b,t)=>a+(b-a)*t;
 const easeIO=t=>t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
 
 /* ======================= VAKALAR ======================= */
-// gait param: stepLen, cadence, baseWidth, liftH, kneeFlex, equinus, circ, pelvicDrop,
-//   trunkLean, armSwing, stamp, variability, festination, affected('R'/'L'/null), stiffKnee
-function G(o){ return Object.assign({stepLen:0.42,cadence:0.95,baseWidth:0.14,liftH:0.09,kneeFlex:1,equinus:0,circ:0.02,pelvicDrop:0,trunkLean:0,armSwing:1,stamp:0,variability:0,festination:0,affected:null,stiffKnee:false},o); }
-// reflex: 0 arefleksi,1 hipo,2 normal,3 hiper,4 klonus ; pendular(serebellar), clonus
-function R(o){ return Object.assign({pL:2,pR:2,aL:2,aR:2,bL:2,bR:2,pendular:false,clonus:false,areflexic:false},o); }
+function G(o){ return Object.assign({stepLen:0.42,cadence:0.95,baseWidth:0.14,liftH:0.09,equinus:0,circ:0.02,pelvicDrop:0,trunkLean:0,armSwing:1,stamp:0,variability:0,festination:0,affected:null,stiffKnee:false,retropulsion:0},o); }
+// refleks kökleri: c5/c6/c7 (üst), l4/s1 (alt) — her biri 0-4; babinski 'flexor'|'extensor'; pendular, clonus
+function R(o){ return Object.assign({c5:2,c6:2,c7:2,l4:2,s1:2,c5R:null,l4R:null,s1R:null,babinskiL:'flexor',babinskiR:'flexor',pendular:false,clonus:false,areflexic:false},o); }
 const CASES={
  1:{id:1,name:'Normal',gait:G({}),reflex:R({}),romberg:{base:0.05,visDep:0.05},truthDx:'normal',
    stem:'Sağlıklı birey. Yürüyüş, Romberg ve refleksleri sistematik değerlendirin.',
-   teach:'Normal: koordineli kol salınımı, topuk-burun vuruşu, dar taban; Romberg negatif; refleksler simetrik 2+.'},
- 2:{id:2,name:'Hemiplejik Yürüyüş (İnme sekeli)',gait:G({affected:'R',stiffKnee:true,equinus:0.5,circ:0.34,liftH:0.04,armSwing:0.4,stepLen:0.34}),reflex:R({pR:3,aR:3,bR:3,clonus:true}),romberg:{base:0.1,visDep:0.1},truthDx:'hemiplegic',
-   stem:'Geçirilmiş inme. Sağ bacağı sert, salınımda yana kavis çiziyor, sağ kol gövdeye yapışık.',
-   teach:'Hemiplejik (spastik) yürüyüş: etkilenen bacak ekstansiyonda, diz bükülmez, ayak ekin (düşük ayak) → salınımda sirkümdüksiyon (yana kavis). Etkilenen kol fleksiyonda, gövdeye yapışık (Wernicke-Mann), salınmaz. UMN → hiperrefleksi, klonus.'},
- 3:{id:3,name:'Parkinsonyen',gait:G({stepLen:0.16,cadence:1.5,trunkLean:0.3,armSwing:0.15,festination:0.5,liftH:0.03,baseWidth:0.1}),reflex:R({}),romberg:{base:0.12,visDep:0.08},truthDx:'parkinson',
-   stem:'Öne eğik, küçük sürüyen adımlar, azalmış kol salınımı, giderek hızlanma.',
-   teach:'Parkinsonyen yürüyüş: öne eğik gövde, kısa sürüyen adımlar (şuffling), azalmış kol salınımı, festinasyon (giderek hızlanma), dönüşlerde en bloc. Postüral instabilite geç dönem.'},
+   teach:'Normal: koordineli kol salınımı, topuk-burun vuruşu, dar taban; Romberg negatif; refleksler simetrik 2+; plantar fleksör (Babinski negatif).'},
+ 2:{id:2,name:'Hemiplejik Yürüyüş (İnme sekeli)',gait:G({affected:'R',stiffKnee:true,equinus:0.5,circ:0.34,liftH:0.04,armSwing:0.4,stepLen:0.34}),reflex:R({l4R:3,s1R:3,c5R:3,babinskiR:'extensor',clonus:true}),romberg:{base:0.1,visDep:0.1},truthDx:'hemiplegic',
+   stem:'Geçirilmiş inme. Bir bacağı sert, salınımda yana kavis çiziyor, aynı taraf kol gövdeye yapışık.',
+   teach:'Hemiplejik (spastik): etkilenen bacak ekstansiyonda, diz bükülmez, ayak ekin (düşük ayak) → sirkümdüksiyon. Kol fleksiyonda gövdeye yapışık (Wernicke-Mann). UMN → etkilenen tarafta hiperrefleksi, klonus, Babinski EKSTANSÖR.'},
+ 3:{id:3,name:'Parkinsonyen',gait:G({stepLen:0.16,cadence:1.5,trunkLean:0.3,armSwing:0.15,festination:0.5,liftH:0.03,baseWidth:0.1,retropulsion:0.7}),reflex:R({}),romberg:{base:0.12,visDep:0.08},truthDx:'parkinson',
+   stem:'Öne eğik, küçük sürüyen adımlar, azalmış kol salınımı, giderek hızlanma; çekme testinde geriye düşme eğilimi.',
+   teach:'Parkinsonyen: öne eğik gövde, şuffling adımlar, azalmış kol salınımı, festinasyon, en bloc dönüş. Çekme testinde (pull test) retropulsiyon — postüral refleks bozuk. Refleksler genelde normal.'},
  4:{id:4,name:'Serebellar Ataksi',gait:G({baseWidth:0.34,variability:0.5,stepLen:0.4,liftH:0.1,armSwing:0.8}),reflex:R({pendular:true}),romberg:{base:0.8,visDep:0.05},truthDx:'cerebellar',
-   stem:'Geniş tabanlı, sendelemeli, adım boyu/zamanlaması değişken; gövdede titreme. Tandem yapamıyor.',
-   teach:'Serebellar ataksi: geniş tabanlı, sendelemeli (titubasyon), düzensiz adımlar; tandem yürüyemez. Romberg NEGATİF (gözler açıkken de dengesiz — Romberg propriyosepsiyonu test eder, serebellumu değil!). Refleksler sarkaç (pendular).'},
- 5:{id:5,name:'Duyusal Ataksi (Romberg +)',gait:G({baseWidth:0.3,stamp:0.6,stepLen:0.38,liftH:0.12,armSwing:0.7}),reflex:R({pL:0,pR:0,aL:0,aR:0,areflexic:true}),romberg:{base:0.12,visDep:0.9},truthDx:'sensory',
+   stem:'Geniş tabanlı, sendelemeli, adım boyu/zamanlaması değişken; tandem yürüyemez.',
+   teach:'Serebellar ataksi: geniş tabanlı, sendelemeli, düzensiz adımlar; TANDEM yürüyemez. Romberg NEGATİF (gözler açıkken de dengesiz — Romberg propriyosepsiyonu test eder). Refleksler SARKAÇ (pendular).'},
+ 5:{id:5,name:'Duyusal Ataksi (Romberg +)',gait:G({baseWidth:0.3,stamp:0.6,stepLen:0.38,liftH:0.12,armSwing:0.7}),reflex:R({c5:0,c6:0,c7:0,l4:0,s1:0,areflexic:true}),romberg:{base:0.12,visDep:0.9},truthDx:'sensory',
    stem:'Gözünü yere dikerek, geniş tabanlı, ayağını yere sert vurarak yürüyor. Gözler kapanınca dengesi belirgin bozuluyor.',
-   teach:'Duyusal ataksi (arka kordon/propriyosepsiyon): gözle kompanse eder → yere bakar, geniş tabanlı, stamping (ayağı sert basma). Gözler kapanınca denge BELİRGİN bozulur → ROMBERG POZİTİF. Sıklıkla arefleksi (Jendrassik ile doğrula!).'},
- 6:{id:6,name:'Stepaj (Peroneal/L5)',gait:G({affected:'R',equinus:0.7,liftH:0.2,kneeFlex:1.5,stamp:0.4,stepLen:0.38}),reflex:R({aR:1}),romberg:{base:0.1,visDep:0.1},truthDx:'steppage',
-   stem:'Sağ ayağı düşük; takılmasın diye dizi ve kalçayı abartılı kaldırıyor, ayak yere "şap" çarpıyor.',
-   teach:'Stepaj: ayak dorsifleksiyon kaybı (düşük ayak) → ayağı sürümemek için diz/kalça abartılı fleksiyon (yüksek adımlama), ayak yere şap diye çarpar. Peroneal nöropati / L5 radikülopati (LMN → ilgili refleks düşük).'},
- 7:{id:7,name:'Ördekvari (Miyopatik)',gait:G({pelvicDrop:0.5,trunkLean:0,baseWidth:0.2,stepLen:0.36,armSwing:0.9}),reflex:R({pL:1,pR:1}),romberg:{base:0.1,visDep:0.1},truthDx:'waddling',
+   teach:'Duyusal ataksi (arka kordon): gözle kompanse → yere bakar, geniş tabanlı, stamping. Gözler kapanınca ROMBERG POZİTİF. Sıklıkla arefleksi — Jendrassik ile doğrula.'},
+ 6:{id:6,name:'Stepaj (Peroneal/L5)',gait:G({affected:'R',equinus:0.7,liftH:0.2,stamp:0.4,stepLen:0.38}),reflex:R({}),romberg:{base:0.1,visDep:0.1},truthDx:'steppage',
+   stem:'Bir ayağı düşük; takılmasın diye dizi ve kalçayı abartılı kaldırıyor, ayak yere "şap" çarpıyor.',
+   teach:'Stepaj: dorsifleksiyon kaybı (düşük ayak) → yüksek adımlama, ayak şap çarpar. Peroneal nöropati / L5 radikülopati (LMN). Aşil (S1) ve patella (L4) genelde KORUNUR, Babinski FLEKSÖR (normal).'},
+ 7:{id:7,name:'Ördekvari (Miyopatik)',gait:G({pelvicDrop:0.6,baseWidth:0.2,stepLen:0.36,armSwing:0.9}),reflex:R({c5:1,c6:1,l4:1,s1:1}),romberg:{base:0.1,visDep:0.1},truthDx:'waddling',
    stem:'Pelvis her adımda karşı tarafa düşüyor, gövde iki yana sallanıyor (ördek yürüyüşü).',
-   teach:'Ördekvari (Trendelenburg/miyopatik): zayıf kalça abdüktörleri → basan bacağın KARŞI tarafında pelvis düşer, gövde basan tarafa eğilerek kompanse → bilateral waddling. Proksimal kas güçsüzlüğü (miyopati).'},
- 8:{id:8,name:'Servikal Miyelopati (Spastik)',gait:G({baseWidth:0.1,stepLen:0.3,kneeFlex:0.7,equinus:0.3,circ:0.12,armSwing:0.6,cadence:0.8}),reflex:R({pL:4,pR:4,aL:4,aR:4,bL:3,bR:3,clonus:true}),romberg:{base:0.2,visDep:0.15},truthDx:'myelopathy',
+   teach:'Ördekvari (Trendelenburg/miyopatik): zayıf kalça abdüktörleri → basan bacağın karşı tarafında pelvis düşer, gövde basan tarafa eğilir → bilateral waddling. Proksimal kas güçsüzlüğü; refleksler hafif düşük olabilir.'},
+ 8:{id:8,name:'Servikal Miyelopati (Spastik)',gait:G({baseWidth:0.1,stepLen:0.3,equinus:0.3,circ:0.12,armSwing:0.6,cadence:0.8}),reflex:R({c5:4,c6:4,c7:3,l4:4,s1:4,babinskiL:'extensor',babinskiR:'extensor',clonus:true}),romberg:{base:0.2,visDep:0.15},truthDx:'myelopathy',
    stem:'Sert, makaslayan spastik yürüyüş; dört ekstremitede canlı refleksler, klonus.',
-   teach:'Servikal miyelopati: spastik (makaslayan) yürüyüş, hiperrefleksi + klonus + Hoffmann/Babinski (UMN). Geniş tabanlı değildir; propriyoseptif tutulum varsa Romberg hafif +. İleri olguda cerrahi dekompresyon.'}
+   teach:'Servikal miyelopati: spastik makaslayan yürüyüş, hiperrefleksi + klonus + Babinski BİLATERAL EKSTANSÖR + Hoffmann (UMN). Geniş tabanlı değildir. İleri olguda cerrahi dekompresyon.'}
 };
 const DX=[['normal','Normal'],['hemiplegic','Hemiplejik (spastik) yürüyüş'],['parkinson','Parkinsonyen'],['cerebellar','Serebellar ataksi'],
   ['sensory','Duyusal ataksi'],['steppage','Stepaj (düşük ayak)'],['waddling','Ördekvari (miyopatik)'],['myelopathy','Servikal miyelopati']];
 
 /* ======================= DURUM ======================= */
-const ENG={ idx:1, cas:CASES[1], level:'student', examMode:false, mode:'gait',
-  eyesClosed:false, jendrassik:false, reflexGrades:{}, lastReflex:null, t:0,
-  // gait state
-  pelvisX:0, legs:{L:{plantX:-0.0,plantZ:-0.14,state:'stance',swS:0,swT:0},R:{plantX:0,plantZ:0.14,state:'swing',swS:0,swT:0}},
-  circPeak:0 };
+const ENG={ idx:1, cas:CASES[1], level:'student', examMode:false, mode:'gait', maneuver:'normal',
+  eyesClosed:false, jendrassik:false, t:0, groundOff:0, orbitAz:0.35, orbitEl:0.32, dragging:false,
+  reflexDone:{}, lastReflex:null, flick:null, cop:[], pullT:-1, boneDev:0 };
 
-/* ======================= KİNEMATİK MOTOR ======================= */
-const HIP_H=0.92, THIGH=0.46, SHANK=0.46, HIPW=0.1;
-function ik2(L1,L2,dh,dy){ var d=Math.hypot(dh,dy); d=clamp(d,Math.abs(L1-L2)+0.02,L1+L2-0.02);
-  var base=Math.atan2(dy,dh), off=Math.acos(clamp((L1*L1+d*d-L2*L2)/(2*L1*d),-1,1));
-  var a1=base+off,a2=base-off; var a=(Math.cos(a1)>=Math.cos(a2))?a1:a2;   // diz önde
-  return {kh:Math.cos(a)*L1, ky:Math.sin(a)*L1}; }
-
+/* ======================= KİNEMATİK (treadmill + sert kemik) ======================= */
+const HIP_H=0.90, THIGH=0.48, SHANK=0.46, HIPW=0.1, REACH=THIGH+SHANK, ANKLE_H=0.09;
+// ayak bileği LOKAL yörüngesi (pelvis orijinde) — koşu bandı; y = ayak bileği yüksekliği
+function footLocal(side,lp,G){
+  var man=ENG.maneuver;
+  var half=G.stepLen*0.5, bw=HIPW+G.baseWidth*0.5;
+  if(man==='tandem') bw=HIPW*0.15;                 // tandem: ayaklar tek çizgi
+  var baseZ=(side==='L'?-1:1)*bw;
+  var affected=(G.affected===side);
+  if(lp<0.6){ var s=lp/0.6; return {x:lerp(half,-half,s),y:ANKLE_H,z:baseZ,toe:0,stance:true}; }  // basma: zemin hızıyla geriye
+  var s=(lp-0.6)/0.4; s=clamp(s,0,1);
+  var jit=G.variability? Math.sin((Math.floor(ENG.t*G.cadence)+(side==='L'?7:3))*12.9)*G.variability*0.10:0;
+  var lift=G.liftH*(affected&&G.stiffKnee?0.4:1);
+  var y=ANKLE_H+lift*Math.sin(Math.PI*s); if(G.stamp&&s>0.85) y=ANKLE_H;
+  var circ=(affected?G.circ:G.circ*0.3)*Math.sin(Math.PI*s);
+  return {x:lerp(-half,half,easeIO(s))+jit, y:y, z:baseZ+(side==='L'?-1:1)*circ, toe:(affected?G.equinus:G.equinus*0.25), stance:false};
+}
 function gaitStep(dt){
   var G=ENG.cas.gait; ENG.t+=dt;
-  var cad=G.cadence*(1+ENG.t*0.02*G.festination);   // festinasyon: giderek hızlan
-  cad=Math.min(cad,2.2);
-  var speed=G.stepLen*cad*2;                          // ileri hız
-  ENG.pelvisX+=speed*dt;
-  var p=ENG.t*cad;
-  ['L','R'].forEach(function(side){
-    var leg=ENG.legs[side], off=(side==='L')?0.5:0.0;
-    var lp=((p+off)%1+1)%1;
-    var stance=lp<0.62;
-    if(stance && leg.state==='swing'){ leg.state='stance'; leg.plantX=leg.footX; }       // temas → kilitle
-    if(!stance && leg.state==='stance'){ leg.state='swing'; leg.swS=leg.plantX; leg.swT=ENG.pelvisX+G.stepLen; }
-    var baseZ=(side==='L'?-1:1)*(HIPW+G.baseWidth*0.5);
-    if(leg.state==='stance'){ leg.footX=leg.plantX; leg.footY=0; leg.footZ=baseZ; leg.toe=0; }
-    else { var s=(lp-0.62)/0.38; s=clamp(s,0,1);
-      // adım değişkenliği (serebellar): tohumlu jitter
-      var jit = G.variability? (Math.sin((Math.floor(p)+ (side==='L'?7:3))*12.9)* G.variability*0.12):0;
-      leg.footX=lerp(leg.swS,leg.swT+jit,easeIO(s));
-      var affected=(G.affected===side);
-      var lift=G.liftH*(affected&&G.stiffKnee?0.4:1);
-      leg.footY=lift*Math.sin(Math.PI*s) + (G.stamp&&s>0.8? -0.0:0);
-      // sirkümdüksiyon (hemiplejik etkilenen bacak): yana kavis (z)
-      var circ = (affected? G.circ : G.circ*0.4) * Math.sin(Math.PI*s);
-      leg.footZ=baseZ + (side==='L'?-1:1)*circ;
-      if(affected) ENG.circPeak=Math.max(ENG.circPeak, Math.abs((side==='L'?-1:1)*G.circ));
-      leg.toe = G.equinus*(affected?1:0.3);   // ekin (ayak ucu aşağı)
-      // stamping: temas anında hızlı iniş
-      if(G.stamp&&s>0.85) leg.footY*=0.2;
-    }
-  });
+  var cad=Math.min(G.cadence*(1+ENG.t*0.015*G.festination),2.2);
+  var v=G.stepLen*cad;                   // ileri hız (görsel: zemin geriye kayar)
+  ENG.groundOff+=v*dt;
 }
 
 /* ======================= THREE.JS SAHNE ======================= */
-let renderer,scene,cam,fig={},gl=$('gl'),clock;
-function tube(r,color){ var m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,1,12), new THREE.MeshStandardMaterial({color:color,roughness:.7})); m.castShadow=true; return m; }
-function ball(r,color){ return new THREE.Mesh(new THREE.SphereGeometry(r,16,16),new THREE.MeshStandardMaterial({color:color,roughness:.6})); }
-function setSeg(mesh,a,b,r){ var ax=new THREE.Vector3(a.x,a.y,a.z),bx=new THREE.Vector3(b.x,b.y,b.z); var d=bx.clone().sub(ax); var len=d.length(); mesh.scale.set(1,Math.max(len,0.001),1); mesh.position.copy(ax).add(bx).multiplyScalar(0.5);
-  var up=new THREE.Vector3(0,1,0); mesh.quaternion.setFromUnitVectors(up,d.clone().normalize()); mesh.userData.r&&mesh.scale.set(mesh.userData.r,Math.max(len,0.001),mesh.userData.r); }
+let renderer,scene,cam,fig={},gl=$('gl'),grid;
+function tube(r,color){ var m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,1,12),new THREE.MeshStandardMaterial({color:color,roughness:.7})); m.userData.r=r; m.castShadow=true; return m; }
+function ball(r,color){ var m=new THREE.Mesh(new THREE.SphereGeometry(r,16,16),new THREE.MeshStandardMaterial({color:color,roughness:.6})); m.castShadow=true; return m; }
+function setTube(mesh,a,b){ var ax=new THREE.Vector3(a.x,a.y,a.z),bx=new THREE.Vector3(b.x,b.y,b.z),d=bx.clone().sub(ax),len=Math.max(d.length(),0.001);
+  mesh.scale.set(1,len,1); mesh.position.copy(ax.add(bx).multiplyScalar(0.5)); mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize()); }
 function initGL(){
   renderer=new THREE.WebGLRenderer({canvas:gl,antialias:true}); renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1)); renderer.shadowMap.enabled=true;
-  scene=new THREE.Scene(); scene.background=new THREE.Color(0x070b14); scene.fog=new THREE.Fog(0x070b14,6,16);
-  cam=new THREE.PerspectiveCamera(42,2,0.1,100); cam.position.set(1.6,1.2,4.2);
-  var hemi=new THREE.HemisphereLight(0x9fb4d0,0x202830,0.8); scene.add(hemi);
-  var dir=new THREE.DirectionalLight(0xffffff,0.9); dir.position.set(3,6,4); dir.castShadow=true; dir.shadow.mapSize.set(1024,1024); dir.shadow.camera.left=-5;dir.shadow.camera.right=5;dir.shadow.camera.top=5;dir.shadow.camera.bottom=-5; scene.add(dir);
-  // zemin (dünya sabit — grid planted ayak kaymaz göstergesi)
-  var grd=new THREE.Mesh(new THREE.PlaneGeometry(60,8),new THREE.MeshStandardMaterial({color:0x0c1422,roughness:1})); grd.rotation.x=-Math.PI/2; grd.receiveShadow=true; scene.add(grd);
-  var grid=new THREE.GridHelper(60,120,0x1b2a40,0x14202f); grid.position.y=0.002; scene.add(grid);
-  // figür
-  var skin=0x7fa8c8, cloth=0x44618a;
-  fig.pelvis=ball(0.12,cloth); fig.torso=tube(0.13,cloth); fig.torso.userData.r=0.13; fig.head=ball(0.13,skin); fig.neck=tube(0.05,skin);fig.neck.userData.r=0.05;
-  fig.thighL=tube(0.07,cloth);fig.thighR=tube(0.07,cloth);fig.shankL=tube(0.06,cloth);fig.shankR=tube(0.06,cloth);
-  fig.footL=tube(0.05,0x2a3550);fig.footR=tube(0.05,0x2a3550);
-  fig.uarmL=tube(0.05,skin);fig.uarmR=tube(0.05,skin);fig.farmL=tube(0.045,skin);fig.farmR=tube(0.045,skin);
-  ['thighL','thighR','shankL','shankR','footL','footR','uarmL','uarmR','farmL','farmR','torso','neck'].forEach(function(k){ fig[k].userData.r=fig[k].userData.r||fig[k].geometry.parameters.radiusTop; });
+  scene=new THREE.Scene(); scene.background=new THREE.Color(0x070b14); scene.fog=new THREE.Fog(0x070b14,7,18);
+  cam=new THREE.PerspectiveCamera(42,2,0.1,100);
+  scene.add(new THREE.HemisphereLight(0x9fb4d0,0x202830,0.8));
+  var dir=new THREE.DirectionalLight(0xffffff,0.95); dir.position.set(3,6,4); dir.castShadow=true; dir.shadow.mapSize.set(1024,1024); var sc=dir.shadow.camera; sc.left=-4;sc.right=4;sc.top=4;sc.bottom=-4; scene.add(dir);
+  var grd=new THREE.Mesh(new THREE.PlaneGeometry(80,10),new THREE.MeshStandardMaterial({color:0x0c1422,roughness:1})); grd.rotation.x=-Math.PI/2; grd.receiveShadow=true; scene.add(grd);
+  grid=new THREE.GridHelper(80,160,0x1b2a40,0x14202f); grid.position.y=0.002; scene.add(grid);
+  var cloth=0x44618a, clothR=0x5a6f8f, skin=0x86a7c4, dark=0x263150;
+  fig.pelvis=ball(0.1,cloth); fig.pelvisBar=tube(0.05,cloth); fig.torso=tube(0.13,cloth); fig.head=ball(0.13,skin); fig.neck=tube(0.05,skin);
+  ['L','R'].forEach(function(s){ var c=(s==='R'?clothR:cloth);
+    fig['thigh'+s]=tube(0.07,c); fig['shank'+s]=tube(0.06,c); fig['heel'+s]=tube(0.05,dark); fig['toe'+s]=tube(0.045,dark);
+    fig['uarm'+s]=tube(0.05,skin); fig['farm'+s]=tube(0.045,skin);
+    fig['knee'+s]=ball(0.055,c); fig['ankle'+s]=ball(0.05,c); fig['shoulder'+s]=ball(0.05,(s==='R'?0xd98a7a:0x7ab0c4)); // R/L renk işareti
+    fig['hip'+s]=ball(0.06,c); fig['elbow'+s]=ball(0.04,skin);
+  });
   Object.keys(fig).forEach(function(k){ scene.add(fig[k]); });
-  // knee/joint balls
-  fig.kneeL=ball(0.06,cloth);fig.kneeR=ball(0.06,cloth);fig.ankleL=ball(0.05,cloth);fig.ankleR=ball(0.05,cloth); fig.hipC=ball(0.1,cloth);
-  [fig.kneeL,fig.kneeR,fig.ankleL,fig.ankleR].forEach(function(m){scene.add(m);});
   resizeGL();
 }
 function resizeGL(){ var w=gl.clientWidth,h=gl.clientHeight; renderer.setSize(w,h,false); cam.aspect=w/h; cam.updateProjectionMatrix(); }
 window.addEventListener('resize',resizeGL);
 
-function setTube(mesh,a,b){ var r=mesh.userData.r||0.05; var ax=new THREE.Vector3(a.x,a.y,a.z),bx=new THREE.Vector3(b.x,b.y,b.z); var d=bx.clone().sub(ax),len=Math.max(d.length(),0.001);
-  mesh.scale.set(r/0.05*0.05/0.05* r , len, r/0.05*0.05); mesh.scale.set(1,len,1); // y uzar
-  mesh.geometry; mesh.position.copy(ax.clone().add(bx).multiplyScalar(0.5)); mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), d.normalize()); }
-
-function poseFigure(){
-  var G=ENG.cas.gait, px=ENG.pelvisX;
-  var lean=G.trunkLean;
-  var pelvisY=HIP_H + (ENG.mode==='gait'?0.015*Math.sin(ENG.t*ENG.cas.gait.cadence*4*Math.PI):0);
-  // ördekvari pelvis düşmesi: salınım bacağının KARŞI tarafı düşer
-  var drop=0;
-  if(G.pelvicDrop){ var swingL=ENG.legs.L.state==='swing'; drop = (swingL?1:-1)*G.pelvicDrop*0.08; }
-  var P={x:px,y:pelvisY,z:0};
-  function hip(side){ return {x:px + Math.sin(lean)*0.0, y:pelvisY+ (side==='L'?drop:-drop)*1, z:(side==='L'?-HIPW:HIPW)}; }
-  // bacaklar — IK
-  ['L','R'].forEach(function(side){
-    var leg=ENG.legs[side], H=hip(side);
-    var foot={x:(leg.footX||0)-px + px, y:leg.footY||0, z:leg.footZ||0};
-    // IK yatay-dikey düzlemde
-    var dxh=foot.x-H.x, dz=foot.z-H.z, dh=Math.hypot(dxh,dz)*(dxh<0?-1:1); var dy=foot.y-H.y;
-    var k;
-    if(G.stiffKnee && G.affected===side){ k={kh:dh*THIGH/(THIGH+SHANK),ky:dy*THIGH/(THIGH+SHANK)}; } // sert diz ~ düz
-    else k=ik2(THIGH,SHANK,dh,dy);
-    var dirx=(dh!==0?dxh/Math.abs(dh):1), dirz=(dh!==0?dz/Math.abs(dh):0);
-    var knee={x:H.x+dirx*k.kh, y:H.y+k.ky, z:H.z+dirz*k.kh};
-    var ankle={x:foot.x,y:foot.y+0.06,z:foot.z}; var toeDrop=leg.toe||0;
-    var toe={x:foot.x+0.14,y:foot.y - toeDrop*0.08,z:foot.z};
-    setTube(fig['thigh'+side],H,knee); setTube(fig['shank'+side],knee,ankle); setTube(fig['foot'+side],ankle,toe);
-    fig['knee'+side].position.set(knee.x,knee.y,knee.z); fig['ankle'+side].position.set(ankle.x,ankle.y,ankle.z);
-  });
-  // gövde + baş (öne eğim)
-  var neck={x:px+Math.sin(lean)*0.5, y:pelvisY+0.52-Math.cos(lean)*0.0, z:0};
-  var shoulderMid={x:px+Math.sin(lean)*0.45, y:pelvisY+0.5, z:0};
-  setTube(fig.torso,P,shoulderMid);
-  var headC={x:shoulderMid.x+Math.sin(lean)*0.18,y:shoulderMid.y+0.2,z:0};
-  setTube(fig.neck,shoulderMid,{x:headC.x,y:shoulderMid.y+0.08,z:0});
-  fig.head.position.set(headC.x,headC.y,0);
-  if(ENG.mode==='reflex'||ENG.mode==='romberg'){ fig.head.position.x += (ENG.cas.gait.stamp? 0.05:0); } // duyusal: yere bakma ipucu
-  fig.pelvis.position.set(P.x,P.y,0); fig.hipC.position.set(P.x,P.y,0);
-  // kollar — bacakların tersine salınır (azalmış per armSwing)
-  var sw=ENG.mode==='gait'? Math.sin(ENG.t*ENG.cas.gait.cadence*2*Math.PI)*0.35*G.armSwing : 0;
-  ['L','R'].forEach(function(side){
-    var sgn=(side==='L'?-1:1), shoulder={x:shoulderMid.x,y:shoulderMid.y,z:sgn*0.17};
-    var affectedArm=(ENG.cas.gait.affected===side && ENG.cas.gait.stiffKnee);
-    var ax = affectedArm? shoulder.x+0.12 : shoulder.x + (side==='L'?sw:-sw)*0.5; // etkilenen kol fleksiyonda öne
-    var elbow={x:ax, y:shoulder.y-0.22, z:sgn*0.19};
-    var hand={x:elbow.x+(affectedArm?0.1:0.02), y:elbow.y-0.2 + (affectedArm?0.12:0), z:sgn*0.2};
-    setTube(fig['uarm'+side],shoulder,elbow); setTube(fig['farm'+side],elbow,hand);
-  });
-  // kamera takip
-  cam.position.x = px+1.6; cam.lookAt(px, 0.9, 0);
+// SERT KEMİK KİLİDİ: 3B law-of-cosines; ||hip-knee||≡THIGH, ||knee-ankle||≡SHANK (ispatlı, sıfır esneme)
+function solveLeg(side, target, hip){
+  var dx=target.x-hip.x, dy=target.y-hip.y, dz=target.z-hip.z, d=Math.hypot(dx,dy,dz);
+  var maxd=REACH*0.995, mind=Math.abs(THIGH-SHANK)+0.012;
+  if(d>maxd){ var k=maxd/d; dx*=k;dy*=k;dz*=k; d=maxd; }       // erişimi aşarsa kalçadan o yöne clamp
+  else if(d<mind){ var k=mind/d; dx*=k;dy*=k;dz*=k; d=mind; }
+  var ankle={x:hip.x+dx,y:hip.y+dy,z:hip.z+dz};
+  var ux=dx/d, uy=dy/d, uz=dz/d;                               // kalça→ayak birim ekseni
+  var a=(THIGH*THIGH+d*d-SHANK*SHANK)/(2*d);                   // dizin eksen üzerindeki izdüşümü
+  var h=Math.sqrt(Math.max(THIGH*THIGH-a*a,0));                // diz bükülme offseti
+  var px=1-ux*ux, py=-ux*uy, pz=-ux*uz, pl=Math.hypot(px,py,pz);  // +x'in eksene dik bileşeni → diz ÖNE bükülür
+  if(pl<1e-4){ px=0;py=0;pz=1;pl=1; } px/=pl;py/=pl;pz/=pl;
+  var knee={x:hip.x+ux*a+px*h, y:hip.y+uy*a+py*h, z:hip.z+uz*a+pz*h};
+  return {knee:knee,ankle:ankle,foot:{x:ankle.x,y:ankle.y,z:ankle.z,toe:target.toe||0}};
 }
+function poseFigure(){
+  var G=ENG.cas.gait, lean=G.trunkLean;
+  var bob=(ENG.mode==='gait')?0.012*Math.sin(ENG.t*G.cadence*4*Math.PI):0;
+  var pullLean=0;
+  if(ENG.pullT>=0){ var pt=ENG.t-ENG.pullT; if(pt<1.4){ pullLean=-Math.sin(Math.min(pt,1)*Math.PI)*0.25*(1-G.retropulsion*0.4); } else ENG.pullT=-1; }
+  var pelvisY=HIP_H+bob;
+  var P={x:0,y:pelvisY,z:0};
+  var maxDev=0;
+  function hip(side){ var drop=0; if(G.pelvicDrop&&ENG.mode==='gait'){ var swingL=phaseOf('L')>=0.6; drop=(side==='L'? (swingL?1:-1):(swingL?-1:1))*0; // pelvis karşı tarafta düşer
+      var stanceSide=(phaseOf('L')<0.6)?'L':'R'; drop=(side!==stanceSide? -G.pelvicDrop*0.09:0); }
+    return {x:Math.sin(lean)*0.05, y:pelvisY+drop, z:(side==='L'?-HIPW:HIPW)}; }
+  ['L','R'].forEach(function(side){ var H=hip(side), foot;
+    if(ENG.mode==='gait'){ foot=footLocal(side,phaseOf(side),G); }
+    else { // statik ayakta duruş (Romberg/Refleks): ayaklar düz
+      var bw=HIPW+(ENG.mode==='romberg'?0.0:0.06); foot={x:0.02,y:ANKLE_H,z:(side==='L'?-1:1)*bw,toe:0};
+    }
+    var sol=solveLeg(side,foot,H);
+    // kemik uzunluğu sapması ölç (test)
+    var d1=Math.hypot(sol.knee.x-H.x,sol.knee.y-H.y,sol.knee.z-H.z), d2=Math.hypot(sol.ankle.x-sol.knee.x,sol.ankle.y-sol.knee.y,sol.ankle.z-sol.knee.z);
+    maxDev=Math.max(maxDev,Math.abs(d1-THIGH)/THIGH,Math.abs(d2-SHANK)/SHANK);
+    setTube(fig['thigh'+side],H,sol.knee); setTube(fig['shank'+side],sol.knee,sol.ankle);
+    fig['knee'+side].position.set(sol.knee.x,sol.knee.y,sol.knee.z); fig['ankle'+side].position.set(sol.ankle.x,sol.ankle.y,sol.ankle.z); fig['hip'+side].position.set(H.x,H.y,H.z);
+    // ayak: topuk + ayak ucu (ekin/düşük ayak toe ile); taban yere oturur, salınımda ayak bileğiyle kalkar
+    var toeDrop=(sol.foot.toe||0), sole=sol.ankle.y-ANKLE_H;
+    var heel={x:sol.ankle.x-0.08,y:sole,z:sol.ankle.z};
+    var toe={x:sol.ankle.x+0.17,y:sole-toeDrop*0.09,z:sol.ankle.z};
+    // Babinski görsel: refleks modunda etkilenen ayak ucu yukarı
+    if(ENG.mode==='reflex'&&ENG.flick&&ENG.flick.root==='bab'&&ENG.flick.side===side){ var ph=ENG.flick.type==='extensor'?1:-1; toe.y+=0.06*ph*Math.max(0,1-(ENG.t-ENG.flick.t)); }
+    setTube(fig['heel'+side],sol.ankle,heel); setTube(fig['toe'+side],sol.ankle,toe);
+  });
+  ENG.boneDev=maxDev;
+  // gövde + baş (öne eğim + pull lean)
+  var shoulderMid={x:Math.sin(lean+pullLean)*0.5, y:pelvisY+0.5, z:0};
+  setTube(fig.torso,P,shoulderMid);
+  var headC={x:shoulderMid.x+Math.sin(lean+pullLean)*0.18, y:shoulderMid.y+0.22, z:0};
+  setTube(fig.neck,shoulderMid,{x:headC.x,y:shoulderMid.y+0.08,z:0}); fig.head.position.set(headC.x,headC.y,0);
+  if((ENG.mode==='gait')&&ENG.cas.gait.stamp) fig.head.position.x+=0.06;   // duyusal: yere bakma
+  fig.pelvis.position.set(P.x,P.y,0); setTube(fig.pelvisBar,{x:0,y:pelvisY,z:-HIPW},{x:0,y:pelvisY,z:HIPW});
+  // kollar
+  var sw=(ENG.mode==='gait')?Math.sin(ENG.t*ENG.cas.gait.cadence*2*Math.PI)*0.4*G.armSwing:0;
+  ['L','R'].forEach(function(side){ var sgn=(side==='L'?-1:1), shoulder={x:shoulderMid.x,y:shoulderMid.y,z:sgn*0.17};
+    var affArm=(ENG.cas.gait.affected===side&&ENG.cas.gait.stiffKnee);
+    var elbow,hand;
+    if(affArm){ elbow={x:shoulder.x+0.14,y:shoulder.y-0.18,z:sgn*0.18}; hand={x:elbow.x+0.12,y:elbow.y-0.08,z:sgn*0.16}; } // fleksiyonda gövdeye yapışık
+    else { var ax=shoulder.x+(side==='L'?sw:-sw)*0.5; elbow={x:ax,y:shoulder.y-0.24,z:sgn*0.19}; hand={x:elbow.x+0.02,y:elbow.y-0.22,z:sgn*0.2};
+      // refleks flick: biseps/triseps/brakioradyalis → dirsek/el
+      if(ENG.mode==='reflex'&&ENG.flick&&ENG.flick.side===side&&['c5','c6','c7'].indexOf(ENG.flick.root)>=0){ var amp=flickAmp(); var fl=(ENG.flick.root==='c7'?-1:1)*amp; hand.x+=fl*0.18; hand.y+=Math.abs(fl)*0.1; }
+    }
+    setTube(fig['uarm'+side],shoulder,elbow); setTube(fig['farm'+side],elbow,hand);
+    fig['shoulder'+side].position.set(shoulder.x,shoulder.y,shoulder.z); fig['elbow'+side].position.set(elbow.x,elbow.y,elbow.z);
+  });
+  // refleks flick: patella/aşil → diz/ayak (statik duruşta)
+  if(ENG.mode==='reflex'&&ENG.flick&&['l4','s1'].indexOf(ENG.flick.root)>=0){ var side=ENG.flick.side, amp=flickAmp();
+    var kn=fig['knee'+side], an=fig['ankle'+side];
+    if(ENG.flick.root==='l4'){ an.position.x += amp*0.3; an.position.y += Math.abs(amp)*0.12; setTube(fig['shank'+side],{x:kn.position.x,y:kn.position.y,z:kn.position.z},{x:an.position.x,y:an.position.y,z:an.position.z}); }
+    else { an.position.y -= amp*0.06; }
+  }
+  // kamera (treadmill — hedef sabit origin)
+  var R=4.4, az=ENG.orbitAz, el=ENG.orbitEl;
+  cam.position.set(Math.sin(az)*R*Math.cos(el), 0.95+Math.sin(el)*2.2, Math.cos(az)*R*Math.cos(el));
+  cam.lookAt(0,0.85,0);
+  // zemin kaydır (koşu bandı)
+  if(grid){ grid.position.x = -((ENG.groundOff)%1.0); }
+}
+function phaseOf(side){ var G=ENG.cas.gait, cad=Math.min(G.cadence*(1+ENG.t*0.015*G.festination),2.2); var off=(side==='L')?0.5:0; return ((ENG.t*cad+off)%1+1)%1; }
+function flickAmp(){ if(!ENG.flick)return 0; var dt=ENG.t-ENG.flick.t, g=ENG.flick.grade;
+  if(ENG.flick.pendular){ return Math.sin(dt*8)*Math.exp(-dt*0.8)*0.5; }     // sarkaç
+  if(g>=4||ENG.flick.clonus){ return Math.sin(dt*22)*Math.exp(-dt*1.2)*0.5; } // klonus osilasyonu
+  return Math.sin(Math.min(dt,0.25)*Math.PI*4)*Math.exp(-dt*5)*(g/4); }        // tek sıçrama
 
-/* ======================= ROMBERG ======================= */
-function rombergSway(eyesOpen){ var r=ENG.cas.romberg; return r.base + (eyesOpen?0:r.visDep); }
-function applyRombergPose(dt){
-  // ayaklar bitişik statik; salınım genliği rombergSway'e bağlı
-  var amp=rombergSway(!ENG.eyesClosed);
-  var sway=Math.sin(ENG.t*2.1)*amp*0.12 + Math.sin(ENG.t*3.7)*amp*0.05;
-  ENG.pelvisX=0; ENG.legs.L.footX=0;ENG.legs.L.footY=0;ENG.legs.L.footZ=-0.05;ENG.legs.L.toe=0;
-  ENG.legs.R.footX=0;ENG.legs.R.footY=0;ENG.legs.R.footZ=0.05;ENG.legs.R.toe=0;
-  // gövde salınımı pose'da uygula
-  ENG._rombergSway=sway;
+/* ======================= ROMBERG CoP ======================= */
+var copCv=$('cop'),copCtx=copCv.getContext('2d');
+function rombergSway(eyesOpen){ var r=ENG.cas.romberg; return r.base+(eyesOpen?0:r.visDep); }
+function drawCoP(){ var w=130,h=130; copCtx.clearRect(0,0,w,h);
+  copCtx.strokeStyle='rgba(111,163,200,.3)'; copCtx.beginPath();copCtx.arc(w/2,h/2,55,0,6.283);copCtx.stroke();
+  copCtx.strokeStyle='rgba(160,176,196,.12)';copCtx.beginPath();copCtx.moveTo(w/2,8);copCtx.lineTo(w/2,h-8);copCtx.moveTo(8,h/2);copCtx.lineTo(w-8,h/2);copCtx.stroke();
+  copCtx.strokeStyle=ENG.eyesClosed?'#e88b92':'#8fe3bf'; copCtx.lineWidth=1.3; copCtx.beginPath();
+  ENG.cop.forEach(function(p,i){ var x=w/2+p.x*50,y=h/2+p.y*50; if(i===0)copCtx.moveTo(x,y);else copCtx.lineTo(x,y); }); copCtx.stroke();
+  copCtx.fillStyle=ENG.eyesClosed?'#e88b92':'#8fe3bf'; var last=ENG.cop[ENG.cop.length-1]; if(last){ copCtx.beginPath();copCtx.arc(w/2+last.x*50,h/2+last.y*50,3,0,6.283);copCtx.fill(); }
 }
 
 /* ======================= DÖNGÜ ======================= */
 let running=true,last=0;
 function loop(ts){ if(!running)return; var dt=last?Math.min(0.05,(ts-last)/1000):0.016; last=ts;
-  if(ENG.mode==='gait'){ gaitStep(dt); }
-  else if(ENG.mode==='romberg'){ ENG.t+=dt; applyRombergPose(dt); }
-  else { ENG.t+=dt; ENG.pelvisX=0; ENG.legs.L.footX=-0.05;ENG.legs.L.footY=0;ENG.legs.L.footZ=-0.14;ENG.legs.R.footX=-0.05;ENG.legs.R.footY=0;ENG.legs.R.footZ=0.14; }
-  poseFigure();
-  if(ENG.mode==='romberg' && ENG._rombergSway){ fig.head.position.z+=ENG._rombergSway; fig.pelvis.position.z+=ENG._rombergSway*0.4; }
-  renderer.render(scene,cam); updateReadouts();
+  if(ENG.mode==='gait') gaitStep(dt); else ENG.t+=dt;
+  if(ENG.mode==='romberg'){ var amp=rombergSway(!ENG.eyesClosed); var sx=Math.sin(ENG.t*2.1)*amp+Math.sin(ENG.t*3.7)*amp*0.4, sy=Math.cos(ENG.t*1.7)*amp*0.8;
+    ENG.cop.push({x:clamp(sx,-1,1),y:clamp(sy,-1,1)}); if(ENG.cop.length>120)ENG.cop.shift(); drawCoP();
+    fig.head.position.z=sx*0.3; fig.pelvis.position.z=sx*0.12; }
+  poseFigure(); renderer.render(scene,cam); updateReadouts();
   requestAnimationFrame(loop);
 }
 function startLoop(){ if(!running){running=true;last=0;requestAnimationFrame(loop);} } function stopLoop(){ running=false; }
 
 function updateReadouts(){
   $('modeRead').textContent={gait:'Yürüyüş',romberg:'Romberg',reflex:'Refleks'}[ENG.mode];
-  $('baseRead').textContent=(ENG.cas.gait.baseWidth>0.25?'Geniş':ENG.cas.gait.baseWidth>0.16?'Orta':'Dar');
-  $('baseRead').className='v '+(ENG.cas.gait.baseWidth>0.25?'warn':'ok');
-  if(ENG.mode==='romberg'){ var open=rombergSway(true),closed=rombergSway(false); $('swayRead').textContent='Açık '+open.toFixed(2)+' / Kapalı '+closed.toFixed(2); $('swayRead').className='v '+((closed-open)>0.4?'bad':'ok'); }
+  var hide=(ENG.level==='student'||ENG.examMode);
+  $('baseRead').textContent= hide?'Gözlemleyin':(ENG.cas.gait.baseWidth>0.25?'Geniş':ENG.cas.gait.baseWidth>0.16?'Orta':'Dar');
+  $('baseRead').className='v '+(hide?'':(ENG.cas.gait.baseWidth>0.25?'warn':'ok'));
+  if(ENG.mode==='romberg'){ var o=rombergSway(true),c=rombergSway(false); $('swayRead').textContent=(ENG.eyesClosed?'Kapalı '+c.toFixed(2):'Açık '+o.toFixed(2)); $('swayRead').className='v '+((ENG.eyesClosed&&(c-o)>0.4)?'bad':'ok'); }
   else $('swayRead').textContent='—';
   $('jendRead').textContent=ENG.jendrassik?'Uygulandı':'Yok'; $('jendRead').className='v '+(ENG.jendrassik?'ok':'');
 }
 
 /* ======================= REFLEKS ======================= */
-var REFLEXES=[['p','Patella'],['a','Aşil'],['b','Biseps']];
+var ROOTS=[['c5','Biseps (C5)'],['c6','Brakioradyalis (C6)'],['c7','Triseps (C7)'],['l4','Patella (L4)'],['s1','Aşil (S1)'],['bab','Babinski (plantar)']];
+function reflexGrade(root,side){ var rf=ENG.cas.reflex; var key=root+(side==='R'?'R':''); var v=rf[key]; if(v==null) v=rf[root]; return v; }
+function babinski(side){ return ENG.cas.reflex['babinski'+side]||'flexor'; }
 function buildReflexGrid(){ var g=$('reflexGrid'); g.innerHTML='<div class="h"></div><div class="h">Sol</div><div class="h">Sağ</div>';
-  REFLEXES.forEach(function(rf){ var lab=document.createElement('div');lab.className='mini';lab.textContent=rf[1];g.appendChild(lab);
-    ['L','R'].forEach(function(side){ var b=document.createElement('button'); b.id='rf-'+rf[0]+side; b.textContent='Vur'; b.onclick=function(){ strike(rf[0],side); }; g.appendChild(b); }); }); }
-function gradeText(gr,pendular){ return (['0 Arefleksi','1+ Hipo','2+ Normal','3+ Hiper','4+ Klonus'][gr]||gr)+(pendular?' · sarkaç':''); }
-function strike(rf,side){
-  var key=rf+side; var base=ENG.cas.reflex[key]; var pendular=ENG.cas.reflex.pendular;
-  // Jendrassik: arefleksik/hipoaktif yanıtı bir derece artırabilir (takviye)
-  var shown=base; if(ENG.jendrassik && base<=1) shown=Math.min(base+1,2);
-  ENG.reflexGrades[key]=shown; ENG.lastReflex={key:key,grade:shown,pendular:pendular};
-  var btn=$('rf-'+key); btn.textContent=['0','1+','2+','3+','4+'][shown]; btn.style.color=shown>=3?'#e88b92':shown<=1?'#d9a441':'#8fe3bf';
-  // kısa uzuv seğirmesi animasyonu (refleks modunda)
-  flickLimb(rf,side,shown,pendular); beep(300+shown*80,0.05);
-  var msg=REFLEXES.find(function(x){return x[0]===rf;})[1]+' '+(side==='L'?'sol':'sağ')+': '+gradeText(shown,pendular);
-  $('findNote').textContent=msg; toast(msg);
+  ROOTS.forEach(function(rf){ var lab=document.createElement('div');lab.className='mini';lab.textContent=rf[1];g.appendChild(lab);
+    ['L','R'].forEach(function(side){ var b=document.createElement('button'); b.id='rf-'+rf[0]+side; b.textContent=(rf[0]==='bab'?'Çiz':'Vur'); b.onclick=function(){ strike(rf[0],side); }; g.appendChild(b); }); }); }
+function strike(root,side){
+  if(ENG.mode!=='reflex') setMode('reflex');
+  if(root==='bab'){ var r=babinski(side); ENG.flick={root:'bab',side:side,type:r,t:ENG.t}; ENG.reflexDone['bab'+side]=r;
+    var msg='Babinski '+(side==='L'?'sol':'sağ')+': '+(r==='extensor'?'EKSTANSÖR (başparmak dorsifleksiyon — patolojik, UMN)':'fleksör (normal)');
+    $('rf-bab'+side).style.color=r==='extensor'?'#e88b92':'#8fe3bf'; $('rf-bab'+side).textContent=r==='extensor'?'↑ Ext':'↓ Flx'; $('findNote').textContent=msg; toast(msg,r==='extensor'?'bad':''); beep(r==='extensor'?220:360,0.06); return; }
+  var base=reflexGrade(root,side); var shown=base; if(ENG.jendrassik&&base<=1) shown=Math.min(base+1,2);
+  var pend=ENG.cas.reflex.pendular, clo=(shown>=4||ENG.cas.reflex.clonus);
+  ENG.flick={root:root,side:side,grade:shown,pendular:pend,clonus:clo,t:ENG.t}; ENG.reflexDone[root+side]=shown;
+  var b=$('rf-'+root+side); b.textContent=['0','1+','2+','3+','4+'][shown]; b.style.color=shown>=3?'#e88b92':shown<=1?'#d9a441':'#8fe3bf';
+  var txt=['Arefleksi','Hipoaktif','Normal','Hiperaktif','Klonus'][shown]+(pend?' · sarkaç':'');
+  var msg=ROOTS.find(function(x){return x[0]===root;})[1]+' '+(side==='L'?'sol':'sağ')+': '+shown+'+ '+txt;
+  $('findNote').textContent=msg; toast(msg); beep(300+shown*80,0.05);
 }
-var flick={};
-function flickLimb(rf,side,gr,pendular){ flick={rf:rf,side:side,t:0,amp:(gr/4)*0.4,pendular:pendular}; }
 
 /* ======================= AUDIO/TOAST ======================= */
 var AC=null,soundOn=true; function beep(f,d){ if(!soundOn)return; try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();if(AC.state!=='running'&&AC.resume)AC.resume();var o=AC.createOscillator(),g=AC.createGain();o.frequency.value=f;o.type='sine';g.gain.value=0.0001;o.connect(g);g.connect(AC.destination);var t=AC.currentTime;g.gain.exponentialRampToValueAtTime(0.05,t+0.01);g.gain.exponentialRampToValueAtTime(0.0001,t+d);o.start(t);o.stop(t+d+0.02);}catch(e){} }
@@ -376,66 +387,57 @@ function toast(msg,kind){ var t=document.createElement('div');t.className='toast
 
 /* ======================= JÜRİ ======================= */
 function evaluate(){
-  var C=ENG.cas,dx=$('dxSel').value,flags=[],cats=[];
-  var truth=C.truthDx, areflexiaClaim=$('areflexiaClaim').checked, rombergClaim=$('rombergClaim').checked;
-  // YETERSİZ_TEKNİK: Jendrassik yapılmadan arefleksi iddiası
-  if(areflexiaClaim && !ENG.jendrassik){ flags.push({cls:'red',t:'YETERSİZ_TEKNİK / UNSUPPORTED_CLAIM: Refleks alınamadı diye arefleksi demeden önce Jendrassik manevrası (distraksiyonla takviye) yapılmalıdır.'}); }
-  // Romberg tuzağı: serebellar tanısı Romberg'e dayandırılırsa
-  if(dx==='cerebellar' && rombergClaim){ flags.push({cls:'amber',t:'Serebellar ataksi tanısı ROMBERG ile konmaz! Romberg propriyosepsiyonu (arka kordon) test eder; serebellar hasta gözler açıkken de dengesizdir (Romberg negatif).'}); }
-  if(dx==='sensory' && !rombergClaim && truth==='sensory'){ flags.push({cls:'amber',t:'Duyusal atakside Romberg pozitifliği kilit bulgudur — değerlendirmediniz.'}); }
-
-  var dxOk=(dx===truth);
-  var partial=(!dxOk)&&((truth==='cerebellar'&&dx==='sensory')||(truth==='sensory'&&dx==='cerebellar')||(truth==='myelopathy'&&dx==='hemiplegic')||(truth==='hemiplegic'&&dx==='myelopathy'));
+  var C=ENG.cas,dx=$('dxSel').value,flags=[],cats=[]; var truth=C.truthDx, areflexiaClaim=$('areflexiaClaim').checked, rombergClaim=$('rombergClaim').checked;
+  if(areflexiaClaim&&!ENG.jendrassik){ flags.push({cls:'red',t:'YETERSİZ_TEKNİK / UNSUPPORTED_CLAIM: Refleks alınamadı diye arefleksi demeden önce Jendrassik manevrası (distraksiyonla takviye) yapılmalıdır.'}); }
+  if(dx==='cerebellar'&&rombergClaim){ flags.push({cls:'amber',t:'Serebellar ataksi tanısı ROMBERG ile konmaz! Romberg propriyosepsiyonu test eder; serebellar hasta gözler açıkken de dengesizdir (Romberg negatif).'}); }
+  if(truth==='sensory'&&dx==='sensory'&&!rombergClaim){ flags.push({cls:'amber',t:'Duyusal atakside Romberg pozitifliği kilit bulgudur — değerlendirmediniz.'}); }
+  var dxOk=(dx===truth); var partial=(!dxOk)&&((truth==='cerebellar'&&dx==='sensory')||(truth==='sensory'&&dx==='cerebellar')||(truth==='myelopathy'&&dx==='hemiplegic')||(truth==='hemiplegic'&&dx==='myelopathy'));
   var interp=dxOk?100:partial?55:15;
-  var tech=100; if(areflexiaClaim&&!ENG.jendrassik)tech-=35; if(Object.keys(ENG.reflexGrades).length<2)tech-=15; tech=clamp(tech,0,100);
+  var tech=100; if(areflexiaClaim&&!ENG.jendrassik)tech-=35; if(Object.keys(ENG.reflexDone).length<2)tech-=15; tech=clamp(tech,0,100);
   var crit=100; flags.forEach(function(f){ crit-=f.cls==='red'?35:12; }); crit=clamp(crit,0,100);
   interp=clamp(interp-(flags.some(function(f){return f.cls==='red';})?20:0),0,100);
   var overall=Math.round(tech*0.3+interp*0.4+crit*0.3);
-  cats.push(['Muayene Tekniği',Math.round(tech), (ENG.jendrassik?'Jendrassik ✓ · ':'')+Object.keys(ENG.reflexGrades).length+' refleks çekildi']);
-  cats.push(['Tanı',Math.round(interp), dxOk?('Doğru: '+label(DX,truth)):(partial?'Yakın; gerçek: '+label(DX,truth):'Hatalı; gerçek: '+label(DX,truth))]);
-  cats.push(['Kritik Kurallar',Math.round(crit), flags.length?(flags.length+' uyarı'):'ihlal yok']);
-  renderJury(overall,cats,flags);
-  $('teachNote').textContent=C.teach; if(ENG.examMode)$('caseStem').textContent=C.stem;
-  reportChain(dx,dxOk,overall,flags.length);
-  beep(overall>=70?700:300,0.12);
+  cats.push(['Muayene Tekniği',Math.round(tech),(ENG.jendrassik?'Jendrassik ✓ · ':'')+Object.keys(ENG.reflexDone).length+' refleks değerlendirildi']);
+  cats.push(['Tanı',Math.round(interp),dxOk?('Doğru: '+label(DX,truth)):(partial?'Yakın; gerçek: '+label(DX,truth):'Hatalı; gerçek: '+label(DX,truth))]);
+  cats.push(['Kritik Kurallar',Math.round(crit),flags.length?(flags.length+' uyarı'):'ihlal yok']);
+  renderJury(overall,cats,flags); $('teachNote').textContent=C.teach; if(ENG.examMode)$('caseStem').textContent=C.stem;
+  reportChain(dx,dxOk,overall,flags.length); beep(overall>=70?700:300,0.12);
 }
 function label(arr,k){ var r=arr.find(function(x){return x[0]===k;}); return r?r[1]:k; }
 function renderJury(overall,cats,flags){ var col=overall>=75?'#8fe3bf':overall>=55?'#d9a441':'#e88b92';
   var h='<div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:13px">NRO Jüri Karnesi</b><span class="mono" style="font-size:22px;font-weight:700;color:'+col+'">'+overall+'</span></div>';
   cats.forEach(function(c){ var cc=c[1]>=75?'#8fe3bf':c[1]>=55?'#d9a441':'#e88b92'; h+='<div class="jury-cat"><div class="row"><span>'+c[0]+'</span><span class="mono" style="color:'+cc+'">'+c[1]+'</span></div><div class="bar"><span style="width:'+c[1]+'%;background:'+cc+'"></span></div><div class="hint">'+c[2]+'</div></div>'; });
-  flags.forEach(function(f){ h+='<div class="flag '+f.cls+'">'+f.t+'</div>'; });
-  if(!flags.length) h+='<div class="flag green">Teknik ve yorum tutarlı, kural ihlali yok.</div>';
+  flags.forEach(function(f){ h+='<div class="flag '+f.cls+'">'+f.t+'</div>'; }); if(!flags.length) h+='<div class="flag green">Teknik ve yorum tutarlı, kural ihlali yok.</div>';
   $('juryOut').innerHTML=h; }
-
-/* ======================= CORE ZİNCİRİ ======================= */
 function reportChain(dx,dxOk,score,n){ try{ if(!window.__chainS)return; window.__chainS.addEvidence({modality:'neuroexam',summary:'Nörolojik muayene: '+label(DX,dx)+' (skor '+score+')',claims:['gait_finding'],quality:{assessable:n===0,regionsSeen:['yürüyüş','refleks']}}); }catch(e){} }
 (function initChain(){ var qs=new URLSearchParams(location.search); if(qs.get('chain')!=='1')return; var sc=document.createElement('script');sc.src='../ductus-core.js';
-  sc.onload=function(){ try{ window.__chainS=DuctusCore.open({patientId:qs.get('pid')}); toast('🩺 Entegre vaka zinciri — nörolojik muayene paylaşılan hastaya yansıyacak.');
-    DuctusCore.connectLifecycle({onDeactivate:function(){stopLoop();},onActivate:function(){startLoop();}}); }catch(e){} }; document.head.appendChild(sc); })();
+  sc.onload=function(){ try{ window.__chainS=DuctusCore.open({patientId:qs.get('pid')}); toast('🩺 Entegre vaka zinciri — nörolojik muayene paylaşılan hastaya yansıyacak.'); DuctusCore.connectLifecycle({onDeactivate:stopLoop,onActivate:startLoop}); }catch(e){} }; document.head.appendChild(sc); })();
 window.addEventListener('message',function(e){ var d=e.data;if(!d||!d.ductus)return; if(d.type==='suite:pause'||d.type==='suite:module:deactivate')stopLoop(); else if(d.type==='suite:resume'||d.type==='suite:module:activate')startLoop(); });
 
-/* ======================= VAKA YÜKLE ======================= */
-function loadCase(i){ ENG.idx=i; ENG.cas=CASES[i]; ENG.t=0; ENG.pelvisX=0; ENG.jendrassik=false; ENG.eyesClosed=false; ENG.reflexGrades={}; ENG.circPeak=0;
-  ENG.legs={L:{plantX:0,plantZ:-0.14,state:'stance'},R:{plantX:0.2,plantZ:0.14,state:'swing'}};
+/* ======================= VAKA / MOD / UI ======================= */
+function loadCase(i){ ENG.idx=i; ENG.cas=CASES[i]; ENG.t=0; ENG.groundOff=0; ENG.jendrassik=false; ENG.eyesClosed=false; ENG.reflexDone={}; ENG.flick=null; ENG.cop=[]; ENG.pullT=-1; ENG.maneuver='normal';
   $('caseSel').value=i; $('jendChk').checked=false; $('areflexiaClaim').checked=false; $('rombergClaim').checked=false; $('juryOut').innerHTML='';
   $('caseStem').textContent=ENG.examMode?'🔒 Gizli vaka: yürüyüş/Romberg/refleksle sendromu çözün.':ENG.cas.stem;
   $('teachNote').textContent=(ENG.level==='student'||ENG.examMode)?'Öğretim notu "Beyanı Değerlendir" sonrası açılır.':ENG.cas.teach;
-  buildReflexGrid(); $('findNote').textContent='';
-}
-
-/* ======================= MOD & UI ======================= */
+  buildReflexGrid(); $('findNote').textContent=''; }
 function setMode(m){ ENG.mode=m; ['mGait','mRomberg','mReflex'].forEach(function(id){$(id).classList.toggle('on',id==='m'+m.charAt(0).toUpperCase()+m.slice(1));});
-  $('badge').textContent={gait:'Yürüyüş gözlemi',romberg:'Romberg testi',reflex:'Refleks muayenesi'}[m];
-  $('reflexCard').style.display = m==='reflex'?'block':'block';
-  buildFootTools(); }
+  $('cop').style.display=m==='romberg'?'block':'none'; $('coplbl').style.display=m==='romberg'?'block':'none';
+  if(m!=='reflex'){ ENG.flick=null; } if(m==='reflex') ENG.maneuver='normal';
+  buildSubbar(); buildFootTools(); }
+function setCam(a){ ENG.orbitAz=a; ['camSag','camCor','camPos'].forEach(function(id){$(id).classList.remove('on');});
+  $(a<0?'camPos':Math.abs(a-Math.PI/2)<0.3?'camCor':'camSag').classList.add('on'); }
+function buildSubbar(){ var sb=$('subbar'); sb.innerHTML=''; if(ENG.mode!=='gait'){ return; }
+  [['normal','Normal'],['tandem','Tandem'],['pull','Çekme testi']].forEach(function(m){ var b=document.createElement('button');b.className='btn sm'+(ENG.maneuver===m[0]?' on':'');b.textContent=m[1];
+    b.onclick=function(){ ENG.maneuver=(m[0]==='pull'?'normal':m[0]); if(m[0]==='pull'){ ENG.pullT=ENG.t; var steps=Math.round(1+ENG.cas.gait.retropulsion*4); toast('Çekme testi: '+(ENG.cas.gait.retropulsion>0.4?'retropulsiyon — '+steps+' geri adım, düşme eğilimi':'1 düzeltici adım, stabil'),ENG.cas.gait.retropulsion>0.4?'warn':''); }
+      else if(m[0]==='tandem' && ENG.cas.truthDx==='cerebellar'){ toast('Tandem yürüyüş: serebellar hasta sendeliyor, dengesini kaybediyor.','warn'); } buildSubbar(); }; sb.appendChild(b); }); }
 function buildFootTools(){ var f=$('footTools'); f.innerHTML='';
-  if(ENG.mode==='gait'){ f.innerHTML='<div class="toolgrp"><span class="lbl">Yürüyüş</span><span class="mini">Yan profilden gözle: taban, kol salınımı, diz/ayak, sirkümdüksiyon/festinasyon</span></div>'; }
-  else if(ENG.mode==='romberg'){ var g=document.createElement('div');g.className='toolgrp'; g.innerHTML='<span class="lbl">Romberg</span>';
-    var bo=document.createElement('button');bo.className='btn sm'+(!ENG.eyesClosed?' on':'');bo.textContent='Gözler Açık';bo.onclick=function(){ENG.eyesClosed=false;buildFootTools();};
-    var bc=document.createElement('button');bc.className='btn sm'+(ENG.eyesClosed?' on':'');bc.textContent='Gözleri Kapat';bc.onclick=function(){ENG.eyesClosed=true;buildFootTools(); var o=rombergSway(true),c=rombergSway(false); toast('Gözler kapalı — salınım '+c.toFixed(2)+' ('+((c-o)>0.4?'Romberg POZİTİF':'belirgin değişim yok')+')',(c-o)>0.4?'warn':'');};
+  if(ENG.mode==='romberg'){ var g=document.createElement('div');g.className='toolgrp'; g.innerHTML='<span class="lbl">Romberg</span>';
+    var bo=document.createElement('button');bo.className='btn sm'+(!ENG.eyesClosed?' on':'');bo.textContent='Gözler Açık';bo.onclick=function(){ENG.eyesClosed=false;ENG.cop=[];buildFootTools();};
+    var bc=document.createElement('button');bc.className='btn sm'+(ENG.eyesClosed?' on':'');bc.textContent='Gözleri Kapat';bc.onclick=function(){ENG.eyesClosed=true;ENG.cop=[];buildFootTools(); var o=rombergSway(true),c=rombergSway(false); toast('Gözler kapalı — salınım '+c.toFixed(2)+' ('+((c-o)>0.4?'Romberg POZİTİF, ~'+(c/Math.max(o,0.05)).toFixed(1)+'x':'belirgin değişim yok')+')',(c-o)>0.4?'warn':'');};
     g.appendChild(bo);g.appendChild(bc); f.appendChild(g);
     var h=document.createElement('div');h.className='toolgrp';h.innerHTML='<span class="mini">Ayaklar bitişik; göz kapanınca salınım artışı propriyosepsiyon kaybını (Romberg+) gösterir. Serebellar hasta zaten dengesizdir.</span>';f.appendChild(h);
-  } else { f.innerHTML='<div class="toolgrp"><span class="lbl">Refleks</span><span class="mini">Sağdaki karttan hedef refleksi seçip vur; taraf karşılaştır. Arefleksi düşünüyorsan Jendrassik uygula.</span></div>'; }
+  } else if(ENG.mode==='reflex'){ f.innerHTML='<div class="toolgrp"><span class="lbl">Refleks</span><span class="mini">Sağdaki karttan kök seçip vur/çiz; 3B mankende uzuv tepki verir. Arefleksi düşünüyorsan Jendrassik uygula.</span></div>';
+  } else { f.innerHTML='<div class="toolgrp"><span class="lbl">Yürüyüş</span><span class="mini">Kamera açısıyla taban/sirkümdüksiyon/pelvis düşmesini gözle. Tandem & çekme testi üst barda. Fareyle döndür.</span></div>'; }
 }
 function bindUI(){
   var cs=$('caseSel'); Object.keys(CASES).forEach(function(k){ var o=document.createElement('option');o.value=k;o.textContent=k+'. '+CASES[k].name;cs.appendChild(o); });
@@ -445,25 +447,30 @@ function bindUI(){
   $('examToggle').onclick=function(){ ENG.examMode=!ENG.examMode; this.classList.toggle('on',ENG.examMode); loadCase(ENG.idx); };
   $('homeBtn').onclick=function(){ location.href='../index.html'; };
   $('mGait').onclick=function(){setMode('gait');}; $('mRomberg').onclick=function(){setMode('romberg');}; $('mReflex').onclick=function(){setMode('reflex');};
+  $('camSag').onclick=function(){setCam(0.35);}; $('camCor').onclick=function(){setCam(Math.PI/2);}; $('camPos').onclick=function(){setCam(-Math.PI/2);};
   $('jendChk').onchange=function(){ ENG.jendrassik=this.checked; };
   $('declareBtn').onclick=evaluate;
+  // fareyle orbit
+  gl.addEventListener('mousedown',function(e){ ENG.dragging=true;ENG._mx=e.clientX;ENG._my=e.clientY;gl.style.cursor='grabbing'; });
+  window.addEventListener('mousemove',function(e){ if(!ENG.dragging)return; ENG.orbitAz-=(e.clientX-ENG._mx)*0.008; ENG.orbitEl=clamp(ENG.orbitEl+(e.clientY-ENG._my)*0.005,-0.1,0.9); ENG._mx=e.clientX;ENG._my=e.clientY; });
+  window.addEventListener('mouseup',function(){ ENG.dragging=false;gl.style.cursor='grab'; });
 }
 
 /* ======================= TEST API ======================= */
 window.NRO={
-  loadCase:function(n){ loadCase(n); },
+  loadCase:function(n){ loadCase(n); }, setMode:function(m){ setMode(m); }, setManeuver:function(m){ ENG.maneuver=m; },
   rombergSway:function(eyesOpen){ return rombergSway(eyesOpen); },
-  circumductionCoeff:function(){ return ENG.cas.gait.circ * (ENG.cas.gait.affected?1:0.4); },
-  reflexGrade:function(rf,side){ return ENG.cas.reflex[rf+side]; },
-  setJendrassik:function(b){ ENG.jendrassik=!!b; $('jendChk').checked=!!b; },
-  strike:function(rf,side){ strike(rf,side); return ENG.lastReflex; },
+  circumductionCoeff:function(){ return ENG.cas.gait.circ*(ENG.cas.gait.affected?1:0.3); },
+  reflexGrade:function(root,side){ return reflexGrade(root,side); }, babinski:function(side){ return babinski(side); },
+  setJendrassik:function(b){ ENG.jendrassik=!!b; $('jendChk').checked=!!b; }, strike:function(r,s){ strike(r,s); return ENG.flick; },
+  // 300 kare yürü, kemik uzunluğu sapmasını döndür (sert kemik testi)
+  boneLengthCheck:function(frames){ frames=frames||300; setMode('gait'); var mx=0; for(var i=0;i<frames;i++){ gaitStep(0.016); poseFigure(); mx=Math.max(mx,ENG.boneDev); } return mx; },
   declare:function(o){ if(o&&o.dx)$('dxSel').value=o.dx; $('areflexiaClaim').checked=!!(o&&o.areflexia); $('rombergClaim').checked=!!(o&&o.romberg); evaluate(); return $('juryOut').innerText; },
   juryFlags:function(o){ if(o&&o.dx)$('dxSel').value=o.dx; $('areflexiaClaim').checked=!!(o&&o.areflexia); $('rombergClaim').checked=!!(o&&o.romberg); evaluate(); return [].slice.call($('juryOut').querySelectorAll('.flag')).map(function(f){return f.className+'|'+f.textContent;}); },
-  setMode:function(m){ setMode(m); }, _eng:ENG, CASES:CASES
+  _eng:ENG, CASES:CASES
 };
-
 /* ======================= INIT ======================= */
-function init(){ initGL(); bindUI(); loadCase(1); setMode('gait'); requestAnimationFrame(loop); }
+function init(){ initGL(); bindUI(); loadCase(1); setMode('gait'); setCam(0.35); requestAnimationFrame(loop); }
 init();
 </script>
 </body>
