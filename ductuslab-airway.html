@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>DuctusLab · Zor Havayolu & Video Laringoskopi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap"/>
+<style>
+:root{--bg0:#04070e;--bg1:#070c17;--bg2:#0b1220;--bg3:#101a2c;--glass:rgba(13,20,34,.72);--line:rgba(160,176,196,.12);--line2:rgba(160,176,196,.2);
+--ink:#e4e9f1;--ink2:#a6b1c2;--ink3:#6c7889;--accent:#6fa3c8;--accent2:#4f7fa3;--accentd:rgba(111,163,200,.14);
+--amber:#d9a441;--amberd:rgba(217,164,65,.14);--ok:#5a9f7f;--okd:rgba(90,159,127,.16);--alert:#c4565f;--alertd:rgba(196,86,95,.16);--violet:#9a86c9;
+--sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;--mono:"JetBrains Mono",ui-monospace,monospace;}
+*{box-sizing:border-box;margin:0;padding:0}html,body{height:100%}
+body{background:radial-gradient(1200px 800px at 70% -10%,#0a1424,var(--bg0) 60%);color:var(--ink);font-family:var(--sans);font-size:14px;overflow:hidden}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.app{display:flex;flex-direction:column;height:100vh}
+.topbar{display:flex;align-items:center;gap:13px;padding:9px 16px;border-bottom:1px solid var(--line);background:var(--glass);backdrop-filter:blur(12px);flex:0 0 auto;z-index:20;flex-wrap:wrap}
+.wordmark{font-weight:700;letter-spacing:.04em;font-size:15px}.wordmark em{color:var(--accent);font-style:normal}
+.vsep{width:1px;height:20px;background:var(--line2)}.product{color:var(--ink2);font-size:12px}.spacer{flex:1}
+.seg{display:flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:transparent;color:var(--ink2);font-family:var(--sans);font-size:11.5px;padding:6px 10px;cursor:pointer}
+.seg button.on{color:#fff;background:var(--accentd)}.seg button+button{border-left:1px solid var(--line2)}
+.btn{font-family:var(--sans);font-size:12px;color:var(--ink2);background:rgba(17,26,43,.55);border:1px solid var(--line2);border-radius:8px;padding:6px 11px;cursor:pointer;transition:.15s}
+.btn:hover{color:var(--ink);border-color:var(--accent2);background:var(--accentd)}.btn.sm{padding:5px 8px;font-size:11px}
+.caseseg button.on{background:linear-gradient(135deg,#49a6e6,#36bd8e);color:#05121c;font-weight:700}
+.main{flex:1;display:flex;min-height:0}
+.scopewrap{flex:1.5;min-width:0;position:relative;background:#05070c;display:flex;flex-direction:column}
+.scope{flex:1;position:relative;min-height:0}
+#gl{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab}
+/* video laringoskop optik vinyet + HUD */
+.optic{position:absolute;inset:0;pointer-events:none;border-radius:0;box-shadow:inset 0 0 120px 40px rgba(0,0,0,.72), inset 0 0 40px 8px rgba(0,0,0,.4)}
+.optic::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 46%, rgba(0,0,0,0) 48%, rgba(0,0,0,.55) 82%, rgba(0,0,0,.85) 100%)}
+.hud{position:absolute;top:10px;left:12px;font-family:var(--mono);font-size:11px;color:#8fe3bf;text-shadow:0 1px 3px #000;pointer-events:none;line-height:1.6}
+.hud .rec{color:#e88b92}
+.scopebadge{position:absolute;top:10px;right:12px;font-family:var(--mono);font-size:11px;color:#bfe0f5;text-align:right;text-shadow:0 1px 3px #000;pointer-events:none;line-height:1.6}
+.dental{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:var(--sans);font-weight:800;font-size:15px;color:#ffd0d0;background:rgba(150,20,30,.5);border:1px solid #e88b92;border-radius:10px;padding:8px 14px;display:none;pointer-events:none;text-align:center}
+.dental.show{display:block;animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.4}}
+.toothbar{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:160px;height:8px;border:1px solid var(--line2);border-radius:6px;background:rgba(0,0,0,.5);overflow:hidden;pointer-events:none}
+.toothbar>span{display:block;height:100%;width:0;background:linear-gradient(90deg,#5a9f7f,#d9a441,#c4565f);transition:width .1s}
+.scope-foot{flex:0 0 auto;border-top:1px solid var(--line);background:var(--glass);padding:9px 12px}
+.toolrow{display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+.toolgrp{display:flex;align-items:center;gap:5px;padding:4px 7px;border:1px solid var(--line);border-radius:9px;background:var(--bg2)}
+.toolgrp .lbl{font-size:9px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink3);white-space:nowrap}
+.console{flex:1;min-width:330px;max-width:400px;border-left:1px solid var(--line);background:var(--bg1);display:flex;flex-direction:column;min-height:0}
+.console-scroll{overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:11px}
+.card{border:1px solid var(--line);border-radius:12px;background:var(--glass);padding:12px 13px}
+.card h3{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);font-weight:600;margin-bottom:9px;display:flex;justify-content:space-between;align-items:center}
+.mon{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.monch{border:1px solid var(--line);border-radius:10px;padding:8px 9px;background:#05080f;position:relative}
+.monch .ml{font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3)}
+.monch .mv{font-family:var(--mono);font-size:22px;font-weight:700;line-height:1}
+.monch canvas{width:100%;height:30px;display:block;margin-top:4px}
+.mv.o2{color:#8fe3bf}.mv.warn{color:var(--amber)}.mv.crit{color:#e88b92}
+.drawgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.drawgrid button{font-size:11.5px;padding:8px 6px;border:1px solid var(--line2);background:var(--bg3);color:var(--ink);border-radius:8px;cursor:pointer;text-align:left}
+.drawgrid button:hover{border-color:var(--accent2)}
+.drawgrid button.on{border-color:var(--ok);background:var(--okd);color:#8fe3bf}
+.drawgrid button.locked{opacity:.4;cursor:not-allowed}
+.drawgrid button.trap{border-color:rgba(196,86,95,.35)}
+.mini{font-size:11.5px;color:var(--ink2);line-height:1.5}
+.flag{font-size:11.5px;padding:7px 9px;border-radius:8px;margin-top:7px;border:1px solid;line-height:1.45}
+.flag.red{color:#e88b92;border-color:rgba(196,86,95,.45);background:var(--alertd)}
+.flag.amber{color:var(--amber);border-color:rgba(217,164,65,.45);background:var(--amberd)}
+.flag.green{color:#8fe3bf;border-color:rgba(90,159,127,.45);background:var(--okd)}
+.hint{font-size:11px;color:var(--ink3);margin-top:6px;line-height:1.45}
+.btn-primary{width:100%;font-size:13px;font-weight:600;color:#06131d;background:linear-gradient(135deg,#7ec0e8,#5a9bc4);border:0;border-radius:9px;padding:10px;cursor:pointer}
+.toast{position:fixed;left:22px;bottom:20px;background:rgba(10,16,28,.96);border:1px solid var(--line2);border-left:3px solid var(--accent);border-radius:9px;padding:10px 14px;font-size:12.5px;max-width:420px;z-index:70;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.toast.bad{border-left-color:var(--alert)}.toast.warn{border-left-color:var(--amber)}.toast.good{border-left-color:var(--ok)}
+@media(max-width:960px){.main{flex-direction:column}.console{max-width:none;border-left:0;border-top:1px solid var(--line)}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <span class="wordmark">Ductus<em>Lab</em></span><span class="vsep"></span>
+    <span class="product">Zor Havayolu · Video Laringoskopi · RSI</span>
+    <span class="vsep"></span>
+    <span class="mini" style="font-size:10px;color:var(--ink3)">VAKA</span>
+    <div class="seg caseseg" id="caseSeg"></div>
+    <span class="spacer"></span>
+    <div class="seg" id="lvlSeg"><button class="on" data-lvl="student">TUS / Öğrenci</button><button data-lvl="resident">Asistan</button></div>
+    <button class="btn sm" id="homeBtn">← Anasayfa</button>
+  </div>
+  <div class="main">
+    <div class="scopewrap">
+      <div class="scope">
+        <canvas id="gl"></canvas>
+        <div class="optic"></div>
+        <div class="toothbar" id="toothbar"><span id="toothfill"></span></div>
+        <div class="hud" id="hud"></div>
+        <div class="scopebadge" id="scopebadge"></div>
+        <div class="dental" id="dental">⚠ DİŞ TRAVMASI RİSKİ<br><span style="font-size:11px;font-weight:500">Kanırtma (levering) — üst kesici dişlere bindiniz. Aksiyel kaldırın.</span></div>
+      </div>
+      <div class="scope-foot"><div class="toolrow" id="scopeTools"></div></div>
+    </div>
+    <div class="console">
+      <div class="console-scroll">
+        <div class="card" id="caseCard"><h3>Vaka <span class="mini" id="caseTag"></span></h3><div class="mini" id="caseStem"></div></div>
+        <div class="card">
+          <h3>Hasta Monitörü <span class="mini mono" id="monClock">00:00</span></h3>
+          <div class="mon">
+            <div class="monch"><div class="ml">SpO₂ %</div><div class="mv o2" id="spo2v">—</div><canvas id="plethCv"></canvas></div>
+            <div class="monch"><div class="ml">EtCO₂ mmHg</div><div class="mv" id="etco2v">—</div><canvas id="capnoCv"></canvas></div>
+            <div class="monch"><div class="ml">EKG · DII · HR</div><div class="mv" id="hrv">—</div><canvas id="ekgCv"></canvas></div>
+            <div class="monch"><div class="ml">KB mmHg · MAP</div><div class="mv" id="bpv">—</div><canvas id="artCv"></canvas></div>
+          </div>
+          <div class="mini" id="apneaNote" style="margin-top:8px;color:var(--ink3)"></div>
+        </div>
+        <div class="card">
+          <h3>Pre-Oksijenasyon &amp; RSI İlaçları</h3>
+          <div class="drawgrid" id="rsiDrawer"></div>
+          <div id="rsiFlags"></div>
+        </div>
+        <div class="card">
+          <h3>Laringoskopi Araçları (2. Aşama)</h3>
+          <div class="drawgrid" id="toolDrawer"></div>
+          <div class="hint">ETT / Buji / Hiperangüle Stilet / LMA / CICO eFONA yuvaları 2. Aşamada aktifleşir.</div>
+        </div>
+        <div class="card" style="border-color:rgba(154,134,201,.25)"><h3>Öğretim Notu</h3><div class="mini" id="teachNote">Pre-oksijenasyon → indüksiyon → paralizi → laringoskopi. Doğru bıçak, derinlik ve manevralarla glottisi kadraja alın.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="toastHost"></div>
+
+<script type="importmap">{ "imports": { "three": "https://unpkg.com/three@0.160.1/build/three.module.js" } }</script>
+<script type="module">
+import * as THREE from 'three';
+/* ===================================================================================
+ *  DuctusLab · Airway (Aşama 1) — organik 3B orofarenks-larinks, video laringoskop
+ *  optiği, bıçak/lift/BURP/aspirasyon kinematiği, RSI fizyoloji monitörü, 4 vaka.
+ * =================================================================================== */
+const $=id=>document.getElementById(id);
+const clamp=(x,a,b)=>x<a?a:x>b?b:x;
+const lerp=(a,b,t)=>a+(b-a)*t;
+
+/* ============ VAKALAR ============ */
+const CASES={
+ 1:{id:1,name:'Standart Acil RSI',tag:'42Y E · aspirasyon riski',anterior:0.0,baseCL:'IIb',patientO2:1.0,secretion:0.0,
+   stem:'42Y erkek, acil RSI gerekiyor (dolu mide, aspirasyon riski). Doğru pre-oksijenasyon, vallekula yerleşimi ve BURP ile CL IIb → CL I hedefleyin.',
+   vit:{hr:92,sbp:138,dbp:82,spo2:98},
+   teach:'Standart RSI: pre-O2 (EtO2≥%85) → hızlı indüksiyon + paralizi → krikoid/BURP. Mac #3 vallekulaya oturur, aksiyel lift + BURP ile görüş açılır.'},
+ 2:{id:2,name:'Anterior Larinks · Mallampati III',tag:'55Y E · kısa çene',anterior:0.42,baseCL:'III',patientO2:0.9,secretion:0.05,
+   stem:'55Y erkek, kısa çene + Mallampati III. Mac bıçakla yalnız epiglot ucu görülür (CL III). Hiperangüle D-Blade + BURP ile kordlar kadraja girer.',
+   vit:{hr:86,sbp:144,dbp:86,spo2:96},
+   teach:'Anterior larinks: Mac ile CL III (yalnız epiglot). Hiperangüle D-Blade anterior köşeyi döner; BURP larinksi arkaya-yukarı-sağa getirir. (2. Aşama: buji/özofagus entübasyon tuzağı.)'},
+ 3:{id:3,name:'ÜGİS Kanaması · Hipovolemik Şok',tag:'60Y E · KB 86/52, HR 124',anterior:0.1,baseCL:'IIb',patientO2:0.5,secretion:0.55,
+   stem:'60Y erkek, üst GİS kanaması + hipovolemik şok (KB 86/52, HR 124). Propofol kontrendike (ağır hipotansiyon!). Hipofarenks kanla dolu — Yankauer aspirasyonu şart.',
+   vit:{hr:124,sbp:86,dbp:52,spo2:92},
+   teach:'Şokta Propofol → ağır hipotansiyon/kollaps. Ketamin veya Etomidat hemodinamiyi korur. Kanlı hipofarenks + buğulu lens → Yankauer aspirasyonu olmadan glottis görülmez.'},
+ 4:{id:4,name:'Anjiyoödem / Boyun Travması',tag:'38Y K · ödemli dar larinks',anterior:0.55,baseCL:'IV',patientO2:0.6,secretion:0.2,
+   stem:'38Y kadın, anjiyoödem — ödemli, daralmış larinks (CL IV). Laringoskopi zorlu; 2. Aşamada CICO / krikotiroidotomi kurtarma senaryosu.',
+   vit:{hr:108,sbp:150,dbp:92,spo2:90},
+   teach:'Anjiyoödem: ödemli dar larinks, CL IV. Beklenen zor havayolu — uyanık/esnek seçenekler ve CICO planı (2. Aşama eFONA/krikotiroidotomi) hazır olmalı.'}
+};
+
+/* ============ DURUM ============ */
+const ENG={ caseId:1, cas:CASES[1], level:'student',
+  blade:'mac', head:'sniff', depth:0.3, lift:0.0, pitch:0.0, burp:false, suctioned:false, bladeInserted:false,
+  // fizyoloji
+  preox:false, eto2:21, spo2:98, etco2:38, hr:92, sbp:138, dbp:82, apnea:false, apneaT:0, ventilating:false,
+  induction:null, paralytic:null, blockState:'none', blockT:0, mapDelta:0, lastMAPchange:0,
+  dentalWarning:false, laryngospasm:false, cordPhase:0, t:0, drag:null };
+
+/* ============ THREE.JS SAHNE ============ */
+let renderer,scene,cam,gl=$('gl'),meshes={},mucosaMats=[];
+function mucosaMaterial(color, spec){ return new THREE.ShaderMaterial({
+  uniforms:{ uColor:{value:new THREE.Color(color)}, uTime:{value:0}, uSpec:{value:spec||0.6}, uLight:{value:new THREE.Vector3(0.3,0.9,1.4).normalize()} },
+  vertexShader:`varying vec3 vN; varying vec3 vP; varying vec3 vW;
+    void main(){ vN=normalize(normalMatrix*normal); vec4 wp=modelMatrix*vec4(position,1.0); vW=wp.xyz; vec4 mv=modelViewMatrix*vec4(position,1.0); vP=mv.xyz; gl_Position=projectionMatrix*mv; }`,
+  fragmentShader:`precision highp float; uniform vec3 uColor; uniform float uTime; uniform float uSpec; uniform vec3 uLight; varying vec3 vN; varying vec3 vP; varying vec3 vW;
+    float hash(vec3 p){ return fract(sin(dot(p,vec3(12.9,78.2,37.7)))*43758.5); }
+    void main(){ vec3 N=normalize(vN); vec3 V=normalize(-vP); vec3 L=normalize(uLight);
+      float diff=clamp(dot(N,L),0.0,1.0);
+      float fres=pow(1.0-clamp(dot(N,V),0.0,1.0),2.2);              // kenar/ıslak translüsensi
+      vec3 h=normalize(L+V); float spec=pow(clamp(dot(N,h),0.0,1.0),48.0)*uSpec; // tükürük parlaması
+      float sal=pow(clamp(dot(N,h),0.0,1.0),140.0)*hash(floor(vW*60.0))*1.4;      // noktasal salya parıltısı
+      vec3 deep=uColor*0.45;                                        // derin subsurface kırmızısı
+      vec3 base=mix(deep,uColor,0.3+0.7*diff);
+      base+=uColor*fres*0.55;                                       // translüsent kenar kızarması
+      base+=vec3(1.0,0.96,0.95)*(spec+sal);                        // ıslak speküler
+      float mott=0.9+0.12*hash(floor(vW*22.0));
+      gl_FragColor=vec4(base*mott,1.0);
+    }`, side:THREE.DoubleSide }); }
+
+function lathe(points,seg,color,spec){ var v=points.map(p=>new THREE.Vector2(p[0],p[1])); var g=new THREE.LatheGeometry(v,seg||40); var m=new THREE.Mesh(g,mucosaMaterial(color,spec)); mucosaMats.push(m.material); return m; }
+function blob(rx,ry,rz,color,spec){ var g=new THREE.SphereGeometry(1,40,28); var m=new THREE.Mesh(g,mucosaMaterial(color,spec)); m.scale.set(rx,ry,rz); mucosaMats.push(m.material); return m; }
+
+function initGL(){
+  renderer=new THREE.WebGLRenderer({canvas:gl,antialias:true}); renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1));
+  scene=new THREE.Scene(); scene.background=new THREE.Color(0x0a0305); scene.fog=new THREE.Fog(0x120406,3.2,9.5);
+  cam=new THREE.PerspectiveCamera(68,2,0.05,100);                   // geniş açılı video laringoskop optiği
+  scene.add(new THREE.HemisphereLight(0xffd8d2,0x200808,0.55));
+  var key=new THREE.PointLight(0xfff0ec,1.5,12); key.position.set(0,0.4,2.6); scene.add(key); meshes.key=key; // laringoskop ışığı (kameradan)
+  var fill=new THREE.DirectionalLight(0xff9a8a,0.3); fill.position.set(0.5,1,0.5); scene.add(fill);
+
+  // FARİNGEAL LÜMEN — kavisli tünel (lathe + eğim)
+  var lumen=lathe([[0.02,-2.6],[0.95,-2.2],[1.3,-1.4],[1.35,-0.6],[1.25,0.1],[1.3,0.8],[1.6,1.5],[1.8,2.2],[1.5,2.7]],48,0x9a3b36,0.5);
+  lumen.rotation.x=Math.PI; lumen.position.set(0,0.1,-1.9); lumen.material.side=THREE.BackSide; lumen.scale.set(1.15,1,1.15); meshes.lumen=lumen; scene.add(lumen); // kavite: iç/arka duvarı gör, ön duvar glottisi örtmesin
+
+  // DİL KÖKÜ — kubbeli (ön-alt, kadrajı alttan çerçeveler)
+  var tongue=blob(1.5,0.85,1.3,0xb85a52,0.55); tongue.position.set(0,-1.75,0.95); meshes.tongue=tongue; scene.add(tongue);
+  // UVULA (üstte sarkan)
+  var uvula=blob(0.1,0.28,0.1,0xc96f66,0.6); uvula.position.set(0,1.45,0.3); meshes.uvula=uvula; scene.add(uvula);
+  // TONSİL PLİKALARI (yan çerçeve)
+  ['L','R'].forEach(function(s){ var sg=(s==='L'?-1:1); var t=blob(0.18,0.55,0.22,0xa84b45,0.5); t.position.set(sg*1.45,0.35,-0.15); meshes['tonsil'+s]=t; scene.add(t); });
+
+  // EPİGLOT — yaprak/omega esnek (hinged alt kenar)
+  var epiShape=new THREE.Shape(); epiShape.moveTo(-0.5,0); epiShape.bezierCurveTo(-0.58,0.55,-0.28,1.02,0,0.98); epiShape.bezierCurveTo(0.28,1.02,0.58,0.55,0.5,0); epiShape.bezierCurveTo(0.26,-0.12,-0.26,-0.12,-0.5,0);
+  var epiGeo=new THREE.ExtrudeGeometry(epiShape,{depth:0.05,bevelEnabled:true,bevelThickness:0.04,bevelSize:0.05,bevelSegments:3}); epiGeo.center();
+  var epi=new THREE.Mesh(epiGeo,mucosaMaterial(0xc07068,0.7)); mucosaMats.push(epi.material); meshes.epi=epi; meshes.epiPivot=new THREE.Group(); meshes.epiPivot.add(epi); epi.position.y=0.5; meshes.epiPivot.position.set(0,-0.3,-0.78); scene.add(meshes.epiPivot);
+
+  // VOKAL KORDLAR — inci beyazı (iki şerit, V açıklık)
+  var cordMat=new THREE.MeshStandardMaterial({color:0xf2ece4,roughness:0.45,metalness:0.02,emissive:0x1a1512,emissiveIntensity:0.3});
+  ['L','R'].forEach(function(s){ var sg=(s==='L'?-1:1); var g=new THREE.BoxGeometry(0.17,1.15,0.12); g.translate(0,0,0); // şerit; genişlik açıklığı belirler
+    var c=new THREE.Mesh(g,cordMat); meshes['cord'+s]=c; scene.add(c); });
+  // ARİTENOİD kıkırdaklar (kordların arkası)
+  ['L','R'].forEach(function(s){ var sg=(s==='L'?-1:1); var a=blob(0.15,0.2,0.15,0xd8b0a0,0.4); a.position.set(sg*0.26,-0.62,-1.2); meshes['aryt'+s]=a; scene.add(a); });
+  // TRAKEAL KIKIRDAK HALKALARI (glottisten derin)
+  meshes.trachea=new THREE.Group(); for(var i=0;i<6;i++){ var r=new THREE.Mesh(new THREE.TorusGeometry(0.3-i*0.018,0.03,10,28),new THREE.MeshStandardMaterial({color:0xc9a89a,roughness:0.6,emissive:0x0a0505})); r.position.set(0,-0.5-i*0.05,-1.25-i*0.24); r.rotation.x=Math.PI/2.1; meshes.trachea.add(r); } scene.add(meshes.trachea);
+  // ÖZOFAGUS girişi (aritenoidlerin arkası — karanlık)
+  var eso=new THREE.Mesh(new THREE.CircleGeometry(0.26,24),new THREE.MeshBasicMaterial({color:0x090202})); eso.position.set(0,-0.72,-1.55); meshes.eso=eso; scene.add(eso);
+
+  // DİŞLER — üst/alt kesici ark (yuvarlatılmış, kutu değil)
+  meshes.teethU=new THREE.Group(); meshes.teethL=new THREE.Group();
+  var toothMat=new THREE.MeshStandardMaterial({color:0xf3efe2,roughness:0.3,metalness:0.02});
+  for(var ti=0;ti<7;ti++){ var ang=(ti-3)/3*0.5; var tx=Math.sin(ang)*1.15, tz=0.9-Math.cos(ang)*0.25;
+    var tg=new THREE.Mesh(new THREE.SphereGeometry(0.11,16,12),toothMat); tg.scale.set(1,1.5,0.8); tg.position.set(tx,0,tz); meshes.teethU.add(tg);
+    var tl=tg.clone(); meshes.teethL.add(tl); }
+  meshes.teethU.position.set(0,1.75,0.9); meshes.teethL.position.set(0,-1.75,0.9); scene.add(meshes.teethU); scene.add(meshes.teethL);
+
+  // LARİNGOSKOP BIÇAĞI (ön planda, kameradan uzanır)
+  meshes.bladeGroup=new THREE.Group(); scene.add(meshes.bladeGroup);
+  var bladeMat=new THREE.MeshStandardMaterial({color:0x2a3340,roughness:0.28,metalness:0.85});
+  var macCurve=new THREE.Mesh(new THREE.TorusGeometry(0.9,0.09,10,40,1.4),bladeMat); macCurve.rotation.z=Math.PI*0.5; macCurve.rotation.y=0.2;
+  meshes.bladeMac=macCurve; meshes.bladeGroup.add(macCurve);
+  var dShape=new THREE.Mesh(new THREE.TorusGeometry(0.55,0.09,10,40,2.1),bladeMat); dShape.rotation.z=Math.PI*0.5; dShape.visible=false;
+  meshes.bladeD=dShape; meshes.bladeGroup.add(dShape);
+  var lightNub=new THREE.Mesh(new THREE.SphereGeometry(0.05,12,12),new THREE.MeshBasicMaterial({color:0xfff3e0})); lightNub.position.set(0,-0.8,0.1); meshes.bladeGroup.add(lightNub);
+
+  // KAN/SEKRESYON gölü (vaka 3) — glottis önü
+  meshes.bloodPool=new THREE.Mesh(new THREE.CircleGeometry(0.9,28),new THREE.MeshStandardMaterial({color:0x5a0a0c,roughness:0.2,metalness:0.1,transparent:true,opacity:0.0})); meshes.bloodPool.rotation.x=-Math.PI/2.2; meshes.bloodPool.position.set(0,-0.75,-0.6); scene.add(meshes.bloodPool);
+  resizeGL();
+}
+function resizeGL(){ var w=gl.clientWidth,h=gl.clientHeight; renderer.setSize(w,h,false); cam.aspect=w/h; cam.updateProjectionMatrix(); }
+window.addEventListener('resize',resizeGL);
+
+/* ============ GLOTTİK GÖRÜŞ GEOMETRİSİ → POGO / CORMACK ============ */
+function headFactor(){ return {neutral:0.08,sniff:0.34,ramp:(ENG.cas.id===4?0.42:0.30)}[ENG.head]; }
+function depthFactor(){ var d=ENG.depth;
+  if(d<0.4) return -(0.4-d)*1.4;            // sığ: dil kökü kapatır
+  if(d<=0.72) return 0.12;                  // vallekula sweet-spot
+  return -(d-0.72)*2.6; }                   // aşırı derin: epiglot kordların üstüne kapanır (CL III/IV)
+function depthOk(){ return ENG.depth>=0.45 && ENG.depth<=0.75; }
+function leverAmt(){ return Math.max(0,ENG.pitch-0.45); }      // 0.45 üstü kanırtma = diş pivotu
+function exposure(){
+  var e=headFactor()+depthFactor();
+  e+=ENG.lift*0.55*(depthOk()?1:0.3);                          // aksiyel lift yalnız vallekulada tam etkili
+  if(ENG.burp) e+=0.22+ENG.cas.anterior*0.2;                   // BURP anteriorda daha çok kazandırır
+  if(ENG.blade==='dblade') e+=0.1+ENG.cas.anterior*0.4;        // hiperangüle anterior köşeyi döner
+  e-=ENG.cas.anterior;                                         // vakaya özgü anterior larinks
+  e-=leverAmt()*0.7;                                           // kanırtma görüşü bozar
+  var sec=ENG.cas.secretion*(ENG.suctioned?0.0:1.0);           // temizlenmemiş kan/sekresyon
+  e-=sec*0.8;
+  return e;
+}
+function pogo(){ return Math.round(clamp(exposure(),0,1)*100); }
+function cormack(){ var p=pogo(); var lev=leverAmt(); if(p>=80)return 'I'; if(p>=50)return 'IIa'; if(p>=25)return 'IIb'; if(p>=6)return 'III'; return 'IV'; }
+function cordAperture(){ if(ENG.blockState==='full') return 1.0;   // tam blok laringospazmı da çözer, kordları abduksiyonda açar
+  if(ENG.laryngospasm) return 0.04;
+  if(ENG.blockState==='onset') return lerp(0.45,1.0,clamp(ENG.blockT/45,0,1));
+  return 0.42+0.18*Math.sin(ENG.cordPhase); }                  // paralizi yok: solunumla açılıp kapanır
+
+/* ============ FİZYOLOJİ ============ */
+function safeApneaReserve(){ var base=300; return base*clamp(ENG.eto2/90,0.2,1.0)*ENG.cas.patientO2; } // saniye
+function physTick(dt){ ENG.t+=dt;
+  // blok ilerleyişi
+  if(ENG.blockState==='onset'){ ENG.blockT+=dt; if(ENG.blockT>=45){ ENG.blockState='full'; ENG.laryngospasm=false; toast('Tam nöromüsküler blok oturdu — kordlar abduksiyonda açık.','good'); } }
+  if(ENG.blockState==='none'||ENG.blockState==='onset'){ ENG.cordPhase+=dt*2.2; }
+  // pre-oksijenasyon: EtO2 dolar
+  if(ENG.preox && !ENG.apnea){ ENG.eto2=lerp(ENG.eto2,90,dt*0.5); }
+  // ventilasyon kurtarma
+  if(ENG.ventilating){ ENG.apnea=false; ENG.apneaT=Math.max(0,ENG.apneaT-dt*3); ENG.spo2=lerp(ENG.spo2,99,dt*0.8); ENG.eto2=lerp(ENG.eto2,88,dt*0.6); ENG.etco2=lerp(ENG.etco2,38,dt*0.5); }
+  // apne desatürasyonu
+  if(ENG.apnea && !ENG.ventilating){ ENG.apneaT+=dt; ENG.etco2=0;
+    var res=safeApneaReserve(); var f=ENG.apneaT/res;                 // 0..1+
+    var target = f<0.6 ? 99 : 99 - (f-0.6)/0.5*(99-55);              // 0.6'dan sonra dik düşüş
+    target=clamp(target,40,99); ENG.spo2=lerp(ENG.spo2,target,dt*1.5);
+  } else if(!ENG.ventilating && !ENG.apnea){ ENG.etco2=lerp(ENG.etco2, (ENG.blockState==='full'?0:38), dt*0.6); }
+  // HR / KB — hipoksi + ilaç
+  var map=ENG.sbp*0.33+ENG.dbp*0.67;
+  if(ENG.spo2<85){ ENG.hr=lerp(ENG.hr, ENG.spo2<70?40:135, dt*0.5); } else { ENG.hr=lerp(ENG.hr,ENG.cas.vit.hr+(ENG.induction?-6:0),dt*0.3); }
+  ENG.sbp=lerp(ENG.sbp, ENG.cas.vit.sbp+ENG.mapDelta, dt*0.5); ENG.dbp=lerp(ENG.dbp, ENG.cas.vit.dbp+ENG.mapDelta*0.7, dt*0.5);
+  ENG.laryngospasm = ENG.laryngospasm && ENG.blockState!=='full';
+}
+function getMAP(){ return Math.round((ENG.cas.vit.sbp+ENG.mapDelta)*0.33+(ENG.cas.vit.dbp+ENG.mapDelta*0.7)*0.67); }
+
+/* ============ RSI İLAÇLARI ============ */
+function giveDrug(id){
+  if(id==='preo2'){ ENG.preox=true; toast('Pre-oksijenasyon başladı — EtO2 yükseliyor, hedef ≥%85.','good'); setDrawerOn('preo2'); return; }
+  if(['propofol','etomidat','ketamin'].indexOf(id)>=0){ ENG.induction=id; setDrawerGroupOn(['propofol','etomidat','ketamin'],id);
+    if(id==='propofol'){ ENG.mapDelta += (ENG.cas.id===3? -38 : -16); if(ENG.cas.id===3) logRSI('red','🔒 Şokta Propofol → ağır hipotansiyon/kollaps. Ketamin veya Etomidat tercih edilmeliydi.'); else logRSI('amber','Propofol: doz-bağımlı hipotansiyon; şokta dikkat.'); }
+    else if(id==='etomidat'){ ENG.mapDelta += -3; logRSI('green','Etomidat: hemodinamik olarak nötr (şok/kalp hastasında tercih).'); }
+    else { ENG.mapDelta += (ENG.cas.id===3? 4 : 2); logRSI('green','Ketamin: sempatomimetik — şok/hipovolemide KB’yi korur.'); }
+    toast('İndüksiyon: '+id,'good'); return; }
+  if(['rokuronyum','suksinilkolin'].indexOf(id)>=0){ ENG.paralytic=id; if(ENG.blockState==='none'){ ENG.blockState='onset'; ENG.blockT=0; ENG.apnea=true; }
+    setDrawerGroupOn(['rokuronyum','suksinilkolin'],id); logRSI('green',id+': nöromüsküler blok başladı (apne) — ~45 sn’de tam abduksiyon.'); toast('Paralizi: '+id+' — apne başladı, pre-O2 rezervi tükeniyor.','warn'); return; }
+}
+function ventilateRescue(){ ENG.ventilating=true; toast('Maske ile oksijenleniyor — SpO2 toparlanıyor.','good'); setTimeout(function(){ ENG.ventilating=false; if(ENG.paralytic){ENG.apnea=true;} },4000); }
+function logRSI(kind,msg){ var el=$('rsiFlags'); var d=document.createElement('div'); d.className='flag '+kind; d.textContent=msg; el.appendChild(d); }
+
+/* ============ KİNEMATİK UYGULAMA (her kare) ============ */
+function applyKinematics(){
+  var exp=exposure();
+  // epiglot: lift + depth ile kalkar; aşırı derin/az exposure'da kordların üstüne kapanır
+  var epiLift = clamp(exp,0,1);
+  meshes.epiPivot.rotation.x = lerp(0.55, -1.5, epiLift);       // örtük(öne-aşağı) → kalkık(yukarı-geri, glottisi açar)
+  meshes.epi.visible=true;
+  // vokal kordlar: V biçimi, aperture açıklığı; anterior komissür önde
+  var ap=cordAperture(); var open=0.05+ap*0.30;
+  meshes.cordL.position.set(-open,-0.40,-1.02); meshes.cordR.position.set(open,-0.40,-1.02);
+  meshes.cordL.rotation.set(0.1,0,0.16); meshes.cordR.rotation.set(0.1,0,-0.16);
+  var showGlottis=clamp((exp-0.0)*1.3,0,1);
+  meshes.trachea.visible=true; meshes.eso.visible=true;
+  // bıçak tipi & diş pivotu
+  meshes.bladeMac.visible=(ENG.blade==='mac'); meshes.bladeD.visible=(ENG.blade==='dblade');
+  var lev=leverAmt(); ENG.dentalWarning=(lev>0.15);
+  meshes.bladeGroup.position.set(0, lerp(-1.6,-1.15,ENG.depth), lerp(2.2,0.4,ENG.depth));
+  meshes.bladeGroup.rotation.x = -0.3 + ENG.pitch*0.6 - ENG.lift*0.2;
+  // BURP: larinks arkaya-yukarı-sağa → kordları kadraja sok
+  var bx=ENG.burp?0.0:(ENG.cas.anterior*0.5); var by=ENG.burp?0.12:0;
+  meshes.cordL.position.x-=bx; meshes.cordR.position.x-=bx; meshes.cordL.position.y+=by; meshes.cordR.position.y+=by;
+  meshes.arytL.position.y+=by; meshes.arytR.position.y+=by;
+  // kan/sekresyon
+  var sec=ENG.cas.secretion*(ENG.suctioned?0.05:1.0);
+  meshes.bloodPool.material.opacity=clamp(sec*0.95,0,0.95);
+  // kamera: baş pozisyonu bazal açıyı değiştirir; lift ile glottise odaklan
+  var camY = {neutral:0.42,sniff:0.08,ramp:-0.06}[ENG.head];
+  cam.position.set(ENG.burp?0.08:0, camY*0.8, 1.75); cam.lookAt(0, lerp(-0.1,-0.45,epiLift), -1.05);
+  meshes.key.position.set(0,camY,1.7);
+}
+
+/* ============ MONİTÖR ÇİZİMİ ============ */
+var plethP=0,capnoP=0,ekgP=0,artP=0;
+function drawTraces(){ trace('plethCv',plethP,'#8fe3bf',function(x){ var ph=(x+plethP)%1; return pulseWave(ph)*(ENG.spo2/100); });
+  trace('capnoCv',capnoP,'#d9a441',function(x){ var ph=(x+capnoP)%1; return (ENG.etco2<4?0.02:capnoWave(ph)*(ENG.etco2/45)); });
+  trace('ekgCv',ekgP,'#7ec0e8',function(x){ var ph=(x+ekgP)%1; return ekgWave(ph); });
+  trace('artCv',artP,'#e0a0a8',function(x){ var ph=(x+artP)%1; return 0.3+pulseWave(ph)*0.5*((ENG.sbp)/160); });
+}
+function trace(id,phase,color,fn){ var c=$(id); if(!c)return; var w=c.width=c.clientWidth*2, h=c.height=c.clientHeight*2; var g=c.getContext('2d'); g.clearRect(0,0,w,h); g.strokeStyle=color; g.lineWidth=2; g.beginPath(); for(var px=0;px<w;px++){ var x=px/w; var y=h-(fn(x)*h*0.8+h*0.1); if(px===0)g.moveTo(px,y); else g.lineTo(px,y); } g.stroke(); }
+function pulseWave(p){ return Math.exp(-Math.pow((p-0.15)/0.08,2))*1.0 + Math.exp(-Math.pow((p-0.3)/0.12,2))*0.25; }
+function capnoWave(p){ if(p<0.1)return 0.05; if(p<0.5)return 0.85+0.1*(p-0.1); if(p<0.6)return 0.95; return Math.max(0.05,0.95-(p-0.6)/0.1*0.9); }
+function ekgWave(p){ return Math.exp(-Math.pow((p-0.3)/0.012,2))*1.0 - Math.exp(-Math.pow((p-0.27)/0.01,2))*0.18 + Math.exp(-Math.pow((p-0.5)/0.04,2))*0.2 + Math.exp(-Math.pow((p-0.15)/0.03,2))*0.12; }
+
+/* ============ WEBAUDIO NABIZ TONU ============ */
+var AC=null,soundOn=true,lastBeep=0;
+function pulseBeep(){ if(!soundOn)return; var now=performance.now(); var interval=60000/Math.max(40,ENG.hr); if(now-lastBeep<interval)return; lastBeep=now;
+  try{ AC=AC||new (window.AudioContext||window.webkitAudioContext)(); if(AC.state!=='running'&&AC.resume)AC.resume();
+    var o=AC.createOscillator(),g=AC.createGain(); var f=lerp(420,760,clamp((ENG.spo2-70)/30,0,1)); // SpO2 düştükçe ton kalınlaşır
+    o.frequency.value=f; o.type='sine'; g.gain.value=0.0001; o.connect(g); g.connect(AC.destination); var t=AC.currentTime;
+    g.gain.exponentialRampToValueAtTime(0.06,t+0.01); g.gain.exponentialRampToValueAtTime(0.0001,t+0.12); o.start(t); o.stop(t+0.14); }catch(e){} }
+
+/* ============ DÖNGÜ ============ */
+let running=true,last=0;
+function loop(ts){ if(!running)return; var dt=last?Math.min(0.05,(ts-last)/1000):0.016; last=ts;
+  physTick(dt); mucosaMats.forEach(function(m){ m.uniforms.uTime.value=ENG.t; }); applyKinematics();
+  renderer.render(scene,cam); drawTraces(); plethP+=dt*0.6; capnoP+=dt*0.4; ekgP+=dt*0.6; artP+=dt*0.6; pulseBeep(); updateHUD();
+  requestAnimationFrame(loop);
+}
+function updateHUD(){
+  $('spo2v').textContent=Math.round(ENG.spo2); $('spo2v').className='mv '+(ENG.spo2<85?'crit':ENG.spo2<92?'warn':'o2');
+  $('etco2v').textContent=Math.round(ENG.etco2); $('hrv').textContent=Math.round(ENG.hr);
+  $('bpv').textContent=Math.round(ENG.cas.vit.sbp+ENG.mapDelta)+'/'+Math.round(ENG.cas.vit.dbp+ENG.mapDelta*0.7)+' ('+getMAP()+')';
+  $('bpv').className='mv '+(getMAP()<60?'crit':getMAP()<70?'warn':'');
+  var m=Math.floor(ENG.t/60),s=Math.floor(ENG.t%60); $('monClock').textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+  var apN=''; if(ENG.apnea){ var res=safeApneaReserve(); apN='Apne '+Math.round(ENG.apneaT)+' sn · güvenli apne rezervi ~'+Math.round(res)+' sn ('+(ENG.preox?'pre-O2 ✓':'pre-O2 YOK ⚠')+')'; } else if(ENG.preox){ apN='Pre-oksijenasyon: EtO2 ~%'+Math.round(ENG.eto2); }
+  $('apneaNote').textContent=apN;
+  // HUD (TUS modunda CL/POGO gizli)
+  var reveal=(ENG.level==='resident');
+  $('hud').innerHTML='<span class="rec">● REC</span> C-MAC '+(ENG.blade==='mac'?'Mac #3':'D-Blade')+'<br>'+(reveal?('CL '+cormack()+' · POGO %'+pogo()):'CL / POGO — Jüri için kayıtta');
+  $('scopebadge').innerHTML=ENG.cas.name+'<br>'+({neutral:'Nötr',sniff:'Sniffing',ramp:'Ramping'}[ENG.head])+(ENG.burp?' · BURP':'')+(ENG.suctioned?' · Aspire':'');
+  $('dental').classList.toggle('show',ENG.dentalWarning);
+  $('toothfill').style.width=clamp(leverAmt()/0.55*100,0,100)+'%';
+  window.AirwayMetrics={ cormack:cormack(), pogo:pogo(), dentalWarning:ENG.dentalWarning, cordAperture:+cordAperture().toFixed(2), blockState:ENG.blockState };
+}
+function startLoop(){ if(!running){running=true;last=0;requestAnimationFrame(loop);} } function stopLoop(){ running=false; }
+
+/* ============ UI ============ */
+function setDrawerOn(id){ var b=$('rsi-'+id); if(b)b.classList.add('on'); }
+function setDrawerGroupOn(grp,id){ grp.forEach(function(g){ var b=$('rsi-'+g); if(b)b.classList.toggle('on',g===id); }); }
+function buildCaseSeg(){ var sg=$('caseSeg'); sg.innerHTML=''; [1,2,3,4].forEach(function(n){ var b=document.createElement('button'); b.textContent=n; b.className=(n===ENG.caseId?'on':''); b.onclick=function(){ loadCase(n); }; sg.appendChild(b); }); }
+function buildRSIDrawer(){ var d=$('rsiDrawer'); d.innerHTML='';
+  var items=[['preo2','🫁 %100 O₂ Pre-oksijenasyon'],['propofol','💉 Propofol'],['etomidat','💉 Etomidat'],['ketamin','💉 Ketamin'],['rokuronyum','⛓ Roküronyum 1.2 mg/kg'],['suksinilkolin','⛓ Süksinilkolin'],['rescue','🅾 Maske ile Oksijenle (kurtarma)']];
+  items.forEach(function(it){ var b=document.createElement('button'); b.id='rsi-'+it[0]; b.textContent=it[1]; if(it[0]==='propofol')b.classList.add('trap'); b.onclick=function(){ if(it[0]==='rescue')ventilateRescue(); else giveDrug(it[0]); }; d.appendChild(b); }); }
+function buildToolDrawer(){ var d=$('toolDrawer'); d.innerHTML=''; [['ETT Tüp'],['Buji (Bougie)'],['Hiperangüle Stilet'],['LMA'],['CICO eFONA']].forEach(function(it){ var b=document.createElement('button'); b.className='locked'; b.textContent='🔒 '+it[0]; d.appendChild(b); }); }
+function buildScopeTools(){ var f=$('scopeTools');
+  f.innerHTML='<div class="toolgrp"><span class="lbl">Bıçak</span><div class="seg" id="bladeSeg"><button data-b="mac">Mac #3</button><button data-b="dblade">D-Blade</button></div></div>'+
+    '<div class="toolgrp"><span class="lbl">Baş</span><div class="seg" id="headSeg"><button data-h="neutral">Nötr</button><button data-h="sniff">Sniffing</button><button data-h="ramp">Ramping</button></div></div>'+
+    '<div class="toolgrp"><span class="lbl">Manevra</span><button class="btn sm" id="burpBtn">BURP [B]</button><button class="btn sm" id="suctionBtn">Yankauer [A]</button></div>'+
+    '<div class="toolgrp"><span class="lbl">Bıçak kinematiği</span><span class="mini" style="font-size:10px">Tekerlek/W-S: derinlik · Sol sürükle: Lift · Sağ sürükle/Q-E: kanırtma</span></div>';
+  [].forEach.call($('bladeSeg').children,function(b){ b.className=(b.dataset.b===ENG.blade?'on':''); b.onclick=function(){ ENG.blade=b.dataset.b; buildScopeTools(); toast('Bıçak: '+(ENG.blade==='mac'?'Macintosh #3 (eğri)':'Hiperangüle D-Blade (60°)')); }; });
+  [].forEach.call($('headSeg').children,function(b){ b.className=(b.dataset.h===ENG.head?'on':''); b.onclick=function(){ ENG.head=b.dataset.h; buildScopeTools(); }; });
+  $('burpBtn').className='btn sm'+(ENG.burp?' on':''); $('burpBtn').onclick=function(){ ENG.burp=!ENG.burp; buildScopeTools(); toast(ENG.burp?'BURP: tiroid kıkırdağa arkaya-yukarı-sağa bası':'BURP kaldırıldı'); };
+  $('suctionBtn').className='btn sm'+(ENG.suctioned?' on':''); $('suctionBtn').onclick=function(){ doSuction(); };
+}
+function doSuction(){ ENG.suctioned=true; buildScopeTools(); toast('Yankauer: hipofarenks ve lens aspire edildi — görüş temizlendi.','good'); }
+
+/* ============ FARE / KLAVYE ============ */
+gl.addEventListener('wheel',function(e){ e.preventDefault(); ENG.depth=clamp(ENG.depth+ (e.deltaY<0?0.04:-0.04),0,1); onBladeMove(); },{passive:false});
+gl.addEventListener('mousedown',function(e){ ENG.drag={btn:e.button,x:e.clientX,y:e.clientY}; gl.style.cursor='grabbing'; if(!ENG.bladeInserted){ENG.bladeInserted=true; maybeSpasm();} });
+window.addEventListener('mousemove',function(e){ if(!ENG.drag)return; var dy=(e.clientY-ENG.drag.y)*0.004, dx=(e.clientX-ENG.drag.x)*0.004;
+  if(ENG.drag.btn===0){ ENG.lift=clamp(ENG.lift-dy,0,1); } else { ENG.pitch=clamp(ENG.pitch+dx+(-dy),0,1); } ENG.drag.x=e.clientX; ENG.drag.y=e.clientY; onBladeMove(); });
+window.addEventListener('mouseup',function(){ ENG.drag=null; gl.style.cursor='grab'; });
+window.addEventListener('keydown',function(e){ var k=e.key.toLowerCase();
+  if(k==='w')ENG.depth=clamp(ENG.depth+0.04,0,1); else if(k==='s'&&!e.shiftKey)ENG.depth=clamp(ENG.depth-0.04,0,1);
+  else if(k==='q')ENG.pitch=clamp(ENG.pitch-0.05,0,1); else if(k==='e')ENG.pitch=clamp(ENG.pitch+0.05,0,1);
+  else if(k==='b'){ENG.burp=!ENG.burp;buildScopeTools();} else if(k==='a'){doSuction();}
+  else return; onBladeMove(); });
+function onBladeMove(){ if(!ENG.bladeInserted){ENG.bladeInserted=true;} maybeSpasm(); }
+function maybeSpasm(){ // bıçak temas edince paralizi yoksa öğürme/laringospazm
+  if((ENG.blockState==='none'||ENG.blockState==='onset'&&ENG.blockT<10) && ENG.depth>0.4 && !ENG.laryngospasm){ ENG.laryngospasm=true; toast('⚠ Laringospazm / öğürme — paralizi oturmadan bıçak temas etti, kordlar kapandı!','bad'); }
+}
+
+/* ============ VAKA / INIT ============ */
+function loadCase(n){ ENG.caseId=n; ENG.cas=CASES[n]; ENG.blade='mac'; ENG.head='sniff'; ENG.depth=0.3; ENG.lift=0; ENG.pitch=0; ENG.burp=false; ENG.suctioned=false; ENG.bladeInserted=false;
+  ENG.preox=false; ENG.eto2=21; ENG.spo2=ENG.cas.vit.spo2; ENG.etco2=38; ENG.hr=ENG.cas.vit.hr; ENG.sbp=ENG.cas.vit.sbp; ENG.dbp=ENG.cas.vit.dbp;
+  ENG.apnea=false; ENG.apneaT=0; ENG.ventilating=false; ENG.induction=null; ENG.paralytic=null; ENG.blockState='none'; ENG.blockT=0; ENG.mapDelta=0; ENG.laryngospasm=false; ENG.dentalWarning=false;
+  $('caseTag').textContent=ENG.cas.tag; $('caseStem').textContent=ENG.cas.stem; $('teachNote').textContent=(ENG.level==='resident')?ENG.cas.teach:'Pre-oksijenasyon → indüksiyon → paralizi → laringoskopi. Doğru bıçak, derinlik ve manevralarla glottisi kadraja alın.';
+  $('rsiFlags').innerHTML=''; buildCaseSeg(); buildRSIDrawer(); buildScopeTools(); window.__chainCase=n;
+  toast('Vaka '+n+': '+ENG.cas.name,'good');
+}
+
+/* ============ TOAST ============ */
+function toast(msg,kind){ var host=$('toastHost'); var t=document.createElement('div'); t.className='toast'+(kind?' '+kind:''); t.textContent=msg; host.innerHTML=''; host.appendChild(t); setTimeout(function(){ t.style.opacity='0'; t.style.transition='.4s'; setTimeout(function(){ if(t.parentNode)t.remove(); },420); },3200); }
+
+/* ============ TEST API ============ */
+window.AW={
+  setCase:function(n){ loadCase(n); }, case:function(){ return ENG.caseId; },
+  setBlade:function(b){ ENG.blade=b; }, setHead:function(h){ ENG.head=h; }, setDepth:function(x){ ENG.depth=clamp(x,0,1); }, setLift:function(x){ ENG.lift=clamp(x,0,1); }, setPitch:function(x){ ENG.pitch=clamp(x,0,1); }, setBurp:function(b){ ENG.burp=!!b; }, suction:function(){ ENG.suctioned=true; },
+  pogo:function(){ return pogo(); }, cormack:function(){ return cormack(); }, dentalWarning:function(){ applyKinematics(); return ENG.dentalWarning; },
+  exposure:function(){ return +exposure().toFixed(3); },
+  giveDrug:function(id){ giveDrug(id); }, getMAP:function(){ return getMAP(); }, resetDrugs:function(){ ENG.induction=null; ENG.mapDelta=0; },
+  blockState:function(){ return ENG.blockState; }, advanceBlock:function(sec){ if(ENG.blockState==='onset'){ ENG.blockT+=sec; if(ENG.blockT>=45){ ENG.blockState='full'; ENG.laryngospasm=false; } } return ENG.blockState; },
+  cordAperture:function(){ return +cordAperture().toFixed(2); }, triggerContact:function(){ ENG.depth=0.55; maybeSpasm(); return ENG.laryngospasm; }, laryngospasm:function(){ return ENG.laryngospasm; },
+  preoxygenate:function(full){ ENG.preox=true; ENG.eto2= full===false?21:90; }, skipPreox:function(){ ENG.preox=false; ENG.eto2=21; },
+  // apne: SpO2 %90 altına düşme süresi (saniye) — senkron integrasyon
+  timeToDesat:function(preox){ var savedEto2=ENG.eto2, savedCas=ENG.cas; ENG.eto2= preox? 90:21; var res=safeApneaReserve();
+    var spo2=99,t=0,dt=0.5; while(spo2>=90 && t<2000){ t+=dt; var f=t/res; var tg= f<0.6?99:clamp(99-(f-0.6)/0.5*(99-55),40,99); spo2=spo2+(tg-spo2)*0.6; } ENG.eto2=savedEto2; return Math.round(t); },
+  startApnea:function(){ ENG.apnea=true; }, phys:function(){ return {spo2:+ENG.spo2.toFixed(1),eto2:+ENG.eto2.toFixed(0),etco2:+ENG.etco2.toFixed(0),hr:Math.round(ENG.hr),map:getMAP(),apneaT:+ENG.apneaT.toFixed(0),block:ENG.blockState}; },
+  metrics:function(){ applyKinematics(); return {pogo:pogo(),cormack:cormack(),dentalWarning:ENG.dentalWarning,exposure:+exposure().toFixed(3),cordAperture:+cordAperture().toFixed(2),blockState:ENG.blockState}; },
+  _eng:ENG
+};
+
+/* ============ chain bootstrap ============ */
+(function(){ var qs=new URLSearchParams(location.search); if(qs.get('chain')!=='1')return; var cs=+(qs.get('case')||0); if(cs){ setTimeout(function(){ try{ loadCase(cs); window.__chainCase=cs; }catch(e){} },80); } })();
+
+$('homeBtn').onclick=function(){ location.href='index.html'; };
+[].forEach.call($('lvlSeg').children,function(b){ b.onclick=function(){ ENG.level=b.dataset.lvl; [].forEach.call($('lvlSeg').children,function(x){x.classList.toggle('on',x===b);}); $('teachNote').textContent=(ENG.level==='resident')?ENG.cas.teach:'Pre-oksijenasyon → indüksiyon → paralizi → laringoskopi.'; }; });
+
+function init(){ initGL(); buildCaseSeg(); buildRSIDrawer(); buildToolDrawer(); buildScopeTools(); loadCase(1); requestAnimationFrame(loop); }
+init();
+window.AIRWAY_READY=true;
+</script>
+</body>
+</html>

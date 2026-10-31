@@ -83,6 +83,9 @@ body{background:radial-gradient(1200px 800px at 70% -10%,#0a1424,var(--bg0) 60%)
 .sheet h2{font-size:20px;margin-bottom:5px}.sheet .sub{color:var(--ink2);font-size:12.5px;margin-bottom:14px}
 .jcat{margin:9px 0;padding:11px 12px;border:1px solid var(--line);border-radius:11px;background:var(--bg2)}
 .jcat .r{display:flex;justify-content:space-between;font-weight:600;font-size:13px}.bar{height:6px;border-radius:4px;background:#17202f;margin-top:7px;overflow:hidden}.bar>span{display:block;height:100%}
+#selLvl button.on,#selVar button.on{background:linear-gradient(135deg,#49a6e6,#36bd8e);color:#05121c;font-weight:700;box-shadow:0 0 0 1px rgba(90,200,150,.35) inset}
+#selLvl button.on::after,#selVar button.on::after{content:' ✓';font-weight:800}
+#selStatus{margin:10px 0 2px;padding:9px 12px;border:1px solid rgba(90,200,150,.3);background:rgba(54,189,142,.08);border-radius:9px;font-size:12px;color:#bfe9d6;line-height:1.45}
 .selgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px}
 .selcard{border:1px solid var(--line);border-radius:13px;background:var(--bg2);padding:14px;cursor:pointer;transition:.15s}
 .selcard:hover{border-color:var(--accent);transform:translateY(-2px)}
@@ -495,12 +498,19 @@ function buildJury(){ var ch=CC.chain, flags=CC.flags; var clampN=function(x){re
 
 /* -------- SEÇİCİ -------- */
 function showSelector(){ var h='<h2>🩺 6 Entegre Nöbet & Vaka Zinciri</h2><div class="sub">12 modül tam entegre — ductus-core v1.1 ile truth sızmazlığı, alan-bazlı revizyon ve kanıt güncelliği. Mod ve varyant seçin, bir zincir açın. Tanı öncesi spoiler yok.</div>';
-  h+='<div class="actions" style="margin-bottom:6px"><div class="seg" id="selLvl"><button class="'+(CC.level==='student'?'on':'')+'" data-lvl="student">TUS / Öğrenci</button><button class="'+(CC.level==='resident'?'on':'')+'" data-lvl="resident">Asistan / Girişimsel</button></div>'+
-    '<div class="seg" id="selVar"><button class="'+(CC.variant==='A'?'on':'')+'" data-v="A">Varyant A</button><button class="'+(CC.variant==='B'?'on':'')+'" data-v="B">Varyant B</button></div></div><div class="selgrid">';
+  h+='<div class="actions" style="margin-bottom:4px"><div class="seg" id="selLvl"><button class="'+(CC.level==='student'?'on':'')+'" data-lvl="student">TUS / Öğrenci</button><button class="'+(CC.level==='resident'?'on':'')+'" data-lvl="resident">Asistan / Girişimsel</button></div>'+
+    '<div class="seg" id="selVar"><button class="'+(CC.variant==='A'?'on':'')+'" data-v="A">Varyant A</button><button class="'+(CC.variant==='B'?'on':'')+'" data-v="B">Varyant B</button></div></div>';
+  h+='<div id="selStatus"></div><div class="selgrid">';
   Object.keys(CHAINS).forEach(function(k){ var c=CHAINS[k]; h+='<div class="selcard" onclick="pickChain('+k+')"><div class="cx">ZİNCİR #'+k+'</div><div class="ct">'+c.nick+'</div><div class="cc">'+c.complaint+'</div><div class="cm">'+c.path+'</div></div>'; });
   h+='</div>'; $('selSheet').innerHTML=h; $('selOverlay').classList.add('open'); $('jury').classList.remove('open');
-  [].forEach.call($('selLvl').children,function(b){ b.onclick=function(){ CC.level=b.dataset.lvl; [].forEach.call($('selLvl').children,function(x){x.classList.toggle('on',x===b);}); }; });
-  [].forEach.call($('selVar').children,function(b){ b.onclick=function(){ CC.variant=b.dataset.v; [].forEach.call($('selVar').children,function(x){x.classList.toggle('on',x===b);}); }; });
+  [].forEach.call($('selLvl').children,function(b){ b.onclick=function(){ CC.level=b.dataset.lvl; [].forEach.call($('selLvl').children,function(x){x.classList.toggle('on',x===b);}); updateSelStatus(); }; });
+  [].forEach.call($('selVar').children,function(b){ b.onclick=function(){ CC.variant=b.dataset.v; [].forEach.call($('selVar').children,function(x){x.classList.toggle('on',x===b);}); updateSelStatus(); }; });
+  updateSelStatus();
+}
+function updateSelStatus(){ var el=$('selStatus'); if(!el)return;
+  var modTxt=(CC.level==='resident')?'Asistan / Girişimsel Mod':'TUS / Öğrenci Modu';
+  var varTxt=(CC.variant==='B')?'Başvuru aynıdır; klinik seyir ve komplikasyon profili vaka içinde farklılaşır':'Standart klinik seyir; her istasyon temel yönetimi sınar';
+  el.innerHTML='<b>Seçili:</b> '+modTxt+' · <b>Varyant '+CC.variant+'</b> ('+varTxt+') — Başlamak için aşağıdan bir zincir seçin.';
 }
 window.pickChain=function(k){ boot(k,CC.variant,CC.level); }; window.showSelector=showSelector;
 function toast(msg,kind){ var host=$('toastHost'); var t=document.createElement('div'); t.className='toast'+(kind?' '+kind:''); t.textContent=msg; host.innerHTML=''; host.appendChild(t); setTimeout(function(){ t.style.opacity='0'; t.style.transition='.4s'; setTimeout(function(){ if(t.parentNode)t.remove(); },420); },3400); }
@@ -545,6 +555,12 @@ window.CC2={
   moduleURL:function(id,idx){ boot(id,'A','student'); return moduleURL(CHAINS[id].stations[idx],idx); },
   caseFor:function(id,idx){ return CHAINS[id].stations[idx].caseN||null; },
   handoffOptions:function(id){ var h=CHAINS[id].handoff; return [].concat(h.status,h.unc,h.alarm); },
+  // seçim modalı: butona tıkla → aktif vurgu + durum satırı anında güncelleniyor mu
+  modalToggle:function(which,value){ showSelector(); var seg=$(which==='lvl'?'selLvl':'selVar'); var attr=(which==='lvl'?'lvl':'v');
+    var btn=[].slice.call(seg.children).find(function(b){return b.dataset[attr]===value;}); if(!btn)return{ok:false};
+    btn.click(); var status=$('selStatus')?$('selStatus').textContent:'';
+    return { activeHighlighted:btn.classList.contains('on'), othersOff:[].slice.call(seg.children).filter(function(b){return b!==btn;}).every(function(b){return !b.classList.contains('on');}),
+      statusUpdated:(which==='lvl'?(status.indexOf(value==='resident'?'Asistan':'TUS')>=0):(status.indexOf('Varyant '+value)>=0)), statusText:status }; },
   state:function(){ return {chainId:CC.chainId, idx:CC.idx, flags:CC.flags.length, vitals:CC.vitals, revisions:CC.S?CC.S.getRevisions():null}; }
 };
 showSelector(); tick(); window.CHAIN_READY=true;
