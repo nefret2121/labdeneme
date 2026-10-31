@@ -157,7 +157,7 @@ function logFlag(type,msg,kind){ CH.flags.push({type:type,msg:msg,kind:kind,atSi
 
 // ---- BroadcastChannel: CathLab'dan gelen PCI sonucu ----
 S.on('state', function(){ renderVitals(); });
-S.on('evidence', function(){ renderEvidence(); });
+S.on('evidence', function(){ renderEvidence(); renderVitals(); });
 // CathLab chain modundan PCI sonucu geldiğinde (DeployStent zaten state'i günceller)
 S.on('lifecycle', function(d){ /* ileride */ });
 
@@ -166,7 +166,9 @@ S.on('lifecycle', function(d){ /* ileride */ });
 // =====================================================================
 function renderVitals(){
   var st=S.getState(), v=st.vitals;
-  $('pWho').innerHTML = st.demographics.name+' · '+st.demographics.age+' '+st.demographics.sex+' <small>· '+(st.pathology.wall?st.pathology.wall.toUpperCase()+' şüphesi':'')+'</small>';
+  var ecgDone = S.getEvidence().some(function(e){return e.modality==='ECG12';});
+  var dxTag = (ecgDone && st.pathology.wall) ? st.pathology.wall.toUpperCase()+' STEMI' : 'Akut Göğüs Ağrısı — Triyaj';
+  $('pWho').innerHTML = st.demographics.name+' · '+st.demographics.age+' '+st.demographics.sex+' <small>· '+dxTag+'</small>';
   $('vHr').textContent=Math.round(v.hr); $('vBp').textContent=Math.round(v.sbp)+'/'+Math.round(v.dbp);
   $('vMap').textContent=Math.round(v.map); $('vMap').className='v'+(v.map<65?' bad':''); $('vSpo2').textContent=Math.round(v.spo2); $('vRr').textContent=Math.round(v.rr);
   $('vBp').className='v'+(v.sbp<90?' bad':'');
@@ -189,11 +191,11 @@ var STAGE={
  triage:function(){
   var st=S.getState(); var rv=st.pathology.rvInvolvement;
   return '<div class="panelttl">🚑 Acil Değerlendirme</div><div class="panelsub">Kapı anı — ilk değerlendirme, ilaç ve triyaj kararları.</div>'+
-  '<div class="card"><h3>Başvuru</h3><p>71Y erkek, 40 dk önce başlayan baskı tarzı göğüs ağrısı, bulantı ve terleme. Nabız yavaş (bradikardi), kan basıncı sınırda. İnferior iskemi kliniği; <b>sağ ventrikül tutulumu şüphesi</b> (inferior STEMI).</p>'+
+  '<div class="card"><h3>Başvuru</h3><p>71Y erkek, 40 dk önce başlayan baskı tarzı retrosternal göğüs ağrısı; bulantı ve soğuk terleme eşlik ediyor. Muayenede soluk ve terli; nabız yavaş ve düzenli, kan basıncı sınırda, akciğerler bazallerde temiz, juguler venöz dolgunluk hafif artmış. İlk değerlendirme ve stabilizasyon kararlarını verin.</p>'+
   '<div class="actions">'+
    '<button onclick="CHAIN.act(\'aspirin\')" id="a-aspirin">Aspirin 300 mg çiğnet</button>'+
    '<button onclick="CHAIN.act(\'heparin\')" id="a-heparin">Antikoagülan (heparin)</button>'+
-   '<button class="warnb" onclick="CHAIN.act(\'nitrat\')" id="a-nitrat">Dilaltı Nitrat</button>'+
+   '<button onclick="CHAIN.act(\'nitrat\')" id="a-nitrat">Dilaltı Nitrat</button>'+
    '<button onclick="CHAIN.act(\'fluid\')" id="a-fluid">IV sıvı bolus</button>'+
   '</div>'+
   '<div id="triageFlags"></div></div>'+

@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DuctusLab · 3B Otoskopi &amp; Pnömatik Muayene</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" />
+<style>
+:root{
+  --bg-0:#040812;--bg-1:#070c17;--bg-2:#0b1220;--bg-3:#101829;
+  --glass:rgba(13,20,34,.66);--glass-2:rgba(17,26,43,.55);
+  --line:rgba(160,176,196,.10);--line-2:rgba(160,176,196,.18);
+  --ink:#e4e9f1;--ink-2:#a6b1c2;--ink-3:#6c7889;
+  --accent:#6fa3c8;--accent-2:#4f7fa3;--accent-dim:rgba(111,163,200,.14);
+  --amber:#d9a441;--amber-dim:rgba(217,164,65,.14);
+  --ok:#5a9f7f;--ok-dim:rgba(90,159,127,.16);
+  --alert:#c4565f;--alert-dim:rgba(196,86,95,.16);
+  --violet:#9a86c9;--violet-dim:rgba(154,134,201,.16);
+  --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:"JetBrains Mono","SF Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:radial-gradient(1200px 800px at 70% -10%,#0a1424 0%,var(--bg-0) 60%);color:var(--ink);font-family:var(--sans);font-size:14px;overflow:hidden}
+.app{display:flex;flex-direction:column;height:100vh}
+.topbar{display:flex;align-items:center;gap:16px;padding:10px 18px;border-bottom:1px solid var(--line);background:var(--glass);backdrop-filter:blur(12px);flex:0 0 auto;z-index:20}
+.wordmark{font-weight:700;letter-spacing:.04em;font-size:15px}.wordmark em{color:var(--accent);font-style:normal}
+.vsep{width:1px;height:22px;background:var(--line-2)}
+.product{color:var(--ink-2);font-size:12.5px}
+.spacer{flex:1}
+.btn{font-family:var(--sans);font-size:12.5px;color:var(--ink-2);background:var(--glass-2);border:1px solid var(--line-2);border-radius:9px;padding:7px 12px;cursor:pointer;transition:.15s;white-space:nowrap}
+.btn:hover{color:var(--ink);border-color:var(--accent-2);background:var(--accent-dim)}
+.btn.on{color:#fff;background:var(--accent-dim);border-color:var(--accent)}
+.btn.sm{padding:5px 9px;font-size:11.5px}
+.seg{display:flex;border:1px solid var(--line-2);border-radius:9px;overflow:hidden}
+.seg button{border:0;border-radius:0;background:transparent}.seg button+button{border-left:1px solid var(--line-2)}
+.main{flex:1;display:flex;min-height:0}
+.stage{flex:1.3;min-width:0;position:relative;display:flex;flex-direction:column;background:#03060d}
+.canvas-wrap{flex:1;position:relative;min-height:0}
+#gl,#overlay{position:absolute;inset:0;width:100%;height:100%;display:block}
+#overlay{pointer-events:auto}
+.stage-foot{flex:0 0 auto;border-top:1px solid var(--line);background:var(--glass);backdrop-filter:blur(10px);padding:9px 14px}
+.toolrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.toolgrp{display:flex;align-items:center;gap:7px;padding:5px 9px;border:1px solid var(--line);border-radius:10px;background:var(--glass-2)}
+.toolgrp .lbl{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+input[type=range]{-webkit-appearance:none;height:4px;border-radius:3px;background:linear-gradient(90deg,#1a2234,#30405c);outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);border:2px solid #0a1120;cursor:pointer}
+.console{flex:1;min-width:360px;max-width:450px;border-left:1px solid var(--line);background:var(--bg-1);display:flex;flex-direction:column;min-height:0}
+.console-scroll{overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px}
+.console-scroll::-webkit-scrollbar{width:9px}.console-scroll::-webkit-scrollbar-thumb{background:#1b2638;border-radius:6px}
+.card{border:1px solid var(--line);border-radius:12px;background:var(--glass);padding:12px 13px}
+.card h3{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);font-weight:600;margin-bottom:9px;display:flex;justify-content:space-between;align-items:center}
+.eyebrow{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3)}
+select{width:100%;font-family:var(--sans);font-size:13px;color:var(--ink);background:var(--bg-2);border:1px solid var(--line-2);border-radius:9px;padding:9px 10px;cursor:pointer}
+select:focus{outline:none;border-color:var(--accent-2)}
+.rdg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.rdg .cell{border:1px solid var(--line);border-radius:9px;padding:8px 9px;background:var(--bg-2)}
+.rdg .cell .k{font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3)}
+.rdg .cell .v{font-family:var(--mono);font-size:15px;font-weight:600;margin-top:2px}
+.v.ok{color:#8fe3bf}.v.warn{color:var(--amber)}.v.bad{color:#e88b92}
+.mini{font-size:11.5px;color:var(--ink-2)}
+.pinbar{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+.pinbar button{font-size:11px;padding:5px 8px;border:1px solid var(--line-2);background:var(--bg-2);color:var(--ink-2);border-radius:7px;cursor:pointer}
+.pinbar button.on{border-color:var(--accent);color:#fff;background:var(--accent-dim)}
+.pinlist{font-size:11px;color:var(--ink-2);margin-top:6px}
+.pinlist span{display:inline-block;background:var(--bg-3);border:1px solid var(--line-2);border-radius:6px;padding:2px 7px;margin:2px 3px 0 0}
+.btn-primary{width:100%;font-size:13.5px;font-weight:600;color:#06131d;background:linear-gradient(135deg,#7ec0e8,#5a9bc4);border:0;border-radius:10px;padding:11px;cursor:pointer}
+.btn-primary:hover{filter:brightness(1.08)}
+.btn-bridge{width:100%;font-size:12.5px;font-weight:600;color:#fff;background:linear-gradient(135deg,#8b6fc9,#6f56a8);border:0;border-radius:10px;padding:10px;cursor:pointer;margin-top:8px}
+.jury-cat{margin:8px 0;padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:var(--bg-2)}
+.jury-cat .row{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;font-weight:600}
+.bar{height:6px;border-radius:4px;background:#17202f;margin-top:6px;overflow:hidden}.bar>span{display:block;height:100%;border-radius:4px}
+.flag{font-size:11.5px;padding:7px 9px;border-radius:8px;margin-top:6px;border:1px solid}
+.flag.red{color:#e88b92;border-color:rgba(196,86,95,.45);background:var(--alert-dim)}
+.flag.amber{color:var(--amber);border-color:rgba(217,164,65,.45);background:var(--amber-dim)}
+.flag.green{color:#8fe3bf;border-color:rgba(90,159,127,.45);background:var(--ok-dim)}
+.hint{font-size:11px;color:var(--ink-3);margin-top:6px;line-height:1.45}
+#toastBox{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;z-index:60}
+.toast{background:rgba(10,16,28,.95);border:1px solid var(--line-2);border-left:3px solid var(--accent);border-radius:9px;padding:10px 14px;font-size:12.5px;color:var(--ink);max-width:420px;box-shadow:0 8px 28px rgba(0,0,0,.45);animation:tin .25s}
+.toast.warn{border-left-color:var(--amber)}.toast.bad{border-left-color:var(--alert)}
+@keyframes tin{from{opacity:0;transform:translateY(8px)}}
+.pneu-badge{position:absolute;top:12px;left:12px;font-family:var(--mono);font-size:11px;color:var(--ink-2);background:rgba(8,12,20,.7);border:1px solid var(--line-2);border-radius:8px;padding:6px 10px;z-index:5}
+.fieldhint{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);font-size:11px;color:var(--ink-3);background:rgba(8,12,20,.6);border-radius:7px;padding:4px 10px;z-index:5}
+@media(max-width:960px){.main{flex-direction:column}.console{max-width:none;border-left:0;border-top:1px solid var(--line)}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <span class="wordmark">Ductus<em>Lab</em></span>
+    <span class="vsep"></span>
+    <span class="product">3B Otoskopi &amp; Pnömatik Muayene</span>
+    <span class="spacer"></span>
+    <div class="seg" id="levelSeg">
+      <button class="btn sm on" data-lvl="student">TUS / Öğrenci</button>
+      <button class="btn sm" data-lvl="resident">Asistan / KBB</button>
+    </div>
+    <button class="btn sm" id="examToggle">🔒 Gizli Vaka (Sınav)</button>
+    <button class="btn sm" id="homeBtn">← Anasayfa</button>
+  </div>
+
+  <div class="main">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="gl"></canvas>
+        <canvas id="overlay"></canvas>
+        <div class="pneu-badge" id="pneuBadge">Otoskop hazır</div>
+        <div class="fieldhint" id="fieldHint">Vizörde gezinmek için fareyle sürükleyin · işaretlemek için tıklayın</div>
+      </div>
+      <div class="stage-foot">
+        <div class="toolrow">
+          <div class="toolgrp">
+            <span class="lbl">Pinna traksiyonu</span>
+            <div class="seg">
+              <button class="btn sm" id="trUB">Yukarı-Geri</button>
+              <button class="btn sm" id="trDB">Aşağı-Geri</button>
+              <button class="btn sm on" id="trNone">Yok</button>
+            </div>
+          </div>
+          <div class="toolgrp">
+            <span class="lbl">Spekulum</span>
+            <div class="seg">
+              <button class="btn sm" id="sp25">2.5 mm</button>
+              <button class="btn sm on" id="sp40">4.0 mm</button>
+            </div>
+          </div>
+          <div class="toolgrp">
+            <span class="lbl">İlerletme</span>
+            <input type="range" id="depth" min="0" max="100" value="45" style="width:90px">
+          </div>
+          <div class="toolgrp">
+            <span class="lbl">Otoskop açısı</span>
+            <input type="range" id="otoX" min="-100" max="100" value="0" style="width:70px">
+            <input type="range" id="otoY" min="-100" max="100" value="0" style="width:70px">
+          </div>
+          <div class="toolgrp">
+            <span class="lbl">Pnömatik puar</span>
+            <button class="btn sm" id="puff">Bas (+)</button>
+            <button class="btn sm" id="suck">Çek (−)</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="console">
+      <div class="console-scroll">
+        <div class="card">
+          <h3>Vaka Seçici <span class="eyebrow" id="caseCount"></span></h3>
+          <select id="caseSel"></select>
+          <div style="display:flex;gap:8px;margin-top:9px">
+            <div style="flex:1"><span class="eyebrow">Kulak</span><div class="mini" id="earRead" style="margin-top:3px">—</div></div>
+            <div style="flex:1"><span class="eyebrow">Yaş grubu</span><div class="mini" id="ageRead" style="margin-top:3px">—</div></div>
+          </div>
+          <div class="mini" id="caseStem" style="margin-top:9px"></div>
+        </div>
+
+        <div class="card">
+          <h3>Muayene Durumu</h3>
+          <div class="rdg">
+            <div class="cell"><div class="k">Sızdırmazlık</div><div class="v" id="sealRead">—</div></div>
+            <div class="cell"><div class="k">Zar mobilitesi</div><div class="v" id="mobRead">—</div></div>
+            <div class="cell"><div class="k">Görülen zar</div><div class="v" id="visRead">—</div></div>
+            <div class="cell"><div class="k">Işık refleksi</div><div class="v" id="reflexRead">—</div></div>
+          </div>
+          <div class="mini" id="techNote" style="margin-top:9px;color:var(--ink-3)"></div>
+        </div>
+
+        <div class="card">
+          <h3>Bulgu İşaretleme <span class="eyebrow" id="pinCount">0 pin</span></h3>
+          <div class="mini">Önce yapı seç, sonra vizörde o yapıya tıkla:</div>
+          <div class="pinbar" id="pinBar"></div>
+          <div class="pinlist" id="pinList"></div>
+          <button class="btn sm" id="clearPins" style="margin-top:7px">Pinleri temizle</button>
+        </div>
+
+        <div class="card">
+          <h3>Tanı &amp; Yönetim Beyanı</h3>
+          <span class="eyebrow">Tanı</span>
+          <select id="dxSel" style="margin-top:5px"></select>
+          <span class="eyebrow" style="display:block;margin-top:9px">Yönetim kararı</span>
+          <select id="mgSel" style="margin-top:5px"></select>
+          <button class="btn-primary" id="declareBtn" style="margin-top:11px">Beyanı Değerlendir</button>
+          <div id="juryOut" style="margin-top:11px"></div>
+        </div>
+
+        <div class="card" style="border-color:rgba(154,134,201,.25)">
+          <h3>Öğretim Notu</h3>
+          <div class="mini" id="teachNote">Muayene aracı seçin veya tanı beyan edin.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="toastBox"></div>
+
+<script type="importmap">
+{ "imports": { "three": "https://unpkg.com/three@0.160.1/build/three.module.js" } }
+</script>
+<script type="module">
+import * as THREE from 'three';
+/* ============================================================================
+ *  DuctusLab · OTO — 3B Otoskopi & Pnömatik Muayene
+ *  Timpanik zar fiziği GLSL'de EMERGENT (ışık üçgeni boyanmaz; yüzey normalinin
+ *  gerçek speküler yansıması). JS test aynası (window.OTO) birebir aynı yükseklik
+ *  alanı sabitlerini kullanır. optic-viewport.js diyafram+tremor+coverage sağlar.
+ * ========================================================================== */
+const $=id=>document.getElementById(id);
+const clamp=(x,a,b)=>x<a?a:x>b?b:x;
+
+// ---- TEK KAYNAK yükseklik-alanı sabitleri (Node'da kalibre edildi) ----
+const HF={ umbo:[0.08,-0.10], cone:0.95, bulgeAmp:0.80, retrAmp:0.45, power:40.0, hb:[-0.30,0.44,1.25] };
+
+/* ======================= VAKA AİLESİ (8) ======================= */
+// hyper: hiperemi, bulge: bombeleşme, retract, fluid: efüzyon(menisküs), scler: timpanoskleroz,
+// cerumen: serümen örtme oranı, perf: 0 yok/1 santral/2 marjinal, comp: pnömatik kompliyans,
+// landmarksSilik: işaret noktası silikliği. truthDx: gizli tanı.
+function C(o){ return Object.assign({ear:'R',age:'adult',hyper:0,bulge:0,retract:0.05,fluid:0,scler:0,cerumen:0,perf:0,comp:1.0,landmark:1.0},o); }
+const CASES=[
+ C({id:1,name:'Normal Timpanik Zar',ear:'R',age:'adult',truthDx:'normal',comp:1.0,
+    stem:'Rutin kontrol. Asemptomatik erişkin. Zarı değerlendirin ve sağ/sol yönü doğrulayın.',
+    teach:'Normal zar: inci-gri, yarı saydam; umbo, malleus sapı ve lateral çıkıntı seçilir; ışık refleksi SAĞ kulakta saat 5, SOL kulakta saat 7 kadranında kendiliğinden belirir; pnömatik bası ile belirgin hareketli.'}),
+ C({id:2,name:'Ağlayan Çocukta İzole Hiperemi',ear:'L',age:'child',truthDx:'hyperemia',hyper:0.72,bulge:0,comp:0.92,landmark:0.95,
+    stem:'Ağlayan 2 yaş çocuk, ateşsiz, kulak çekiştirmesi yok. Zar kırmızımsı. Karar: AOM mu, ağlamaya bağlı hiperemi mi?',
+    teach:'Ağlama/ateş zarı damarlanmayla kızartır ama BOMBELEŞME YOK ve mobilite NORMAL. İzole hiperemi tek başına AOM değildir — gereksiz antibiyotik tuzağı. AOM için bombeleşme ± azalmış mobilite ± işaret noktası silikliği gerekir.'}),
+ C({id:3,name:'Serümen Tıkacı (Buşon)',ear:'R',age:'adult',truthDx:'cerumen',cerumen:0.72,comp:0.5,
+    stem:'Kulak dolgunluğu ve azalmış işitme. Dış kanalda bol serümen. Zarın büyük kısmı örtülü.',
+    teach:'Zarın >%60’ı serümenle örtülüyse doğru beyan "DEĞERLENDİRİLEMEZ — önce serümen temizliği". Örtülü zarda "Normal" veya "Perforasyon yok" demek kanıtı aşan iddiadır (CLAIM_EXCEEDS_VISIBLE_EVIDENCE).'}),
+ C({id:4,name:'Akut Otitis Media (AOM)',ear:'R',age:'child',truthDx:'aom',hyper:0.82,bulge:0.92,comp:0.3,landmark:0.25,
+    stem:'3 yaş, 2 gündür ateş ve kulak ağrısı. Zar belirgin bombeleşmiş, işaret noktaları silik.',
+    teach:'AOM: belirgin bombeleşme (koni tersine döner → ışık refleksi fiziksel olarak DAĞILIR), hiperemi, işaret noktaları silik, pnömatik mobilite azalmış. Yönetim: analjezi ± yaş/şiddet/kriterlere göre antibiyotik.'}),
+ C({id:5,name:'Efüzyonlu Otitis Media (OME)',ear:'L',age:'child',truthDx:'ome',hyper:0.15,retract:0.5,fluid:0.62,comp:0.12,landmark:0.6,
+    stem:'4 yaş, geçirilmiş ÜSYE sonrası işitme azlığı; ağrı yok. Zar mat, arkasında sıvı/kabarcık izlenimi.',
+    teach:'OME: retrakte/mat zar, hava-sıvı menisküsü/kabarcıklar (yerçekimine kilitli), pnömatik hareket AZALMIŞ/YOK. Ağrısız. Pnömatik immobilite yalnız SIZDIRMAZLIK varsa geçerlidir (küçük spekulum kaçağı efüzyon sanılmasın!). Yönetim: izlem; kalıcıysa KBB.'}),
+ C({id:6,name:'Santral Kuru Perforasyon',ear:'L',age:'adult',truthDx:'perf_central',perf:1,comp:0.0,landmark:0.7,
+    stem:'Geçirilmiş otit öyküsü, kuru kulak. Zarda santral açıklık; annulus korunmuş.',
+    teach:'Santral perforasyon: annulus korunmuş (güvenli). Pnömatik testte zar hareket etmez (hava kaçar). Kuru tutma, su koruması; cerrahi onarım planlanabilir.'}),
+ C({id:7,name:'Marjinal / Atik Perforasyon',ear:'R',age:'adult',truthDx:'perf_marginal',perf:2,comp:0.0,landmark:0.6,
+    stem:'Tekrarlayan akıntı. Zarda annulusa ulaşan kenar/atik defekti.',
+    teach:'Marjinal/atik perforasyon annulusa ulaşır → GÜVENLİ OLMAYAN kulak; kolesteatom riski yüksek. İvedi KBB değerlendirmesi/görüntüleme.'}),
+ C({id:8,name:'Pars Flaccida Retraksiyon + Keratin',ear:'L',age:'adult',truthDx:'cholesteatoma',retract:0.35,scler:0,comp:0.3,landmark:0.65,attic:1,
+    stem:'Kronik tek taraflı kötü kokulu akıntı. Üst-arkada (pars flaccida) retraksiyon cebi ve beyaz debris.',
+    teach:'Pars flaccida (atik) retraksiyon cebi + beyaz keratin debris → KOLESTEATOM şüphesi. KBB sevki + temporal kemik BT endikasyonu. "Basit AOM/OME" olarak geçiştirilmemeli.'})
+];
+
+const DX=[['normal','Normal timpanik zar'],['hyperemia','İzole hiperemi (AOM değil)'],['cerumen','Serümen tıkacı — değerlendirilemez'],
+  ['aom','Akut otitis media (AOM)'],['ome','Efüzyonlu otitis media (OME)'],['perf_central','Santral kuru perforasyon'],
+  ['perf_marginal','Marjinal/atik perforasyon'],['cholesteatoma','Kolesteatom şüphesi']];
+const MG=[['reassure','İzlem / güvence, antibiyotik yok'],['analgesia_abx','Analjezi ± antibiyotik (AOM)'],
+  ['cerumen_remove','Önce serümen temizliği, sonra yeniden muayene'],['watchful_ent','İzlem; kalıcıysa KBB'],
+  ['dry_ent','Kuru tutma + KBB/odyometri'],['urgent_ent','İvedi KBB sevki ± temporal BT']];
+const PIN_STRUCTS=[['umbo','Umbo'],['malleus','Malleus sapı'],['reflex','Işık refleksi'],['bulge','Bombeleşme'],
+  ['fluid','Sıvı seviyesi/kabarcık'],['perf','Perforasyon kenarı'],['attic','Atik retraksiyon cebi'],['cerumen','Serümen']];
+
+/* ======================= MOTOR DURUMU ======================= */
+const ENG={ idx:0, cas:CASES[0], speculum:4.0, traction:'none', depth:45, otoX:0, otoY:0,
+  pneu:0, pneuTarget:0, pneuBadge:'', examMode:false, pins:[], activeStruct:null,
+  look:{x:0,y:0}, dragging:false, painCount:0, pneuUsed:false, t:0 };
+
+function requiredTraction(){ return ENG.cas.age==='child' ? 'down-back' : 'up-back'; }
+function tractionCorrect(){ return ENG.traction===requiredTraction(); }
+function mirror(){ return ENG.cas.ear==='R'?1:-1; }
+// kanal düzleşmesi → görülen zar oranı
+function visibleFrac(){
+  var base = tractionCorrect()? 1.0 : 0.42;
+  var d = clamp(ENG.depth/100,0,1);
+  var depthF = d<0.25? d/0.25*0.7+0.3 : 1.0;     // çok sığ → az görüş
+  var cer = 1.0 - ENG.cas.cerumen*0.9;            // serümen örtmesi
+  return clamp(base*depthF*cer,0.12,1.0);
+}
+// pnömatik sızdırmazlık: büyük spekulum + doğru traksiyon + yeterli ilerletme
+function sealOk(){ return ENG.speculum>=4.0 && tractionCorrect() && ENG.depth>=30 && ENG.cas.cerumen<0.5; }
+function pneumaticValid(){ return sealOk() && ENG.cas.perf===0; }   // perforasyonda da hava kaçar
+function mobilityObserved(){ return pneumaticValid()? ENG.cas.comp : 0; }  // kaçak → hareket yok (efüzyon sanma!)
+function tooDeepBony(){ return ENG.depth>86; }   // kemik kanala fazla itme → ağrı
+
+/* ======================= JS TEST AYNASI (GLSL ile aynı) ======================= */
+function heightJS(px,py){
+  var P=ENG.cas, m=mirror();
+  var ux=HF.umbo[0]*m, uy=HF.umbo[1];
+  var dxu=px-ux, dyu=py-uy, du2=dxu*dxu+dyu*dyu, du=Math.sqrt(du2);
+  var zc=HF.cone*du2;
+  var r2=px*px+py*py;
+  var zb=P.bulge*HF.bulgeAmp*(1.0-r2);
+  var zr=-P.retract*HF.retrAmp*(1.0-du);
+  return zc+zb+zr + ENG.pneu*0.12*(1.0-r2);
+}
+function normalJS(px,py){ var e=0.01;
+  var zx=heightJS(px+e,py)-heightJS(px-e,py);
+  var zy=heightJS(px,py+e)-heightJS(px,py-e);
+  var nx=-zx/(2*e), ny=-zy/(2*e); var l=Math.hypot(nx,ny,1); return [nx/l,ny/l,1/l];
+}
+function halfVecJS(){ var m=mirror(), hx=HF.hb[0]*m+ENG.otoX, hy=HF.hb[1]+ENG.otoY, hz=HF.hb[2]; var l=Math.hypot(hx,hy,hz); return [hx/l,hy/l,hz/l]; }
+function clockOf(px,py){ var a=Math.atan2(py,px)*180/Math.PI; var h=((90-a)/30); h=((h%12)+12)%12; return (h<0.5||h>11.5)?12:Math.round(h*10)/10; }
+function specularScan(){
+  var h=halfVecJS(), peak=0,ppx=0,ppy=0,cnt=0,ss=[];
+  for(var py=-0.96;py<=0.96;py+=0.035) for(var px=-0.96;px<=0.96;px+=0.035){
+    if(px*px+py*py>0.9) continue;
+    var n=normalJS(px,py); var d=n[0]*h[0]+n[1]*h[1]+n[2]*h[2]; if(d<0)d=0; var s=Math.pow(d,HF.power);
+    ss.push(s); cnt++; if(s>peak){peak=s;ppx=px;ppy=py;}
+  }
+  var above=0; for(var i=0;i<ss.length;i++) if(ss[i]>0.5*peak) above++;
+  var spread=above/cnt, ecc=Math.hypot(ppx,ppy);
+  // bombeleşme dağıtır; perforasyon/serümen refleksi bozar
+  var dispersed=(ecc<0.22)||(spread>0.16)||(peak<0.30)||ENG.cas.bulge>0.5;
+  return { peak:+peak.toFixed(2), clock:clockOf(ppx,ppy), ecc:+ecc.toFixed(2), spread:+spread.toFixed(3), dispersed:dispersed };
+}
+
+/* ======================= THREE.JS SAHNE ======================= */
+let renderer,scene,cam,mat,glcv=$('gl');
+const FRAG=`
+precision highp float;
+uniform vec2 uRes; uniform float uTime, uField;
+uniform float uBulge,uRetract,uFluid,uHyper,uScler,uCerumen,uMirror,uPneu,uVisible,uLandmark;
+uniform int uPerf, uAttic; uniform vec2 uOto,uCenter;
+const float CONE=${HF.cone.toFixed(3)};
+const float BULGEA=${HF.bulgeAmp.toFixed(3)};
+const float RETRA=${HF.retrAmp.toFixed(3)};
+const float POWER=${HF.power.toFixed(1)};
+vec2 UMBO(){ return vec2(${HF.umbo[0].toFixed(3)}*uMirror, ${HF.umbo[1].toFixed(3)}); }
+float hf(vec2 p){
+  vec2 u=UMBO(); vec2 d=p-u; float du2=dot(d,d); float du=sqrt(du2);
+  float zc=CONE*du2;
+  float r2=dot(p,p);
+  float zb=uBulge*BULGEA*(1.0-r2);
+  float zr=-uRetract*RETRA*(1.0-du);
+  return zc+zb+zr + uPneu*0.12*(1.0-r2);
+}
+vec3 nrm(vec2 p){ float e=0.01;
+  float zx=hf(p+vec2(e,0.))-hf(p-vec2(e,0.));
+  float zy=hf(p+vec2(0.,e))-hf(p-vec2(0.,e));
+  return normalize(vec3(-zx/(2.0*e),-zy/(2.0*e),1.0)); }
+float hash(vec2 p){ return fract(sin(dot(p,vec2(41.3,289.1)))*43758.5); }
+float noise(vec2 p){ vec2 i=floor(p),f=fract(p); f=f*f*(3.0-2.0*f);
+  float a=hash(i),b=hash(i+vec2(1,0)),c=hash(i+vec2(0,1)),d=hash(i+vec2(1,1));
+  return mix(mix(a,b,f.x),mix(c,d,f.x),f.y); }
+void main(){
+  vec2 uv=(gl_FragCoord.xy-0.5*uRes)/uField;   // -1..1 alan
+  uv-=uCenter;
+  float r=length(uv);
+  // --- kanal açıklığı (traksiyon/ilerletme ile) ---
+  float ap = mix(0.52,1.06,uVisible);
+  vec2 apC = (1.0-uVisible)*vec2(0.22*uMirror,0.14);
+  float rc = length(uv-apC);
+  if(rc>ap){
+    // dış kulak yolu duvarı: sıcak doku + kıl/serümen girişte
+    float wall=0.14+0.05*noise(uv*7.0+uTime*0.0);
+    vec3 cw=vec3(0.32,0.17,0.12)*(0.7+wall);
+    cw*= smoothstep(1.35,ap,rc);
+    gl_FragColor=vec4(cw,1.0); return;
+  }
+  if(r>1.0){ // zar dışı ama kanal içi — annulus/halka gölgesi
+    vec3 ann=vec3(0.5,0.34,0.28)*(0.8+0.1*noise(uv*10.0));
+    gl_FragColor=vec4(ann,1.0); return;
+  }
+  vec3 n=nrm(uv);
+  vec3 h=normalize(vec3(${HF.hb[0].toFixed(3)}*uMirror+uOto.x, ${HF.hb[1].toFixed(3)}+uOto.y, ${HF.hb[2].toFixed(3)}));
+  float spec=pow(max(dot(n,h),0.0),POWER);
+  float diff=clamp(n.z,0.0,1.0);
+  // --- taban zar rengi ---
+  vec3 pearl=vec3(0.78,0.76,0.74);
+  vec3 col=pearl;
+  // kollajen lif dokusu (radyal+sirküler)
+  float ang=atan(uv.y,uv.x);
+  float fib=0.5+0.5*sin(ang*46.0)*0.12 + 0.06*sin(r*40.0);
+  col*=(0.92+0.08*fib);
+  // hiperemi (damarlanma — radyal kızarıklık, malleus boyunca)
+  float vasc=uHyper*(0.5+0.5*noise(vec2(ang*3.0,r*6.0)));
+  col=mix(col,vec3(0.86,0.30,0.26),clamp(uHyper*0.5+vasc*0.4,0.0,0.75));
+  // timpanoskleroz (beyaz plak)
+  col=mix(col,vec3(0.95,0.95,0.92),uScler*smoothstep(0.3,0.7,noise(uv*5.0)));
+  // --- malleus sapı: umbodan antero-süperiora çizgi ---
+  vec2 u=UMBO();
+  vec2 msDir=normalize(vec2(-0.18*uMirror,0.9));     // antero-süperior
+  vec2 pr=uv-u; float along=dot(pr,msDir); float perp=length(pr-msDir*along);
+  float malleus=smoothstep(0.08,0.0,perp)*step(0.0,along)*step(along,0.62)*uLandmark;
+  col=mix(col,vec3(0.90,0.88,0.82),malleus*0.6);
+  // lateral çıkıntı (malleus üst ucunda nokta)
+  float latP=smoothstep(0.09,0.0,length(uv-(u+msDir*0.6)))*uLandmark;
+  col=mix(col,vec3(0.93,0.90,0.84),latP*0.7);
+  // umbo (merkez çöküntü koyu)
+  col*=1.0-0.25*smoothstep(0.10,0.0,length(uv-u));
+  // --- yarı saydam derin yapı (promontoryum/inkus) gölgesi ---
+  col*=0.96+0.04*noise(uv*3.0+10.0);
+  // --- efüzyon: yerçekimine kilitli menisküs + kabarcık ---
+  if(uFluid>0.01){
+    float level=-0.15;                        // menisküs yüksekliği (ekran y)
+    float below=smoothstep(level+0.03,level-0.03,uv.y);
+    vec3 amber=vec3(0.80,0.58,0.22);
+    col=mix(col,amber,below*uFluid*0.6);
+    // menisküs çizgisi
+    col=mix(col,vec3(0.9,0.75,0.4),smoothstep(0.02,0.0,abs(uv.y-level))*uFluid);
+    // hava kabarcıkları
+    for(int i=0;i<3;i++){ float fi=float(i);
+      vec2 bc=vec2(0.3*sin(fi*2.1)-0.1, level+0.18+0.12*fi);
+      float bb=smoothstep(0.07,0.04,length(uv-bc));
+      col=mix(col,vec3(0.9,0.8,0.5),bb*uFluid*0.5);
+    }
+  }
+  // --- bombeleşme: genel kızarık-şişkin, mat ---
+  col=mix(col,vec3(0.80,0.33,0.30),uBulge*0.35*smoothstep(1.0,0.2,r));
+  // --- pars flaccida (üst) retraksiyon cebi + keratin (atik) ---
+  if(uAttic==1){
+    vec2 ac=vec2(-0.12*uMirror,0.62);
+    float pocket=smoothstep(0.26,0.0,length(uv-ac));
+    col=mix(col,vec3(0.30,0.26,0.24),pocket*0.6);               // derin cep gölgesi
+    col=mix(col,vec3(0.95,0.93,0.86),pocket*smoothstep(0.14,0.0,length(uv-ac))*0.9); // beyaz keratin
+  }
+  // --- perforasyon ---
+  if(uPerf>0){
+    vec2 pc = uPerf==1? vec2(0.12*uMirror,-0.08) : vec2(0.5*uMirror,0.34); // santral / marjinal(atik)
+    float pr2=length(uv-pc);
+    float hole=smoothstep(0.20,0.14,pr2);
+    // orta kulak boşluğu (koyu) + promontoryum ışıltısı
+    vec3 mid=vec3(0.18,0.09,0.09)+vec3(0.25,0.18,0.16)*smoothstep(0.14,0.0,pr2);
+    col=mix(col,mid,hole);
+    // kenar halkası
+    col=mix(col,vec3(0.6,0.4,0.36),smoothstep(0.205,0.18,pr2)*step(pr2,0.205));
+  }
+  // --- aydınlatma bileşimi ---
+  vec3 lit = col*(0.35+0.65*diff);
+  // EMERGENT ışık refleksi (boyanmadı — normalin speküleri)
+  float reflexMask = (uPerf>0?0.5:1.0)*(1.0-uCerumen*0.6)*(1.0-uBulge*0.5);
+  lit += vec3(1.0,0.98,0.92)*spec*0.55*reflexMask;
+  lit = clamp(lit,0.0,1.0);
+  // --- serümen örtmesi (girişten) ---
+  if(uCerumen>0.01){
+    float cg = smoothstep(-0.2,0.9,uv.y*uMirror + (uCerumen-0.5)*1.6);
+    cg=clamp(cg*uCerumen*1.3,0.0,1.0);
+    vec3 cer=vec3(0.52,0.33,0.12)*(0.7+0.3*noise(uv*9.0));
+    lit=mix(lit,cer,cg);
+  }
+  // kenar vinyet (kanal gölgesi)
+  lit*=smoothstep(1.02,0.5,r)*0.6+0.4;
+  gl_FragColor=vec4(lit,1.0);
+}`;
+const VERT=`void main(){ gl_Position=vec4(position,1.0); }`;
+
+function initGL(){
+  renderer=new THREE.WebGLRenderer({canvas:glcv,antialias:true});
+  renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1));
+  scene=new THREE.Scene(); cam=new THREE.Camera();
+  mat=new THREE.ShaderMaterial({ vertexShader:VERT, fragmentShader:FRAG, uniforms:{
+    uRes:{value:new THREE.Vector2(1,1)}, uTime:{value:0}, uField:{value:300},
+    uBulge:{value:0},uRetract:{value:0.05},uFluid:{value:0},uHyper:{value:0},uScler:{value:0},
+    uCerumen:{value:0},uMirror:{value:1},uPneu:{value:0},uVisible:{value:1},uLandmark:{value:1},
+    uPerf:{value:0},uAttic:{value:0},uOto:{value:new THREE.Vector2(0,0)},uCenter:{value:new THREE.Vector2(0,0)}
+  }});
+  var quad=new THREE.Mesh(new THREE.PlaneGeometry(2,2),mat); quad.frustumCulled=false; scene.add(quad);
+  resizeGL();
+}
+function resizeGL(){
+  var w=glcv.clientWidth,h=glcv.clientHeight; renderer.setSize(w,h,false);
+  mat.uniforms.uRes.value.set(w*renderer.getPixelRatio(),h*renderer.getPixelRatio());
+  mat.uniforms.uField.value=Math.min(w,h)*renderer.getPixelRatio()*0.46;
+  resizeOverlay();
+}
+window.addEventListener('resize',resizeGL);
+
+function syncUniforms(){
+  var P=ENG.cas,u=mat.uniforms;
+  u.uBulge.value=P.bulge; u.uRetract.value=P.retract; u.uFluid.value=P.fluid; u.uHyper.value=P.hyper;
+  u.uScler.value=P.scler; u.uCerumen.value=P.cerumen; u.uMirror.value=mirror(); u.uLandmark.value=P.landmark;
+  u.uPerf.value=P.perf||0; u.uAttic.value=P.attic?1:0; u.uVisible.value=visibleFrac();
+  u.uPneu.value=ENG.pneu; u.uOto.value.set(ENG.otoX,ENG.otoY); u.uCenter.value.set(ENG.look.x,ENG.look.y);
+}
+
+/* ======================= OPTİK VİZÖR (overlay) ======================= */
+let V, ov=$('overlay'), octx=ov.getContext('2d');
+function resizeOverlay(){ var r=ov.getBoundingClientRect(),dpr=Math.min(2,window.devicePixelRatio||1);
+  ov.width=r.width*dpr; ov.height=r.height*dpr; ov.style.width=r.width+'px'; ov.style.height=r.height+'px'; octx.setTransform(dpr,0,0,dpr,0,0); }
+function regionsForCase(){
+  // TM üstü bölgeler (alan koordinatı -1..1): coverage için
+  var m=mirror();
+  return [ {id:'center',x:0,y:0,r:0.4}, {id:'antinf',x:0.33*m,y:-0.33,r:0.34},
+           {id:'antsup',x:-0.3*m,y:0.4,r:0.34}, {id:'postsup',x:0.3*m,y:0.4,r:0.34},
+           {id:'postinf',x:-0.33*m,y:-0.33,r:0.34} ];
+}
+
+/* ======================= PİN & FARE ======================= */
+function buildPinBar(){ var b=$('pinBar'); b.innerHTML=''; PIN_STRUCTS.forEach(function(s){
+  var btn=document.createElement('button'); btn.textContent=s[1]; btn.dataset.s=s[0];
+  btn.onclick=function(){ ENG.activeStruct=ENG.activeStruct===s[0]?null:s[0]; [].forEach.call(b.children,function(x){x.classList.toggle('on',x.dataset.s===ENG.activeStruct);}); }; b.appendChild(btn); }); }
+function screenToField(mx,my){ var r=ov.getBoundingClientRect(); var field=Math.min(r.width,r.height)*0.46;
+  return { x:(mx-r.left-r.width/2)/field + ENG.look.x, y:-((my-r.top-r.height/2)/field) + ENG.look.y }; }
+ov.addEventListener('mousedown',function(e){ ENG.dragging=true; ENG._mx=e.clientX; ENG._my=e.clientY; ENG._moved=false; });
+window.addEventListener('mousemove',function(e){ if(!ENG.dragging) return; var dx=e.clientX-ENG._mx,dy=e.clientY-ENG._my;
+  if(Math.abs(dx)+Math.abs(dy)>3) ENG._moved=true;
+  var r=ov.getBoundingClientRect(); var field=Math.min(r.width,r.height)*0.46;
+  ENG.look.x=clamp(ENG.look.x-dx/field,-0.7,0.7); ENG.look.y=clamp(ENG.look.y+dy/field,-0.7,0.7);
+  ENG._mx=e.clientX; ENG._my=e.clientY; });
+window.addEventListener('mouseup',function(e){ if(ENG.dragging && !ENG._moved){ placePin(e.clientX,e.clientY); } ENG.dragging=false; });
+function placePin(mx,my){ if(!ENG.activeStruct){ toast('Önce işaretlenecek yapıyı seçin.'); return; }
+  var f=screenToField(mx,my); if(f.x*f.x+f.y*f.y>1.0){ return; }
+  ENG.pins.push({s:ENG.activeStruct,x:f.x,y:f.y}); renderPins(); beep(680,0.04); }
+function renderPins(){ $('pinCount').textContent=ENG.pins.length+' pin';
+  $('pinList').innerHTML=ENG.pins.map(function(p){ var nm=(PIN_STRUCTS.find(function(s){return s[0]===p.s;})||['',p.s])[1]; return '<span>📍 '+nm+'</span>'; }).join(''); }
+$('clearPins').onclick=function(){ ENG.pins=[]; renderPins(); };
+function drawPins(){ var r=ov.getBoundingClientRect(); var field=Math.min(r.width,r.height)*0.46, cx=r.width/2, cy=r.height/2;
+  ENG.pins.forEach(function(p){ var sx=cx+(p.x-ENG.look.x)*field, sy=cy-(p.y-ENG.look.y)*field;
+    octx.save(); octx.strokeStyle='#ffd27a'; octx.fillStyle='rgba(255,210,122,.25)'; octx.lineWidth=2;
+    octx.beginPath(); octx.arc(sx,sy,9,0,6.283); octx.fill(); octx.stroke();
+    octx.beginPath(); octx.moveTo(sx,sy-13); octx.lineTo(sx,sy+13); octx.moveTo(sx-13,sy); octx.lineTo(sx+13,sy); octx.stroke();
+    octx.restore(); }); }
+
+/* ======================= AUDIO ======================= */
+let AC=null,soundOn=true;
+function ac(){ if(!AC){ try{AC=new (window.AudioContext||window.webkitAudioContext)();}catch(e){} } return AC; }
+function beep(f,d){ if(!soundOn) return; var a=ac(); if(!a) return; if(a.state!=='running'&&a.resume)a.resume();
+  try{ var o=a.createOscillator(),g=a.createGain(); o.frequency.value=f;o.type='sine';g.gain.value=0.0001;o.connect(g);g.connect(a.destination);
+  var t=a.currentTime; g.gain.exponentialRampToValueAtTime(0.05,t+0.01); g.gain.exponentialRampToValueAtTime(0.0001,t+d); o.start(t);o.stop(t+d+0.02);}catch(e){} }
+
+/* ======================= TOAST ======================= */
+function toast(msg,kind){ var t=document.createElement('div'); t.className='toast'+(kind?' '+kind:''); t.textContent=msg; $('toastBox').appendChild(t);
+  setTimeout(function(){t.style.opacity='0';t.style.transition='.4s';setTimeout(function(){t.remove();},420);},3400); }
+
+/* ======================= PNÖMATİK ======================= */
+function pneumaticPulse(sign){
+  ENG.pneuUsed=true;
+  if(!sealOk()){ ENG.pneuBadge='SEAL_LEAK — hava kaçağı'; toast('⚠ Sızdırmazlık yok ('+(ENG.speculum<4?'küçük spekulum':!tractionCorrect()?'traksiyon hatalı':'yetersiz ilerletme')+') → zar hareketi geçersiz. Efüzyon sanmayın!','warn');
+    ENG.pneuTarget=0; return; }
+  if(ENG.cas.perf>0){ ENG.pneuBadge='Perforasyon — hava kaçıyor, hareket yok'; ENG.pneuTarget=0; return; }
+  var amp=ENG.cas.comp*0.6;
+  ENG.pneuTarget = sign>0? -amp : amp;   // bas→içe
+  ENG.pneuBadge='Pnömatik: mobilite '+(ENG.cas.comp>0.6?'belirgin':ENG.cas.comp>0.25?'azalmış':'yok/çok az');
+  // yaylanma: kısa süre sonra geri
+  setTimeout(function(){ ENG.pneuTarget=0; },260);
+  beep(sign>0?320:260,0.08);
+}
+function tractionFeedback(){
+  if(ENG.traction!=='none' && !tractionCorrect()){ ENG.painCount++; toast('Hasta irkildi — '+(ENG.cas.age==='child'?'çocukta AŞAĞI-GERİ':'erişkinde YUKARI-GERİ')+' traksiyon gerekir.','warn'); beep(180,0.1); }
+}
+function depthFeedback(){ if(tooDeepBony()){ ENG.painCount++; toast('Spekulum kemik kanala fazla itildi — ağrı! Geri çekin.','bad'); beep(160,0.12); } }
+
+/* ======================= RENDER DÖNGÜSÜ ======================= */
+let running=true,lastT=0;
+function loop(ts){ if(!running) return; var dt=lastT?Math.min(60,ts-lastT):16; lastT=ts; ENG.t+=dt;
+  // pnömatik yumuşak takip
+  ENG.pneu += (ENG.pneuTarget-ENG.pneu)*(1-Math.exp(-dt/90));
+  // optik vizör frame (tremor + coverage)
+  var tr=V.tremorOffset();
+  var q=focusQuality();
+  V.frame(dt,{ look:ENG.look, focusQuality:q, gate:visibleFrac()>0.3 });
+  mat.uniforms.uTime.value=ENG.t/1000;
+  mat.uniforms.uCenter.value.set(ENG.look.x+tr.dx, ENG.look.y+tr.dy);
+  syncUniforms();
+  renderer.render(scene,cam);
+  drawOverlay();
+  updateReadouts();
+  requestAnimationFrame(loop);
+}
+function focusQuality(){ // ilerletme uç noktalarda defokus + tremor
+  var d=ENG.depth/100; var f=1.0 - Math.abs(d-0.5)*0.5; return clamp(f,0.3,1.0)*clamp(visibleFrac()+0.2,0,1); }
+function drawOverlay(){ var r=ov.getBoundingClientRect(); octx.clearRect(0,0,r.width,r.height);
+  // defokus: overlay bulanıklığı CSS filtresiyle gl'e uygulanamaz; hafif kenar yok → sadece diyafram
+  V.drawDiaphragm(octx,r.width,r.height);
+  drawPins(); }
+function startLoop(){ if(!running){running=true;lastT=0;requestAnimationFrame(loop);} }
+function stopLoop(){ running=false; }
+
+function updateReadouts(){
+  $('sealRead').textContent= sealOk()?'Var':'Kaçak'; $('sealRead').className='v '+(sealOk()?'ok':'bad');
+  var mob=mobilityObserved(); var mobTxt= !pneumaticValid()?'Geçersiz': mob>0.6?'Belirgin':mob>0.25?'Azalmış':'Yok';
+  $('mobRead').textContent=mobTxt; $('mobRead').className='v '+(!pneumaticValid()?'warn':mob>0.6?'ok':mob>0.25?'warn':'bad');
+  var vis=Math.round(visibleFrac()*100); $('visRead').textContent='%'+vis; $('visRead').className='v '+(vis>70?'ok':vis>45?'warn':'bad');
+  var rf=specularScan(); $('reflexRead').textContent= rf.dispersed?'Dağınık':('Saat '+Math.round(rf.clock)); $('reflexRead').className='v '+(rf.dispersed?'bad':'ok');
+  $('pneuBadge').textContent=ENG.pneuBadge||( 'Spekulum '+ENG.speculum.toFixed(1)+' mm · '+(tractionCorrect()?'traksiyon ✓':'traksiyon —'));
+  var tn=[]; if(!tractionCorrect()&&ENG.traction!=='none') tn.push('traksiyon yönü hatalı');
+  if(ENG.speculum<4) tn.push('küçük spekulum (sızdırmazlık zor)');
+  if(visibleFrac()<0.5) tn.push('zarın büyük kısmı görülmüyor');
+  $('techNote').textContent= tn.length? '⚠ '+tn.join(' · '): 'Teknik uygun.';
+}
+
+/* ======================= VAKA YÜKLEME ======================= */
+function loadCase(i){
+  ENG.idx=i; ENG.cas=CASES[i]; ENG.pins=[]; ENG.activeStruct=null; ENG.pneu=0; ENG.pneuTarget=0; ENG.pneuBadge=''; ENG.painCount=0; ENG.pneuUsed=false;
+  ENG.look={x:0,y:0}; ENG.depth=45; $('depth').value=45; ENG.otoX=0;ENG.otoY=0; $('otoX').value=0;$('otoY').value=0;
+  ENG.traction='none'; ENG.speculum=4.0;
+  $('trNone').classList.add('on'); $('trUB').classList.remove('on'); $('trDB').classList.remove('on');
+  $('sp40').classList.add('on'); $('sp25').classList.remove('on');
+  $('caseSel').value=i; $('earRead').textContent=ENG.cas.ear==='R'?'Sağ (OD)':'Sol (OS)'; $('ageRead').textContent=ENG.cas.age==='child'?'Pediatrik':'Erişkin';
+  $('caseStem').textContent= ENG.examMode? '🔒 Gizli vaka: öyküyü muayeneyle çözün.' : ENG.cas.stem;
+  $('teachNote').textContent= ENG.examMode? 'Sınav modunda öğretim notu gizli.' : ENG.cas.teach;
+  V.setRegions(regionsForCase()); V.coverage.reset();
+  [].forEach.call($('pinBar').children,function(x){x.classList.remove('on');});
+  renderPins(); $('juryOut').innerHTML='';
+  reportChainContext();
+}
+
+/* ======================= JÜRİ ======================= */
+function evaluate(){
+  var c=ENG.cas, dx=$('dxSel').value, mg=$('mgSel').value, flags=[], cats=[];
+  var rf=specularScan(), vis=visibleFrac(), cov=V.coverage.overall();
+  var truth=c.truthDx;
+
+  // ---- UNSUPPORTED / kanıt kapıları ----
+  // 1) Serümen örtülü → "normal/perf yok" iddiası kanıtı aşar
+  if(c.cerumen>=0.6 && (dx==='normal'||dx==='perf_central'||dx==='perf_marginal')){
+    flags.push({cls:'red',t:'CLAIM_EXCEEDS_VISIBLE_EVIDENCE: Zarın >%60’ı serümenle örtülüyken "'+label(DX,dx)+'" denemez. Doğru beyan: değerlendirilemez → önce serümen temizliği.'});
+  }
+  // 2) AOM iddiası bombeleşme/azalmış mobilite olmadan (izole hiperemi tuzağı)
+  if(dx==='aom' && c.bulge<0.4){
+    flags.push({cls:'red',t:'FALSE_AOM: Bombeleşme yok (ve zar hareketli). İzole hiperemi AOM değildir — gereksiz antibiyotik.'});
+  }
+  // 3) Pnömatik immobiliteyi sızdırmazlık olmadan efüzyon kanıtı saymak
+  if((dx==='ome') && ENG.pneuUsed && !pneumaticValid() && !sealOk()){
+    flags.push({cls:'amber',t:'SEAL_LEAK: Sızdırmazlık yokken pnömatik hareketsizlik efüzyon kanıtı sayılmaz. Büyük spekulum + doğru traksiyonla tekrarlayın.'});
+  }
+  // 4) Yetersiz görüş/tarama ile kesin tanı
+  if(cov<0.4 && vis<0.6 && dx!=='cerumen'){
+    flags.push({cls:'amber',t:'Zarın tüm kadranları yeterince taranmadan kesin tanı — vizörle dört kadranı da inceleyin.'});
+  }
+
+  // ---- kategori skorları ----
+  // Muayene kalitesi %25
+  var q=100; if(!tractionCorrect()&&c.cerumen<0.6) q-=22; if(ENG.speculum<4 && truth==='ome') q-=18;
+  q-=ENG.painCount*10; q-= (cov<0.5?20:cov<0.75?8:0); q=clamp(q,0,100);
+  // Bulgu işaretleme %25
+  var needPins=requiredPins(truth); var pinned=ENG.pins.map(function(p){return p.s;});
+  var gotPins=needPins.filter(function(s){return pinned.indexOf(s)>=0;}).length;
+  var mark = needPins.length? Math.round(gotPins/needPins.length*100) : (ENG.pins.length?80:60);
+  // Klinik yorum %30
+  var dxOk=(dx===truth); var partial=dxFamily(dx,truth);
+  var interp = dxOk?100: partial?55:15;
+  // Yönetim %20
+  var mgOk = correctMgmt(truth).indexOf(mg)>=0; var mgmt = mgOk?100: (dxOk?55:25);
+  // bayrak cezaları
+  var penalty=0; flags.forEach(function(f){ penalty += f.cls==='red'?22:10; });
+  interp=clamp(interp-penalty*0.5,0,100); mgmt=clamp(mgmt-penalty*0.5,0,100);
+
+  var overall=Math.round(q*0.25+mark*0.25+interp*0.30+mgmt*0.20);
+  cats.push(['Muayene Kalitesi',Math.round(q),techSummary()]);
+  cats.push(['Bulgu İşaretleme',mark, needPins.length?('Beklenen: '+needPins.map(function(s){return label(PIN_STRUCTS,s);}).join(', ')+'. İşaretlenen doğru: '+gotPins+'/'+needPins.length):'Serbest işaretleme.']);
+  cats.push(['Klinik Yorum',Math.round(interp), dxOk?('Doğru: '+label(DX,truth)):(partial?'Yakın ama alt tip hatalı. Gerçek: '+label(DX,truth):'Hatalı. Gerçek tanı: '+label(DX,truth))]);
+  cats.push(['Yönetim Kararı',Math.round(mgmt), mgOk?'Uygun yönetim.':'Uygun: '+correctMgmt(truth).map(function(m){return label(MG,m);}).join(' / ')]);
+
+  renderJury(overall,cats,flags);
+  $('teachNote').textContent=c.teach;
+  if(ENG.examMode) $('caseStem').textContent=c.stem;
+  // core zinciri
+  reportChainEvidence(dx,dxOk,flags.length,overall);
+  // kolesteatom/marjinal → KBB/BT köprü notu
+  if(truth==='cholesteatoma'||truth==='perf_marginal'){ setTimeout(offerReferral,250); }
+  beep(overall>=70?700:300,0.12);
+}
+function requiredPins(truth){ return {normal:['umbo','malleus','reflex'],hyperemia:['malleus'],cerumen:['cerumen'],
+  aom:['bulge'],ome:['fluid'],perf_central:['perf'],perf_marginal:['perf'],cholesteatoma:['attic']}[truth]||[]; }
+function correctMgmt(truth){ return {normal:['reassure'],hyperemia:['reassure'],cerumen:['cerumen_remove'],
+  aom:['analgesia_abx'],ome:['watchful_ent'],perf_central:['dry_ent'],perf_marginal:['urgent_ent'],cholesteatoma:['urgent_ent']}[truth]||['reassure']; }
+function dxFamily(a,b){ var f=[['perf_central','perf_marginal'],['aom','ome'],['cholesteatoma','perf_marginal']];
+  return f.some(function(p){return (p.indexOf(a)>=0&&p.indexOf(b)>=0&&a!==b);}); }
+function techSummary(){ var s=[]; s.push(tractionCorrect()?'traksiyon ✓':(ENG.traction==='none'?'traksiyon yapılmadı':'traksiyon hatalı'));
+  s.push('spekulum '+ENG.speculum.toFixed(1)+'mm'); s.push('kapsama %'+Math.round(V.coverage.overall()*100)); if(ENG.painCount) s.push(ENG.painCount+' ağrı tepkisi'); return s.join(' · '); }
+function label(arr,k){ var r=arr.find(function(x){return x[0]===k;}); return r?r[1]:k; }
+function renderJury(overall,cats,flags){
+  var col=overall>=75?'#8fe3bf':overall>=55?'#d9a441':'#e88b92';
+  var h='<div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:13px">OTO Jüri Karnesi</b><span class="mono" style="font-size:22px;font-weight:700;color:'+col+'">'+overall+'</span></div>';
+  cats.forEach(function(c){ var cc=c[1]>=75?'#8fe3bf':c[1]>=55?'#d9a441':'#e88b92';
+    h+='<div class="jury-cat"><div class="row"><span>'+c[0]+'</span><span class="mono" style="color:'+cc+'">'+c[1]+'</span></div><div class="bar"><span style="width:'+c[1]+'%;background:'+cc+'"></span></div><div class="hint">'+c[2]+'</div></div>'; });
+  flags.forEach(function(f){ h+='<div class="flag '+f.cls+'">'+f.t+'</div>'; });
+  if(!flags.length) h+='<div class="flag green">Kanıtsız iddia yok — muayene ve yorum tutarlı.</div>';
+  $('juryOut').innerHTML=h;
+}
+function offerReferral(){ var b=document.createElement('button'); b.className='btn-bridge';
+  b.textContent='🏥 KBB sevki notu + temporal kemik BT endikasyonu'; b.onclick=function(){ toast('KBB sevk notu oluşturuldu: güvenli olmayan kulak / kolesteatom şüphesi — temporal BT.');
+    try{ if(window.__chainS){ window.__chainS.update({pathology:{earReferral:true}}); } }catch(e){} };
+  $('juryOut').appendChild(b); }
+
+/* ======================= DUCTUS-CORE ZİNCİRİ ======================= */
+function reportChainContext(){}
+function reportChainEvidence(dx,dxOk,nflags,score){
+  try{ if(!window.__chainS) return;
+    window.__chainS.addEvidence({ modality:'otoscopy', summary:'Otoskopi: '+label(DX,dx)+' (skor '+score+')', claims:['tm_finding'], quality:{assessable:ENG.cas.cerumen<0.6 && nflags===0, regionsSeen:['timpanik zar']} });
+  }catch(e){}
+}
+(function initChain(){
+  var qs=new URLSearchParams(location.search); if(qs.get('chain')!=='1') return;
+  var sc=document.createElement('script'); sc.src='../ductus-core.js';
+  sc.onload=function(){ try{ window.__chainS=DuctusCore.open({patientId:qs.get('pid')}); toast('🩺 Entegre vaka zinciri — otoskopi bulgusu paylaşılan hastaya yansıyacak.');
+    DuctusCore.connectLifecycle({onDeactivate:function(){stopLoop();DuctusCore.suspendAudio(AC);},onActivate:function(){startLoop();DuctusCore.resumeAudio(AC);}}); }catch(e){} };
+  document.head.appendChild(sc);
+})();
+window.addEventListener('message',function(e){ var d=e.data; if(!d||!d.ductus) return;
+  if(d.type==='suite:pause'||d.type==='suite:module:deactivate'){ stopLoop(); if(AC&&AC.suspend)AC.suspend(); }
+  else if(d.type==='suite:resume'||d.type==='suite:module:activate'){ startLoop(); if(AC&&AC.resume)AC.resume(); } });
+
+/* ======================= UI BAĞLAMA ======================= */
+function bindUI(){
+  var cs=$('caseSel'); CASES.forEach(function(c,i){ var o=document.createElement('option'); o.value=i; o.textContent=(i+1)+'. '+c.name+' ('+(c.ear==='R'?'sağ':'sol')+(c.age==='child'?', pediatrik':'')+')'; cs.appendChild(o); });
+  $('caseCount').textContent='8 aile'; cs.onchange=function(){ loadCase(+cs.value); };
+  var ds=$('dxSel'); DX.forEach(function(d){ var o=document.createElement('option'); o.value=d[0]; o.textContent=d[1]; ds.appendChild(o); });
+  var ms=$('mgSel'); MG.forEach(function(m){ var o=document.createElement('option'); o.value=m[0]; o.textContent=m[1]; ms.appendChild(o); });
+  [].forEach.call($('levelSeg').children,function(b){ b.onclick=function(){ [].forEach.call($('levelSeg').children,function(x){x.classList.remove('on');}); b.classList.add('on'); }; });
+  $('examToggle').onclick=function(){ ENG.examMode=!ENG.examMode; this.classList.toggle('on',ENG.examMode); loadCase(ENG.idx); toast(ENG.examMode?'Gizli vaka modu açık.':'Sınav modu kapalı.'); };
+  $('homeBtn').onclick=function(){ location.href='../index.html'; };
+  // traction
+  function setTr(v,b){ ENG.traction=v; ['trUB','trDB','trNone'].forEach(function(id){$(id).classList.toggle('on',$(id)===b);}); tractionFeedback(); }
+  $('trUB').onclick=function(){ setTr('up-back',this); }; $('trDB').onclick=function(){ setTr('down-back',this); }; $('trNone').onclick=function(){ setTr('none',this); };
+  // speculum
+  $('sp25').onclick=function(){ ENG.speculum=2.5; this.classList.add('on'); $('sp40').classList.remove('on'); };
+  $('sp40').onclick=function(){ ENG.speculum=4.0; this.classList.add('on'); $('sp25').classList.remove('on'); };
+  // depth
+  $('depth').oninput=function(){ ENG.depth=+this.value; depthFeedback(); };
+  $('otoX').oninput=function(){ ENG.otoX=+this.value/100*0.5; };
+  $('otoY').oninput=function(){ ENG.otoY=+this.value/100*0.5; };
+  // pneumatic
+  $('puff').onclick=function(){ pneumaticPulse(1); }; $('suck').onclick=function(){ pneumaticPulse(-1); };
+  // declare
+  $('declareBtn').onclick=evaluate;
+  buildPinBar();
+}
+
+/* ======================= TEST API ======================= */
+window.OTO={
+  loadCase:function(n){ loadCase(n-1); },
+  setEar:function(e){ ENG.cas.ear=e; }, setAge:function(a){ ENG.cas.age=a; },
+  setSpeculum:function(mm){ ENG.speculum=mm; }, setTraction:function(t){ ENG.traction=t; },
+  setDepth:function(d){ ENG.depth=d; }, setOto:function(x,y){ ENG.otoX=x;ENG.otoY=y; },
+  pneumaticPulse:function(s){ pneumaticPulse(s||1); },
+  specular:function(){ return specularScan(); },
+  sealOk:function(){ return sealOk(); }, pneumaticValid:function(){ return pneumaticValid(); },
+  mobility:function(){ return mobilityObserved(); }, visiblePercent:function(){ return Math.round(visibleFrac()*100); },
+  requiredTraction:function(){ return requiredTraction(); },
+  pin:function(s,x,y){ ENG.pins.push({s:s,x:x||0,y:y||0}); },
+  declare:function(o){ // {dx,mg,pins:[..]} → jüri sonucu (DOM gerektirmeden skor)
+    if(o&&o.pins){ ENG.pins=o.pins.map(function(s){return {s:s,x:0,y:0};}); }
+    if(o&&o.dx) $('dxSel').value=o.dx; if(o&&o.mg) $('mgSel').value=o.mg;
+    evaluate(); return $('juryOut').innerText;
+  },
+  juryFlags:function(o){ // test için: bayrakları döndür
+    if(o&&o.pins){ ENG.pins=o.pins.map(function(s){return {s:s,x:0,y:0};}); }
+    if(o&&o.dx) $('dxSel').value=o.dx; if(o&&o.mg) $('mgSel').value=o.mg;
+    evaluate(); return [].slice.call($('juryOut').querySelectorAll('.flag')).map(function(f){return f.className+'|'+f.textContent;});
+  },
+  _eng:ENG, _scan:specularScan
+};
+
+/* ======================= INIT ======================= */
+function init(){
+  initGL();
+  V=OpticViewport.create({ tremorAmp:1.0, fieldRadius:0.94, regions:regionsForCase(), vignetteColor:'rgba(2,3,6,1)' });
+  resizeOverlay(); bindUI(); loadCase(0);
+  requestAnimationFrame(loop);
+}
+if(window.OpticViewport){ init(); }
+else { var s=document.createElement('script'); s.src='../optic-viewport.js'; s.onload=init; document.head.appendChild(s); }
+</script>
+<script src="../optic-viewport.js"></script>
+</body>
+</html>

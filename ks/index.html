@@ -156,9 +156,11 @@ select:focus{outline:none;border-color:var(--accent-2)}
           </div>
           <div class="toolgrp">
             <span class="lbl">Örtme</span>
-            <button class="btn sm" id="coverR">Sağ ört</button>
-            <button class="btn sm" id="coverL">Sol ört</button>
-            <button class="btn sm" id="coverOff">Aç</button>
+            <div class="seg">
+              <button class="btn sm" id="coverR">Sağ</button>
+              <button class="btn sm" id="coverL">Sol</button>
+              <button class="btn sm" id="coverOff">Aç</button>
+            </div>
           </div>
         </div>
       </div>
@@ -507,20 +509,17 @@ function drawScene(){
   grd.addColorStop(1,'rgba(4,7,14,1)'); ctx.fillStyle=grd; ctx.fillRect(0,0,VW,VH);
 
   var F=faceLayout();
-  // burun kökü / glabella ipucu
-  ctx.save();
-  ctx.globalAlpha=0.5*amb+0.1;
-  ctx.fillStyle='#161d2b';
-  ctx.beginPath(); ctx.ellipse(VW/2,F.cy+10,36,96,0,0,Math.PI*2); ctx.fill();
-  ctx.restore();
+  // --- tek parça sürekli üst yüz silüeti (şakaktan şakağa) ---
+  drawFace(F,amb);
 
   drawEye('R',F.R.x,F.cy,F.eyeR,amb);
   drawEye('L',F.L.x,F.cy,F.eyeR,amb);
 
-  // etiketler
-  ctx.fillStyle='rgba(166,177,194,.6)'; ctx.font='11px "JetBrains Mono",monospace'; ctx.textAlign='center';
-  ctx.fillText('SAĞ GÖZ (hasta)',F.R.x,F.cy+F.eyeR+34);
-  ctx.fillText('SOL GÖZ (hasta)',F.L.x,F.cy+F.eyeR+34);
+  // klinik yön etiketleri — dış-üst köşe (OD/OS)
+  ctx.fillStyle='rgba(166,177,194,.72)'; ctx.font='11px "JetBrains Mono",monospace';
+  ctx.textAlign='left';  ctx.fillText('SAĞ GÖZ · OD',F.R.x-F.eyeR*1.3,F.cy-F.eyeR*1.15);
+  ctx.textAlign='right'; ctx.fillText('SOL GÖZ · OS',F.L.x+F.eyeR*1.3,F.cy-F.eyeR*1.15);
+  ctx.textAlign='center';
 
   // konfrontasyon / uzak hedef işareti
   if(nearActive()){ ctx.fillStyle='rgba(217,164,65,.9)'; ctx.font='12px Inter'; ctx.fillText('● Yakın hedef 15 cm (konverjans/akomodasyon)',VW/2,VH-16); }
@@ -529,9 +528,7 @@ function drawScene(){
 
 function drawEye(eye,cx,cy,R,amb){
   var c=ENG.cas, pe=c[eye], o=ENG.eyes[eye];
-  // --- yumuşak periorbital cilt (yüz bağlamı) ---
-  drawPeriorbit(cx,cy,R,amb);
-  // --- sklera (badem) ---
+  // --- sklera (badem) --- (yüz silüeti drawFace'te global çizilir)
   ctx.save();
   ctx.beginPath();
   palpebral(cx,cy,R);
@@ -568,21 +565,38 @@ function palpebral(cx,cy,R){
   ctx.quadraticCurveTo(cx+w*0.3,cy+h, cx,cy+h*0.95);
   ctx.quadraticCurveTo(cx-w*0.3,cy+h, cx-w,cy+h*0.06);
 }
-// yumuşak periorbital cilt — kutu değil, yüze oturan soket
-function drawPeriorbit(cx,cy,R,amb){
-  var skin=skinTone(amb);
+// tek parça sürekli üst yüz: şakaktan şakağa alın/kaş/glabella/nazal köprü/elmacık
+function drawFace(F,amb){
+  var skin=skinTone(amb), R=F.eyeR, cx=VW/2, cy=F.cy;
+  var halfSpan=(F.L.x-F.R.x)/2;             // göz merkezleri arası yarı mesafe
+  var rx=halfSpan+R*2.1, ry=R*2.9;
   ctx.save();
-  // geniş yumuşak cilt yaması
-  var g=ctx.createRadialGradient(cx,cy-R*0.1,R*0.4,cx,cy,R*2.3);
-  g.addColorStop(0,skin.mid); g.addColorStop(0.55,skin.mid); g.addColorStop(1,'rgba(0,0,0,0)');
-  ctx.fillStyle=g; ctx.beginPath(); ctx.ellipse(cx,cy,R*2.2,R*1.7,0,0,6.283); ctx.fill();
-  // kaş gölgesi
-  ctx.globalAlpha=0.5; ctx.strokeStyle=skin.brow; ctx.lineWidth=R*0.26; ctx.lineCap='round';
-  ctx.beginPath(); ctx.moveTo(cx-R*1.2,cy-R*1.02); ctx.quadraticCurveTo(cx,cy-R*1.42,cx+R*1.2,cy-R*0.98); ctx.stroke();
-  ctx.globalAlpha=1;
-  // soket gölgesi (badem çevresi hafif koyu)
-  ctx.beginPath(); palpebral(cx,cy,R*1.12);
-  ctx.strokeStyle='rgba(60,42,30,.35)'; ctx.lineWidth=R*0.14; ctx.stroke();
+  // 1) ana cilt kütlesi — merkezde dolu, kenarda şeffaf (yumuşak vinyet)
+  var g=ctx.createRadialGradient(cx,cy-R*0.3,R*0.6, cx,cy-R*0.2,rx*1.02);
+  g.addColorStop(0,skin.hi); g.addColorStop(0.42,skin.mid); g.addColorStop(0.72,skin.mid); g.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=g; ctx.beginPath(); ctx.ellipse(cx,cy-R*0.25,rx,ry,0,0,6.283); ctx.fill();
+  // 2) alın vurgusu (üstte biraz daha aydınlık)
+  var fg=ctx.createRadialGradient(cx,cy-R*1.7,R*0.4, cx,cy-R*1.4,rx*0.9);
+  fg.addColorStop(0,'rgba(255,245,232,'+(0.10+amb*0.12)+')'); fg.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=fg; ctx.beginPath(); ctx.ellipse(cx,cy-R*1.5,rx*0.8,ry*0.6,0,0,6.283); ctx.fill();
+  // 3) nazal köprü — glabelladan buruna dikey aydınlık bant + yan duvar gölgeleri
+  var ng=ctx.createLinearGradient(cx-R*0.5,cy,cx+R*0.5,cy);
+  ng.addColorStop(0,'rgba(60,42,30,0)'); ng.addColorStop(0.5,'rgba(255,244,230,'+(0.12+amb*0.12)+')'); ng.addColorStop(1,'rgba(60,42,30,0)');
+  ctx.fillStyle=ng; ctx.beginPath(); ctx.ellipse(cx,cy+R*0.4,R*0.5,R*1.9,0,0,6.283); ctx.fill();
+  // nazal yan gölgeler
+  ctx.strokeStyle='rgba(70,48,34,.22)'; ctx.lineWidth=R*0.10; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(cx-R*0.34,cy-R*0.5); ctx.quadraticCurveTo(cx-R*0.5,cy+R*0.6,cx-R*0.3,cy+R*1.5); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx+R*0.34,cy-R*0.5); ctx.quadraticCurveTo(cx+R*0.5,cy+R*0.6,cx+R*0.3,cy+R*1.5); ctx.stroke();
+  // burun ucu ipucu
+  ctx.fillStyle='rgba(120,84,60,.14)'; ctx.beginPath(); ctx.ellipse(cx,cy+R*1.7,R*0.42,R*0.3,0,0,6.283); ctx.fill();
+  // 4) kaş kemerleri — her göz üstünde yumuşak koyu yay
+  [F.R.x,F.L.x].forEach(function(ex){
+    ctx.globalAlpha=0.42; ctx.strokeStyle=skin.brow; ctx.lineWidth=R*0.30; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(ex-R*1.15,cy-R*0.98); ctx.quadraticCurveTo(ex,cy-R*1.42,ex+R*1.15,cy-R*0.92); ctx.stroke();
+    ctx.globalAlpha=1;
+    // soket gölgesi
+    ctx.beginPath(); palpebral(ex,cy,R*1.14); ctx.strokeStyle='rgba(60,42,30,.28)'; ctx.lineWidth=R*0.16; ctx.stroke();
+  });
   ctx.restore();
 }
 function skinTone(amb){
