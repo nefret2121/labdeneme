@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DuctusLab · Nörolojik Muayene</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" />
+<style>
+:root{
+  --bg-0:#040812;--bg-1:#070c17;--bg-2:#0b1220;--bg-3:#101829;
+  --glass:rgba(13,20,34,.66);--glass-2:rgba(17,26,43,.55);
+  --line:rgba(160,176,196,.10);--line-2:rgba(160,176,196,.18);
+  --ink:#e4e9f1;--ink-2:#a6b1c2;--ink-3:#6c7889;
+  --accent:#6fa3c8;--accent-2:#4f7fa3;--accent-dim:rgba(111,163,200,.14);
+  --amber:#d9a441;--amber-dim:rgba(217,164,65,.14);
+  --ok:#5a9f7f;--ok-dim:rgba(90,159,127,.16);
+  --alert:#c4565f;--alert-dim:rgba(196,86,95,.16);
+  --violet:#9a86c9;
+  --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:"JetBrains Mono","SF Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}html,body{height:100%}
+body{background:radial-gradient(1200px 800px at 70% -10%,#0a1424 0%,var(--bg-0) 60%);color:var(--ink);font-family:var(--sans);font-size:14px;overflow:hidden}
+.app{display:flex;flex-direction:column;height:100vh}
+.topbar{display:flex;align-items:center;gap:16px;padding:10px 18px;border-bottom:1px solid var(--line);background:var(--glass);backdrop-filter:blur(12px);flex:0 0 auto;z-index:20}
+.wordmark{font-weight:700;letter-spacing:.04em;font-size:15px}.wordmark em{color:var(--accent);font-style:normal}
+.vsep{width:1px;height:22px;background:var(--line-2)}.product{color:var(--ink-2);font-size:12.5px}.spacer{flex:1}
+.btn{font-family:var(--sans);font-size:12.5px;color:var(--ink-2);background:var(--glass-2);border:1px solid var(--line-2);border-radius:9px;padding:7px 12px;cursor:pointer;transition:.15s;white-space:nowrap}
+.btn:hover{color:var(--ink);border-color:var(--accent-2);background:var(--accent-dim)}
+.btn.on{color:#fff;background:var(--accent-dim);border-color:var(--accent)}.btn.sm{padding:5px 9px;font-size:11.5px}
+.seg{display:flex;border:1px solid var(--line-2);border-radius:9px;overflow:hidden}.seg button{border:0;border-radius:0;background:transparent}.seg button+button{border-left:1px solid var(--line-2)}
+.main{flex:1;display:flex;min-height:0}
+.stage{flex:1.3;min-width:0;position:relative;display:flex;flex-direction:column;background:#05080f}
+.canvas-wrap{flex:1;position:relative;min-height:0}#gl{position:absolute;inset:0;width:100%;height:100%;display:block}
+.modebar{position:absolute;top:12px;left:12px;display:flex;gap:6px;z-index:5}
+.badge{position:absolute;top:12px;right:12px;font-family:var(--mono);font-size:11px;color:var(--ink-2);background:rgba(8,12,20,.7);border:1px solid var(--line-2);border-radius:8px;padding:6px 10px;z-index:5}
+.stage-foot{flex:0 0 auto;border-top:1px solid var(--line);background:var(--glass);padding:9px 14px;min-height:56px}
+.toolrow{display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+.toolgrp{display:flex;align-items:center;gap:5px;padding:4px 7px;border:1px solid var(--line);border-radius:10px;background:var(--glass-2)}
+.toolgrp .lbl{font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3);white-space:nowrap}
+.console{flex:1;min-width:360px;max-width:450px;border-left:1px solid var(--line);background:var(--bg-1);display:flex;flex-direction:column;min-height:0}
+.console-scroll{overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px}
+.console-scroll::-webkit-scrollbar{width:9px}.console-scroll::-webkit-scrollbar-thumb{background:#1b2638;border-radius:6px}
+.card{border:1px solid var(--line);border-radius:12px;background:var(--glass);padding:12px 13px}
+.card h3{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);font-weight:600;margin-bottom:9px;display:flex;justify-content:space-between;align-items:center}
+.eyebrow{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3)}
+select{width:100%;font-family:var(--sans);font-size:13px;color:var(--ink);background:var(--bg-2);border:1px solid var(--line-2);border-radius:9px;padding:9px 10px;cursor:pointer}
+select:focus{outline:none;border-color:var(--accent-2)}
+.mini{font-size:11.5px;color:var(--ink-2)}
+.reflexgrid{display:grid;grid-template-columns:auto 1fr 1fr;gap:5px;align-items:center;margin-top:7px}
+.reflexgrid .h{font-size:9.5px;color:var(--ink-3);text-transform:uppercase}
+.reflexgrid button{font-size:11px;padding:6px 4px;border:1px solid var(--line-2);background:var(--bg-2);color:var(--ink-2);border-radius:7px;cursor:pointer}
+.reflexgrid button:hover{border-color:var(--accent-2)}
+.grade{font-family:var(--mono);font-weight:600;text-align:center;font-size:13px}
+.rdg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cell{border:1px solid var(--line);border-radius:9px;padding:8px 9px;background:var(--bg-2)}
+.cell .k{font-size:10px;color:var(--ink-3);text-transform:uppercase}.cell .v{font-family:var(--mono);font-size:14px;font-weight:600;margin-top:2px}
+.v.ok{color:#8fe3bf}.v.warn{color:var(--amber)}.v.bad{color:#e88b92}
+.chkline{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--ink-2);cursor:pointer;padding:4px 0}.chkline input{accent-color:var(--accent)}
+.btn-primary{width:100%;font-size:13.5px;font-weight:600;color:#06131d;background:linear-gradient(135deg,#7ec0e8,#5a9bc4);border:0;border-radius:10px;padding:11px;cursor:pointer}
+.btn-primary:hover{filter:brightness(1.08)}
+.btn-bridge{width:100%;font-size:12.5px;font-weight:600;color:#fff;background:linear-gradient(135deg,#8b6fc9,#6f56a8);border:0;border-radius:10px;padding:10px;cursor:pointer;margin-top:8px}
+.jury-cat{margin:8px 0;padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:var(--bg-2)}
+.jury-cat .row{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;font-weight:600}
+.bar{height:6px;border-radius:4px;background:#17202f;margin-top:6px;overflow:hidden}.bar>span{display:block;height:100%;border-radius:4px}
+.flag{font-size:11.5px;padding:7px 9px;border-radius:8px;margin-top:6px;border:1px solid}
+.flag.red{color:#e88b92;border-color:rgba(196,86,95,.45);background:var(--alert-dim)}
+.flag.amber{color:var(--amber);border-color:rgba(217,164,65,.45);background:var(--amber-dim)}
+.flag.green{color:#8fe3bf;border-color:rgba(90,159,127,.45);background:var(--ok-dim)}
+.hint{font-size:11px;color:var(--ink-3);margin-top:6px;line-height:1.45}
+#toastBox{position:fixed;top:64px;right:20px;display:flex;flex-direction:column;gap:8px;z-index:60;align-items:flex-end}
+.toast{background:rgba(10,16,28,.95);border:1px solid var(--line-2);border-left:3px solid var(--accent);border-radius:9px;padding:10px 14px;font-size:12.5px;color:var(--ink);max-width:380px;box-shadow:0 8px 28px rgba(0,0,0,.45)}
+.toast.warn{border-left-color:var(--amber)}
+@media(max-width:960px){.main{flex-direction:column}.console{max-width:none;border-left:0;border-top:1px solid var(--line)}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <span class="wordmark">Ductus<em>Lab</em></span><span class="vsep"></span>
+    <span class="product">Nörolojik Muayene · Yürüyüş · Denge · Refleks</span>
+    <span class="spacer"></span>
+    <div class="seg" id="levelSeg"><button class="btn sm on" data-lvl="student">TUS / Öğrenci</button><button class="btn sm" data-lvl="resident">Asistan / Nöroloji</button></div>
+    <button class="btn sm" id="examToggle">🔒 Gizli Vaka (Sınav)</button>
+    <button class="btn sm" id="homeBtn">← Anasayfa</button>
+  </div>
+  <div class="main">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="gl"></canvas>
+        <div class="modebar">
+          <div class="seg"><button class="btn sm on" id="mGait">Yürüyüş</button><button class="btn sm" id="mRomberg">Romberg</button><button class="btn sm" id="mReflex">Refleks</button></div>
+        </div>
+        <div class="badge" id="badge">Yürüyüş gözlemi</div>
+      </div>
+      <div class="stage-foot">
+        <div class="toolrow" id="footTools"></div>
+      </div>
+    </div>
+    <div class="console">
+      <div class="console-scroll">
+        <div class="card">
+          <h3>Vaka Seçici <span class="eyebrow" id="caseCount"></span></h3>
+          <select id="caseSel"></select>
+          <div class="mini" id="caseStem" style="margin-top:9px"></div>
+        </div>
+        <div class="card">
+          <h3>Muayene Bulgusu</h3>
+          <div class="rdg">
+            <div class="cell"><div class="k">Mod</div><div class="v" id="modeRead">Yürüyüş</div></div>
+            <div class="cell"><div class="k">Taban genişliği</div><div class="v" id="baseRead">—</div></div>
+            <div class="cell"><div class="k">Romberg salınımı</div><div class="v" id="swayRead">—</div></div>
+            <div class="cell"><div class="k">Jendrassik</div><div class="v" id="jendRead">Yok</div></div>
+          </div>
+          <div class="mini" id="findNote" style="margin-top:9px;color:var(--ink-3)"></div>
+        </div>
+        <div class="card" id="reflexCard">
+          <h3>Refleks Muayenesi <span class="eyebrow">0–4+ derece</span></h3>
+          <div class="mini">Hedef refleksi seç, çekiçle vur (taraf karşılaştır):</div>
+          <div class="reflexgrid" id="reflexGrid"></div>
+          <label class="chkline" style="margin-top:8px"><input type="checkbox" id="jendChk"> Jendrassik manevrası (elleri kenetleyip çek)</label>
+        </div>
+        <div class="card">
+          <h3>Tanı &amp; Yönetim</h3>
+          <span class="eyebrow">Yürüyüş/sendrom tanısı</span><select id="dxSel" style="margin-top:5px"></select>
+          <label class="chkline" style="margin-top:7px"><input type="checkbox" id="areflexiaClaim"> Beyanımda <b>arefleksi</b> var</label>
+          <label class="chkline"><input type="checkbox" id="rombergClaim"> Tanıyı <b>Romberg</b> bulgusuna dayandırdım</label>
+          <button class="btn-primary" id="declareBtn" style="margin-top:9px">Beyanı Değerlendir</button>
+          <div id="juryOut" style="margin-top:11px"></div>
+        </div>
+        <div class="card" style="border-color:rgba(154,134,201,.25)">
+          <h3>Öğretim Notu</h3><div class="mini" id="teachNote">Muayene yapın veya tanı beyan edin.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="toastBox"></div>
+
+<script type="importmap">{ "imports": { "three": "https://unpkg.com/three@0.160.1/build/three.module.js" } }</script>
+<script type="module">
+import * as THREE from 'three';
+/* ============================================================================
+ *  DuctusLab · NRO — Nörolojik Muayene (Yürüyüş · Denge · Refleks)
+ *  Procedural kinematics: faz durum makinesi + 2-kemik IK (stance ayak dünyaya
+ *  kilitli — kaymaz). Sabit animasyon dosyası YOK; her şey matematiksel.
+ * ========================================================================== */
+const $=id=>document.getElementById(id);
+const clamp=(x,a,b)=>x<a?a:x>b?b:x;
+const lerp=(a,b,t)=>a+(b-a)*t;
+const easeIO=t=>t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+
+/* ======================= VAKALAR ======================= */
+// gait param: stepLen, cadence, baseWidth, liftH, kneeFlex, equinus, circ, pelvicDrop,
+//   trunkLean, armSwing, stamp, variability, festination, affected('R'/'L'/null), stiffKnee
+function G(o){ return Object.assign({stepLen:0.42,cadence:0.95,baseWidth:0.14,liftH:0.09,kneeFlex:1,equinus:0,circ:0.02,pelvicDrop:0,trunkLean:0,armSwing:1,stamp:0,variability:0,festination:0,affected:null,stiffKnee:false},o); }
+// reflex: 0 arefleksi,1 hipo,2 normal,3 hiper,4 klonus ; pendular(serebellar), clonus
+function R(o){ return Object.assign({pL:2,pR:2,aL:2,aR:2,bL:2,bR:2,pendular:false,clonus:false,areflexic:false},o); }
+const CASES={
+ 1:{id:1,name:'Normal',gait:G({}),reflex:R({}),romberg:{base:0.05,visDep:0.05},truthDx:'normal',
+   stem:'Sağlıklı birey. Yürüyüş, Romberg ve refleksleri sistematik değerlendirin.',
+   teach:'Normal: koordineli kol salınımı, topuk-burun vuruşu, dar taban; Romberg negatif; refleksler simetrik 2+.'},
+ 2:{id:2,name:'Hemiplejik Yürüyüş (İnme sekeli)',gait:G({affected:'R',stiffKnee:true,equinus:0.5,circ:0.34,liftH:0.04,armSwing:0.4,stepLen:0.34}),reflex:R({pR:3,aR:3,bR:3,clonus:true}),romberg:{base:0.1,visDep:0.1},truthDx:'hemiplegic',
+   stem:'Geçirilmiş inme. Sağ bacağı sert, salınımda yana kavis çiziyor, sağ kol gövdeye yapışık.',
+   teach:'Hemiplejik (spastik) yürüyüş: etkilenen bacak ekstansiyonda, diz bükülmez, ayak ekin (düşük ayak) → salınımda sirkümdüksiyon (yana kavis). Etkilenen kol fleksiyonda, gövdeye yapışık (Wernicke-Mann), salınmaz. UMN → hiperrefleksi, klonus.'},
+ 3:{id:3,name:'Parkinsonyen',gait:G({stepLen:0.16,cadence:1.5,trunkLean:0.3,armSwing:0.15,festination:0.5,liftH:0.03,baseWidth:0.1}),reflex:R({}),romberg:{base:0.12,visDep:0.08},truthDx:'parkinson',
+   stem:'Öne eğik, küçük sürüyen adımlar, azalmış kol salınımı, giderek hızlanma.',
+   teach:'Parkinsonyen yürüyüş: öne eğik gövde, kısa sürüyen adımlar (şuffling), azalmış kol salınımı, festinasyon (giderek hızlanma), dönüşlerde en bloc. Postüral instabilite geç dönem.'},
+ 4:{id:4,name:'Serebellar Ataksi',gait:G({baseWidth:0.34,variability:0.5,stepLen:0.4,liftH:0.1,armSwing:0.8}),reflex:R({pendular:true}),romberg:{base:0.8,visDep:0.05},truthDx:'cerebellar',
+   stem:'Geniş tabanlı, sendelemeli, adım boyu/zamanlaması değişken; gövdede titreme. Tandem yapamıyor.',
+   teach:'Serebellar ataksi: geniş tabanlı, sendelemeli (titubasyon), düzensiz adımlar; tandem yürüyemez. Romberg NEGATİF (gözler açıkken de dengesiz — Romberg propriyosepsiyonu test eder, serebellumu değil!). Refleksler sarkaç (pendular).'},
+ 5:{id:5,name:'Duyusal Ataksi (Romberg +)',gait:G({baseWidth:0.3,stamp:0.6,stepLen:0.38,liftH:0.12,armSwing:0.7}),reflex:R({pL:0,pR:0,aL:0,aR:0,areflexic:true}),romberg:{base:0.12,visDep:0.9},truthDx:'sensory',
+   stem:'Gözünü yere dikerek, geniş tabanlı, ayağını yere sert vurarak yürüyor. Gözler kapanınca dengesi belirgin bozuluyor.',
+   teach:'Duyusal ataksi (arka kordon/propriyosepsiyon): gözle kompanse eder → yere bakar, geniş tabanlı, stamping (ayağı sert basma). Gözler kapanınca denge BELİRGİN bozulur → ROMBERG POZİTİF. Sıklıkla arefleksi (Jendrassik ile doğrula!).'},
+ 6:{id:6,name:'Stepaj (Peroneal/L5)',gait:G({affected:'R',equinus:0.7,liftH:0.2,kneeFlex:1.5,stamp:0.4,stepLen:0.38}),reflex:R({aR:1}),romberg:{base:0.1,visDep:0.1},truthDx:'steppage',
+   stem:'Sağ ayağı düşük; takılmasın diye dizi ve kalçayı abartılı kaldırıyor, ayak yere "şap" çarpıyor.',
+   teach:'Stepaj: ayak dorsifleksiyon kaybı (düşük ayak) → ayağı sürümemek için diz/kalça abartılı fleksiyon (yüksek adımlama), ayak yere şap diye çarpar. Peroneal nöropati / L5 radikülopati (LMN → ilgili refleks düşük).'},
+ 7:{id:7,name:'Ördekvari (Miyopatik)',gait:G({pelvicDrop:0.5,trunkLean:0,baseWidth:0.2,stepLen:0.36,armSwing:0.9}),reflex:R({pL:1,pR:1}),romberg:{base:0.1,visDep:0.1},truthDx:'waddling',
+   stem:'Pelvis her adımda karşı tarafa düşüyor, gövde iki yana sallanıyor (ördek yürüyüşü).',
+   teach:'Ördekvari (Trendelenburg/miyopatik): zayıf kalça abdüktörleri → basan bacağın KARŞI tarafında pelvis düşer, gövde basan tarafa eğilerek kompanse → bilateral waddling. Proksimal kas güçsüzlüğü (miyopati).'},
+ 8:{id:8,name:'Servikal Miyelopati (Spastik)',gait:G({baseWidth:0.1,stepLen:0.3,kneeFlex:0.7,equinus:0.3,circ:0.12,armSwing:0.6,cadence:0.8}),reflex:R({pL:4,pR:4,aL:4,aR:4,bL:3,bR:3,clonus:true}),romberg:{base:0.2,visDep:0.15},truthDx:'myelopathy',
+   stem:'Sert, makaslayan spastik yürüyüş; dört ekstremitede canlı refleksler, klonus.',
+   teach:'Servikal miyelopati: spastik (makaslayan) yürüyüş, hiperrefleksi + klonus + Hoffmann/Babinski (UMN). Geniş tabanlı değildir; propriyoseptif tutulum varsa Romberg hafif +. İleri olguda cerrahi dekompresyon.'}
+};
+const DX=[['normal','Normal'],['hemiplegic','Hemiplejik (spastik) yürüyüş'],['parkinson','Parkinsonyen'],['cerebellar','Serebellar ataksi'],
+  ['sensory','Duyusal ataksi'],['steppage','Stepaj (düşük ayak)'],['waddling','Ördekvari (miyopatik)'],['myelopathy','Servikal miyelopati']];
+
+/* ======================= DURUM ======================= */
+const ENG={ idx:1, cas:CASES[1], level:'student', examMode:false, mode:'gait',
+  eyesClosed:false, jendrassik:false, reflexGrades:{}, lastReflex:null, t:0,
+  // gait state
+  pelvisX:0, legs:{L:{plantX:-0.0,plantZ:-0.14,state:'stance',swS:0,swT:0},R:{plantX:0,plantZ:0.14,state:'swing',swS:0,swT:0}},
+  circPeak:0 };
+
+/* ======================= KİNEMATİK MOTOR ======================= */
+const HIP_H=0.92, THIGH=0.46, SHANK=0.46, HIPW=0.1;
+function ik2(L1,L2,dh,dy){ var d=Math.hypot(dh,dy); d=clamp(d,Math.abs(L1-L2)+0.02,L1+L2-0.02);
+  var base=Math.atan2(dy,dh), off=Math.acos(clamp((L1*L1+d*d-L2*L2)/(2*L1*d),-1,1));
+  var a1=base+off,a2=base-off; var a=(Math.cos(a1)>=Math.cos(a2))?a1:a2;   // diz önde
+  return {kh:Math.cos(a)*L1, ky:Math.sin(a)*L1}; }
+
+function gaitStep(dt){
+  var G=ENG.cas.gait; ENG.t+=dt;
+  var cad=G.cadence*(1+ENG.t*0.02*G.festination);   // festinasyon: giderek hızlan
+  cad=Math.min(cad,2.2);
+  var speed=G.stepLen*cad*2;                          // ileri hız
+  ENG.pelvisX+=speed*dt;
+  var p=ENG.t*cad;
+  ['L','R'].forEach(function(side){
+    var leg=ENG.legs[side], off=(side==='L')?0.5:0.0;
+    var lp=((p+off)%1+1)%1;
+    var stance=lp<0.62;
+    if(stance && leg.state==='swing'){ leg.state='stance'; leg.plantX=leg.footX; }       // temas → kilitle
+    if(!stance && leg.state==='stance'){ leg.state='swing'; leg.swS=leg.plantX; leg.swT=ENG.pelvisX+G.stepLen; }
+    var baseZ=(side==='L'?-1:1)*(HIPW+G.baseWidth*0.5);
+    if(leg.state==='stance'){ leg.footX=leg.plantX; leg.footY=0; leg.footZ=baseZ; leg.toe=0; }
+    else { var s=(lp-0.62)/0.38; s=clamp(s,0,1);
+      // adım değişkenliği (serebellar): tohumlu jitter
+      var jit = G.variability? (Math.sin((Math.floor(p)+ (side==='L'?7:3))*12.9)* G.variability*0.12):0;
+      leg.footX=lerp(leg.swS,leg.swT+jit,easeIO(s));
+      var affected=(G.affected===side);
+      var lift=G.liftH*(affected&&G.stiffKnee?0.4:1);
+      leg.footY=lift*Math.sin(Math.PI*s) + (G.stamp&&s>0.8? -0.0:0);
+      // sirkümdüksiyon (hemiplejik etkilenen bacak): yana kavis (z)
+      var circ = (affected? G.circ : G.circ*0.4) * Math.sin(Math.PI*s);
+      leg.footZ=baseZ + (side==='L'?-1:1)*circ;
+      if(affected) ENG.circPeak=Math.max(ENG.circPeak, Math.abs((side==='L'?-1:1)*G.circ));
+      leg.toe = G.equinus*(affected?1:0.3);   // ekin (ayak ucu aşağı)
+      // stamping: temas anında hızlı iniş
+      if(G.stamp&&s>0.85) leg.footY*=0.2;
+    }
+  });
+}
+
+/* ======================= THREE.JS SAHNE ======================= */
+let renderer,scene,cam,fig={},gl=$('gl'),clock;
+function tube(r,color){ var m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,1,12), new THREE.MeshStandardMaterial({color:color,roughness:.7})); m.castShadow=true; return m; }
+function ball(r,color){ return new THREE.Mesh(new THREE.SphereGeometry(r,16,16),new THREE.MeshStandardMaterial({color:color,roughness:.6})); }
+function setSeg(mesh,a,b,r){ var ax=new THREE.Vector3(a.x,a.y,a.z),bx=new THREE.Vector3(b.x,b.y,b.z); var d=bx.clone().sub(ax); var len=d.length(); mesh.scale.set(1,Math.max(len,0.001),1); mesh.position.copy(ax).add(bx).multiplyScalar(0.5);
+  var up=new THREE.Vector3(0,1,0); mesh.quaternion.setFromUnitVectors(up,d.clone().normalize()); mesh.userData.r&&mesh.scale.set(mesh.userData.r,Math.max(len,0.001),mesh.userData.r); }
+function initGL(){
+  renderer=new THREE.WebGLRenderer({canvas:gl,antialias:true}); renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1)); renderer.shadowMap.enabled=true;
+  scene=new THREE.Scene(); scene.background=new THREE.Color(0x070b14); scene.fog=new THREE.Fog(0x070b14,6,16);
+  cam=new THREE.PerspectiveCamera(42,2,0.1,100); cam.position.set(1.6,1.2,4.2);
+  var hemi=new THREE.HemisphereLight(0x9fb4d0,0x202830,0.8); scene.add(hemi);
+  var dir=new THREE.DirectionalLight(0xffffff,0.9); dir.position.set(3,6,4); dir.castShadow=true; dir.shadow.mapSize.set(1024,1024); dir.shadow.camera.left=-5;dir.shadow.camera.right=5;dir.shadow.camera.top=5;dir.shadow.camera.bottom=-5; scene.add(dir);
+  // zemin (dünya sabit — grid planted ayak kaymaz göstergesi)
+  var grd=new THREE.Mesh(new THREE.PlaneGeometry(60,8),new THREE.MeshStandardMaterial({color:0x0c1422,roughness:1})); grd.rotation.x=-Math.PI/2; grd.receiveShadow=true; scene.add(grd);
+  var grid=new THREE.GridHelper(60,120,0x1b2a40,0x14202f); grid.position.y=0.002; scene.add(grid);
+  // figür
+  var skin=0x7fa8c8, cloth=0x44618a;
+  fig.pelvis=ball(0.12,cloth); fig.torso=tube(0.13,cloth); fig.torso.userData.r=0.13; fig.head=ball(0.13,skin); fig.neck=tube(0.05,skin);fig.neck.userData.r=0.05;
+  fig.thighL=tube(0.07,cloth);fig.thighR=tube(0.07,cloth);fig.shankL=tube(0.06,cloth);fig.shankR=tube(0.06,cloth);
+  fig.footL=tube(0.05,0x2a3550);fig.footR=tube(0.05,0x2a3550);
+  fig.uarmL=tube(0.05,skin);fig.uarmR=tube(0.05,skin);fig.farmL=tube(0.045,skin);fig.farmR=tube(0.045,skin);
+  ['thighL','thighR','shankL','shankR','footL','footR','uarmL','uarmR','farmL','farmR','torso','neck'].forEach(function(k){ fig[k].userData.r=fig[k].userData.r||fig[k].geometry.parameters.radiusTop; });
+  Object.keys(fig).forEach(function(k){ scene.add(fig[k]); });
+  // knee/joint balls
+  fig.kneeL=ball(0.06,cloth);fig.kneeR=ball(0.06,cloth);fig.ankleL=ball(0.05,cloth);fig.ankleR=ball(0.05,cloth); fig.hipC=ball(0.1,cloth);
+  [fig.kneeL,fig.kneeR,fig.ankleL,fig.ankleR].forEach(function(m){scene.add(m);});
+  resizeGL();
+}
+function resizeGL(){ var w=gl.clientWidth,h=gl.clientHeight; renderer.setSize(w,h,false); cam.aspect=w/h; cam.updateProjectionMatrix(); }
+window.addEventListener('resize',resizeGL);
+
+function setTube(mesh,a,b){ var r=mesh.userData.r||0.05; var ax=new THREE.Vector3(a.x,a.y,a.z),bx=new THREE.Vector3(b.x,b.y,b.z); var d=bx.clone().sub(ax),len=Math.max(d.length(),0.001);
+  mesh.scale.set(r/0.05*0.05/0.05* r , len, r/0.05*0.05); mesh.scale.set(1,len,1); // y uzar
+  mesh.geometry; mesh.position.copy(ax.clone().add(bx).multiplyScalar(0.5)); mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), d.normalize()); }
+
+function poseFigure(){
+  var G=ENG.cas.gait, px=ENG.pelvisX;
+  var lean=G.trunkLean;
+  var pelvisY=HIP_H + (ENG.mode==='gait'?0.015*Math.sin(ENG.t*ENG.cas.gait.cadence*4*Math.PI):0);
+  // ördekvari pelvis düşmesi: salınım bacağının KARŞI tarafı düşer
+  var drop=0;
+  if(G.pelvicDrop){ var swingL=ENG.legs.L.state==='swing'; drop = (swingL?1:-1)*G.pelvicDrop*0.08; }
+  var P={x:px,y:pelvisY,z:0};
+  function hip(side){ return {x:px + Math.sin(lean)*0.0, y:pelvisY+ (side==='L'?drop:-drop)*1, z:(side==='L'?-HIPW:HIPW)}; }
+  // bacaklar — IK
+  ['L','R'].forEach(function(side){
+    var leg=ENG.legs[side], H=hip(side);
+    var foot={x:(leg.footX||0)-px + px, y:leg.footY||0, z:leg.footZ||0};
+    // IK yatay-dikey düzlemde
+    var dxh=foot.x-H.x, dz=foot.z-H.z, dh=Math.hypot(dxh,dz)*(dxh<0?-1:1); var dy=foot.y-H.y;
+    var k;
+    if(G.stiffKnee && G.affected===side){ k={kh:dh*THIGH/(THIGH+SHANK),ky:dy*THIGH/(THIGH+SHANK)}; } // sert diz ~ düz
+    else k=ik2(THIGH,SHANK,dh,dy);
+    var dirx=(dh!==0?dxh/Math.abs(dh):1), dirz=(dh!==0?dz/Math.abs(dh):0);
+    var knee={x:H.x+dirx*k.kh, y:H.y+k.ky, z:H.z+dirz*k.kh};
+    var ankle={x:foot.x,y:foot.y+0.06,z:foot.z}; var toeDrop=leg.toe||0;
+    var toe={x:foot.x+0.14,y:foot.y - toeDrop*0.08,z:foot.z};
+    setTube(fig['thigh'+side],H,knee); setTube(fig['shank'+side],knee,ankle); setTube(fig['foot'+side],ankle,toe);
+    fig['knee'+side].position.set(knee.x,knee.y,knee.z); fig['ankle'+side].position.set(ankle.x,ankle.y,ankle.z);
+  });
+  // gövde + baş (öne eğim)
+  var neck={x:px+Math.sin(lean)*0.5, y:pelvisY+0.52-Math.cos(lean)*0.0, z:0};
+  var shoulderMid={x:px+Math.sin(lean)*0.45, y:pelvisY+0.5, z:0};
+  setTube(fig.torso,P,shoulderMid);
+  var headC={x:shoulderMid.x+Math.sin(lean)*0.18,y:shoulderMid.y+0.2,z:0};
+  setTube(fig.neck,shoulderMid,{x:headC.x,y:shoulderMid.y+0.08,z:0});
+  fig.head.position.set(headC.x,headC.y,0);
+  if(ENG.mode==='reflex'||ENG.mode==='romberg'){ fig.head.position.x += (ENG.cas.gait.stamp? 0.05:0); } // duyusal: yere bakma ipucu
+  fig.pelvis.position.set(P.x,P.y,0); fig.hipC.position.set(P.x,P.y,0);
+  // kollar — bacakların tersine salınır (azalmış per armSwing)
+  var sw=ENG.mode==='gait'? Math.sin(ENG.t*ENG.cas.gait.cadence*2*Math.PI)*0.35*G.armSwing : 0;
+  ['L','R'].forEach(function(side){
+    var sgn=(side==='L'?-1:1), shoulder={x:shoulderMid.x,y:shoulderMid.y,z:sgn*0.17};
+    var affectedArm=(ENG.cas.gait.affected===side && ENG.cas.gait.stiffKnee);
+    var ax = affectedArm? shoulder.x+0.12 : shoulder.x + (side==='L'?sw:-sw)*0.5; // etkilenen kol fleksiyonda öne
+    var elbow={x:ax, y:shoulder.y-0.22, z:sgn*0.19};
+    var hand={x:elbow.x+(affectedArm?0.1:0.02), y:elbow.y-0.2 + (affectedArm?0.12:0), z:sgn*0.2};
+    setTube(fig['uarm'+side],shoulder,elbow); setTube(fig['farm'+side],elbow,hand);
+  });
+  // kamera takip
+  cam.position.x = px+1.6; cam.lookAt(px, 0.9, 0);
+}
+
+/* ======================= ROMBERG ======================= */
+function rombergSway(eyesOpen){ var r=ENG.cas.romberg; return r.base + (eyesOpen?0:r.visDep); }
+function applyRombergPose(dt){
+  // ayaklar bitişik statik; salınım genliği rombergSway'e bağlı
+  var amp=rombergSway(!ENG.eyesClosed);
+  var sway=Math.sin(ENG.t*2.1)*amp*0.12 + Math.sin(ENG.t*3.7)*amp*0.05;
+  ENG.pelvisX=0; ENG.legs.L.footX=0;ENG.legs.L.footY=0;ENG.legs.L.footZ=-0.05;ENG.legs.L.toe=0;
+  ENG.legs.R.footX=0;ENG.legs.R.footY=0;ENG.legs.R.footZ=0.05;ENG.legs.R.toe=0;
+  // gövde salınımı pose'da uygula
+  ENG._rombergSway=sway;
+}
+
+/* ======================= DÖNGÜ ======================= */
+let running=true,last=0;
+function loop(ts){ if(!running)return; var dt=last?Math.min(0.05,(ts-last)/1000):0.016; last=ts;
+  if(ENG.mode==='gait'){ gaitStep(dt); }
+  else if(ENG.mode==='romberg'){ ENG.t+=dt; applyRombergPose(dt); }
+  else { ENG.t+=dt; ENG.pelvisX=0; ENG.legs.L.footX=-0.05;ENG.legs.L.footY=0;ENG.legs.L.footZ=-0.14;ENG.legs.R.footX=-0.05;ENG.legs.R.footY=0;ENG.legs.R.footZ=0.14; }
+  poseFigure();
+  if(ENG.mode==='romberg' && ENG._rombergSway){ fig.head.position.z+=ENG._rombergSway; fig.pelvis.position.z+=ENG._rombergSway*0.4; }
+  renderer.render(scene,cam); updateReadouts();
+  requestAnimationFrame(loop);
+}
+function startLoop(){ if(!running){running=true;last=0;requestAnimationFrame(loop);} } function stopLoop(){ running=false; }
+
+function updateReadouts(){
+  $('modeRead').textContent={gait:'Yürüyüş',romberg:'Romberg',reflex:'Refleks'}[ENG.mode];
+  $('baseRead').textContent=(ENG.cas.gait.baseWidth>0.25?'Geniş':ENG.cas.gait.baseWidth>0.16?'Orta':'Dar');
+  $('baseRead').className='v '+(ENG.cas.gait.baseWidth>0.25?'warn':'ok');
+  if(ENG.mode==='romberg'){ var open=rombergSway(true),closed=rombergSway(false); $('swayRead').textContent='Açık '+open.toFixed(2)+' / Kapalı '+closed.toFixed(2); $('swayRead').className='v '+((closed-open)>0.4?'bad':'ok'); }
+  else $('swayRead').textContent='—';
+  $('jendRead').textContent=ENG.jendrassik?'Uygulandı':'Yok'; $('jendRead').className='v '+(ENG.jendrassik?'ok':'');
+}
+
+/* ======================= REFLEKS ======================= */
+var REFLEXES=[['p','Patella'],['a','Aşil'],['b','Biseps']];
+function buildReflexGrid(){ var g=$('reflexGrid'); g.innerHTML='<div class="h"></div><div class="h">Sol</div><div class="h">Sağ</div>';
+  REFLEXES.forEach(function(rf){ var lab=document.createElement('div');lab.className='mini';lab.textContent=rf[1];g.appendChild(lab);
+    ['L','R'].forEach(function(side){ var b=document.createElement('button'); b.id='rf-'+rf[0]+side; b.textContent='Vur'; b.onclick=function(){ strike(rf[0],side); }; g.appendChild(b); }); }); }
+function gradeText(gr,pendular){ return (['0 Arefleksi','1+ Hipo','2+ Normal','3+ Hiper','4+ Klonus'][gr]||gr)+(pendular?' · sarkaç':''); }
+function strike(rf,side){
+  var key=rf+side; var base=ENG.cas.reflex[key]; var pendular=ENG.cas.reflex.pendular;
+  // Jendrassik: arefleksik/hipoaktif yanıtı bir derece artırabilir (takviye)
+  var shown=base; if(ENG.jendrassik && base<=1) shown=Math.min(base+1,2);
+  ENG.reflexGrades[key]=shown; ENG.lastReflex={key:key,grade:shown,pendular:pendular};
+  var btn=$('rf-'+key); btn.textContent=['0','1+','2+','3+','4+'][shown]; btn.style.color=shown>=3?'#e88b92':shown<=1?'#d9a441':'#8fe3bf';
+  // kısa uzuv seğirmesi animasyonu (refleks modunda)
+  flickLimb(rf,side,shown,pendular); beep(300+shown*80,0.05);
+  var msg=REFLEXES.find(function(x){return x[0]===rf;})[1]+' '+(side==='L'?'sol':'sağ')+': '+gradeText(shown,pendular);
+  $('findNote').textContent=msg; toast(msg);
+}
+var flick={};
+function flickLimb(rf,side,gr,pendular){ flick={rf:rf,side:side,t:0,amp:(gr/4)*0.4,pendular:pendular}; }
+
+/* ======================= AUDIO/TOAST ======================= */
+var AC=null,soundOn=true; function beep(f,d){ if(!soundOn)return; try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();if(AC.state!=='running'&&AC.resume)AC.resume();var o=AC.createOscillator(),g=AC.createGain();o.frequency.value=f;o.type='sine';g.gain.value=0.0001;o.connect(g);g.connect(AC.destination);var t=AC.currentTime;g.gain.exponentialRampToValueAtTime(0.05,t+0.01);g.gain.exponentialRampToValueAtTime(0.0001,t+d);o.start(t);o.stop(t+d+0.02);}catch(e){} }
+function toast(msg,kind){ var t=document.createElement('div');t.className='toast'+(kind?' '+kind:'');t.textContent=msg;$('toastBox').appendChild(t);setTimeout(function(){t.style.opacity='0';t.style.transition='.4s';setTimeout(function(){t.remove();},420);},3200); }
+
+/* ======================= JÜRİ ======================= */
+function evaluate(){
+  var C=ENG.cas,dx=$('dxSel').value,flags=[],cats=[];
+  var truth=C.truthDx, areflexiaClaim=$('areflexiaClaim').checked, rombergClaim=$('rombergClaim').checked;
+  // YETERSİZ_TEKNİK: Jendrassik yapılmadan arefleksi iddiası
+  if(areflexiaClaim && !ENG.jendrassik){ flags.push({cls:'red',t:'YETERSİZ_TEKNİK / UNSUPPORTED_CLAIM: Refleks alınamadı diye arefleksi demeden önce Jendrassik manevrası (distraksiyonla takviye) yapılmalıdır.'}); }
+  // Romberg tuzağı: serebellar tanısı Romberg'e dayandırılırsa
+  if(dx==='cerebellar' && rombergClaim){ flags.push({cls:'amber',t:'Serebellar ataksi tanısı ROMBERG ile konmaz! Romberg propriyosepsiyonu (arka kordon) test eder; serebellar hasta gözler açıkken de dengesizdir (Romberg negatif).'}); }
+  if(dx==='sensory' && !rombergClaim && truth==='sensory'){ flags.push({cls:'amber',t:'Duyusal atakside Romberg pozitifliği kilit bulgudur — değerlendirmediniz.'}); }
+
+  var dxOk=(dx===truth);
+  var partial=(!dxOk)&&((truth==='cerebellar'&&dx==='sensory')||(truth==='sensory'&&dx==='cerebellar')||(truth==='myelopathy'&&dx==='hemiplegic')||(truth==='hemiplegic'&&dx==='myelopathy'));
+  var interp=dxOk?100:partial?55:15;
+  var tech=100; if(areflexiaClaim&&!ENG.jendrassik)tech-=35; if(Object.keys(ENG.reflexGrades).length<2)tech-=15; tech=clamp(tech,0,100);
+  var crit=100; flags.forEach(function(f){ crit-=f.cls==='red'?35:12; }); crit=clamp(crit,0,100);
+  interp=clamp(interp-(flags.some(function(f){return f.cls==='red';})?20:0),0,100);
+  var overall=Math.round(tech*0.3+interp*0.4+crit*0.3);
+  cats.push(['Muayene Tekniği',Math.round(tech), (ENG.jendrassik?'Jendrassik ✓ · ':'')+Object.keys(ENG.reflexGrades).length+' refleks çekildi']);
+  cats.push(['Tanı',Math.round(interp), dxOk?('Doğru: '+label(DX,truth)):(partial?'Yakın; gerçek: '+label(DX,truth):'Hatalı; gerçek: '+label(DX,truth))]);
+  cats.push(['Kritik Kurallar',Math.round(crit), flags.length?(flags.length+' uyarı'):'ihlal yok']);
+  renderJury(overall,cats,flags);
+  $('teachNote').textContent=C.teach; if(ENG.examMode)$('caseStem').textContent=C.stem;
+  reportChain(dx,dxOk,overall,flags.length);
+  beep(overall>=70?700:300,0.12);
+}
+function label(arr,k){ var r=arr.find(function(x){return x[0]===k;}); return r?r[1]:k; }
+function renderJury(overall,cats,flags){ var col=overall>=75?'#8fe3bf':overall>=55?'#d9a441':'#e88b92';
+  var h='<div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:13px">NRO Jüri Karnesi</b><span class="mono" style="font-size:22px;font-weight:700;color:'+col+'">'+overall+'</span></div>';
+  cats.forEach(function(c){ var cc=c[1]>=75?'#8fe3bf':c[1]>=55?'#d9a441':'#e88b92'; h+='<div class="jury-cat"><div class="row"><span>'+c[0]+'</span><span class="mono" style="color:'+cc+'">'+c[1]+'</span></div><div class="bar"><span style="width:'+c[1]+'%;background:'+cc+'"></span></div><div class="hint">'+c[2]+'</div></div>'; });
+  flags.forEach(function(f){ h+='<div class="flag '+f.cls+'">'+f.t+'</div>'; });
+  if(!flags.length) h+='<div class="flag green">Teknik ve yorum tutarlı, kural ihlali yok.</div>';
+  $('juryOut').innerHTML=h; }
+
+/* ======================= CORE ZİNCİRİ ======================= */
+function reportChain(dx,dxOk,score,n){ try{ if(!window.__chainS)return; window.__chainS.addEvidence({modality:'neuroexam',summary:'Nörolojik muayene: '+label(DX,dx)+' (skor '+score+')',claims:['gait_finding'],quality:{assessable:n===0,regionsSeen:['yürüyüş','refleks']}}); }catch(e){} }
+(function initChain(){ var qs=new URLSearchParams(location.search); if(qs.get('chain')!=='1')return; var sc=document.createElement('script');sc.src='../ductus-core.js';
+  sc.onload=function(){ try{ window.__chainS=DuctusCore.open({patientId:qs.get('pid')}); toast('🩺 Entegre vaka zinciri — nörolojik muayene paylaşılan hastaya yansıyacak.');
+    DuctusCore.connectLifecycle({onDeactivate:function(){stopLoop();},onActivate:function(){startLoop();}}); }catch(e){} }; document.head.appendChild(sc); })();
+window.addEventListener('message',function(e){ var d=e.data;if(!d||!d.ductus)return; if(d.type==='suite:pause'||d.type==='suite:module:deactivate')stopLoop(); else if(d.type==='suite:resume'||d.type==='suite:module:activate')startLoop(); });
+
+/* ======================= VAKA YÜKLE ======================= */
+function loadCase(i){ ENG.idx=i; ENG.cas=CASES[i]; ENG.t=0; ENG.pelvisX=0; ENG.jendrassik=false; ENG.eyesClosed=false; ENG.reflexGrades={}; ENG.circPeak=0;
+  ENG.legs={L:{plantX:0,plantZ:-0.14,state:'stance'},R:{plantX:0.2,plantZ:0.14,state:'swing'}};
+  $('caseSel').value=i; $('jendChk').checked=false; $('areflexiaClaim').checked=false; $('rombergClaim').checked=false; $('juryOut').innerHTML='';
+  $('caseStem').textContent=ENG.examMode?'🔒 Gizli vaka: yürüyüş/Romberg/refleksle sendromu çözün.':ENG.cas.stem;
+  $('teachNote').textContent=(ENG.level==='student'||ENG.examMode)?'Öğretim notu "Beyanı Değerlendir" sonrası açılır.':ENG.cas.teach;
+  buildReflexGrid(); $('findNote').textContent='';
+}
+
+/* ======================= MOD & UI ======================= */
+function setMode(m){ ENG.mode=m; ['mGait','mRomberg','mReflex'].forEach(function(id){$(id).classList.toggle('on',id==='m'+m.charAt(0).toUpperCase()+m.slice(1));});
+  $('badge').textContent={gait:'Yürüyüş gözlemi',romberg:'Romberg testi',reflex:'Refleks muayenesi'}[m];
+  $('reflexCard').style.display = m==='reflex'?'block':'block';
+  buildFootTools(); }
+function buildFootTools(){ var f=$('footTools'); f.innerHTML='';
+  if(ENG.mode==='gait'){ f.innerHTML='<div class="toolgrp"><span class="lbl">Yürüyüş</span><span class="mini">Yan profilden gözle: taban, kol salınımı, diz/ayak, sirkümdüksiyon/festinasyon</span></div>'; }
+  else if(ENG.mode==='romberg'){ var g=document.createElement('div');g.className='toolgrp'; g.innerHTML='<span class="lbl">Romberg</span>';
+    var bo=document.createElement('button');bo.className='btn sm'+(!ENG.eyesClosed?' on':'');bo.textContent='Gözler Açık';bo.onclick=function(){ENG.eyesClosed=false;buildFootTools();};
+    var bc=document.createElement('button');bc.className='btn sm'+(ENG.eyesClosed?' on':'');bc.textContent='Gözleri Kapat';bc.onclick=function(){ENG.eyesClosed=true;buildFootTools(); var o=rombergSway(true),c=rombergSway(false); toast('Gözler kapalı — salınım '+c.toFixed(2)+' ('+((c-o)>0.4?'Romberg POZİTİF':'belirgin değişim yok')+')',(c-o)>0.4?'warn':'');};
+    g.appendChild(bo);g.appendChild(bc); f.appendChild(g);
+    var h=document.createElement('div');h.className='toolgrp';h.innerHTML='<span class="mini">Ayaklar bitişik; göz kapanınca salınım artışı propriyosepsiyon kaybını (Romberg+) gösterir. Serebellar hasta zaten dengesizdir.</span>';f.appendChild(h);
+  } else { f.innerHTML='<div class="toolgrp"><span class="lbl">Refleks</span><span class="mini">Sağdaki karttan hedef refleksi seçip vur; taraf karşılaştır. Arefleksi düşünüyorsan Jendrassik uygula.</span></div>'; }
+}
+function bindUI(){
+  var cs=$('caseSel'); Object.keys(CASES).forEach(function(k){ var o=document.createElement('option');o.value=k;o.textContent=k+'. '+CASES[k].name;cs.appendChild(o); });
+  $('caseCount').textContent='8 aile'; cs.onchange=function(){ loadCase(+cs.value); };
+  var ds=$('dxSel'); DX.forEach(function(d){ var o=document.createElement('option');o.value=d[0];o.textContent=d[1];ds.appendChild(o); });
+  [].forEach.call($('levelSeg').children,function(b){ b.onclick=function(){ [].forEach.call($('levelSeg').children,function(x){x.classList.remove('on');}); b.classList.add('on'); ENG.level=b.dataset.lvl; }; });
+  $('examToggle').onclick=function(){ ENG.examMode=!ENG.examMode; this.classList.toggle('on',ENG.examMode); loadCase(ENG.idx); };
+  $('homeBtn').onclick=function(){ location.href='../index.html'; };
+  $('mGait').onclick=function(){setMode('gait');}; $('mRomberg').onclick=function(){setMode('romberg');}; $('mReflex').onclick=function(){setMode('reflex');};
+  $('jendChk').onchange=function(){ ENG.jendrassik=this.checked; };
+  $('declareBtn').onclick=evaluate;
+}
+
+/* ======================= TEST API ======================= */
+window.NRO={
+  loadCase:function(n){ loadCase(n); },
+  rombergSway:function(eyesOpen){ return rombergSway(eyesOpen); },
+  circumductionCoeff:function(){ return ENG.cas.gait.circ * (ENG.cas.gait.affected?1:0.4); },
+  reflexGrade:function(rf,side){ return ENG.cas.reflex[rf+side]; },
+  setJendrassik:function(b){ ENG.jendrassik=!!b; $('jendChk').checked=!!b; },
+  strike:function(rf,side){ strike(rf,side); return ENG.lastReflex; },
+  declare:function(o){ if(o&&o.dx)$('dxSel').value=o.dx; $('areflexiaClaim').checked=!!(o&&o.areflexia); $('rombergClaim').checked=!!(o&&o.romberg); evaluate(); return $('juryOut').innerText; },
+  juryFlags:function(o){ if(o&&o.dx)$('dxSel').value=o.dx; $('areflexiaClaim').checked=!!(o&&o.areflexia); $('rombergClaim').checked=!!(o&&o.romberg); evaluate(); return [].slice.call($('juryOut').querySelectorAll('.flag')).map(function(f){return f.className+'|'+f.textContent;}); },
+  setMode:function(m){ setMode(m); }, _eng:ENG, CASES:CASES
+};
+
+/* ======================= INIT ======================= */
+function init(){ initGL(); bindUI(); loadCase(1); setMode('gait'); requestAnimationFrame(loop); }
+init();
+</script>
+</body>
+</html>
