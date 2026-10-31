@@ -79,7 +79,7 @@ select:focus{outline:none;border-color:var(--accent-2)}
 .flag.green{color:#8fe3bf;border-color:rgba(90,159,127,.45);background:var(--ok-dim)}
 .hint{font-size:11px;color:var(--ink-3);margin-top:6px;line-height:1.45}
 .chkline{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--ink-2);cursor:pointer;padding:4px 0}.chkline input{accent-color:var(--accent)}
-#toastBox{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;z-index:60}
+#toastBox{position:fixed;top:64px;right:20px;display:flex;flex-direction:column;gap:8px;z-index:60;align-items:flex-end}
 .toast{background:rgba(10,16,28,.95);border:1px solid var(--line-2);border-left:3px solid var(--accent);border-radius:9px;padding:10px 14px;font-size:12.5px;color:var(--ink);max-width:420px;box-shadow:0 8px 28px rgba(0,0,0,.45);animation:tin .25s}
 .toast.warn{border-left-color:var(--amber)}
 @keyframes tin{from{opacity:0;transform:translateY(8px)}}
@@ -234,6 +234,7 @@ function qExp(V,C){ var u=clamp(V/C.FVC,0,1); var base=C.PEF*Math.pow(1-u,C.a); 
 function qInsp(V,C){ var u=clamp(V/C.FVC,0,1); var base=C.PEF*0.92*Math.sqrt(Math.max(1-Math.pow(2*u-1,2),0)); if(C.inspPlateau) base=Math.min(base,C.inspPlateau); return Math.max(base,0); }
 function simulate(C,opt){
   opt=opt||{}; if(opt.postBD){ C=Object.assign({},C,{a:C.postBDa!=null?C.postBDa:C.a}); }
+  if(opt.volScale||opt.pefScale){ C=Object.assign({},C,{FVC:C.FVC*(opt.volScale||1), PEF:C.PEF*(opt.pefScale||1)}); } // fizyolojik deneme farkı
   var dt=0.01,t=0,V=0,out={t:[],q:[],v:[],insp:[]};
   var riseTime=opt.hesitant?0.40:0.08;
   var coughT=opt.cough?(opt.coughTime!=null?opt.coughTime:0.5):-1;
@@ -290,18 +291,19 @@ var fv=$('fvCanvas'),fvx=fv.getContext('2d'),vt=$('vtCanvas'),vtx=vt.getContext(
 function resize(){ [fv,vt].forEach(function(c){ var r=c.parentElement.getBoundingClientRect(); c.width=r.width*DPR;c.height=r.height*DPR;c.style.width=r.width+'px';c.style.height=r.height+'px'; c.getContext('2d').setTransform(DPR,0,0,DPR,0,0); }); draw(); }
 window.addEventListener('resize',resize);
 var COLORS=['#6fa3c8','#5a9f7f','#d9a441','#c483c4','#cf7b57'];
+var FV_VMAX=6, FV_QMAX=11, FV_QMIN=-8.5;   // L ; L/s (tam inspiratuvar halka + UAO platoları)
 
 function draw(){ drawFV(); drawVT(); }
 function drawFV(animFrac){
   var r=fv.getBoundingClientRect(),W=r.width,H=r.height; fvx.clearRect(0,0,W,H);
   var padL=46,padB=34,padT=20,padR=14, plotW=W-padL-padR, plotH=H-padT-padB;
-  var maxV=6, maxQp=12, maxQn=6;  // L, L/s exp+, insp-
+  var maxV=FV_VMAX;
   function X(v){ return padL + (v/maxV)*plotW; }
-  function Y(q){ var zeroY=padT + (maxQp/(maxQp+maxQn))*plotH; return zeroY - (q/maxQp)*(maxQp/(maxQp+maxQn))*plotH * (q>=0?1:(maxQp/maxQn)); }
+  function Y(q){ return padT + (FV_QMAX-q)/(FV_QMAX-FV_QMIN)*plotH; }  // doğrusal, tam kapsayıcı
   // grid
   fvx.strokeStyle='rgba(160,176,196,.08)';fvx.lineWidth=1;fvx.font='9px "JetBrains Mono",monospace';fvx.fillStyle='rgba(108,120,137,.8)';
   for(var vv=0;vv<=maxV;vv++){ var x=X(vv); fvx.beginPath();fvx.moveTo(x,padT);fvx.lineTo(x,padT+plotH);fvx.stroke(); fvx.fillText(vv+'',x-3,padT+plotH+12); }
-  for(var qq=-maxQn;qq<=maxQp;qq+=3){ var y=Y(qq); fvx.beginPath();fvx.moveTo(padL,y);fvx.lineTo(padL+plotW,y);fvx.stroke(); fvx.fillText(qq+'',padL-20,y+3); }
+  for(var qq=-8;qq<=10;qq+=2){ var y=Y(qq); fvx.beginPath();fvx.moveTo(padL,y);fvx.lineTo(padL+plotW,y);fvx.stroke(); fvx.fillText(qq+'',padL-22,y+3); }
   fvx.strokeStyle='rgba(160,176,196,.25)'; fvx.beginPath();fvx.moveTo(padL,Y(0));fvx.lineTo(padL+plotW,Y(0));fvx.stroke();
   fvx.fillStyle='rgba(108,120,137,.9)';fvx.fillText('Akım L/s',padL-40,padT+10);fvx.fillText('Hacim L',padL+plotW-40,padT+plotH+22);
   // kabul edilen/geçmiş manevralar
@@ -353,6 +355,11 @@ function maneuverOpts(){
   // artefakt vakası: ilk 2 manevra zorlu hasta (koçluğa rağmen), 3+ düzelir
   if(ENG.cas.artifact){ var k=ENG.set.length; if(k===0){ o.cough=true;o.coughTime=0.5; } else if(k===1){ o.earlyTerm=true;o.termTime=2.3; } }
   if(ENG.bdPhase) o.postBD=true;
+  // tohumlu fizyolojik deneme farkı → eğriler üst üste binmesin, ΔFVC≠0
+  var seed=ENG.set.length + ENG.idx*7 + (ENG.bdPhase?50:0);
+  function rnd(s){ var x=Math.sin((s+1)*97.137)*43758.5453; return x-Math.floor(x); }
+  o.volScale=1+(rnd(seed)-0.5)*0.024;      // ±1.2% (~±58 mL)
+  o.pefScale=1+(rnd(seed+37)-0.5)*0.06;
   return o;
 }
 function runManeuver(forceOpt){
@@ -426,12 +433,13 @@ function evaluate(){
   var C=ENG.cas,dx=$('dxSel').value,tlc=$('tlcOrder').checked,flags=[],cats=[];
   var truth=C.truthDx;
   var accFVC=acceptedFVC(),accFEV1=acceptedFEV1();
-  var rp=repeatability(ENG.set.filter(function(m){return (m.acceptFEV1||m.acceptFVC)&&!m.bd;}).map(function(m){return {FVC:m.m.FVC,FEV1:m.m.FEV1};}));
+  var accList=ENG.set.filter(function(m){return (m.acceptFEV1||m.acceptFVC)&&!m.bd;}).map(function(m){return {FVC:m.m.FVC,FEV1:m.m.FEV1};});
+  var accCount=accList.length, rp=repeatability(accList), repeatableKnown=(accCount>=2);
   // --- kanıt kapıları ---
   if(dx==='restriction' && !tlc){ flags.push({cls:'red',t:'CLAIM_EXCEEDS_SPIROMETRY: Spirometri tek başına restriksiyonu KESİNLEŞTİRMEZ (psödorestriksiyon / hava hapsi dışlanamaz). Doğrulama için TLC (pletismografi / He dilüsyonu) gerekir.'}); }
   var nAcc=ENG.set.filter(function(m){return (m.acceptFEV1&&m.acceptFVC)&&!m.bd;}).length;
   if(nAcc<3 && !C.artifact){ flags.push({cls:'amber',t:'ATS/ERS: en az 3 kabul edilebilir manevra önerilir ('+nAcc+' kabul edildi).'}); }
-  if(ENG.set.length>=2 && !rp.repeatable && dx!=='nondiagnostic'){ flags.push({cls:'amber',t:'Tekrarlanabilirlik sağlanmadı (ΔFVC '+(rp.maxDiffFVC*1000).toFixed(0)+' / ΔFEV1 '+(rp.maxDiffFEV1*1000).toFixed(0)+' mL > 150 mL).'}); }
+  if(repeatableKnown && !rp.repeatable && dx!=='nondiagnostic'){ flags.push({cls:'amber',t:'Tekrarlanabilirlik sağlanmadı (ΔFVC '+(rp.maxDiffFVC*1000).toFixed(0)+' / ΔFEV1 '+(rp.maxDiffFEV1*1000).toFixed(0)+' mL > 150 mL).'}); }
   // kötü manevrayı kabul etme (kalite)
   var badAccepted=ENG.set.some(function(m){ return (m.acceptFVC&&!m.q.fvcUsable)||(m.acceptFEV1&&!m.q.fev1Usable); });
   if(badAccepted){ flags.push({cls:'red',t:'Geçersiz ölçüm kabul edildi: 1. sn öksürükte FEV1, erken kesmede FVC KABUL EDİLMEMELİ.'}); }
@@ -440,12 +448,12 @@ function evaluate(){
   var dxOk=(dx===truth);
   var partial = (!dxOk) && ((truth==='restriction_suspect'&&dx==='restriction')||(truth==='obstruction'&&dx==='obstruction_reversible')||(truth==='obstruction_reversible'&&dx==='obstruction'));
   var interp=dxOk?100:partial?55:15;
-  var quality=100; if(nAcc<3&&!C.artifact)quality-=25; if(ENG.set.length>=2&&!rp.repeatable&&dx!=='nondiagnostic')quality-=20; if(badAccepted)quality-=30; quality=clamp(quality,0,100);
+  var quality=100; if(nAcc<3&&!C.artifact)quality-=25; if(repeatableKnown&&!rp.repeatable&&dx!=='nondiagnostic')quality-=20; if(badAccepted)quality-=30; quality=clamp(quality,0,100);
   var mgmt=100; if(dx==='restriction'&&!tlc)mgmt=10; else if(truth==='restriction_suspect'&&dx==='restriction_suspect'&&tlc)mgmt=100; else if(!dxOk&&!partial)mgmt=40;
   var crit=100; flags.forEach(function(f){ crit-=f.cls==='red'?40:15; }); crit=clamp(crit,0,100);
   interp=clamp(interp-(badAccepted?25:0),0,100);
   var overall=Math.round(quality*0.30+interp*0.35+mgmt*0.20+crit*0.15);
-  cats.push(['Manevra Kalitesi & Kabul',Math.round(quality), nAcc+' kabul edilebilir · '+(rp.repeatable?'tekrarlanabilir':'tekrarlanamaz')]);
+  cats.push(['Manevra Kalitesi & Kabul',Math.round(quality), nAcc+' kabul edilebilir · '+(repeatableKnown?(rp.repeatable?'tekrarlanabilir':'tekrarlanamaz'):'tekrarlanabilirlik için ≥2 kabul manevra gerekir')]);
   cats.push(['Patern Yorumu',Math.round(interp), dxOk?('Doğru: '+label(DX,truth)):(partial?'Yakın; gerçek: '+label(DX,truth):'Hatalı; gerçek: '+label(DX,truth))]);
   cats.push(['Yönetim / Doğrulama',Math.round(mgmt), (truth==='restriction_suspect')?(tlc?'TLC istendi — doğru':'TLC istenmedi'):'—']);
   cats.push(['Kritik Kurallar',Math.round(crit), flags.length?(flags.length+' uyarı'):'ihlal yok']);
@@ -487,10 +495,12 @@ function toast(msg,kind){ var t=document.createElement('div');t.className='toast
 function loadCase(i){
   ENG.idx=i; ENG.cas=CASES[i]; ENG.set=[]; ENG.lastArr=null; ENG.lastM=null; ENG.lastQ=null; ENG.bdPhase=false;
   $('caseSel').value=i; $('caseStem').textContent=ENG.examMode?'🔒 Gizli vaka: manevra çekip paterni çözün.':ENG.cas.stem;
-  $('teachNote').textContent=ENG.examMode?'Sınav modunda öğretim notu gizli.':ENG.cas.teach;
+  var hideTeach=(ENG.level==='student'||ENG.examMode);
+  $('teachNote').textContent= hideTeach ? 'Öğretim notu "Beyanı Değerlendir" sonrası açılır.' : ENG.cas.teach;
   $('phaseNote').textContent='Pre-bronkodilatör faz'; $('tlcOrder').checked=false; $('juryOut').innerHTML='';
   ['rFEV1','rFVC','rRatio','rPEF','rFEF','rFET','rBEV','rEOFE','rQual'].forEach(function(id){$(id).textContent='—';$(id).className='v';});
-  $('qualFlags').innerHTML=''; renderSet(); $('interpNote').textContent=''; $('llnFixed').textContent='0.70'; $('llnVal').textContent=(ENG.cas.lln||0.70).toFixed(2); $('llnAge').textContent=ENG.cas.age+' y';
+  $('qualFlags').innerHTML=''; renderSet(); $('interpNote').innerHTML='<span class="mini" style="color:var(--ink-3)">Manevra çekince yorum oluşur.</span>';
+  $('llnFixed').textContent='—'; $('llnVal').textContent='—'; $('llnAge').textContent=ENG.cas.age+' y';
   draw();
 }
 
@@ -519,6 +529,8 @@ window.SFT={
   simulate:function(opt){ return simulate(ENG.cas,opt||{}); },
   repeatabilityOf:function(list){ return repeatability(list); },
   uaoRatios:function(n){ return uaoRatios(n?CASES[n]:ENG.cas); },
+  fvYRange:function(){ return {qmin:FV_QMIN,qmax:FV_QMAX}; },
+  measuresHidden:function(){ return document.getElementById('rFEV1').textContent==='—' && document.getElementById('llnVal').textContent==='—'; },
   qualityOf:function(opt){ var a=simulate(ENG.cas,opt||{}); var m=measure(a); return {m:m,q:quality(m,opt||{})}; },
   declare:function(o){ if(o&&o.dx)$('dxSel').value=o.dx; $('tlcOrder').checked=!!(o&&o.tlc); evaluate(); return $('juryOut').innerText; },
   juryFlags:function(o){ if(o&&o.dx)$('dxSel').value=o.dx; $('tlcOrder').checked=!!(o&&o.tlc); evaluate(); return [].slice.call($('juryOut').querySelectorAll('.flag')).map(function(f){return f.className+'|'+f.textContent;}); },
