@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DuctusLab · Kraniyal Sinir, Pupil &amp; Okülomotor Muayene</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" />
+<style>
+:root{
+  --bg-0:#040812;--bg-1:#070c17;--bg-2:#0b1220;--bg-3:#101829;
+  --glass:rgba(13,20,34,.66);--glass-2:rgba(17,26,43,.55);
+  --line:rgba(160,176,196,.10);--line-2:rgba(160,176,196,.18);
+  --ink:#e4e9f1;--ink-2:#a6b1c2;--ink-3:#6c7889;
+  --accent:#6fa3c8;--accent-2:#4f7fa3;--accent-dim:rgba(111,163,200,.14);
+  --amber:#d9a441;--amber-dim:rgba(217,164,65,.14);
+  --ok:#5a9f7f;--ok-dim:rgba(90,159,127,.16);
+  --alert:#c4565f;--alert-dim:rgba(196,86,95,.16);
+  --violet:#9a86c9;--violet-dim:rgba(154,134,201,.16);
+  --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:"JetBrains Mono","SF Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:radial-gradient(1200px 800px at 70% -10%,#0a1424 0%,var(--bg-0) 60%);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;overflow:hidden}
+.app{display:flex;flex-direction:column;height:100vh}
+/* ---- top bar ---- */
+.topbar{display:flex;align-items:center;gap:16px;padding:10px 18px;border-bottom:1px solid var(--line);background:var(--glass);backdrop-filter:blur(12px);flex:0 0 auto;z-index:20}
+.wordmark{font-weight:700;letter-spacing:.04em;font-size:15px}
+.wordmark em{color:var(--accent);font-style:normal}
+.vsep{width:1px;height:22px;background:var(--line-2)}
+.product{color:var(--ink-2);font-size:12.5px;letter-spacing:.02em}
+.topbar .spacer{flex:1}
+.btn{font-family:var(--sans);font-size:12.5px;color:var(--ink-2);background:var(--glass-2);border:1px solid var(--line-2);border-radius:9px;padding:7px 12px;cursor:pointer;transition:.15s;white-space:nowrap}
+.btn:hover{color:var(--ink);border-color:var(--accent-2);background:var(--accent-dim)}
+.btn.on{color:#fff;background:var(--accent-dim);border-color:var(--accent)}
+.btn.sm{padding:5px 9px;font-size:11.5px}
+.seg{display:flex;border:1px solid var(--line-2);border-radius:9px;overflow:hidden}
+.seg button{border:0;border-radius:0;background:transparent}
+.seg button+button{border-left:1px solid var(--line-2)}
+/* ---- main ---- */
+.main{flex:1;display:flex;min-height:0}
+.stage{flex:1.35;min-width:0;position:relative;display:flex;flex-direction:column;background:linear-gradient(180deg,#060b16,#04070e)}
+.canvas-wrap{flex:1;position:relative;min-height:0}
+#scene{width:100%;height:100%;display:block}
+.stage-foot{flex:0 0 auto;border-top:1px solid var(--line);background:var(--glass);backdrop-filter:blur(10px);padding:10px 14px}
+.toolrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.toolgrp{display:flex;align-items:center;gap:7px;padding:5px 9px;border:1px solid var(--line);border-radius:10px;background:var(--glass-2)}
+.toolgrp .lbl{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+input[type=range]{-webkit-appearance:none;height:4px;border-radius:3px;background:linear-gradient(90deg,#1a2234,#30405c);outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);border:2px solid #0a1120;cursor:pointer}
+.gaze-grid{display:grid;grid-template-columns:repeat(3,26px);grid-template-rows:repeat(3,22px);gap:3px}
+.gaze-grid button{border:1px solid var(--line-2);background:var(--glass-2);color:var(--ink-2);border-radius:5px;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+.gaze-grid button:hover{border-color:var(--accent-2);color:var(--ink)}
+.gaze-grid button.on{background:var(--accent-dim);border-color:var(--accent);color:#fff}
+/* ---- console ---- */
+.console{flex:1;min-width:360px;max-width:460px;border-left:1px solid var(--line);background:var(--bg-1);display:flex;flex-direction:column;min-height:0}
+.console-scroll{overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px}
+.console-scroll::-webkit-scrollbar{width:9px}.console-scroll::-webkit-scrollbar-thumb{background:#1b2638;border-radius:6px}
+.card{border:1px solid var(--line);border-radius:12px;background:var(--glass);padding:12px 13px}
+.card h3{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);font-weight:600;margin-bottom:9px;display:flex;justify-content:space-between;align-items:center}
+.eyebrow{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3)}
+select,.inp{width:100%;font-family:var(--sans);font-size:13px;color:var(--ink);background:var(--bg-2);border:1px solid var(--line-2);border-radius:9px;padding:9px 10px;cursor:pointer}
+select:focus{outline:none;border-color:var(--accent-2)}
+.rdg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.rdg .cell{border:1px solid var(--line);border-radius:9px;padding:8px 9px;background:var(--bg-2)}
+.rdg .cell .k{font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3)}
+.rdg .cell .v{font-family:var(--mono);font-size:16px;font-weight:600;margin-top:2px}
+.v.ok{color:#8fe3bf}.v.warn{color:var(--amber)}.v.bad{color:#e88b92}
+.mini{font-size:11.5px;color:var(--ink-2)}
+.tag{font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;padding:2px 7px;border-radius:999px;border:1px solid var(--line-2);color:var(--ink-3)}
+.tag.cur{color:#8fe3bf;border-color:rgba(90,159,127,.5);background:var(--ok-dim)}
+.tag.hist{color:var(--amber);border-color:rgba(217,164,65,.5);background:var(--amber-dim)}
+.tag.na{color:#e88b92;border-color:rgba(196,86,95,.5);background:var(--alert-dim)}
+.logline{font-size:11.5px;color:var(--ink-2);padding:5px 0;border-bottom:1px solid var(--line);display:flex;gap:7px}
+.logline .tm{font-family:var(--mono);color:var(--ink-3);flex:0 0 auto}
+.btn-primary{width:100%;font-size:13.5px;font-weight:600;color:#06131d;background:linear-gradient(135deg,#7ec0e8,#5a9bc4);border:0;border-radius:10px;padding:11px;cursor:pointer;transition:.15s}
+.btn-primary:hover{filter:brightness(1.08)}
+.btn-bridge{width:100%;font-size:13px;font-weight:600;color:#fff;background:linear-gradient(135deg,#8b6fc9,#6f56a8);border:0;border-radius:10px;padding:11px;cursor:pointer;margin-top:8px}
+.jury-cat{margin:8px 0;padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:var(--bg-2)}
+.jury-cat .row{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;font-weight:600}
+.bar{height:6px;border-radius:4px;background:#17202f;margin-top:6px;overflow:hidden}
+.bar>span{display:block;height:100%;border-radius:4px}
+.flag{font-size:11.5px;padding:7px 9px;border-radius:8px;margin-top:6px;border:1px solid}
+.flag.red{color:#e88b92;border-color:rgba(196,86,95,.45);background:var(--alert-dim)}
+.flag.amber{color:var(--amber);border-color:rgba(217,164,65,.45);background:var(--amber-dim)}
+.flag.green{color:#8fe3bf;border-color:rgba(90,159,127,.45);background:var(--ok-dim)}
+.hint{font-size:11px;color:var(--ink-3);margin-top:6px;line-height:1.45}
+.chk{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--ink-2);cursor:pointer;padding:3px 0}
+.chk input{accent-color:var(--accent)}
+.badge-soon{font-size:9.5px;color:var(--violet);border:1px solid rgba(154,134,201,.5);background:var(--violet-dim);border-radius:999px;padding:2px 7px}
+#toastBox{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;z-index:60}
+.toast{background:rgba(10,16,28,.95);border:1px solid var(--line-2);border-left:3px solid var(--accent);border-radius:9px;padding:10px 14px;font-size:12.5px;color:var(--ink);max-width:420px;box-shadow:0 8px 28px rgba(0,0,0,.45);animation:tin .25s}
+@keyframes tin{from{opacity:0;transform:translateY(8px)}}
+.field-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:5px;margin-top:6px}
+.field-grid button{border:1px solid var(--line-2);background:var(--bg-2);color:var(--ink-2);border-radius:7px;padding:9px 4px;font-size:11px;cursor:pointer}
+.field-grid button:hover{border-color:var(--accent-2)}
+.field-grid button.seen{border-color:rgba(90,159,127,.5);color:#8fe3bf}
+.field-grid button.miss{border-color:rgba(196,86,95,.5);color:#e88b92}
+.swatch{display:inline-block;width:10px;height:10px;border-radius:3px;vertical-align:middle;margin-right:5px}
+@media(max-width:960px){.main{flex-direction:column}.console{max-width:none;border-left:0;border-top:1px solid var(--line)}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <span class="wordmark">Ductus<em>Lab</em></span>
+    <span class="vsep"></span>
+    <span class="product">Kraniyal Sinir, Pupil &amp; Okülomotor Muayene</span>
+    <span class="spacer"></span>
+    <div class="seg" id="levelSeg">
+      <button class="btn sm on" data-lvl="student">TUS / Öğrenci</button>
+      <button class="btn sm" data-lvl="resident">Asistan / Nöro-Oftalmoloji</button>
+    </div>
+    <button class="btn sm" id="examToggle">🔒 Gizli Vaka (Sınav)</button>
+    <button class="btn sm" id="soundToggle">🔈 Ses</button>
+    <button class="btn sm" id="homeBtn">← Anasayfa</button>
+  </div>
+
+  <div class="main">
+    <!-- ============ STAGE ============ -->
+    <div class="stage">
+      <div class="canvas-wrap"><canvas id="scene"></canvas></div>
+      <div class="stage-foot">
+        <div class="toolrow">
+          <div class="toolgrp">
+            <span class="lbl">Oda ışığı</span>
+            <input type="range" id="luxSlider" min="5" max="500" value="320" style="width:120px">
+            <span class="mono" id="luxVal" style="font-size:11px;color:var(--ink-2);width:58px">320 lx</span>
+          </div>
+          <div class="toolgrp">
+            <span class="lbl">Kalem fener</span>
+            <button class="btn sm" id="penR">Sağ göz</button>
+            <button class="btn sm" id="penL">Sol göz</button>
+            <button class="btn sm" id="penN">Burun kökü</button>
+            <button class="btn sm" id="swing">↔ Sallanan fener</button>
+          </div>
+          <div class="toolgrp">
+            <span class="lbl">Kapak</span>
+            <button class="btn sm" id="liftR">Sağ kaldır</button>
+            <button class="btn sm" id="liftL">Sol kaldır</button>
+          </div>
+          <div class="toolgrp">
+            <span class="lbl">Bakış (H)</span>
+            <div class="gaze-grid" id="gazeGrid"></div>
+          </div>
+          <div class="toolgrp">
+            <span class="lbl">Yakın 15cm</span>
+            <button class="btn sm" id="nearBtn">Konverjans</button>
+          </div>
+          <div class="toolgrp">
+            <span class="lbl">Baş eğme</span>
+            <button class="btn sm" id="tiltL">30° Sol</button>
+            <button class="btn sm" id="tilt0">Düz</button>
+            <button class="btn sm" id="tiltR">30° Sağ</button>
+          </div>
+          <div class="toolgrp">
+            <span class="lbl">Örtme</span>
+            <button class="btn sm" id="coverR">Sağ ört</button>
+            <button class="btn sm" id="coverL">Sol ört</button>
+            <button class="btn sm" id="coverOff">Aç</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ CONSOLE ============ -->
+    <div class="console">
+      <div class="console-scroll">
+        <div class="card">
+          <h3>Vaka Seçici <span class="eyebrow" id="caseCount"></span></h3>
+          <select id="caseSel"></select>
+          <div class="mini" id="caseStem" style="margin-top:9px"></div>
+          <div id="variantWrap" style="margin-top:9px;display:none">
+            <span class="eyebrow">CN VI alt tip</span>
+            <div class="seg" style="margin-top:5px">
+              <button class="btn sm on" id="vPeripheral" style="flex:1">Periferik (abdüksiyon)</button>
+              <button class="btn sm" id="vNuclear" style="flex:1">Çekirdek (konjuge)</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Canlı Muayene Bulgusu</h3>
+          <div class="rdg">
+            <div class="cell"><div class="k">Sağ pupil</div><div class="v" id="rPd">—</div></div>
+            <div class="cell"><div class="k">Sol pupil</div><div class="v" id="lPd">—</div></div>
+            <div class="cell"><div class="k">Anizokori</div><div class="v" id="aniso">—</div></div>
+            <div class="cell"><div class="k">Ortam</div><div class="v" id="envRead" style="font-size:13px">Aydınlık</div></div>
+          </div>
+          <div class="mini" id="liveNote" style="margin-top:9px;color:var(--ink-3)">Muayene aracı seçin; bulgular gerçek zamanlı güncellenir.</div>
+        </div>
+
+        <div class="card">
+          <h3>Konfrontasyon Görme Alanı <span class="eyebrow">kadran</span></h3>
+          <div class="mini">Test edilen göz: <b id="cfEye">Sağ</b> — diğerini kapatın. Kadrana tıklayıp uyaranı sorun.</div>
+          <div style="display:flex;gap:6px;margin:7px 0">
+            <button class="btn sm" id="cfRight" style="flex:1">Sağ gözü test et</button>
+            <button class="btn sm" id="cfLeft" style="flex:1">Sol gözü test et</button>
+          </div>
+          <div class="field-grid" id="fieldGrid"></div>
+        </div>
+
+        <div class="card">
+          <h3>Muayene Kaydı <span class="eyebrow" id="logCount">0 manevra</span></h3>
+          <div id="logBox" style="max-height:140px;overflow-y:auto"><div class="mini" style="color:var(--ink-3)">Henüz manevra yapılmadı.</div></div>
+        </div>
+
+        <div class="card">
+          <h3>Tanı Beyanı &amp; Lokalizasyon</h3>
+          <span class="eyebrow">Lezyon / sendrom</span>
+          <select id="dxSel" style="margin-top:5px"></select>
+          <span class="eyebrow" style="display:block;margin-top:9px">Taraf</span>
+          <div class="seg" style="margin-top:5px">
+            <button class="btn sm on" data-side="R" style="flex:1">Sağ</button>
+            <button class="btn sm" data-side="L" style="flex:1">Sol</button>
+            <button class="btn sm" data-side="B" style="flex:1">Bilateral / NA</button>
+          </div>
+          <label class="chk" style="margin-top:9px"><input type="checkbox" id="excludeAneurysm"> Pupil korunduğu için anevrizmayı <b>%100 dışladım</b></label>
+          <button class="btn-primary" id="declareBtn" style="margin-top:11px">Beyanı Değerlendir</button>
+          <div id="juryOut" style="margin-top:11px"></div>
+        </div>
+
+        <div class="card" style="border-color:rgba(154,134,201,.25)">
+          <h3>Öğretim Notu</h3>
+          <div class="mini" id="teachNote">Bir manevra yapın veya tanı beyan edin.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="toastBox"></div>
+
+<script>
+/* ============================================================================
+ *  DuctusLab · KS — Kraniyal Sinir / Pupil / Okülomotor Muayene Simülatörü
+ *  Tek deterministik nöro-oftalmoloji motoru. Harici görsel YOK; tümü prosedürel
+ *  Canvas2D. Standalone + suite(iframe) + ductus-core zinciri uyumlu.
+ *  Hasta koordinatı: her göz için temporal(+abdüksiyon)/nasal(−addüksiyon),
+ *  ele(+elevasyon). Ekran: sağ göz solda; "sağ bakış" = ikisi de ekranda sola.
+ * ========================================================================== */
+(function(){
+'use strict';
+var $=function(id){return document.getElementById(id);};
+function clamp(x,a,b){return x<a?a:x>b?b:x;}
+function lerp(a,b,t){return a+(b-a)*t;}
+
+/* ---------------------------------------------------------------------------
+ *  SABİTLER — pupil dinamiği
+ * ------------------------------------------------------------------------- */
+var LIGHT_FLOOR=2.0;        // maksimal sfinkter tonusunda pupil tabanı (mm)
+var PEN=3.4;                // kalem fener aydınlatma birimi (ambient üstüne)
+var kL=0.95, kN=1.25;       // ışık / yakın sfinkter kazançları
+
+function luxNorm(lux){ var l=Math.log(Math.max(1,lux)),lo=Math.log(5),hi=Math.log(500); return clamp((l-lo)/(hi-lo),0,1)*0.95+0.05; }
+function sat(x){ return x/(1+x); }
+
+/* ---------------------------------------------------------------------------
+ *  VAKA AİLESİ (12) — gizli gerçek (truth). Her göz için varsayılan + override.
+ *  darkMm: sempatik-set karanlık çapı. pLight/pNear: ışık/yakın sfinkter etkinliği.
+ *  tauConMul/tauDilMul: konstriksiyon/dilatasyon zaman sabiti çarpanı (Adie/Horner lag).
+ *  physioScale: düz (fizyolojik) çap ölçeği (ışık/karanlıkta sabit anizokori).
+ * ------------------------------------------------------------------------- */
+function eyeDefaults(){ return { darkMm:7.0, pLight:1.0, pNear:0.6, tauConMul:1, tauDilMul:1, physioScale:1, sector:0,
+  ptosis:'none', lidRetract:false, reverseLower:false, af:1.0 /*optik afferent kazanç*/ }; }
+function mk(o){ var e=eyeDefaults(); for(var k in (o||{})) e[k]=o[k]; return e; }
+
+var CASES=[
+ { id:1, name:'Normal & Fizyolojik Anizokori', dx:'normal', side:'B', iris:'#6b4a2b',
+   L:mk({physioScale:1.0}), R:mk({physioScale:0.93}), gaze:null, field:'normal',
+   stem:'Rutin muayene. Pupiller ≤0.8 mm farklı; fark aydınlık ve karanlıkta benzer. Işık ve bakış tam.',
+   teach:'Fizyolojik anizokori: fark ışık/karanlıkta SABİT kalır (~<1 mm), ışık yanıtı her iki gözde canlı, pitozis/motor kusur yok. Dilatasyon gecikmesi olmaz.' },
+
+ { id:2, name:'Sol Optik Nörit (RAPD+)', dx:'optic_neuritis', side:'L', iris:'#5c6b7a',
+   L:mk({af:0.32}), R:mk({af:1.0}), gaze:null, field:'central_scotoma_L',
+   stem:'3 gün önce sol gözde ağrılı görme kaybı, diskromatopsi. Pupiller eşit boyutta. Sallanan fener testi istendi.',
+   teach:'İzole tek taraflı optik nöropatide bazal anizokori MATEMATİKSEL OLARAK SIFIRDIR (aferent sürüş her iki Edinger-Westphal çekirdeğini eşit sürer). Tanı yalnız SALLANAN FENERLE konur: hasta göze geçince her iki pupil paradoksal genişler = RAPD / Marcus Gunn.' },
+
+ { id:3, name:'Bilateral Simetrik Aferent Kayıp (RAPD−)', dx:'bilateral_optic', side:'B', iris:'#5c6b7a',
+   L:mk({af:0.55}), R:mk({af:0.55}), gaze:null, field:'normal',
+   stem:'İki taraflı kronik görme azlığı, simetrik. Sallanan fener testi istendi.',
+   teach:'Simetrik bilateral optik nöropatide iki aferent kol eşit zayıftır → sallanan fenerde taraflar arası fark YOK → RAPD oluşmaz. RAPD taraflar arası ASİMETRİyi ölçer, mutlak kaybı değil.' },
+
+ { id:4, name:'Sağ Kompresif CN III — IC-PC Anevrizması', dx:'cn3_compressive', side:'R', iris:'#6b4a2b',
+   L:mk({}), R:mk({pLight:0.0,pNear:0.0,darkMm:7.6,ptosis:'full'}), gaze:{type:'cn3',side:'R'}, field:'normal', pupilInvolved:true, bridge:true,
+   stem:'Ani başlayan sağ pitozis + şiddetli baş ağrısı. Sağ göz "aşağı-dışa", pupil geniş. Acil nöro-görüntüleme planlanıyor.',
+   teach:'Pupil TUTAN (dilate, ışığa yanıtsız) akut CN III → aksi ispatlanana dek posterior komünikan (IC-PC) ANEVRİZMA. Pupillomotor lifler nervin dışında seyreder, kompresyondan ilk etkilenir. Kapağı kaldırıp "aşağı-dışa" gözü ve geniş pupili doğrula; acil BTA/DSA + nöroşirürji.' },
+
+ { id:5, name:'Mikrovasküler CN III (Pupil Korunmuş)', dx:'cn3_microvascular', side:'R', iris:'#6b4a2b',
+   L:mk({}), R:mk({ptosis:'full'}), gaze:{type:'cn3',side:'R',pupilSpared:true}, field:'normal', pupilInvolved:false,
+   stem:'Diyabetik hastada ağrılı sağ pitozis + oftalmopleji. Pupil boyutu normal ve ışığa yanıtlı.',
+   teach:'Mikrovasküler (iskemik) CN III: tam motor kayıp ama pupil KORUNUR (periferik pupillomotor lifler iskemiye dirençli). Pupil korunması anevrizma olasılığını düşürür ama %100 DIŞLAMAZ — yaş, seyir ve ek bulgulara göre görüntüleme hâlâ gerekebilir.' },
+
+ { id:6, name:'Sağ Horner Sendromu', dx:'horner', side:'R', iris:'#6b4a2b',
+   L:mk({}), R:mk({darkMm:5.3,tauDilMul:4.2,ptosis:'mild',reverseLower:true}), gaze:null, field:'normal',
+   stem:'Sağ hafif pitozis + miyozis. Yüzde anhidroz tarifliyor. Karanlık oda testi istendi.',
+   teach:'Horner: sempatik kusur → karanlıkta BELİRGİNLEŞEN anizokori + 4–5. sn zirve yapan DİLATASYON GECİKMESİ + ASLA 2 mm aşmayan hafif pitozis (Müller) + alt kapak "ters pitozisi" + KORUNAN ışık konstriksiyonu. Fizyolojik anizokoriden ayrım karanlık oda ile yapılır.' },
+
+ { id:7, name:'Sağ CN IV (Superior Oblik) Felci', dx:'cn4', side:'R', iris:'#6b4a2b',
+   L:mk({}), R:mk({}), gaze:{type:'cn4',side:'R'}, field:'normal',
+   stem:'Dikey/eğik çift görme, merdiven inerken belirgin. Baş sola eğik tutuluyor. Parks-Bielschowsky testi istendi.',
+   teach:'CN IV: addüksiyonda depresyon kaybı → hipertropya. Parks 3 adım: (1) hipertropik göz, (2) karşı tarafa bakışta artar, (3) AYNI tarafa (ipsilateral) baş eğmede artar. Sağ CN IV → sola bakışta ve SAĞA baş eğmede sağ hipertropya artar.' },
+
+ { id:8, name:'Sağ CN VI — Periferik vs Çekirdek', dx:'cn6', side:'R', iris:'#6b4a2b',
+   L:mk({}), R:mk({}), gaze:{type:'cn6',side:'R',mode:'peripheral'}, field:'normal', variant:true,
+   stem:'Sağa bakışta çift görme. Periferik mi çekirdek mi? Her iki gözün sağa bakışını ayrı değerlendirin.',
+   teach:'Periferik CN VI: YALNIZ ipsilateral abdüksiyon kaybı (sağ göz sağa gidemez). Çekirdek CN VI: ipsilateral KONJUGE yatay bakış felci — sağ göz abdükte EDEMEZ VE sol göz addükte edemez (çekirdek, karşı MLF üzerinden karşı medial rektusu da sürer). Konverjans korunur.' },
+
+ { id:9, name:'Sol İnternükleer Oftalmopleji (MS)', dx:'ino', side:'L', iris:'#5c6b7a',
+   L:mk({}), R:mk({}), gaze:{type:'ino',side:'L'}, field:'normal',
+   stem:'Genç hastada bulanık/çift görme. Sağa bakışta sol göz içe gelmiyor, sağ gözde nistagmus. Yakın hedef test edildi mi?',
+   teach:'İNÖ = MLF lezyonu. Lezyon tarafında (sol) konjuge bakışta ADDÜKSİYON kısıtlı + karşı (sağ) gözde abdüksiyon nistagmusu. KRİTİK: KONVERJANS KORUNUR — yakın hedefte sol göz tam addükte olur (vergans yolu MLF’den bağımsız). Bu ayrım yakın hedef test edilmeden yapılamaz.' },
+
+ { id:10, name:'Sağ Adie Tonik Pupil', dx:'adie', side:'R', iris:'#6b4a2b',
+   L:mk({}), R:mk({darkMm:6.9,pLight:0.12,pNear:0.85,tauConMul:7,tauDilMul:9,sector:1}), gaze:null, field:'normal',
+   stem:'Genç kadında fark edilen geniş sağ pupil. Işığa yanıtsız gibi. Yakın hedef ve sektörel hareket değerlendirilsin.',
+   teach:'Adie: unilateral midriyatik pupil, ışığa yanıtsız/SEKTÖREL solucanvari (vermiform) hareket, yakına YAVAŞ TONİK kasılma ve uzaklaşınca çok yavaş yeniden genişleme (ışık-yakın disosiyasyonu). Tanı yakın hedef testiyle konur.' },
+
+ { id:11, name:'Argyll Robertson Pupili', dx:'argyll', side:'B', iris:'#6b4a2b',
+   L:mk({darkMm:3.0,pLight:0.08,pNear:0.95,sector:1}), R:mk({darkMm:3.1,pLight:0.08,pNear:0.95,sector:1}), gaze:null, field:'normal',
+   stem:'Bilateral küçük, düzensiz pupiller. Işığa zayıf yanıt. Yakın hedef test edildi mi?',
+   teach:'Argyll Robertson: bilateral küçük/düzensiz miyotik pupil, ışık yanıtı yok/zayıf ama yakına HIZLI kasılma = ışık-yakın disosiyasyonu. "Fahişe pupili" (akomodasyon korunur, ışık kaybolur). Nörosifiliz klasiği. Yakın test edilmeden Adie/İNÖ’den ayrılamaz.' },
+
+ { id:12, name:'Parinaud (Dorsal Mezensefalik) + Alan', dx:'parinaud', side:'B', iris:'#6b4a2b',
+   L:mk({darkMm:5.0,pLight:0.15,pNear:0.8}), R:mk({darkMm:5.0,pLight:0.15,pNear:0.8,lidRetract:true}), LRretract:true,
+   gaze:{type:'parinaud'}, field:'bitemporal',
+   stem:'Yukarı bakış kısıtlı, "batan güneş" görünümü. Yukarı bakış denemesinde göz küreleri içe-geri sıçrıyor. Görme alanı değerlendirilsin.',
+   teach:'Parinaud: yukarı bakış felci + yukarı bakış denemesinde KONVERJANS-RETRAKSİYON NİSTAGMUSU + Collier kapak retraksiyonu + orta-geniş pupilde ışık-yakın disosiyasyonu. Pineal bölge/dorsal mezensefalon. Bitişik kiyazma basısı bitemporal alan defekti yapabilir.' }
+];
+// Parinaud: her iki göze lid retraction
+CASES[11].L.lidRetract=true; CASES[11].R.lidRetract=true;
+
+var DX_LABELS={ normal:'Normal / Fizyolojik anizokori', optic_neuritis:'Optik nörit (tek taraflı, RAPD+)', bilateral_optic:'Bilateral simetrik optik nöropati (RAPD−)',
+  cn3_compressive:'Kompresif CN III (anevrizma — pupil tutan)', cn3_microvascular:'Mikrovasküler CN III (pupil korunmuş)', horner:'Horner sendromu',
+  cn4:'CN IV (superior oblik) felci', cn6:'CN VI felci', ino:'İnternükleer oftalmopleji (İNÖ)', adie:'Adie tonik pupil', argyll:'Argyll Robertson', parinaud:'Parinaud sendromu' };
+
+/* ===========================================================================
+ *  MOTOR — deterministik durum + dinamik
+ * ========================================================================= */
+var ENG={
+  caseIdx:0, cas:CASES[0],
+  roomLux:320, penlight:null /* 'L'|'R'|'N'|null */, swinging:false, swingPhase:0, swingEye:'R',
+  nearTarget:false, gaze:'center', headTilt:0, liftLid:{L:false,R:false}, cover:null,
+  t:0,
+  eyes:{ L:{d:4.0,h:0,v:0}, R:{d:4.0,h:0,v:0} },
+  examMode:false, revealed:true
+};
+
+function curAfferent(){
+  // her göz ne kadar aydınlanıyor (ambient + fener)
+  var amb=luxNorm(ENG.roomLux);
+  var litL=amb, litR=amb;
+  var pen = ENG.swinging ? ENG.swingEye : ENG.penlight;
+  if(pen==='L') litL+=PEN; else if(pen==='R') litR+=PEN; else if(pen==='N'){ litL+=PEN*0.5; litR+=PEN*0.5; }
+  var c=ENG.cas;
+  // A(t) = a_L*h(E_L) + a_R*h(E_R) — ortak pretektal aferent, her iki EW çekirdeğini EŞİT sürer
+  var A = c.L.af*litL + c.R.af*litR;
+  return { A:A, amb:amb, litL:litL, litR:litR };
+}
+
+// yakın fener testinde hasta uzak hedefe (6 m) fikse → yakın refleksi ışık yanıtını kirletmez
+function nearActive(){ return ENG.nearTarget && !ENG.swinging && ENG.penlight===null; }
+
+function targetDiam(eye){
+  var c=ENG.cas, e=c[eye];
+  var af=curAfferent();
+  var U = nearActive()?1:0;
+  // sfinkter tonusu: ışık (ortak A) + yakın (göz-özgü pNear). Işık-yakın disosiyasyonu buradan doğar.
+  var tone = sat( e.pLight*kL*af.A + e.pNear*kN*U );
+  var d = e.darkMm - tone*(e.darkMm - LIGHT_FLOOR);
+  d *= e.physioScale;
+  return clamp(d,1.4,8.8);
+}
+
+function stepPupil(eye,dt){
+  var c=ENG.cas, e=c[eye], o=ENG.eyes[eye];
+  var tgt=targetDiam(eye);
+  var constrict = tgt<o.d;
+  var tau = constrict ? 320*e.tauConMul : 850*e.tauDilMul;
+  // Horner dilatasyon gecikmesi: düşük sempatik → uzun redilatasyon τ (zaten tauDilMul ile)
+  var k=1-Math.exp(-dt/tau);
+  o.d += (tgt-o.d)*k;
+}
+
+/* ---- bakış / kas kinematiği ---- */
+// her göz için patient-centric hedef: temporal(+abdüksiyon), ele(+yukarı)
+function gazeTargets(){
+  var g=ENG.gaze, near=nearActive();
+  var T={L:{temp:0,ele:0},R:{temp:0,ele:0}};
+  if(near){ T.L.temp=-0.72; T.R.temp=-0.72; }   // konverjans: ikisi de addükte
+  else{
+    var hx=0,vy=0;
+    if(g.indexOf('right')>=0) hx=1; if(g.indexOf('left')>=0) hx=-1;
+    if(g.indexOf('up')>=0) vy=1; if(g.indexOf('down')>=0) vy=-1;
+    // sağ bakış(hx=+1): sağ göz abdükte(+temp), sol göz addükte(−temp)
+    T.R.temp = hx>0? 1 : hx<0? -1 : 0;   // RE: sağ bakış→abdüksiyon(+), sol bakış→addüksiyon(−)
+    T.L.temp = hx>0? -1 : hx<0? 1 : 0;   // LE: sağ bakış→addüksiyon(−), sol bakış→abdüksiyon(+)
+    T.R.ele=vy; T.L.ele=vy;
+  }
+  return {T:T, isNear:near};
+}
+
+// lezyon kısıtlaması → ulaşılan (temporal, ele) + nistagmus bilgisi
+function applyLesion(eye, tgt, isNear){
+  var g=ENG.cas.gaze; var out={temp:tgt.temp, ele:tgt.ele, nys:0, nysAxis:'h'};
+  if(!g) return out;
+  var S=g.side;
+  if(g.type==='cn6'){
+    if(S==='R'){
+      // sağ abdüksiyon kaybı (periferik+çekirdek ikisinde)
+      if(eye==='R' && tgt.temp>0 && !isNear) out.temp*=0.04;
+      // çekirdek: konjuge sağ bakış felci → sol göz addüksiyonu da kaybolur (vergans korunur)
+      if(g.mode==='nuclear' && eye==='L' && tgt.temp<0 && !isNear) out.temp*=0.06;
+    }
+  } else if(g.type==='ino'){
+    if(S==='L'){
+      // sol addüksiyon konjuge bakışta kısıtlı; konverjansta KORUNUR
+      if(eye==='L' && tgt.temp<0 && !isNear) out.temp*=0.18;
+      // karşı (sağ) gözde abdüksiyon nistagmusu — sağa bakışta
+      if(eye==='R' && tgt.temp>0 && !isNear){ out.nys=0.5; out.nysAxis='h'; }
+    }
+  } else if(g.type==='cn4'){
+    if(S==='R'){
+      // sağ SO: addüksiyonda depresyon kaybı + hipertropya; ipsilateral baş eğmede ve karşı bakışta artar
+      if(eye==='R'){
+        var hyper=0.34;                                   // dinlenim hipertropyası
+        if(tgt.temp<0) hyper+=0.22;                       // sağ göz addüksiyonda (sola bakış) artar
+        if(ENG.headTilt>0) hyper+=0.26;                   // SAĞA baş eğme (ipsilateral) artırır
+        if(ENG.headTilt<0) hyper-=0.12;                   // sola eğme azaltır
+        out.ele += hyper;
+        if(tgt.temp<0 && tgt.ele<0) out.ele = Math.max(out.ele, -0.2); // addüksiyonda inemez
+      }
+    }
+  } else if(g.type==='cn3'){
+    if(S==='R' && eye==='R'){
+      // istirahat "aşağı-dışa"; elevasyon/addüksiyon/depresyon kısıtlı
+      out.temp = 0.5 + tgt.temp*0.15;     // dışa (abdüksiyon) sabit
+      out.ele  = -0.38 + tgt.ele*0.12;    // aşağı
+    }
+  } else if(g.type==='parinaud'){
+    // iki göz yukarı bakamaz; yukarı bakış denemesinde konverjans-retraksiyon nistagmusu
+    if(tgt.ele>0 && !isNear){ out.ele*=0.05; out.nys=0.6; out.nysAxis='conv'; }
+  }
+  return out;
+}
+
+function stepGaze(eye,dt){
+  var gt=gazeTargets();
+  var les=applyLesion(eye, gt.T[eye], gt.isNear);
+  var o=ENG.eyes[eye];
+  var k=1-Math.exp(-dt/140);
+  // hedef patient-centric → ekran ofseti
+  var tempMax=0.86, eleMax=0.72;
+  // RE: temporal(+abdüksiyon=patient sağ=ekran sol) → screenX negatif
+  var sxTarget = (eye==='R' ? -les.temp : les.temp)*tempMax;
+  var syTarget = -les.ele*eleMax;
+  // nistagmus
+  var nys=0;
+  if(les.nys>0){
+    if(les.nysAxis==='conv'){ nys = Math.sin(ENG.t*0.018)*les.nys*0.10; o._convRetr=les.nys; }
+    else nys = Math.sin(ENG.t*0.02)*les.nys*0.08;
+  } else o._convRetr=0;
+  o.h += (sxTarget - o.h)*k;
+  o.v += (syTarget - o.v)*k;
+  o._nys=nys; o._temp=les.temp; o._ele=les.ele;
+}
+
+function step(dt){
+  ENG.t+=dt;
+  // sallanan fener: ~1.1 sn'de bir tarafı değiştir
+  if(ENG.swinging){ ENG.swingPhase+=dt; if(ENG.swingPhase>1100){ ENG.swingPhase=0; ENG.swingEye = ENG.swingEye==='R'?'L':'R'; } }
+  stepPupil('L',dt); stepPupil('R',dt);
+  stepGaze('L',dt); stepGaze('R',dt);
+}
+
+/* ===========================================================================
+ *  RENDER — Canvas2D prosedürel göz
+ * ========================================================================= */
+var cv=$('scene'), ctx=cv.getContext('2d'), DPR=Math.max(1,Math.min(2,window.devicePixelRatio||1));
+var VW=900, VH=560;
+function resize(){
+  var r=cv.parentElement.getBoundingClientRect();
+  VW=Math.max(520,r.width); VH=Math.max(360,r.height);
+  cv.width=VW*DPR; cv.height=VH*DPR; cv.style.width=r.width+'px'; cv.style.height=r.height+'px';
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+}
+window.addEventListener('resize',resize);
+
+var MM_R=5.3; // 1 mm yarıçap → px (iris ~11.7mm çap)
+function faceLayout(){
+  var cx=VW/2, cy=VH*0.46, sep=Math.min(VW*0.23,210), eyeR=68;
+  return { cy:cy, L:{x:cx+sep}, R:{x:cx-sep}, eyeR:eyeR };   // ekranda: R solda, L sağda
+}
+
+function roomTint(){
+  var amb=luxNorm(ENG.roomLux);
+  return amb; // 0.05(karanlık)..1(aydınlık)
+}
+
+function drawScene(){
+  var amb=roomTint();
+  // arka plan — oda ışığına göre
+  var bgA=lerp(0.02,0.14,amb);
+  ctx.clearRect(0,0,VW,VH);
+  var grd=ctx.createRadialGradient(VW/2,VH*0.4,40,VW/2,VH*0.4,VW*0.7);
+  grd.addColorStop(0,'rgba('+Math.round(40+amb*40)+','+Math.round(46+amb*44)+','+Math.round(58+amb*50)+','+(0.5)+')');
+  grd.addColorStop(1,'rgba(4,7,14,1)'); ctx.fillStyle=grd; ctx.fillRect(0,0,VW,VH);
+
+  var F=faceLayout();
+  // burun kökü / glabella ipucu
+  ctx.save();
+  ctx.globalAlpha=0.5*amb+0.1;
+  ctx.fillStyle='#161d2b';
+  ctx.beginPath(); ctx.ellipse(VW/2,F.cy+10,36,96,0,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+
+  drawEye('R',F.R.x,F.cy,F.eyeR,amb);
+  drawEye('L',F.L.x,F.cy,F.eyeR,amb);
+
+  // etiketler
+  ctx.fillStyle='rgba(166,177,194,.6)'; ctx.font='11px "JetBrains Mono",monospace'; ctx.textAlign='center';
+  ctx.fillText('SAĞ GÖZ (hasta)',F.R.x,F.cy+F.eyeR+34);
+  ctx.fillText('SOL GÖZ (hasta)',F.L.x,F.cy+F.eyeR+34);
+
+  // konfrontasyon / uzak hedef işareti
+  if(nearActive()){ ctx.fillStyle='rgba(217,164,65,.9)'; ctx.font='12px Inter'; ctx.fillText('● Yakın hedef 15 cm (konverjans/akomodasyon)',VW/2,VH-16); }
+  else if(ENG.swinging||ENG.penlight){ ctx.fillStyle='rgba(111,163,200,.85)'; ctx.font='12px Inter'; ctx.fillText('Hasta uzak hedefe (6 m) fikse — yakın refleksi devre dışı',VW/2,VH-16); }
+}
+
+function drawEye(eye,cx,cy,R,amb){
+  var c=ENG.cas, pe=c[eye], o=ENG.eyes[eye];
+  // --- yumuşak periorbital cilt (yüz bağlamı) ---
+  drawPeriorbit(cx,cy,R,amb);
+  // --- sklera (badem) ---
+  ctx.save();
+  ctx.beginPath();
+  palpebral(cx,cy,R);
+  ctx.closePath(); ctx.clip();
+  // sklera dolgu
+  var sg=ctx.createLinearGradient(cx,cy-R,cx,cy+R);
+  sg.addColorStop(0,'#eef1f4'); sg.addColorStop(1,'#d6dde4');
+  ctx.fillStyle=sg; ctx.fillRect(cx-R*1.6,cy-R,R*3.2,R*2);
+  // sklera damarlanması
+  ctx.strokeStyle='rgba(176,72,74,'+(0.28)+')'; ctx.lineWidth=1.1;
+  drawVessels(cx,cy,R,eye);
+  // --- globe (iris+pupil) konumu ---
+  var gx=cx+o.h*R*0.42 + (o._nys||0)*R, gy=cy+o.v*R*0.42;
+  // konverjans-retraksiyon: globe geri+içe sıçrama
+  if(o._convRetr){ gx += (eye==='R'?1:-1)*R*0.10*o._convRetr*(0.5+0.5*Math.sin(ENG.t*0.02)); }
+  drawIris(gx,gy,pe,eye,amb,o);
+  // kornea highlight + Purkinje
+  drawCornea(gx,gy,R,eye);
+  ctx.restore();
+
+  // --- göz kapakları (klip dışında, globe üstünü örter) ---
+  drawLids(cx,cy,R,eye,pe,o);
+
+  // --- çerçeve ---
+  ctx.save(); ctx.beginPath(); palpebral(cx,cy,R); ctx.strokeStyle='rgba(120,90,70,.45)'; ctx.lineWidth=2; ctx.stroke(); ctx.restore();
+}
+
+function palpebral(cx,cy,R){
+  // iki yaylı badem şekli (hafif kantal eğim)
+  var w=R*1.42, h=R*0.92;
+  ctx.moveTo(cx-w,cy+h*0.06);
+  ctx.quadraticCurveTo(cx-w*0.3,cy-h, cx,cy-h*0.92);
+  ctx.quadraticCurveTo(cx+w*0.34,cy-h, cx+w,cy-h*0.04);
+  ctx.quadraticCurveTo(cx+w*0.3,cy+h, cx,cy+h*0.95);
+  ctx.quadraticCurveTo(cx-w*0.3,cy+h, cx-w,cy+h*0.06);
+}
+// yumuşak periorbital cilt — kutu değil, yüze oturan soket
+function drawPeriorbit(cx,cy,R,amb){
+  var skin=skinTone(amb);
+  ctx.save();
+  // geniş yumuşak cilt yaması
+  var g=ctx.createRadialGradient(cx,cy-R*0.1,R*0.4,cx,cy,R*2.3);
+  g.addColorStop(0,skin.mid); g.addColorStop(0.55,skin.mid); g.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=g; ctx.beginPath(); ctx.ellipse(cx,cy,R*2.2,R*1.7,0,0,6.283); ctx.fill();
+  // kaş gölgesi
+  ctx.globalAlpha=0.5; ctx.strokeStyle=skin.brow; ctx.lineWidth=R*0.26; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(cx-R*1.2,cy-R*1.02); ctx.quadraticCurveTo(cx,cy-R*1.42,cx+R*1.2,cy-R*0.98); ctx.stroke();
+  ctx.globalAlpha=1;
+  // soket gölgesi (badem çevresi hafif koyu)
+  ctx.beginPath(); palpebral(cx,cy,R*1.12);
+  ctx.strokeStyle='rgba(60,42,30,.35)'; ctx.lineWidth=R*0.14; ctx.stroke();
+  ctx.restore();
+}
+function skinTone(amb){
+  var l=0.55+amb*0.4;  // oda ışığına göre aydınlanma
+  function px(r,g,b){ return 'rgb('+Math.round(r*l)+','+Math.round(g*l)+','+Math.round(b*l)+')'; }
+  return { mid:px(214,178,146), hi:px(230,198,168), lo:px(176,140,110), brow:px(120,92,66) };
+}
+
+function drawVessels(cx,cy,R,eye){
+  var seed=eye==='R'?3:7;
+  for(var i=0;i<5;i++){
+    var a=(i*1.7+seed)%6.28, sx=cx+Math.cos(a)*R*1.25, sy=cy+Math.sin(a)*R*0.75;
+    ctx.beginPath(); ctx.moveTo(sx,sy);
+    ctx.bezierCurveTo(cx+Math.cos(a)*R*0.9,cy+Math.sin(a)*R*0.5, cx+Math.cos(a)*R*0.7,cy+Math.sin(a)*R*0.35, cx+Math.cos(a)*R*0.5,cy+Math.sin(a+0.3)*R*0.3);
+    ctx.stroke();
+  }
+}
+
+function drawIris(gx,gy,pe,eye,amb,o){
+  var irisR=MM_R*11.7/2* (68/68); // ~62px
+  irisR=62;
+  // iris taban
+  var base=pe.darkMm>0?pe: pe;
+  var col=ENG.cas.iris||'#6b4a2b';
+  var ig=ctx.createRadialGradient(gx,gy,irisR*0.2,gx,gy,irisR);
+  ig.addColorStop(0,shade(col,-18)); ig.addColorStop(0.7,col); ig.addColorStop(1,shade(col,-34));
+  ctx.beginPath(); ctx.arc(gx,gy,irisR,0,6.283); ctx.fillStyle=ig; ctx.fill();
+  // radyal kript lifleri
+  ctx.save(); ctx.beginPath(); ctx.arc(gx,gy,irisR,0,6.283); ctx.clip();
+  ctx.lineWidth=1;
+  for(var i=0;i<140;i++){
+    var a=i/140*6.283 + (eye==='R'?0.2:0.9);
+    var r0=irisR*0.26, r1=irisR*(0.86+0.12*Math.sin(i*2.3));
+    var sh = (i%2? 20:-16);
+    ctx.strokeStyle='rgba('+ (sh>0?'220,210,190':'40,26,14') +','+(0.10+0.08*Math.abs(Math.sin(i)))+')';
+    ctx.beginPath(); ctx.moveTo(gx+Math.cos(a)*r0,gy+Math.sin(a)*r0); ctx.lineTo(gx+Math.cos(a)*r1,gy+Math.sin(a)*r1); ctx.stroke();
+  }
+  // collarette
+  ctx.strokeStyle='rgba(30,18,10,.4)'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(gx,gy,irisR*0.42,0,6.283); ctx.stroke();
+  ctx.restore();
+  // limbus
+  ctx.beginPath(); ctx.arc(gx,gy,irisR,0,6.283); ctx.strokeStyle='rgba(30,20,14,.5)'; ctx.lineWidth=2.5; ctx.stroke();
+
+  // --- pupil (mm → px) ---
+  var pr=o.d*MM_R;
+  drawPupil(gx,gy,pr,pe,o);
+}
+
+function drawPupil(gx,gy,pr,pe,o){
+  ctx.save();
+  if(pe.sector){ // sektörel vermiform (Adie/Argyll): düzensiz kenar
+    ctx.beginPath();
+    for(var a=0;a<=6.283;a+=0.25){
+      var wob=1 + 0.10*Math.sin(a*3+ENG.t*0.004) + 0.07*Math.sin(a*7+1.3);
+      var rr=pr*wob; var x=gx+Math.cos(a)*rr, y=gy+Math.sin(a)*rr;
+      if(a===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    }
+    ctx.closePath();
+  } else { ctx.beginPath(); ctx.arc(gx,gy,pr,0,6.283); }
+  var pg=ctx.createRadialGradient(gx,gy,1,gx,gy,pr);
+  pg.addColorStop(0,'#050608'); pg.addColorStop(1,'#0c0f14');
+  ctx.fillStyle=pg; ctx.fill();
+  ctx.restore();
+}
+
+function drawCornea(gx,gy,R,eye){
+  var irisR=62;
+  // kornea parlaklığı
+  ctx.save(); ctx.globalCompositeOperation='screen';
+  var cg=ctx.createRadialGradient(gx-irisR*0.3,gy-irisR*0.35,2,gx,gy,irisR*1.05);
+  cg.addColorStop(0,'rgba(255,255,255,.14)'); cg.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle=cg; ctx.beginPath(); ctx.arc(gx,gy,irisR,0,6.283); ctx.fill();
+  ctx.restore();
+  // --- Purkinje / Hirschberg kornea refleksi ---
+  // ışık kaynağı yönü + bakış açısına göre kayar
+  var o=ENG.eyes[eye];
+  var lightDx=0,lightDy=-0.5; // tavan/önden
+  var pen = ENG.swinging? ENG.swingEye : ENG.penlight;
+  if(pen===eye || pen==='N') lightDx=0;
+  var showRefl = (pen===eye)||(pen==='N')||(luxNorm(ENG.roomLux)>0.4)||nearActive();
+  if(showRefl){
+    var rx=gx + lightDx*14 - o.h*18*0.5, ry=gy + lightDy*14 - o.v*14*0.5;
+    var bright = (pen===eye)?1:(pen==='N')?0.8:0.55;
+    ctx.save(); ctx.globalCompositeOperation='screen';
+    var rg=ctx.createRadialGradient(rx,ry,0,rx,ry,8);
+    rg.addColorStop(0,'rgba(255,255,255,'+bright+')'); rg.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.fillStyle=rg; ctx.beginPath(); ctx.arc(rx,ry,8,0,6.283); ctx.fill();
+    ctx.restore();
+  }
+}
+
+function drawLids(cx,cy,R,eye,pe,o){
+  var amb=luxNorm(ENG.roomLux), skin=skinTone(amb);
+  var w=R*1.42, h=R*0.92;
+  // üst kapak örtme oranı: 0=tam açık (süperior limbusta), ~0.95=tam pitozis (pupil örtülü)
+  var cov=0.10;
+  if(pe.ptosis==='full' && !ENG.liftLid[eye]) cov=0.95;
+  else if(pe.ptosis==='mild' && !ENG.liftLid[eye]) cov=0.36;   // ~1.5 mm Müller
+  if(pe.lidRetract) cov=-0.16;                                  // Collier/Parinaud (skleral show)
+  if(ENG.liftLid[eye]) cov=-0.04;
+  var marginYc = cy - h*0.82 + cov*h*1.12;   // üst kapak kenarının merkez yüksekliği
+
+  // ---- ÜST KAPAK: badem üst yayı ile kenar eğrisi arası kreşent (kutu değil) ----
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(cx-w,cy+h*0.06);
+  ctx.quadraticCurveTo(cx-w*0.3,cy-h, cx,cy-h*0.92);
+  ctx.quadraticCurveTo(cx+w*0.34,cy-h, cx+w,cy-h*0.04);
+  // kenar eğrisi ile geri (merkeze doğru bombeli)
+  ctx.quadraticCurveTo(cx,marginYc, cx-w,cy+h*0.06);
+  ctx.closePath();
+  var lg=ctx.createLinearGradient(cx,cy-h,cx,marginYc);
+  lg.addColorStop(0,skin.hi); lg.addColorStop(0.7,skin.mid); lg.addColorStop(1,skin.lo);
+  ctx.fillStyle=lg; ctx.fill();
+  // kapak kıvrımı (süperior palpebral sulkus)
+  ctx.strokeStyle='rgba(120,88,62,.28)'; ctx.lineWidth=1.4;
+  ctx.beginPath(); ctx.moveTo(cx-w*0.8,marginYc-h*0.34); ctx.quadraticCurveTo(cx,marginYc-h*0.16,cx+w*0.8,marginYc-h*0.34); ctx.stroke();
+  // kirpik çizgisi (kenar)
+  ctx.strokeStyle='rgba(44,28,18,.72)'; ctx.lineWidth=2.6; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(cx-w*0.92,cy+h*0.02); ctx.quadraticCurveTo(cx,marginYc, cx+w*0.92,cy-h*0.02); ctx.stroke();
+  ctx.restore();
+
+  // ---- ALT KAPAK: badem alt yayı ile kenar eğrisi arası kreşent ----
+  var lowCov = pe.reverseLower? 0.22 : 0.06;   // ters pitozis → inferior sklerayı daha çok örter
+  var lowYc = cy + h*0.80 - lowCov*h*1.1;
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(cx-w,cy+h*0.06);
+  ctx.quadraticCurveTo(cx-w*0.3,cy+h, cx,cy+h*0.95);
+  ctx.quadraticCurveTo(cx+w*0.3,cy+h, cx+w,cy+h*0.06);
+  ctx.quadraticCurveTo(cx,lowYc, cx-w,cy+h*0.06);
+  ctx.closePath();
+  var lg2=ctx.createLinearGradient(cx,lowYc,cx,cy+h); lg2.addColorStop(0,skin.lo); lg2.addColorStop(1,skin.mid);
+  ctx.fillStyle=lg2; ctx.fill();
+  // alt kapak kenarı + hafif gözyaşı şeridi
+  ctx.strokeStyle='rgba(44,28,18,.4)'; ctx.lineWidth=1.6;
+  ctx.beginPath(); ctx.moveTo(cx-w*0.9,cy+h*0.08); ctx.quadraticCurveTo(cx,lowYc,cx+w*0.9,cy+h*0.06); ctx.stroke();
+  ctx.restore();
+
+  // medial/lateral kantus gölgesi
+  ctx.save(); ctx.fillStyle='rgba(120,70,60,.25)';
+  ctx.beginPath(); ctx.ellipse(cx-w*0.98,cy+h*0.04,R*0.09,R*0.14,0,0,6.283); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(cx+w*0.98,cy-h*0.0,R*0.08,R*0.12,0,0,6.283); ctx.fill();
+  ctx.restore();
+
+  // örtülü göz (cover testi) — kapanan kapak
+  if(ENG.cover===eye){ ctx.save(); ctx.beginPath(); palpebral(cx,cy,R); ctx.fillStyle=skin.mid; ctx.fill();
+    ctx.strokeStyle='rgba(44,28,18,.5)'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(cx-w*0.9,cy); ctx.quadraticCurveTo(cx,cy+h*0.18,cx+w*0.9,cy); ctx.stroke();
+    ctx.fillStyle='rgba(60,40,28,.75)'; ctx.font='11px Inter'; ctx.textAlign='center'; ctx.fillText('örtülü',cx,cy+h*0.5); ctx.restore(); }
+}
+
+function shade(hex,amt){
+  var m=/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex); if(!m) return hex;
+  var r=clamp(parseInt(m[1],16)+amt,0,255),g=clamp(parseInt(m[2],16)+amt,0,255),b=clamp(parseInt(m[3],16)+amt,0,255);
+  return 'rgb('+r+','+g+','+b+')';
+}
+
+/* ===========================================================================
+ *  rAF döngüsü + yaşam döngüsü (suite:pause/resume → render+audio uyut)
+ * ========================================================================= */
+var running=true, lastT=0;
+function loop(ts){
+  if(!running){ return; }
+  var dt=lastT? Math.min(60,ts-lastT):16; lastT=ts;
+  step(dt);
+  drawScene();
+  updateReadouts();
+  requestAnimationFrame(loop);
+}
+function startLoop(){ if(!running){ running=true; lastT=0; requestAnimationFrame(loop);} }
+function stopLoop(){ running=false; }
+
+/* ===========================================================================
+ *  UI
+ * ========================================================================= */
+var LOG=[]; // {t, type, label}
+function logMan(type,label){ LOG.push({t:ENG.t,type:type,label:label}); renderLog(); beep(660,0.04); }
+function hasMan(type){ return LOG.some(function(m){return m.type===type;}); }
+function renderLog(){
+  $('logCount').textContent=LOG.length+' manevra';
+  if(!LOG.length){ $('logBox').innerHTML='<div class="mini" style="color:var(--ink-3)">Henüz manevra yapılmadı.</div>'; return; }
+  $('logBox').innerHTML=LOG.slice(-12).map(function(m){ return '<div class="logline"><span class="tm">'+(m.t/1000).toFixed(1)+'s</span><span>'+m.label+'</span></div>'; }).join('');
+  $('logBox').scrollTop=9999;
+}
+
+function updateReadouts(){
+  var dl=ENG.eyes.L.d, dr=ENG.eyes.R.d, an=Math.abs(dl-dr);
+  $('rPd').textContent=dr.toFixed(1)+' mm'; $('lPd').textContent=dl.toFixed(1)+' mm';
+  var ae=$('aniso'); ae.textContent=an.toFixed(1)+' mm'; ae.className='v '+(an<0.5?'ok':an<1.2?'warn':'bad');
+  var amb=luxNorm(ENG.roomLux); $('envRead').textContent= amb<0.2?'Karanlık':amb<0.5?'Loş':'Aydınlık';
+  // canlı not
+  var note=[];
+  if(ENG.swinging) note.push('Sallanan fener: '+(ENG.swingEye==='R'?'sağ':'sol')+' göz aydınlatılıyor');
+  else if(ENG.penlight) note.push('Fener: '+(ENG.penlight==='N'?'burun kökü':ENG.penlight==='R'?'sağ göz':'sol göz'));
+  if(nearActive()) note.push('yakın hedef aktif');
+  if(ENG.gaze!=='center') note.push('bakış: '+gazeLabel(ENG.gaze));
+  if(ENG.headTilt) note.push('baş '+(ENG.headTilt>0?'sağa':'sola')+' eğik');
+  $('liveNote').textContent=note.length?note.join(' · '):'Nötr pozisyon, sakin solunum.';
+}
+function gazeLabel(g){ return {center:'merkez','up':'yukarı','down':'aşağı','left':'sola','right':'sağa','up-left':'sol-üst','up-right':'sağ-üst','down-left':'sol-alt','down-right':'sağ-alt'}[g]||g; }
+
+/* ---- gaze grid ---- */
+var GAZE_CELLS=[['up-left','↖'],['up','↑'],['up-right','↗'],['left','←'],['center','•'],['right','→'],['down-left','↙'],['down','↓'],['down-right','↘']];
+function buildGazeGrid(){
+  var g=$('gazeGrid'); g.innerHTML='';
+  GAZE_CELLS.forEach(function(c){ var b=document.createElement('button'); b.textContent=c[1]; b.dataset.g=c[0]; if(c[0]==='center')b.classList.add('on');
+    b.onclick=function(){ setGaze(c[0]); [].forEach.call(g.children,function(x){x.classList.toggle('on',x.dataset.g===c[0]);}); }; g.appendChild(b); });
+}
+function setGaze(dir){ ENG.gaze=dir; if(dir!=='center'){ logMan('gaze_'+dir,'Bakış: '+gazeLabel(dir)); logMan('gaze_h','H-paterni bakış değerlendirildi'); } }
+
+/* ---- field grid (confrontation) ---- */
+var CF_EYE='R';
+var CF_QUAD=[['Üst-nazal','un'],['Üst-temporal','ut'],['Alt-nazal','an'],['Alt-temporal','at']];
+function buildFieldGrid(){
+  var g=$('fieldGrid'); g.innerHTML='';
+  CF_QUAD.forEach(function(q){ var b=document.createElement('button'); b.textContent=q[0]; b.dataset.q=q[1];
+    b.onclick=function(){ testField(q[1],b); }; g.appendChild(b); });
+}
+function fieldDefect(eye,quad){
+  var f=ENG.cas.field;
+  if(f==='normal') return false;
+  // temporal/nazal, üst/alt
+  var temporal=quad[1]==='t', upper=quad[0]==='u';
+  if(f==='bitemporal') return temporal;                 // her iki gözde temporal kayıp
+  if(f==='homonymous_left') return (eye==='R'? !temporal : temporal); // sol homonim → sağ göz nazal + sol göz temporal (kabaca)
+  if(f==='central_scotoma_L') return eye==='L';         // sol santral skotom → sol gözde genel azalma
+  if(f==='central_scotoma_R') return eye==='R';
+  return false;
+}
+function testField(q,btn){
+  var miss=fieldDefect(CF_EYE,q);
+  btn.classList.remove('seen','miss'); btn.classList.add(miss?'miss':'seen');
+  btn.textContent=(CF_QUAD.find(function(x){return x[1]===q;})[0])+(miss?' ✗':' ✓');
+  logMan('confrontation','Konfrontasyon '+CF_EYE+' '+q+': '+(miss?'uyaran görülmedi':'uyaran görüldü'));
+  beep(miss?240:720,0.05);
+}
+
+/* ---- audio ---- */
+var AC=null, soundOn=true;
+function ac(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } return AC; }
+function beep(f,d){ if(!soundOn) return; var a=ac(); if(!a||a.state!=='running') { if(a&&a.resume)a.resume(); } if(!a) return; try{ var o=a.createOscillator(),g=a.createGain(); o.frequency.value=f; o.type='sine'; g.gain.value=0.0001; o.connect(g); g.connect(a.destination); var t=a.currentTime; g.gain.exponentialRampToValueAtTime(0.05,t+0.01); g.gain.exponentialRampToValueAtTime(0.0001,t+d); o.start(t); o.stop(t+d+0.02);}catch(e){} }
+
+/* ---- toast ---- */
+function toast(msg){ var t=document.createElement('div'); t.className='toast'; t.textContent=msg; $('toastBox').appendChild(t); setTimeout(function(){t.style.opacity='0';t.style.transition='.4s';setTimeout(function(){t.remove();},420);},3600); }
+
+/* ---- case load ---- */
+function loadCase(idx){
+  ENG.caseIdx=idx; ENG.cas=CASES[idx];
+  // reset maneuvers/state
+  ENG.penlight=null; ENG.swinging=false; ENG.nearTarget=false; ENG.gaze='center'; ENG.headTilt=0; ENG.liftLid={L:false,R:false}; ENG.cover=null;
+  ENG.eyes.L.d=4.2; ENG.eyes.R.d=4.2; ENG.eyes.L.h=0;ENG.eyes.L.v=0;ENG.eyes.R.h=0;ENG.eyes.R.v=0;
+  LOG=[]; renderLog();
+  $('caseSel').value=idx;
+  $('variantWrap').style.display = ENG.cas.variant? 'block':'none';
+  if(ENG.cas.variant){ ENG.cas.gaze.mode='peripheral'; $('vPeripheral').classList.add('on'); $('vNuclear').classList.remove('on'); }
+  $('caseStem').textContent = ENG.examMode? '🔒 Gizli vaka: öyküyü manevralarla çözün. (Klinik ipucu gizli.)' : ENG.cas.stem;
+  $('teachNote').textContent = ENG.examMode? 'Sınav modunda öğretim notu gizli. Tanıyı beyan edince açılır.' : ENG.cas.teach;
+  // buttons reset
+  ['penR','penL','penN','swing','nearBtn','liftR','liftL'].forEach(function(id){ $(id).classList.remove('on'); });
+  $('tilt0').classList.add('on'); $('tiltL').classList.remove('on'); $('tiltR').classList.remove('on');
+  buildGazeGrid();
+  $('juryOut').innerHTML=''; $('excludeAneurysm').checked=false;
+  // reset field buttons
+  buildFieldGrid();
+  updateReadouts();
+}
+
+/* ---- declaration & jury ---- */
+function buildDxSelect(){
+  var s=$('dxSel'); s.innerHTML='';
+  Object.keys(DX_LABELS).forEach(function(k){ var o=document.createElement('option'); o.value=k; o.textContent=DX_LABELS[k]; s.appendChild(o); });
+}
+var declSide='R';
+
+function evaluate(){
+  var c=ENG.cas, dx=$('dxSel').value, side=declSide, truthDx=c.dx, truthSide=c.side;
+  var flags=[], cats=[];
+  // ---- KANIT KAPISI: UNSUPPORTED_CLAIM ----
+  function unsupported(cond,msg){ if(cond){ flags.push({cls:'red',t:'KANITSIZ TAHMİN (UNSUPPORTED_CLAIM): '+msg}); return 1;} return 0; }
+  var unsup=0;
+  if(dx==='optic_neuritis'||dx==='bilateral_optic') unsup+=unsupported(!hasMan('swing'),'RAPD/aferent iddiası sallanan fener testi yapılmadan öne sürüldü.');
+  if(dx==='horner'||dx==='normal') unsup+=unsupported(!loggedDark(),'Horner ↔ fizyolojik anizokori ayrımı KARANLIK ODA testi yapılmadan öne sürüldü.');
+  if(dx==='argyll'||dx==='adie'||dx==='ino') unsup+=unsupported(!hasMan('near'),'Işık-yakın disosiyasyonu / korunmuş konverjans YAKIN HEDEF test edilmeden öne sürüldü.');
+  if((truthDx==='cn3_compressive'||truthDx==='cn3_microvascular') && (dx.indexOf('cn3')>=0)) unsup+=unsupported(!ENG.liftLid.R && !ENG.liftLid.L,'Tam pitozisli gözde pupil/bakış KAPAK KALDIRILMADAN yorumlandı.');
+  if(dx==='cn4') unsup+=unsupported(!hasMan('tilt'),'CN IV, BAŞ EĞME (Bielschowsky) testi yapılmadan kesinleştirildi.');
+  if(dx==='cn6') unsup+=unsupported(!hasMan('gaze_h'),'CN VI, yatay bakış (H-paterni) değerlendirilmeden öne sürüldü.');
+  // aşırı kesinlik: pupil korundu = %100 anevrizma dışlandı
+  var overcertain = $('excludeAneurysm').checked;
+  if(overcertain){ flags.push({cls:'red',t:'AŞIRI KESİNLİK: "Pupil korundu → %100 anevrizma dışlandı" geçersizdir. Pupil korunması olasılığı düşürür, dışlamaz.'}); }
+
+  // ---- lokalizasyon doğruluğu ----
+  var dxOk = (dx===truthDx);
+  // yakın akraba kısmi kredi
+  var partial = (!dxOk) && ((dx.indexOf('cn3')>=0 && truthDx.indexOf('cn3')>=0) || (dx==='bilateral_optic'&&truthDx==='optic_neuritis')||(dx==='optic_neuritis'&&truthDx==='bilateral_optic'));
+  var sideOk = (truthSide==='B') || (side===truthSide) || (side==='B'&&truthSide==='B');
+  var locScore = dxOk? (sideOk?100:70) : partial? 55 : 15;
+
+  // ---- kanıt bütünlüğü ----
+  var evScore=100; evScore -= unsup*28; if(overcertain) evScore-=22; evScore=clamp(evScore,0,100);
+
+  // ---- güvenlik (CN III pupil tutan = anevrizma) ----
+  var safeScore=100, safeNote='';
+  if(truthDx==='cn3_compressive'){
+    if(dx==='cn3_microvascular'||overcertain){ safeScore=10; safeNote='Pupil TUTAN CN III mikrovasküler sanıldı/anevrizma dışlandı — hayati hata: IC-PC anevrizması rüptür riskiyle atlanır.'; flags.push({cls:'red',t:safeNote}); }
+    else if(dx==='cn3_compressive'){ safeScore=100; safeNote='Pupil tutan CN III → anevrizma önceliklendirildi. Doğru.'; }
+    else { safeScore=40; safeNote='Akut pupil tutan CN III anevrizma olarak tanınmadı.'; }
+  } else if(truthDx==='cn3_microvascular'){
+    if(dx==='cn3_microvascular' && !overcertain){ safeScore=100; safeNote='Pupil korunmuş CN III — mikrovasküler düşünüldü, ama kesin dışlama yapılmadı. İyi.'; }
+    else if(overcertain){ safeScore=45; safeNote='Mikrovasküler olsa da anevrizmanın %100 dışlanması uygun değil.'; }
+  }
+
+  // ---- genel skor ----
+  var overall=Math.round(locScore*0.4+evScore*0.35+safeScore*0.25);
+  cats.push(['Lokalizasyon & Sendrom',locScore, dxOk?('Doğru: '+DX_LABELS[truthDx]+(sideOk?'':' — ancak taraf yanlış')):(partial?'Kısmen doğru aile, alt tip/taraf hatalı. Gerçek: '+DX_LABELS[truthDx]:'Hatalı. Gerçek tanı: '+DX_LABELS[truthDx]+' ('+sideTR(truthSide)+').')]);
+  cats.push(['Kanıt Bütünlüğü',evScore, unsup?('Kanıtsız iddia sayısı: '+unsup+'. Manevra yapmadan tanı öne sürüldü.'):'Tüm iddialar uygun manevralarla desteklendi.']);
+  cats.push(['Klinik Güvenlik',safeScore, safeNote||'Hayati ayrımlar (anevrizma vs mikrovasküler) uygun değerlendirildi.']);
+
+  renderJury(overall,cats,flags);
+  // öğretim notunu aç
+  $('teachNote').textContent=ENG.cas.teach;
+  if(ENG.examMode){ $('caseStem').textContent=ENG.cas.stem; }
+  // core zinciri — nöro kanıt
+  chainReportEvidence(dx,dxOk,unsup,overall);
+  // Vaka 4 köprüsü
+  if(c.bridge){ setTimeout(function(){ offerBridge(); },300); }
+  beep(overall>=70?700:300,0.12);
+}
+function loggedDark(){ return LOG.some(function(m){return m.type==='dark';}); }
+function sideTR(s){ return s==='R'?'sağ':s==='L'?'sol':'bilateral'; }
+
+function renderJury(overall,cats,flags){
+  var col=overall>=75?'#8fe3bf':overall>=55?'#d9a441':'#e88b92';
+  var h='<div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:13px">Jüri Karnesi</b><span class="mono" style="font-size:22px;font-weight:700;color:'+col+'">'+overall+'</span></div>';
+  cats.forEach(function(c){ var cc=c[1]>=75?'#8fe3bf':c[1]>=55?'#d9a441':'#e88b92';
+    h+='<div class="jury-cat"><div class="row"><span>'+c[0]+'</span><span class="mono" style="color:'+cc+'">'+c[1]+'</span></div><div class="bar"><span style="width:'+c[1]+'%;background:'+cc+'"></span></div><div class="hint">'+c[2]+'</div></div>'; });
+  flags.forEach(function(f){ h+='<div class="flag '+f.cls+'">'+f.t+'</div>'; });
+  if(!flags.length) h+='<div class="flag green">Kanıtsız iddia yok — manevra zinciri tutarlı.</div>';
+  $('juryOut').innerHTML=h;
+}
+
+function offerBridge(){
+  var h=document.createElement('div'); h.className='flag amber'; h.style.marginTop='8px';
+  h.innerHTML='Pupil tutan akut CN III — IC-PC anevrizması. ';
+  var b=document.createElement('button'); b.className='btn-bridge'; b.textContent='🔬 Hastayı Nöroşirürji Masasına Al (IC-PC Anevrizma Klipajı)';
+  b.onclick=function(){ goBridge(); };
+  $('juryOut').appendChild(h); $('juryOut').appendChild(b);
+}
+function goBridge(){
+  // zincirdeyse nöro kanıt + müdahale işareti
+  try{ if(window.__chainS){ window.__chainS.update({pathology:{csLesion:'IC-PC_aneurysm'}}); window.__chainS.addEvidence({modality:'penlight',summary:'KS muayene: sağ pupil-tutan CN III, aşağı-dışa göz — IC-PC anevrizma şüphesi.',claims:['pupil_size'],quality:{assessable:true,regionsSeen:['CN III','pupil']}}); } }catch(e){}
+  var url='../ductuslab-neurosurgery.html?case=1';
+  var qs=new URLSearchParams(location.search);
+  if(qs.get('chain')==='1'){ url+='&chain=1&pid='+encodeURIComponent(qs.get('pid')||''); }
+  window.open(url,'_blank','noopener');
+  toast('Nöroşirürji modülü açıldı — IC-PC anevrizma mikrocerrahisi.');
+}
+
+/* ===========================================================================
+ *  ductus-core zinciri (opsiyonel) — standalone'u ETKİLEMEZ
+ * ========================================================================= */
+function chainReportEvidence(dx,dxOk,unsup,score){
+  try{ if(!window.__chainS) return;
+    window.__chainS.addEvidence({ modality:'gaze_h', summary:'KS nöro-oftalmoloji muayenesi: beyan '+DX_LABELS[dx]+' (skor '+score+').', claims:['cn3_motor'], quality:{assessable:unsup===0,regionsSeen:['pupil','okülomotor']} });
+  }catch(e){}
+}
+(function initChain(){
+  var qs=new URLSearchParams(location.search);
+  if(qs.get('chain')!=='1') return;
+  var pid=qs.get('pid');
+  var sc=document.createElement('script'); sc.src='../ductus-core.js';
+  sc.onload=function(){ try{ window.__chainS=DuctusCore.open({patientId:pid}); toast('🩺 Entegre vaka zinciri — bu muayene paylaşılan hastaya yansıyacak.');
+    DuctusCore.connectLifecycle({ onDeactivate:function(){ stopLoop(); DuctusCore.suspendAudio(AC); }, onActivate:function(){ startLoop(); DuctusCore.resumeAudio(AC); } });
+  }catch(e){} };
+  document.head.appendChild(sc);
+  var qcase=qs.get('case'); if(qcase){ /* ileride vaka eşleme */ }
+})();
+
+/* ---- suite yaşam döngüsü (core yoksa da çalışır) ---- */
+window.addEventListener('message',function(e){ var d=e.data; if(!d||!d.ductus) return;
+  if(d.type==='suite:pause'||d.type==='suite:module:deactivate'){ stopLoop(); if(AC&&AC.suspend)AC.suspend(); }
+  else if(d.type==='suite:resume'||d.type==='suite:module:activate'){ startLoop(); if(AC&&AC.resume)AC.resume(); }
+});
+
+/* ===========================================================================
+ *  EVENT BAĞLAMA
+ * ========================================================================= */
+function bindUI(){
+  // case select
+  var cs=$('caseSel'); CASES.forEach(function(c,i){ var o=document.createElement('option'); o.value=i; o.textContent=(i+1)+'. '+c.name; cs.appendChild(o); });
+  $('caseCount').textContent='12 aile'; cs.onchange=function(){ loadCase(+cs.value); };
+  buildDxSelect();
+  // level
+  [].forEach.call($('levelSeg').children,function(b){ b.onclick=function(){ [].forEach.call($('levelSeg').children,function(x){x.classList.remove('on');}); b.classList.add('on'); }; });
+  // exam toggle
+  $('examToggle').onclick=function(){ ENG.examMode=!ENG.examMode; this.classList.toggle('on',ENG.examMode); loadCase(ENG.caseIdx); toast(ENG.examMode?'Gizli vaka (sınav) modu açık — klinik ipucu ve öğretim notu gizli.':'Sınav modu kapalı.'); };
+  // sound
+  $('soundToggle').onclick=function(){ soundOn=!soundOn; this.classList.toggle('on',soundOn); this.textContent=soundOn?'🔈 Ses':'🔇 Ses'; if(soundOn&&ac()&&AC.resume)AC.resume(); };
+  // home
+  $('homeBtn').onclick=function(){ if(window.parent&&window.parent!==window){ try{ window.parent.postMessage({ductus:true,type:'go-home'},'*'); }catch(e){} } location.href='../index.html'; };
+  // lux
+  $('luxSlider').oninput=function(){ ENG.roomLux=+this.value; $('luxVal').textContent=this.value+' lx'; if(+this.value<=60 && !loggedDark()) logMan('dark','Karanlık oda ('+this.value+' lx) — anizokori ışık/karanlık farkı değerlendirildi'); if(+this.value>=400 && !hasMan('bright')) logMan('bright','Parlak ışık ('+this.value+' lx)'); };
+  // penlight
+  function pen(eye,btn){ return function(){ if(ENG.penlight===eye){ ENG.penlight=null; btn.classList.remove('on'); } else { ENG.swinging=false; $('swing').classList.remove('on'); ENG.penlight=eye; ['penR','penL','penN'].forEach(function(id){$(id).classList.toggle('on',$(id)===btn);}); logMan('penlight','Kalem fener: '+(eye==='N'?'burun kökü':eye==='R'?'sağ göz':'sol göz')); } }; }
+  $('penR').onclick=pen('R',$('penR')); $('penL').onclick=pen('L',$('penL')); $('penN').onclick=pen('N',$('penN'));
+  $('swing').onclick=function(){ ENG.swinging=!ENG.swinging; this.classList.toggle('on',ENG.swinging); if(ENG.swinging){ ENG.penlight=null; ENG.nearTarget=false; $('nearBtn').classList.remove('on'); ['penR','penL','penN'].forEach(function(id){$(id).classList.remove('on');}); ENG.swingEye='R'; ENG.swingPhase=0; logMan('swing','Sallanan fener testi başlatıldı (hasta 6 m hedefe fikse)'); } };
+  // lift lid
+  $('liftR').onclick=function(){ ENG.liftLid.R=!ENG.liftLid.R; this.classList.toggle('on',ENG.liftLid.R); if(ENG.liftLid.R) logMan('lift','Sağ üst kapak kaldırıldı'); };
+  $('liftL').onclick=function(){ ENG.liftLid.L=!ENG.liftLid.L; this.classList.toggle('on',ENG.liftLid.L); if(ENG.liftLid.L) logMan('lift','Sol üst kapak kaldırıldı'); };
+  // near
+  $('nearBtn').onclick=function(){ ENG.nearTarget=!ENG.nearTarget; this.classList.toggle('on',ENG.nearTarget); if(ENG.nearTarget){ ENG.swinging=false;$('swing').classList.remove('on'); ENG.penlight=null;['penR','penL','penN'].forEach(function(id){$(id).classList.remove('on');}); logMan('near','Yakın hedef 15 cm — konverjans/akomodasyon'); } };
+  // tilt
+  $('tiltL').onclick=function(){ ENG.headTilt=-1; tiltUI(this); logMan('tilt','Baş 30° sola eğildi (Bielschowsky)'); };
+  $('tiltR').onclick=function(){ ENG.headTilt=1; tiltUI(this); logMan('tilt','Baş 30° sağa eğildi (Bielschowsky)'); };
+  $('tilt0').onclick=function(){ ENG.headTilt=0; tiltUI(this); };
+  function tiltUI(b){ ['tiltL','tilt0','tiltR'].forEach(function(id){$(id).classList.toggle('on',$(id)===b);}); }
+  // cover
+  $('coverR').onclick=function(){ ENG.cover='R'; logMan('cover','Sağ göz örtüldü (örtme-açma)'); };
+  $('coverL').onclick=function(){ ENG.cover='L'; logMan('cover','Sol göz örtüldü (örtme-açma)'); };
+  $('coverOff').onclick=function(){ ENG.cover=null; };
+  // confrontation eye
+  $('cfRight').onclick=function(){ CF_EYE='R'; $('cfEye').textContent='Sağ'; buildFieldGrid(); };
+  $('cfLeft').onclick=function(){ CF_EYE='L'; $('cfEye').textContent='Sol'; buildFieldGrid(); };
+  // variant
+  $('vPeripheral').onclick=function(){ if(ENG.cas.variant){ ENG.cas.gaze.mode='peripheral'; this.classList.add('on'); $('vNuclear').classList.remove('on'); logMan('variant','CN VI: periferik alt tip'); } };
+  $('vNuclear').onclick=function(){ if(ENG.cas.variant){ ENG.cas.gaze.mode='nuclear'; this.classList.add('on'); $('vPeripheral').classList.remove('on'); logMan('variant','CN VI: çekirdek alt tip'); } };
+  // declaration side
+  var dsWrap=$('dxSel').parentElement.querySelectorAll('.seg')[0];
+  [].forEach.call(dsWrap.querySelectorAll('button'),function(b){ b.onclick=function(){ [].forEach.call(dsWrap.querySelectorAll('button'),function(x){x.classList.remove('on');}); b.classList.add('on'); declSide=b.dataset.side; }; });
+  $('declareBtn').onclick=evaluate;
+}
+
+/* ===========================================================================
+ *  TEST API — headless kabul testleri (rAF throttle'dan bağımsız)
+ * ========================================================================= */
+window.KS={
+  loadCase:function(n){ loadCase(n-1); },
+  setRoomLux:function(l){ ENG.roomLux=l; },
+  setGaze:function(d){ ENG.gaze=d; },
+  setNearTarget:function(b){ ENG.nearTarget=!!b; },
+  penlight:function(eye){ ENG.swinging=false; ENG.penlight=eye; },
+  swinging:function(b,eye){ ENG.swinging=!!b; if(eye)ENG.swingEye=eye; ENG.penlight=null; },
+  headTilt:function(d){ ENG.headTilt=d; },
+  liftLid:function(eye,b){ ENG.liftLid[eye]=!!b; },
+  variant:function(m){ if(ENG.cas.variant) ENG.cas.gaze.mode=m; },
+  // deterministik ilerletme (steady-state'e)
+  settle:function(ms){ ms=ms||4000; var dt=20,n=Math.round(ms/dt); for(var i=0;i<n;i++) step(dt); },
+  stepOnce:function(dt){ step(dt||20); },
+  pupil:function(eye){ return ENG.eyes[eye].d; },
+  anisocoria:function(){ return Math.abs(ENG.eyes.L.d-ENG.eyes.R.d); },
+  // ulaşılan patient-centric excursion (lezyon sonrası)
+  excursion:function(eye){ var gt=gazeTargets(); var les=applyLesion(eye,gt.T[eye],gt.isNear); return {temporal:les.temp, ele:les.ele, nys:les.nys}; },
+  observe:function(){ return { L:ENG.eyes.L.d, R:ENG.eyes.R.d, aniso:this.anisocoria(), gaze:ENG.gaze, lux:ENG.roomLux }; },
+  _eng:ENG
+};
+
+/* ---- init ---- */
+function init(){ resize(); bindUI(); loadCase(0); requestAnimationFrame(loop); }
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
+
+})();
+</script>
+</body>
+</html>
