@@ -190,7 +190,7 @@ const COMPLAINTS={
  4:'47Y kadın, 6 aydır dengesizlik, "sarhoş gibi" yürüme, el-ayak beceriksizliği.',
  5:'59Y erkek, 8 aydır karanlıkta/gözler kapalıyken belirginleşen dengesizlik, ayak tabanında uyuşma.',
  6:'41Y erkek, sağ ayak bileğini yukarı kaldıramıyor, yürürken ayak ucu takılıyor.',
- 7:'23Y kadın, çocukluktan beri iki yana sallanarak yürüme, oturup kalkmada/merdivende zorlanma.',
+ 7:'23Y kadın, birkaç yıldır oturduğu yerden kalkarken ve merdiven çıkarken zorlanma, koltuktan destekle kalkma (proksimal güçsüzlük).',
  8:'55Y erkek, aylardır ellerde beceri kaybı, bacaklarda tutukluk ve giderek artan dengesizlik.'
 };
 const DX=[['normal','Normal'],['hemiplegic','Hemiplejik (spastik) yürüyüş'],['parkinson','Parkinsonyen'],['cerebellar','Serebellar ataksi'],
@@ -470,7 +470,9 @@ function renderJury(overall,cats,flags){ var col=overall>=75?'#8fe3bf':overall>=
   flags.forEach(function(f){ h+='<div class="flag '+f.cls+'">'+f.t+'</div>'; }); if(!flags.length) h+='<div class="flag green">Teknik ve yorum tutarlı, kural ihlali yok.</div>';
   $('juryOut').innerHTML=h; }
 function reportChain(dx,dxOk,score,n){ try{ if(!window.__chainS)return; window.__chainS.addEvidence({modality:'neuroexam',summary:'Nörolojik muayene: '+label(DX,dx)+' (skor '+score+')',claims:['gait_finding'],quality:{assessable:n===0,regionsSeen:['yürüyüş','refleks']}}); }catch(e){} }
-(function initChain(){ var qs=new URLSearchParams(location.search); if(qs.get('chain')!=='1')return; var sc=document.createElement('script');sc.src='../ductus-core.js';
+(function initChain(){ var qs=new URLSearchParams(location.search); if(qs.get('chain')!=='1')return;
+  var qcase=+(qs.get('case')||0); if(qcase){ setTimeout(function(){ try{ loadCase(qcase); window.__chainCase=qcase; }catch(e){} },80); }
+  var sc=document.createElement('script');sc.src='../ductus-core.js';
   sc.onload=function(){ try{ window.__chainS=DuctusCore.open({patientId:qs.get('pid')}); toast('🩺 Entegre vaka zinciri — nörolojik muayene paylaşılan hastaya yansıyacak.'); DuctusCore.connectLifecycle({onDeactivate:stopLoop,onActivate:startLoop}); }catch(e){} }; document.head.appendChild(sc); })();
 window.addEventListener('message',function(e){ var d=e.data;if(!d||!d.ductus)return; if(d.type==='suite:pause'||d.type==='suite:module:deactivate')stopLoop(); else if(d.type==='suite:resume'||d.type==='suite:module:activate')startLoop(); });
 

@@ -854,7 +854,42 @@
       evaluateECGProtocol();
       calcScores();
       publishModuleBar();
+      chainBootstrap();
     });
+
+    // ---- Vaka Zinciri başlangıç kancası: doğru vaka/sekme + preset yüklensin ----
+    function chainBootstrap() {
+      try {
+        const qs = new URLSearchParams(location.search);
+        if (qs.get('chain') !== '1') { window.__chainContext = null; return; }
+        const cid = +(qs.get('chainId') || 0);
+        // zincir bağlamına göre sekme + AKG preset senkronu (varsayılan ARDS/HAGMA DEĞİL)
+        if (cid === 3) { window.__chainContext = 'copd'; switchModule('abg'); loadAbgPreset('copd'); }
+        else if (cid === 5) { window.__chainContext = 'pe'; switchModule('score'); }
+        else if (cid === 1) { window.__chainContext = 'acs'; switchModule('ecg'); }
+        else if (cid === 4) { window.__chainContext = 'htn'; switchModule('ecg'); }
+        else if (cid === 6) { window.__chainContext = 'neuro'; switchModule('score'); }
+        else { window.__chainContext = 'generic'; }
+        // "Bulguları Vaka Zincirine Kaydet" kancası
+        const pid = qs.get('pid');
+        if (pid && !document.getElementById('chainSaveBtn')) {
+          const sc = document.createElement('script'); sc.src = '../ductus-core.js';
+          sc.onload = function () {
+            try {
+              window.__chainS = DuctusCore.open({ patientId: pid });
+              const h = document.querySelector('header'); if (!h) return;
+              const b = document.createElement('button'); b.id = 'chainSaveBtn'; b.textContent = '📌 Bulguları Vaka Zincirine Kaydet';
+              b.style.cssText = 'margin-left:auto;font-size:11px;padding:6px 10px;background:rgba(111,163,200,.18);color:#bfe0f5;border:1px solid rgba(111,163,200,.5);border-radius:8px;cursor:pointer;';
+              b.onclick = function () {
+                try { window.__chainS.addEvidence({ modality: 'ACİL', summary: 'Acil konsol değerlendirmesi (AKG/EKG/skor) zincire kaydedildi', claims: ['acil_eval'] }); b.textContent = '✓ Zincire kaydedildi'; } catch (e) {}
+              };
+              h.appendChild(b);
+            } catch (e) {}
+          };
+          document.head.appendChild(sc);
+        }
+      } catch (e) { window.__chainContext = null; }
+    }
   </script>
 </body>
 </html>

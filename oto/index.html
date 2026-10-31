@@ -704,6 +704,7 @@ function reportChainEvidence(dx,dxOk,nflags,score){
 }
 (function initChain(){
   var qs=new URLSearchParams(location.search); if(qs.get('chain')!=='1') return;
+  var qcase=+(qs.get('case')||0); if(qcase){ setTimeout(function(){ try{ loadCase(qcase); window.__chainCase=qcase; }catch(e){} },80); }
   var sc=document.createElement('script'); sc.src='../ductus-core.js';
   sc.onload=function(){ try{ window.__chainS=DuctusCore.open({patientId:qs.get('pid')}); toast('🩺 Entegre vaka zinciri — otoskopi bulgusu paylaşılan hastaya yansıyacak.');
     DuctusCore.connectLifecycle({onDeactivate:function(){stopLoop();DuctusCore.suspendAudio(AC);},onActivate:function(){startLoop();DuctusCore.resumeAudio(AC);}}); }catch(e){} };

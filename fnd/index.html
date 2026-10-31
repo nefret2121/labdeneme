@@ -494,7 +494,9 @@ function bridgeBtn(txt,kind){ var b=document.createElement('button');b.className
 
 /* ======================= CORE ZİNCİRİ ======================= */
 function reportChain(dx,dxOk,score,n){ try{ if(!window.__chainS)return; window.__chainS.addEvidence({modality:'fundoscopy',summary:'Fundoskopi: '+label(DX,dx)+' (skor '+score+')',claims:['fundus_finding'],quality:{assessable:n===0,regionsSeen:REGIONS.filter(function(r){return (ENG.cov[r]||0)>300;})}}); }catch(e){} }
-(function initChain(){ var qs=new URLSearchParams(location.search); if(qs.get('chain')!=='1')return; var sc=document.createElement('script');sc.src='../ductus-core.js';
+(function initChain(){ var qs=new URLSearchParams(location.search); if(qs.get('chain')!=='1')return;
+  var qcase=+(qs.get('case')||0); if(qcase){ setTimeout(function(){ try{ loadCase(qcase); window.__chainCase=qcase; }catch(e){} },80); }
+  var sc=document.createElement('script');sc.src='../ductus-core.js';
   sc.onload=function(){ try{ window.__chainS=DuctusCore.open({patientId:qs.get('pid')}); toast('🩺 Entegre vaka zinciri — fundoskopi paylaşılan hastaya yansıyacak.');
     DuctusCore.connectLifecycle({onDeactivate:function(){stopLoop();},onActivate:function(){startLoop();}}); }catch(e){} }; document.head.appendChild(sc); })();
 window.addEventListener('message',function(e){ var d=e.data;if(!d||!d.ductus)return; if(d.type==='suite:pause'||d.type==='suite:module:deactivate')stopLoop(); else if(d.type==='suite:resume'||d.type==='suite:module:activate')startLoop(); });

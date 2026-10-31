@@ -984,7 +984,7 @@ function chainReportEvidence(dx,dxOk,unsup,score){
     DuctusCore.connectLifecycle({ onDeactivate:function(){ stopLoop(); DuctusCore.suspendAudio(AC); }, onActivate:function(){ startLoop(); DuctusCore.resumeAudio(AC); } });
   }catch(e){} };
   document.head.appendChild(sc);
-  var qcase=qs.get('case'); if(qcase){ /* ileride vaka eşleme */ }
+  var qcase=+(qs.get('case')||0); if(qcase){ setTimeout(function(){ try{ loadCase(qcase); window.__chainCase=qcase; }catch(e){} },80); }
 })();
 
 /* ---- suite yaşam döngüsü (core yoksa da çalışır) ---- */
