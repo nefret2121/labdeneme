@@ -182,6 +182,17 @@ const CASES={
    stem:'Sert, makaslayan spastik yürüyüş; dört ekstremitede canlı refleksler, klonus.',
    teach:'Servikal miyelopati: spastik makaslayan yürüyüş, hiperrefleksi + klonus + Babinski BİLATERAL EKSTANSÖR + Hoffmann (UMN). Geniş tabanlı değildir. İleri olguda cerrahi dekompresyon.'}
 };
+// Başvuru yakınması (TUS/Gizli modda cevabı vermeden) — sadece şikayet
+const COMPLAINTS={
+ 1:'34Y sağlıklı gönüllü — rutin nörolojik muayene.',
+ 2:'62Y erkek, 4 aydır sağ kol-bacakta güçsüzlük ve yürürken takılma.',
+ 3:'68Y erkek, 2 yıldır giderek yavaşlayan hareketler, elleri titriyor, denge güçlüğü.',
+ 4:'47Y kadın, 6 aydır dengesizlik, "sarhoş gibi" yürüme, el-ayak beceriksizliği.',
+ 5:'59Y erkek, 8 aydır karanlıkta/gözler kapalıyken belirginleşen dengesizlik, ayak tabanında uyuşma.',
+ 6:'41Y erkek, sağ ayak bileğini yukarı kaldıramıyor, yürürken ayak ucu takılıyor.',
+ 7:'23Y kadın, çocukluktan beri iki yana sallanarak yürüme, oturup kalkmada/merdivende zorlanma.',
+ 8:'55Y erkek, aylardır ellerde beceri kaybı, bacaklarda tutukluk ve giderek artan dengesizlik.'
+};
 const DX=[['normal','Normal'],['hemiplegic','Hemiplejik (spastik) yürüyüş'],['parkinson','Parkinsonyen'],['cerebellar','Serebellar ataksi'],
   ['sensory','Duyusal ataksi'],['steppage','Stepaj (düşük ayak)'],['waddling','Ördekvari (miyopatik)'],['myelopathy','Servikal miyelopati']];
 
@@ -236,7 +247,12 @@ function initGL(){
     fig['knee'+s]=ball(0.055,c); fig['ankle'+s]=ball(0.05,c); fig['shoulder'+s]=ball(0.05,(s==='R'?0xd98a7a:0x7ab0c4)); // R/L renk işareti
     fig['hip'+s]=ball(0.06,c); fig['elbow'+s]=ball(0.04,skin);
   });
+  // muayene sedyesi + refleks çekici
+  fig.bench=new THREE.Mesh(new THREE.BoxGeometry(0.5,0.07,0.64),new THREE.MeshStandardMaterial({color:0x33455f,roughness:.85})); fig.bench.castShadow=true; fig.bench.receiveShadow=true;
+  fig.benchL1=tube(0.03,0x263247); fig.benchL2=tube(0.03,0x263247);
+  fig.hammerH=tube(0.012,0x7a5230); fig.hammerHead=ball(0.034,0xb07a44);
   Object.keys(fig).forEach(function(k){ scene.add(fig[k]); });
+  fig.bench.visible=false; fig.benchL1.visible=false; fig.benchL2.visible=false; fig.hammerH.visible=false; fig.hammerHead.visible=false;
   resizeGL();
 }
 function resizeGL(){ var w=gl.clientWidth,h=gl.clientHeight; renderer.setSize(w,h,false); cam.aspect=w/h; cam.updateProjectionMatrix(); }
@@ -245,7 +261,7 @@ window.addEventListener('resize',resizeGL);
 // SERT KEMİK KİLİDİ: 3B law-of-cosines; ||hip-knee||≡THIGH, ||knee-ankle||≡SHANK (ispatlı, sıfır esneme)
 function solveLeg(side, target, hip){
   var dx=target.x-hip.x, dy=target.y-hip.y, dz=target.z-hip.z, d=Math.hypot(dx,dy,dz);
-  var maxd=REACH*0.995, mind=Math.abs(THIGH-SHANK)+0.012;
+  var maxd=REACH*0.9993, mind=Math.abs(THIGH-SHANK)+0.012;
   if(d>maxd){ var k=maxd/d; dx*=k;dy*=k;dz*=k; d=maxd; }       // erişimi aşarsa kalçadan o yöne clamp
   else if(d<mind){ var k=mind/d; dx*=k;dy*=k;dz*=k; d=mind; }
   var ankle={x:hip.x+dx,y:hip.y+dy,z:hip.z+dz};
@@ -257,69 +273,107 @@ function solveLeg(side, target, hip){
   var knee={x:hip.x+ux*a+px*h, y:hip.y+uy*a+py*h, z:hip.z+uz*a+pz*h};
   return {knee:knee,ankle:ankle,foot:{x:ankle.x,y:ankle.y,z:ankle.z,toe:target.toe||0}};
 }
+function kneeFlexDeg(hip,knee,ankle){ var ax=knee.x-hip.x,ay=knee.y-hip.y,az=knee.z-hip.z,bx=ankle.x-knee.x,by=ankle.y-knee.y,bz=ankle.z-knee.z;
+  var dot=ax*bx+ay*by+az*bz, la=Math.hypot(ax,ay,az),lb=Math.hypot(bx,by,bz); return Math.acos(clamp(dot/((la*lb)||1),-1,1))*180/Math.PI; } // 0° = tam ekstansiyon
+
 function poseFigure(){
-  var G=ENG.cas.gait, lean=G.trunkLean;
-  var bob=(ENG.mode==='gait')?0.012*Math.sin(ENG.t*G.cadence*4*Math.PI):0;
-  var pullLean=0;
-  if(ENG.pullT>=0){ var pt=ENG.t-ENG.pullT; if(pt<1.4){ pullLean=-Math.sin(Math.min(pt,1)*Math.PI)*0.25*(1-G.retropulsion*0.4); } else ENG.pullT=-1; }
-  var pelvisY=HIP_H+bob;
-  var P={x:0,y:pelvisY,z:0};
-  var maxDev=0;
-  function hip(side){ var drop=0; if(G.pelvicDrop&&ENG.mode==='gait'){ var swingL=phaseOf('L')>=0.6; drop=(side==='L'? (swingL?1:-1):(swingL?-1:1))*0; // pelvis karşı tarafta düşer
-      var stanceSide=(phaseOf('L')<0.6)?'L':'R'; drop=(side!==stanceSide? -G.pelvicDrop*0.09:0); }
-    return {x:Math.sin(lean)*0.05, y:pelvisY+drop, z:(side==='L'?-HIPW:HIPW)}; }
-  ['L','R'].forEach(function(side){ var H=hip(side), foot;
-    if(ENG.mode==='gait'){ foot=footLocal(side,phaseOf(side),G); }
-    else { // statik ayakta duruş (Romberg/Refleks): ayaklar düz
-      var bw=HIPW+(ENG.mode==='romberg'?0.0:0.06); foot={x:0.02,y:ANKLE_H,z:(side==='L'?-1:1)*bw,toe:0};
-    }
-    var sol=solveLeg(side,foot,H);
-    // kemik uzunluğu sapması ölç (test)
+  if(ENG.mode==='reflex') poseSeated(); else poseUpright();
+  // kamera (treadmill — hedef sabit origin)
+  var R=4.4, az=ENG.orbitAz, el=ENG.orbitEl;
+  cam.position.set(Math.sin(az)*R*Math.cos(el), 0.95+Math.sin(el)*2.2, Math.cos(az)*R*Math.cos(el));
+  cam.lookAt(0,(ENG.mode==='reflex')?0.62:0.85,0);
+  if(grid){ grid.position.x=-((ENG.groundOff)%1.0); }
+  var seated=(ENG.mode==='reflex');
+  fig.bench.visible=seated; fig.benchL1.visible=seated; fig.benchL2.visible=seated;
+  if(!seated||!ENG.flick){ fig.hammerH.visible=false; fig.hammerHead.visible=false; } else drawHammer();
+}
+// YÜRÜYÜŞ + ROMBERG: dinamik pelvis yüksekliği → basma bacağı neredeyse tam ekstansiyon (çömelme yok)
+function poseUpright(){
+  var G=ENG.cas.gait, lean=(ENG.cas.truthDx==='parkinson')?G.trunkLean:0, hipX=Math.sin(lean)*0.05;
+  var pullLean=0; if(ENG.pullT>=0){ var pt=ENG.t-ENG.pullT; if(pt<1.4) pullLean=-Math.sin(Math.min(pt,1)*Math.PI)*0.25*(1-G.retropulsion*0.4); else ENG.pullT=-1; }
+  var tgt={};
+  if(ENG.mode==='gait'){ tgt.L=footLocal('L',phaseOf('L'),G); tgt.R=footLocal('R',phaseOf('R'),G); }
+  else { tgt.L={x:0.02,y:ANKLE_H,z:-HIPW,toe:0}; tgt.R={x:0.02,y:ANKLE_H,z:HIPW,toe:0}; }
+  // dinamik pelvis: basma bacağının istenen ekstansiyonundan türet
+  var pelvisY;
+  if(ENG.mode==='gait'){
+    var lpL=phaseOf('L'),lpR=phaseOf('R');
+    var stance=(lpL<0.6)?((lpR<0.6)?(Math.abs(lpL-0.3)<=Math.abs(lpR-0.3)?'L':'R'):'L'):'R';
+    var sFoot=tgt[stance], hipZ=(stance==='L'?-HIPW:HIPW);
+    var ext=(G.affected===stance)?(G.stiffKnee?0.9985:0.986):0.991;   // normal stance ~15°, spastik ~7°
+    if(ENG.cas.truthDx==='parkinson') ext=0.982;                      // hafif stoop, çömelme değil
+    var dT=REACH*ext, horiz=Math.hypot(sFoot.x-hipX, sFoot.z-hipZ);
+    pelvisY=sFoot.y+Math.sqrt(Math.max(dT*dT-horiz*horiz,0.05));
+  } else pelvisY=ANKLE_H+REACH*0.991;
+  var P={x:hipX,y:pelvisY,z:0}, maxDev=0;
+  function hip(side){ var drop=0; if(G.pelvicDrop&&ENG.mode==='gait'){ var stanceSide=(phaseOf('L')<0.6)?'L':'R'; drop=(side!==stanceSide? -G.pelvicDrop*0.09:0); }
+    return {x:hipX, y:pelvisY+drop, z:(side==='L'?-HIPW:HIPW)}; }
+  ['L','R'].forEach(function(side){ var H=hip(side), foot=tgt[side], sol=solveLeg(side,foot,H);
     var d1=Math.hypot(sol.knee.x-H.x,sol.knee.y-H.y,sol.knee.z-H.z), d2=Math.hypot(sol.ankle.x-sol.knee.x,sol.ankle.y-sol.knee.y,sol.ankle.z-sol.knee.z);
     maxDev=Math.max(maxDev,Math.abs(d1-THIGH)/THIGH,Math.abs(d2-SHANK)/SHANK);
     setTube(fig['thigh'+side],H,sol.knee); setTube(fig['shank'+side],sol.knee,sol.ankle);
     fig['knee'+side].position.set(sol.knee.x,sol.knee.y,sol.knee.z); fig['ankle'+side].position.set(sol.ankle.x,sol.ankle.y,sol.ankle.z); fig['hip'+side].position.set(H.x,H.y,H.z);
-    // ayak: topuk + ayak ucu (ekin/düşük ayak toe ile); taban yere oturur, salınımda ayak bileğiyle kalkar
     var toeDrop=(sol.foot.toe||0), sole=sol.ankle.y-ANKLE_H;
-    var heel={x:sol.ankle.x-0.08,y:sole,z:sol.ankle.z};
-    var toe={x:sol.ankle.x+0.17,y:sole-toeDrop*0.09,z:sol.ankle.z};
-    // Babinski görsel: refleks modunda etkilenen ayak ucu yukarı
-    if(ENG.mode==='reflex'&&ENG.flick&&ENG.flick.root==='bab'&&ENG.flick.side===side){ var ph=ENG.flick.type==='extensor'?1:-1; toe.y+=0.06*ph*Math.max(0,1-(ENG.t-ENG.flick.t)); }
-    setTube(fig['heel'+side],sol.ankle,heel); setTube(fig['toe'+side],sol.ankle,toe);
+    setTube(fig['heel'+side],sol.ankle,{x:sol.ankle.x-0.08,y:sole,z:sol.ankle.z});
+    setTube(fig['toe'+side],sol.ankle,{x:sol.ankle.x+0.17,y:sole-toeDrop*0.09,z:sol.ankle.z});
   });
   ENG.boneDev=maxDev;
-  // gövde + baş (öne eğim + pull lean)
-  var shoulderMid={x:Math.sin(lean+pullLean)*0.5, y:pelvisY+0.5, z:0};
+  var shoulderMid={x:hipX+Math.sin(lean+pullLean)*0.5, y:pelvisY+0.5, z:0};
   setTube(fig.torso,P,shoulderMid);
   var headC={x:shoulderMid.x+Math.sin(lean+pullLean)*0.18, y:shoulderMid.y+0.22, z:0};
   setTube(fig.neck,shoulderMid,{x:headC.x,y:shoulderMid.y+0.08,z:0}); fig.head.position.set(headC.x,headC.y,0);
-  if((ENG.mode==='gait')&&ENG.cas.gait.stamp) fig.head.position.x+=0.06;   // duyusal: yere bakma
-  fig.pelvis.position.set(P.x,P.y,0); setTube(fig.pelvisBar,{x:0,y:pelvisY,z:-HIPW},{x:0,y:pelvisY,z:HIPW});
-  // kollar
-  var sw=(ENG.mode==='gait')?Math.sin(ENG.t*ENG.cas.gait.cadence*2*Math.PI)*0.4*G.armSwing:0;
+  if(ENG.mode==='gait'&&G.stamp) fig.head.position.x+=0.06;
+  fig.pelvis.position.set(P.x,P.y,0); setTube(fig.pelvisBar,{x:hipX,y:pelvisY,z:-HIPW},{x:hipX,y:pelvisY,z:HIPW});
+  var sw=(ENG.mode==='gait')?Math.sin(ENG.t*G.cadence*2*Math.PI)*0.4*G.armSwing:0;
   ['L','R'].forEach(function(side){ var sgn=(side==='L'?-1:1), shoulder={x:shoulderMid.x,y:shoulderMid.y,z:sgn*0.17};
-    var affArm=(ENG.cas.gait.affected===side&&ENG.cas.gait.stiffKnee);
-    var elbow,hand;
-    if(affArm){ elbow={x:shoulder.x+0.14,y:shoulder.y-0.18,z:sgn*0.18}; hand={x:elbow.x+0.12,y:elbow.y-0.08,z:sgn*0.16}; } // fleksiyonda gövdeye yapışık
-    else { var ax=shoulder.x+(side==='L'?sw:-sw)*0.5; elbow={x:ax,y:shoulder.y-0.24,z:sgn*0.19}; hand={x:elbow.x+0.02,y:elbow.y-0.22,z:sgn*0.2};
-      // refleks flick: biseps/triseps/brakioradyalis → dirsek/el
-      if(ENG.mode==='reflex'&&ENG.flick&&ENG.flick.side===side&&['c5','c6','c7'].indexOf(ENG.flick.root)>=0){ var amp=flickAmp(); var fl=(ENG.flick.root==='c7'?-1:1)*amp; hand.x+=fl*0.18; hand.y+=Math.abs(fl)*0.1; }
-    }
+    var affArm=(G.affected===side&&G.stiffKnee), elbow,hand;
+    if(affArm){ elbow={x:shoulder.x+0.14,y:shoulder.y-0.18,z:sgn*0.18}; hand={x:elbow.x+0.12,y:elbow.y-0.08,z:sgn*0.16}; }
+    else { var ax=shoulder.x+(side==='L'?sw:-sw)*0.5; elbow={x:ax,y:shoulder.y-0.24,z:sgn*0.19}; hand={x:elbow.x+0.02,y:elbow.y-0.22,z:sgn*0.2}; }
     setTube(fig['uarm'+side],shoulder,elbow); setTube(fig['farm'+side],elbow,hand);
     fig['shoulder'+side].position.set(shoulder.x,shoulder.y,shoulder.z); fig['elbow'+side].position.set(elbow.x,elbow.y,elbow.z);
   });
-  // refleks flick: patella/aşil → diz/ayak (statik duruşta)
-  if(ENG.mode==='reflex'&&ENG.flick&&['l4','s1'].indexOf(ENG.flick.root)>=0){ var side=ENG.flick.side, amp=flickAmp();
-    var kn=fig['knee'+side], an=fig['ankle'+side];
-    if(ENG.flick.root==='l4'){ an.position.x += amp*0.3; an.position.y += Math.abs(amp)*0.12; setTube(fig['shank'+side],{x:kn.position.x,y:kn.position.y,z:kn.position.z},{x:an.position.x,y:an.position.y,z:an.position.z}); }
-    else { an.position.y -= amp*0.06; }
-  }
-  // kamera (treadmill — hedef sabit origin)
-  var R=4.4, az=ENG.orbitAz, el=ENG.orbitEl;
-  cam.position.set(Math.sin(az)*R*Math.cos(el), 0.95+Math.sin(el)*2.2, Math.cos(az)*R*Math.cos(el));
-  cam.lookAt(0,0.85,0);
-  // zemin kaydır (koşu bandı)
-  if(grid){ grid.position.x = -((ENG.groundOff)%1.0); }
+  if(ENG.mode==='romberg'){ var sx=ENG.swayX||0; fig.head.position.z+=sx*0.3; fig.pelvis.position.z+=sx*0.12; }
+}
+// REFLEKS: hasta muayene sedyesinin kenarına oturur, bacaklar serbest sarkar
+function poseSeated(){
+  var benchTop=0.60, pelvisY=benchTop+0.08, hipX=-0.04, sgnK;
+  fig.pelvis.position.set(hipX,pelvisY,0); setTube(fig.pelvisBar,{x:hipX,y:pelvisY,z:-HIPW},{x:hipX,y:pelvisY,z:HIPW});
+  var shoulderMid={x:hipX,y:pelvisY+0.5,z:0}; setTube(fig.torso,{x:hipX,y:pelvisY,z:0},shoulderMid);
+  setTube(fig.neck,shoulderMid,{x:shoulderMid.x,y:shoulderMid.y+0.08,z:0}); fig.head.position.set(shoulderMid.x,shoulderMid.y+0.22,0);
+  ['L','R'].forEach(function(side){ var sgn=(side==='L'?-1:1), H={x:hipX,y:pelvisY,z:sgn*HIPW};
+    var thighDown=0.20, knee={x:H.x+Math.cos(thighDown)*THIGH, y:H.y-Math.sin(thighDown)*THIGH, z:sgn*HIPW};
+    var swing=0, footAng=0;
+    if(ENG.flick&&ENG.flick.side===side){ var amp=flickAmp();
+      if(ENG.flick.root==='l4') swing=amp*1.4;                                   // patella → ileri tekme (klonus/sarkaç flickAmp'te)
+      else if(ENG.flick.root==='s1'){ footAng=amp*1.2; }                         // aşil → plantar fleksiyon (ayak ucu aşağı)
+      else if(ENG.flick.root==='bab'){ var ph=(ENG.flick.type==='extensor')?1:-1; footAng=ph*0.55*Math.max(0,1-(ENG.t-ENG.flick.t)*0.7); } // ext → dorsifleksiyon (yukarı)
+    }
+    var ankle={x:knee.x+Math.sin(swing)*SHANK, y:knee.y-Math.cos(swing)*SHANK, z:sgn*HIPW};
+    setTube(fig['thigh'+side],H,knee); setTube(fig['shank'+side],knee,ankle);
+    fig['hip'+side].position.set(H.x,H.y,H.z); fig['knee'+side].position.set(knee.x,knee.y,knee.z); fig['ankle'+side].position.set(ankle.x,ankle.y,ankle.z);
+    var toeY=ankle.y-0.02+Math.sin(footAng)*0.14, toeX=ankle.x+Math.cos(footAng)*0.15;
+    setTube(fig['heel'+side],ankle,{x:ankle.x-0.05,y:ankle.y-0.02,z:ankle.z});
+    setTube(fig['toe'+side],ankle,{x:toeX,y:toeY,z:ankle.z});
+  });
+  ['L','R'].forEach(function(side){ var sgn=(side==='L'?-1:1), shoulder={x:hipX,y:pelvisY+0.5,z:sgn*0.17};
+    var elbow={x:shoulder.x+0.12,y:shoulder.y-0.22,z:sgn*0.2}, hand={x:elbow.x+0.14,y:elbow.y-0.06,z:sgn*0.18};
+    if(ENG.flick&&ENG.flick.side===side&&['c5','c6','c7'].indexOf(ENG.flick.root)>=0){ var amp=flickAmp(), dir=(ENG.flick.root==='c7'?-1:1); hand.y+=dir*amp*0.24; hand.x-=(dir>0?Math.abs(amp)*0.1:0); }
+    setTube(fig['uarm'+side],shoulder,elbow); setTube(fig['farm'+side],elbow,hand);
+    fig['shoulder'+side].position.set(shoulder.x,shoulder.y,shoulder.z); fig['elbow'+side].position.set(elbow.x,elbow.y,elbow.z);
+  });
+  ENG.boneDev=0;
+  // sedye: üst tabla + iki ayak
+  fig.bench.position.set(0.12,benchTop-0.035,0);
+  setTube(fig.benchL1,{x:0.28,y:0,z:0.26},{x:0.28,y:benchTop-0.06,z:0.26});
+  setTube(fig.benchL2,{x:0.28,y:0,z:-0.26},{x:0.28,y:benchTop-0.06,z:-0.26});
+}
+function drawHammer(){ var dt=ENG.t-ENG.flick.t; if(dt>0.55){ fig.hammerH.visible=false; fig.hammerHead.visible=false; return; }
+  var side=ENG.flick.side, root=ENG.flick.root, tgt;
+  if(root==='l4') tgt=fig['knee'+side].position; else if(root==='s1'||root==='bab') tgt=fig['ankle'+side].position; else tgt=fig['elbow'+side].position;
+  var swing=Math.sin(Math.min(dt,0.14)/0.14*Math.PI);           // yaklaş sonra çekil
+  var head={x:tgt.x+0.05+0.02*(1-swing), y:tgt.y+0.03+0.02*(1-swing), z:tgt.z}, handle={x:head.x+0.16, y:head.y+0.17, z:head.z};
+  fig.hammerH.visible=true; fig.hammerHead.visible=true;
+  setTube(fig.hammerH,head,handle); fig.hammerHead.position.set(head.x,head.y,head.z);
 }
 function phaseOf(side){ var G=ENG.cas.gait, cad=Math.min(G.cadence*(1+ENG.t*0.015*G.festination),2.2); var off=(side==='L')?0.5:0; return ((ENG.t*cad+off)%1+1)%1; }
 function flickAmp(){ if(!ENG.flick)return 0; var dt=ENG.t-ENG.flick.t, g=ENG.flick.grade;
@@ -344,7 +398,7 @@ function loop(ts){ if(!running)return; var dt=last?Math.min(0.05,(ts-last)/1000)
   if(ENG.mode==='gait') gaitStep(dt); else ENG.t+=dt;
   if(ENG.mode==='romberg'){ var amp=rombergSway(!ENG.eyesClosed); var sx=Math.sin(ENG.t*2.1)*amp+Math.sin(ENG.t*3.7)*amp*0.4, sy=Math.cos(ENG.t*1.7)*amp*0.8;
     ENG.cop.push({x:clamp(sx,-1,1),y:clamp(sy,-1,1)}); if(ENG.cop.length>120)ENG.cop.shift(); drawCoP();
-    fig.head.position.z=sx*0.3; fig.pelvis.position.z=sx*0.12; }
+    ENG.swayX=sx; }
   poseFigure(); renderer.render(scene,cam); updateReadouts();
   requestAnimationFrame(loop);
 }
@@ -369,16 +423,22 @@ function buildReflexGrid(){ var g=$('reflexGrid'); g.innerHTML='<div class="h"><
     ['L','R'].forEach(function(side){ var b=document.createElement('button'); b.id='rf-'+rf[0]+side; b.textContent=(rf[0]==='bab'?'Çiz':'Vur'); b.onclick=function(){ strike(rf[0],side); }; g.appendChild(b); }); }); }
 function strike(root,side){
   if(ENG.mode!=='reflex') setMode('reflex');
+  var isRes=(ENG.level==='resident'&&!ENG.examMode);   // derece yalnız Asistan modunda açık
   if(root==='bab'){ var r=babinski(side); ENG.flick={root:'bab',side:side,type:r,t:ENG.t}; ENG.reflexDone['bab'+side]=r;
-    var msg='Babinski '+(side==='L'?'sol':'sağ')+': '+(r==='extensor'?'EKSTANSÖR (başparmak dorsifleksiyon — patolojik, UMN)':'fleksör (normal)');
-    $('rf-bab'+side).style.color=r==='extensor'?'#e88b92':'#8fe3bf'; $('rf-bab'+side).textContent=r==='extensor'?'↑ Ext':'↓ Flx'; $('findNote').textContent=msg; toast(msg,r==='extensor'?'bad':''); beep(r==='extensor'?220:360,0.06); return; }
+    var b=$('rf-bab'+side);
+    if(isRes){ b.textContent=r==='extensor'?'↑ Ekstansör':'↓ Fleksör'; b.style.color=r==='extensor'?'#e88b92':'#8fe3bf';
+      $('findNote').textContent='Babinski '+(side==='L'?'sol':'sağ')+': '+(r==='extensor'?'EKSTANSÖR — başparmak dorsifleksiyonu + yelpazelenme (patolojik, UMN)':'fleksör (normal)'); toast('Babinski '+(side==='L'?'sol':'sağ')+': '+(r==='extensor'?'ekstansör (patolojik)':'fleksör (normal)'),r==='extensor'?'bad':''); }
+    else { b.textContent='🔨 Tekrar Çiz'; $('findNote').textContent='Babinski '+(side==='L'?'sol':'sağ')+' — plantar yanıtı 3B ayakta gözlemleyin (başparmak yukarı mı aşağı mı?).'; toast('Plantar yanıtı gözlemleyin'); }
+    beep(r==='extensor'?220:360,0.06); return; }
   var base=reflexGrade(root,side); var shown=base; if(ENG.jendrassik&&base<=1) shown=Math.min(base+1,2);
   var pend=ENG.cas.reflex.pendular, clo=(shown>=4||ENG.cas.reflex.clonus);
   ENG.flick={root:root,side:side,grade:shown,pendular:pend,clonus:clo,t:ENG.t}; ENG.reflexDone[root+side]=shown;
-  var b=$('rf-'+root+side); b.textContent=['0','1+','2+','3+','4+'][shown]; b.style.color=shown>=3?'#e88b92':shown<=1?'#d9a441':'#8fe3bf';
-  var txt=['Arefleksi','Hipoaktif','Normal','Hiperaktif','Klonus'][shown]+(pend?' · sarkaç':'');
-  var msg=ROOTS.find(function(x){return x[0]===root;})[1]+' '+(side==='L'?'sol':'sağ')+': '+shown+'+ '+txt;
-  $('findNote').textContent=msg; toast(msg); beep(300+shown*80,0.05);
+  var b=$('rf-'+root+side), rootName=ROOTS.find(function(x){return x[0]===root;})[1];
+  if(isRes){ b.textContent=['0','1+','2+','3+','4+'][shown]; b.style.color=shown>=3?'#e88b92':shown<=1?'#d9a441':'#8fe3bf';
+    var txt=['Arefleksi','Hipoaktif','Normal','Hiperaktif','Klonus'][shown]+(pend?' · sarkaç':'');
+    var msg=rootName+' '+(side==='L'?'sol':'sağ')+': '+shown+'+ '+txt; $('findNote').textContent=msg; toast(msg); }
+  else { b.textContent='🔨 Tekrar Vur'; $('findNote').textContent=rootName+' '+(side==='L'?'sol':'sağ')+' — 3B uzuv yanıtının şiddetinden (sıçrama/klonus/sarkaç) dereceyi siz çıkarın.'; toast('Yanıtı gözlemleyin — istediğiniz kadar vurabilirsiniz'); }
+  beep(300+shown*80,0.05);
 }
 
 /* ======================= AUDIO/TOAST ======================= */
@@ -400,7 +460,7 @@ function evaluate(){
   cats.push(['Muayene Tekniği',Math.round(tech),(ENG.jendrassik?'Jendrassik ✓ · ':'')+Object.keys(ENG.reflexDone).length+' refleks değerlendirildi']);
   cats.push(['Tanı',Math.round(interp),dxOk?('Doğru: '+label(DX,truth)):(partial?'Yakın; gerçek: '+label(DX,truth):'Hatalı; gerçek: '+label(DX,truth))]);
   cats.push(['Kritik Kurallar',Math.round(crit),flags.length?(flags.length+' uyarı'):'ihlal yok']);
-  renderJury(overall,cats,flags); $('teachNote').textContent=C.teach; if(ENG.examMode)$('caseStem').textContent=C.stem;
+  renderJury(overall,cats,flags); $('teachNote').textContent=C.teach; $('caseStem').textContent=C.stem;
   reportChain(dx,dxOk,overall,flags.length); beep(overall>=70?700:300,0.12);
 }
 function label(arr,k){ var r=arr.find(function(x){return x[0]===k;}); return r?r[1]:k; }
@@ -417,7 +477,7 @@ window.addEventListener('message',function(e){ var d=e.data;if(!d||!d.ductus)ret
 /* ======================= VAKA / MOD / UI ======================= */
 function loadCase(i){ ENG.idx=i; ENG.cas=CASES[i]; ENG.t=0; ENG.groundOff=0; ENG.jendrassik=false; ENG.eyesClosed=false; ENG.reflexDone={}; ENG.flick=null; ENG.cop=[]; ENG.pullT=-1; ENG.maneuver='normal';
   $('caseSel').value=i; $('jendChk').checked=false; $('areflexiaClaim').checked=false; $('rombergClaim').checked=false; $('juryOut').innerHTML='';
-  $('caseStem').textContent=ENG.examMode?'🔒 Gizli vaka: yürüyüş/Romberg/refleksle sendromu çözün.':ENG.cas.stem;
+  $('caseStem').textContent=(ENG.level==='student'||ENG.examMode)?(COMPLAINTS[i]||ENG.cas.stem):ENG.cas.stem;
   $('teachNote').textContent=(ENG.level==='student'||ENG.examMode)?'Öğretim notu "Beyanı Değerlendir" sonrası açılır.':ENG.cas.teach;
   buildReflexGrid(); $('findNote').textContent=''; }
 function setMode(m){ ENG.mode=m; ['mGait','mRomberg','mReflex'].forEach(function(id){$(id).classList.toggle('on',id==='m'+m.charAt(0).toUpperCase()+m.slice(1));});
@@ -426,7 +486,9 @@ function setMode(m){ ENG.mode=m; ['mGait','mRomberg','mReflex'].forEach(function
   buildSubbar(); buildFootTools(); }
 function setCam(a){ ENG.orbitAz=a; ['camSag','camCor','camPos'].forEach(function(id){$(id).classList.remove('on');});
   $(a<0?'camPos':Math.abs(a-Math.PI/2)<0.3?'camCor':'camSag').classList.add('on'); }
-function buildSubbar(){ var sb=$('subbar'); sb.innerHTML=''; if(ENG.mode!=='gait'){ return; }
+function buildSubbar(){ var sb=$('subbar'); sb.innerHTML='';
+  if(ENG.mode==='reflex'){ var rb=document.createElement('button'); rb.className='btn sm on'; rb.textContent='🚶 Yürüyüş Moduna Dön'; rb.onclick=function(){ setMode('gait'); }; sb.appendChild(rb); return; }
+  if(ENG.mode!=='gait'){ return; }
   [['normal','Normal'],['tandem','Tandem'],['pull','Çekme testi']].forEach(function(m){ var b=document.createElement('button');b.className='btn sm'+(ENG.maneuver===m[0]?' on':'');b.textContent=m[1];
     b.onclick=function(){ ENG.maneuver=(m[0]==='pull'?'normal':m[0]); if(m[0]==='pull'){ ENG.pullT=ENG.t; var steps=Math.round(1+ENG.cas.gait.retropulsion*4); toast('Çekme testi: '+(ENG.cas.gait.retropulsion>0.4?'retropulsiyon — '+steps+' geri adım, düşme eğilimi':'1 düzeltici adım, stabil'),ENG.cas.gait.retropulsion>0.4?'warn':''); }
       else if(m[0]==='tandem' && ENG.cas.truthDx==='cerebellar'){ toast('Tandem yürüyüş: serebellar hasta sendeliyor, dengesini kaybediyor.','warn'); } buildSubbar(); }; sb.appendChild(b); }); }
@@ -465,6 +527,12 @@ window.NRO={
   setJendrassik:function(b){ ENG.jendrassik=!!b; $('jendChk').checked=!!b; }, strike:function(r,s){ strike(r,s); return ENG.flick; },
   // 300 kare yürü, kemik uzunluğu sapmasını döndür (sert kemik testi)
   boneLengthCheck:function(frames){ frames=frames||300; setMode('gait'); var mx=0; for(var i=0;i<frames;i++){ gaitStep(0.016); poseFigure(); mx=Math.max(mx,ENG.boneDev); } return mx; },
+  // basma fazı minimum diz fleksiyonu (derece) — çömelme testi
+  gaitKneeMin:function(side,frames){ frames=frames||160; setMode('gait'); ENG.t=0; var mn=999; for(var i=0;i<frames;i++){ gaitStep(0.016); poseFigure(); if(phaseOf(side)<0.55){ var f=kneeFlexDeg(fig['hip'+side].position,fig['knee'+side].position,fig['ankle'+side].position); mn=Math.min(mn,f); } } return +mn.toFixed(1); },
+  isSeated:function(){ if(ENG.mode==='reflex') poseFigure(); return ENG.mode==='reflex' && fig.bench.visible===true; },
+  _dbg:function(side,frames){ frames=frames||100; setMode('gait'); ENG.t=0; var rows=[]; for(var i=0;i<frames;i++){ gaitStep(0.016); poseFigure(); var lp=phaseOf(side); if(lp<0.55){ var H=fig['hip'+side].position,A=fig['ankle'+side].position; var d=Math.hypot(A.x-H.x,A.y-H.y,A.z-H.z); var f=kneeFlexDeg(H,fig['knee'+side].position,A); rows.push([+lp.toFixed(2),+d.toFixed(3),+f.toFixed(1)]); } } return rows.slice(0,14); },
+  buttonLabel:function(root,side){ var b=$('rf-'+root+side); return b?b.textContent:null; },
+  stemText:function(){ return $('caseStem').textContent; },
   declare:function(o){ if(o&&o.dx)$('dxSel').value=o.dx; $('areflexiaClaim').checked=!!(o&&o.areflexia); $('rombergClaim').checked=!!(o&&o.romberg); evaluate(); return $('juryOut').innerText; },
   juryFlags:function(o){ if(o&&o.dx)$('dxSel').value=o.dx; $('areflexiaClaim').checked=!!(o&&o.areflexia); $('rombergClaim').checked=!!(o&&o.romberg); evaluate(); return [].slice.call($('juryOut').querySelectorAll('.flag')).map(function(f){return f.className+'|'+f.textContent;}); },
   _eng:ENG, CASES:CASES

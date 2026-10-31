@@ -1,479 +1,476 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>DuctusLab · Entegre Vaka Zinciri #1</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" />
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>DuctusLab · Entegre Vaka Zinciri v2.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap"/>
 <style>
-  :root { --bg-0:#05070c; --bg-1:#0a0f1a; --bg-2:#0e1524; --line:rgba(150,170,200,.12); --line-2:rgba(150,170,200,.24);
-    --ink:#e6ecf5; --ink-2:#9fb0c6; --ink-3:#64728a; --accent:#5fa8d8; --amber:#e0a94a; --ok:#59b88a; --alert:#d85f6a; --violet:#9a86c9;
-    --mono:"JetBrains Mono",ui-monospace,Menlo,monospace; --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
-  * { box-sizing:border-box; margin:0; padding:0; } html,body { height:100%; }
-  body { background:var(--bg-0); color:var(--ink); font-family:var(--sans); font-size:13px; -webkit-font-smoothing:antialiased; }
-  .mono { font-family:var(--mono); font-variant-numeric:tabular-nums; }
-  #app { display:grid; grid-template-rows:auto auto 1fr; min-height:100vh; }
-  button { font-family:var(--sans); font-size:12px; font-weight:600; color:var(--ink-2); background:rgba(20,30,48,.7); border:1px solid var(--line-2); border-radius:8px; padding:8px 13px; cursor:pointer; transition:all .14s; }
-  button:hover:not(:disabled) { color:var(--ink); border-color:var(--accent); } button:disabled { opacity:.45; cursor:not-allowed; }
-  button.pri { background:var(--ok); color:#04101f; border-color:var(--ok); font-weight:700; } button.pri:hover { filter:brightness(1.1); }
-  button.warnb { background:rgba(224,169,74,.18); border-color:rgba(224,169,74,.5); color:#f3d79a; }
-  button.on { background:rgba(95,168,216,.2); color:var(--ink); border-color:var(--accent); }
-  /* header */
-  header { display:flex; align-items:center; gap:14px; padding:12px 18px; background:var(--bg-1); border-bottom:1px solid var(--line); flex-wrap:wrap; }
-  .brand { font-size:13px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; } .brand em { font-style:normal; color:var(--accent); }
-  .brand small { display:block; font-size:10px; letter-spacing:.08em; color:var(--ink-3); font-weight:500; text-transform:none; }
-  header .sp { flex:1; }
-  .lvl { display:flex; gap:4px; } .lvl button { font-size:11px; padding:6px 11px; }
-  a.home { color:var(--ink-3); text-decoration:none; font-size:12px; font-weight:600; } a.home:hover { color:var(--ink); }
-  /* patient file bar */
-  .pfile { display:flex; align-items:center; gap:18px; padding:9px 18px; background:var(--bg-2); border-bottom:1px solid var(--line); flex-wrap:wrap; }
-  .pfile .who { font-size:13px; font-weight:700; } .pfile .who small { color:var(--ink-3); font-weight:500; }
-  .vit { display:flex; gap:14px; } .vit div { text-align:center; } .vit .l { font-size:9px; color:var(--ink-3); text-transform:uppercase; letter-spacing:.05em; } .vit .v { font-family:var(--mono); font-size:15px; font-weight:600; } .vit .v.bad { color:var(--alert); }
-  .clock { margin-left:auto; font-family:var(--mono); font-size:12px; color:var(--ink-3); }
-  /* layout */
-  main { display:grid; grid-template-columns:200px 1fr 300px; min-height:0; }
-  /* station rail */
-  #rail { background:var(--bg-1); border-right:1px solid var(--line); padding:12px 10px; display:flex; flex-direction:column; gap:7px; }
-  #rail .hd { font-size:9.5px; font-weight:600; letter-spacing:.09em; text-transform:uppercase; color:var(--ink-3); margin:4px 4px 2px; }
-  .station { display:flex; align-items:center; gap:9px; padding:10px 11px; border:1px solid var(--line-2); border-radius:10px; background:rgba(20,30,48,.5); cursor:pointer; transition:all .12s; }
-  .station:hover { border-color:var(--accent); } .station.on { background:rgba(95,168,216,.2); border-color:var(--accent); color:var(--ink); }
-  .station.done { border-color:rgba(89,184,138,.45); } .station .ic { font-size:16px; } .station .nm { font-size:12px; font-weight:600; } .station .st { font-size:9px; color:var(--ink-3); }
-  .station.locked { opacity:.5; cursor:not-allowed; }
-  /* stage */
-  #stage { padding:18px 22px; overflow-y:auto; min-height:0; }
-  .panelttl { font-size:16px; font-weight:700; margin-bottom:3px; } .panelsub { font-size:12px; color:var(--ink-3); margin-bottom:14px; }
-  .card { background:var(--bg-1); border:1px solid var(--line); border-radius:12px; padding:15px 16px; margin-bottom:12px; }
-  .card h3 { font-size:13px; font-weight:600; margin-bottom:8px; } .card p { font-size:12.5px; color:var(--ink-2); line-height:1.6; }
-  .actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
-  .opts { display:flex; flex-direction:column; gap:6px; margin-top:8px; }
-  .opts label { display:flex; align-items:center; gap:9px; font-size:12px; color:var(--ink-2); background:rgba(10,16,28,.6); border:1px solid var(--line); border-radius:8px; padding:8px 11px; cursor:pointer; }
-  .opts label:hover { border-color:var(--accent); } .opts label.sel { border-color:var(--accent); background:rgba(95,168,216,.12); color:var(--ink); }
-  .opts input { accent-color:var(--accent); }
-  canvas.ecg { width:100%; background:#05080e; border:1px solid var(--line); border-radius:8px; display:block; }
-  .flag { font-size:11.5px; padding:8px 11px; border-radius:8px; margin-top:8px; line-height:1.5; }
-  .flag.warn { background:rgba(224,169,74,.14); color:#f3d79a; border:1px solid rgba(224,169,74,.4); }
-  .flag.ok { background:rgba(89,184,138,.14); color:#8fe3bf; border:1px solid rgba(89,184,138,.4); }
-  .flag.bad { background:rgba(216,95,106,.14); color:#f1b0b7; border:1px solid rgba(216,95,106,.5); }
-  .pocus { background:#070d16; border:1px solid var(--line); border-radius:10px; height:180px; position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center; }
-  /* evidence rail */
-  #ev { background:var(--bg-1); border-left:1px solid var(--line); padding:12px 12px; overflow-y:auto; min-height:0; }
-  #ev .hd { font-size:9.5px; font-weight:600; letter-spacing:.09em; text-transform:uppercase; color:var(--ink-3); margin-bottom:8px; }
-  .evc { border:1px solid var(--line-2); border-radius:9px; padding:8px 10px; margin-bottom:7px; background:rgba(20,30,48,.4); }
-  .evc .top { display:flex; justify-content:space-between; align-items:center; gap:6px; }
-  .evc .md { font-size:11.5px; font-weight:600; } .evc .tm { font-family:var(--mono); font-size:9.5px; color:var(--ink-3); }
-  .evc .sm { font-size:10.5px; color:var(--ink-2); margin-top:3px; line-height:1.4; }
-  .tag { font-family:var(--mono); font-size:9px; font-weight:600; padding:1px 6px; border-radius:5px; }
-  .tag.cur { background:rgba(89,184,138,.18); color:#8fe3bf; } .tag.hist { background:rgba(224,169,74,.18); color:#f3d79a; } .tag.na { background:rgba(108,120,137,.2); color:var(--ink-3); }
-  /* overlay (jury) */
-  .overlay { position:fixed; inset:0; z-index:80; background:rgba(2,4,8,.76); backdrop-filter:blur(5px); display:none; align-items:flex-start; justify-content:center; overflow-y:auto; padding:34px 16px; }
-  .overlay.open { display:flex; }
-  .sheet { width:760px; max-width:100%; background:linear-gradient(180deg,#0a1120,#070b14); border:1px solid var(--line-2); border-radius:16px; padding:20px 22px; box-shadow:0 30px 80px rgba(0,0,0,.6); }
-  .sheet h2 { font-size:17px; font-weight:700; margin-bottom:4px; } .sheet .sub { font-size:11.5px; color:var(--ink-3); margin-bottom:14px; }
-  .scoreHead { display:flex; align-items:center; justify-content:space-between; gap:14px; background:rgba(20,30,48,.5); border:1px solid var(--line-2); border-radius:14px; padding:14px 16px; margin-bottom:12px; }
-  .bigscore { font-family:var(--mono); font-size:34px; font-weight:700; } .bigscore small { font-size:14px; color:var(--ink-3); }
-  .verdict { font-size:13px; font-weight:700; padding:8px 12px; border-radius:10px; text-align:center; max-width:320px; }
-  .verdict.ok { background:rgba(89,184,138,.14); color:#8fe3bf; border:1px solid rgba(89,184,138,.5); }
-  .verdict.warn { background:rgba(224,169,74,.14); color:#f3d79a; border:1px solid rgba(224,169,74,.5); }
-  .verdict.crit { background:rgba(216,95,106,.16); color:#f1b0b7; border:1px solid rgba(216,95,106,.6); }
-  .jcat { background:rgba(10,16,28,.5); border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin-bottom:8px; }
-  .jcat li { font-size:11.5px; color:var(--ink-2); list-style:none; display:flex; gap:7px; margin:3px 0; }
-  #toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:rgba(10,16,28,.96); border:1px solid var(--line-2); border-radius:10px; padding:10px 17px; font-size:12.5px; opacity:0; transition:opacity .25s; pointer-events:none; z-index:90; max-width:72vw; text-align:center; }
-  #toast.show { opacity:1; }
-  @media (max-width:1000px){ main { grid-template-columns:1fr; } #rail { flex-direction:row; overflow-x:auto; } #ev { display:none; } }
+:root{--bg0:#04070e;--bg1:#070c17;--bg2:#0b1220;--bg3:#101a2c;--glass:rgba(13,20,34,.7);--line:rgba(160,176,196,.12);--line2:rgba(160,176,196,.2);
+--ink:#e4e9f1;--ink2:#a6b1c2;--ink3:#6c7889;--accent:#6fa3c8;--accent2:#4f7fa3;--accentd:rgba(111,163,200,.14);
+--amber:#d9a441;--amberd:rgba(217,164,65,.14);--ok:#5a9f7f;--okd:rgba(90,159,127,.16);--alert:#c4565f;--alertd:rgba(196,86,95,.16);--violet:#9a86c9;
+--sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;--mono:"JetBrains Mono",ui-monospace,monospace;}
+*{box-sizing:border-box;margin:0;padding:0}html,body{height:100%}
+body{background:radial-gradient(1200px 800px at 70% -10%,#0a1424,var(--bg0) 60%);color:var(--ink);font-family:var(--sans);font-size:14px;overflow:hidden}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.app{display:flex;flex-direction:column;height:100vh}
+.topbar{display:flex;align-items:center;gap:14px;padding:10px 18px;border-bottom:1px solid var(--line);background:var(--glass);backdrop-filter:blur(12px);flex:0 0 auto;z-index:20}
+.wordmark{font-weight:700;letter-spacing:.04em;font-size:15px}.wordmark em{color:var(--accent);font-style:normal}
+.vsep{width:1px;height:22px;background:var(--line2)}.product{color:var(--ink2);font-size:12.5px}.spacer{flex:1}
+.chip{font-size:11.5px;color:var(--ink2);border:1px solid var(--line2);border-radius:999px;padding:4px 11px}
+.chip b{color:var(--accent)}
+.seg{display:flex;border:1px solid var(--line2);border-radius:9px;overflow:hidden}
+.seg button{border:0;background:transparent;color:var(--ink2);font-family:var(--sans);font-size:12px;padding:6px 11px;cursor:pointer}
+.seg button.on{color:#fff;background:var(--accentd)}.seg button+button{border-left:1px solid var(--line2)}
+.btn{font-family:var(--sans);font-size:12.5px;color:var(--ink2);background:rgba(17,26,43,.55);border:1px solid var(--line2);border-radius:9px;padding:7px 12px;cursor:pointer;transition:.15s}
+.btn:hover{color:var(--ink);border-color:var(--accent2);background:var(--accentd)}.btn.sm{padding:5px 9px;font-size:11.5px}
+.main{flex:1;display:flex;min-height:0}
+.rail{flex:0 0 268px;border-right:1px solid var(--line);background:var(--bg1);overflow-y:auto;padding:14px 12px}
+.rail h4{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink3);margin:4px 6px 10px}
+.station{display:flex;gap:10px;align-items:flex-start;padding:10px;border:1px solid var(--line);border-radius:11px;margin-bottom:8px;cursor:pointer;background:var(--bg2);transition:.15s}
+.station:hover{border-color:var(--accent2)}.station.cur{border-color:var(--accent);background:var(--accentd)}
+.station.done{opacity:.72}.station.done .ic{color:var(--ok)}
+.station .ic{font-size:13px;font-weight:700;color:var(--ink3);min-width:46px;font-family:var(--mono)}
+.station .nm{font-size:13px;font-weight:600}.station .st{font-size:11px;color:var(--ink3);margin-top:2px}
+.phasebar{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--violet);margin:12px 6px 7px;border-top:1px solid var(--line);padding-top:10px}
+.content{flex:1;min-width:0;overflow-y:auto;padding:20px 24px}
+.panel{max-width:760px}
+.panelttl{font-size:19px;font-weight:700;margin-bottom:3px}
+.panelsub{color:var(--ink2);font-size:13px;margin-bottom:14px;line-height:1.5}
+.card{border:1px solid var(--line);border-radius:13px;background:var(--glass);padding:15px 16px;margin-bottom:14px}
+.card h3{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);font-weight:600;margin-bottom:10px}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.actions button{font-family:var(--sans);font-size:13px;color:var(--ink);background:var(--bg3);border:1px solid var(--line2);border-radius:9px;padding:9px 13px;cursor:pointer;transition:.15s}
+.actions button:hover{border-color:var(--accent2);background:var(--accentd)}
+.actions button.pri{background:linear-gradient(135deg,#7ec0e8,#5a9bc4);color:#06131d;font-weight:600;border:0}
+.actions button.done{opacity:.55;pointer-events:none}
+.actions button.trap{border-color:rgba(196,86,95,.3)}
+.evrow{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;padding:7px 9px;border:1px solid var(--line);border-radius:8px;margin-top:6px;background:var(--bg2)}
+.tag{font-size:10px;padding:2px 7px;border-radius:999px;border:1px solid}
+.tag.fresh{color:#8fe3bf;border-color:rgba(90,159,127,.4);background:var(--okd)}
+.tag.stale{color:var(--amber);border-color:rgba(217,164,65,.45);background:var(--amberd)}
+.flag{font-size:12px;padding:8px 11px;border-radius:9px;margin-top:8px;border:1px solid;line-height:1.45}
+.flag.red{color:#e88b92;border-color:rgba(196,86,95,.45);background:var(--alertd)}
+.flag.amber{color:var(--amber);border-color:rgba(217,164,65,.45);background:var(--amberd)}
+.flag.green{color:#8fe3bf;border-color:rgba(90,159,127,.45);background:var(--okd)}
+.hint{font-size:11.5px;color:var(--ink3);margin-top:7px;line-height:1.5}
+.ho-q{margin:12px 0}.ho-q .q{font-size:13px;font-weight:600;margin-bottom:7px}
+.ho-q label{display:flex;gap:9px;align-items:flex-start;font-size:12.5px;color:var(--ink2);padding:7px 9px;border:1px solid var(--line);border-radius:8px;margin-bottom:5px;cursor:pointer}
+.ho-q label:hover{border-color:var(--accent2)}.ho-q label.sel{border-color:var(--accent);background:var(--accentd);color:var(--ink)}
+.ho-q input{margin-top:2px;accent-color:var(--accent)}
+.overlay{position:fixed;inset:0;background:rgba(2,5,10,.72);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:60;padding:22px}
+.overlay.open{display:flex}
+.sheet{width:min(720px,94vw);max-height:90vh;overflow-y:auto;background:var(--bg1);border:1px solid var(--line2);border-radius:16px;padding:22px 24px}
+.sheet h2{font-size:20px;margin-bottom:5px}.sheet .sub{color:var(--ink2);font-size:12.5px;margin-bottom:14px}
+.jcat{margin:9px 0;padding:11px 12px;border:1px solid var(--line);border-radius:11px;background:var(--bg2)}
+.jcat .r{display:flex;justify-content:space-between;font-weight:600;font-size:13px}.bar{height:6px;border-radius:4px;background:#17202f;margin-top:7px;overflow:hidden}.bar>span{display:block;height:100%}
+.selgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px}
+.selcard{border:1px solid var(--line);border-radius:13px;background:var(--bg2);padding:14px;cursor:pointer;transition:.15s}
+.selcard:hover{border-color:var(--accent);transform:translateY(-2px)}
+.selcard .cx{font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:.06em}
+.selcard .ct{font-size:15px;font-weight:700;margin:4px 0 4px}
+.selcard .cc{font-size:11.5px;color:var(--ink3);line-height:1.5}
+.selcard .cm{margin-top:8px;font-size:10px;color:var(--ink3)}
+.toast{position:fixed;left:24px;bottom:22px;background:rgba(10,16,28,.96);border:1px solid var(--line2);border-left:3px solid var(--accent);border-radius:9px;padding:11px 15px;font-size:12.5px;max-width:420px;z-index:70;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.toast.bad{border-left-color:var(--alert)}.toast.warn{border-left-color:var(--amber)}.toast.good{border-left-color:var(--ok)}
+@media(max-width:900px){.rail{flex-basis:200px}.selgrid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-<div id="app">
-  <header>
-    <a class="home" href="index.html">← Anasayfa</a>
-    <div class="brand">Ductus<em>Lab</em> · Vaka Zinciri<small id="chainSub">#1 — Akut Göğüs Ağrısı → Reperfüzyon → Devir</small></div>
-    <div class="sp"></div>
-    <div class="lvl" id="lvlSel">
-      <button data-lvl="student" class="on">🎓 TUS / Öğrenci</button>
-      <button data-lvl="resident">🩺 Asistan / Girişimsel</button>
-    </div>
-    <button onclick="restartCase()">↺ Vakayı Yenile</button>
-  </header>
-
-  <div class="pfile">
-    <div class="who" id="pWho">—</div>
-    <div class="vit">
-      <div><div class="l">HR</div><div class="v" id="vHr">—</div></div>
-      <div><div class="l">KB</div><div class="v" id="vBp">—</div></div>
-      <div><div class="l">MAP</div><div class="v" id="vMap">—</div></div>
-      <div><div class="l">SpO₂</div><div class="v" id="vSpo2">—</div></div>
-      <div><div class="l">RR</div><div class="v" id="vRr">—</div></div>
-    </div>
-    <div class="clock">⏱ <span id="simClock">00:00</span> · zincir süresi</div>
+<div class="app">
+  <div class="topbar">
+    <span class="wordmark">Ductus<em>Lab</em></span><span class="vsep"></span>
+    <span class="product" id="chainTitle">Entegre Nöbet &amp; Vaka Zinciri</span>
+    <span class="spacer"></span>
+    <span class="chip" id="varChip" style="display:none">Varyant <b id="varB">A</b></span>
+    <span class="chip mono">⏱ <span id="simClock">00:00</span></span>
+    <div class="seg" id="lvlSeg"><button class="on" data-lvl="student">TUS / Öğrenci</button><button data-lvl="resident">Asistan / Girişimsel</button></div>
+    <button class="btn sm" id="switchBtn">⇄ Zincir Değiştir</button>
+    <button class="btn sm" id="homeBtn">← Anasayfa</button>
   </div>
-
-  <main>
-    <nav id="rail">
-      <div class="hd">İstasyonlar</div>
-      <div class="station on" data-stn="triage"><span class="ic">🚑</span><div><div class="nm">Acil Değerlendirme</div><div class="st" id="s-triage">triyaj</div></div></div>
-      <div class="station" data-stn="ecg"><span class="ic">💓</span><div><div class="nm">12-Der EKG</div><div class="st" id="s-ecg">bekliyor</div></div></div>
-      <div class="station" data-stn="echo"><span class="ic">🫀</span><div><div class="nm">Eko / POCUS</div><div class="st" id="s-echo">opsiyonel</div></div></div>
-      <div class="station" data-stn="cath"><span class="ic">🩻</span><div><div class="nm">CathLab</div><div class="st" id="s-cath">reperfüzyon</div></div></div>
-      <div class="station" data-stn="handoff"><span class="ic">📋</span><div><div class="nm">Hasta Devri</div><div class="st" id="s-handoff">bitiş</div></div></div>
-    </nav>
-    <section id="stage"></section>
-    <aside id="ev">
-      <div class="hd">Toplanan Kanıt (zaman damgalı)</div>
-      <div id="evList"></div>
-    </aside>
-  </main>
+  <div class="main">
+    <div class="rail" id="rail"></div>
+    <div class="content"><div class="panel" id="panel"></div></div>
+  </div>
 </div>
+<div id="selOverlay" class="overlay open"><div class="sheet" id="selSheet"></div></div>
 <div id="jury" class="overlay"><div class="sheet" id="jurySheet"></div></div>
-<div id="toast"></div>
+<div id="toastHost"></div>
 
 <script src="ductus-core.js"></script>
 <script>
-(function(){
-'use strict';
+/* ===================================================================================
+ *  DuctusLab · Case Chain v2.0 — 6 entegre hasta zinciri, 12 modül, ductus-core v1.1
+ *  (truth sızmazlığı · alan-bazlı revizyon/TARİHSEL kanıt · ModalityCanAnswerClaim)
+ * =================================================================================== */
 var $=function(id){return document.getElementById(id);};
-var toast=function(m){var t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(function(){t.classList.remove('show');},2600);};
 var qs=new URLSearchParams(location.search);
 
-// ---- vaka tohumu: İnferior STEMI, iki varyant ----
-var VARIANT = (qs.get('variant')||'').toUpperCase();
-if(VARIANT!=='A'&&VARIANT!=='B') VARIANT = Math.random()<0.5?'A':'B';
-var LEVEL = qs.get('level')||'student';
+// modül → bağımsız sayfa (yoksa inline istasyon)
+var HREF={ ACİL:'acil/index.html', EKG:'ekg/index.html', EKO:'eko/index.html', VNT:'ventilator/index.html',
+  KS:'ks/index.html', OTO:'oto/index.html', SFT:'sft/index.html', FND:'fnd/index.html', NRO:'nro/index.html',
+  CathLab:'ductuslab-cathlab.html', 'NŞR':'ductuslab-neurosurgery.html', OSK:null, POCUS:'eko/index.html' };
+var MODNAME={ ACİL:'Acil Konsol', EKG:'12-Derivasyon EKG', EKO:'Eko / POCUS', VNT:'Ventilatör', KS:'Kraniyal Sinir',
+  OTO:'Otoskopi', SFT:'Spirometri', FND:'Fundoskopi', NRO:'Nörolojik Muayene', CathLab:'Kateter Lab', 'NŞR':'Nöroşirürji', OSK:'Oskültasyon', POCUS:'POCUS' };
 
-var SEED = {
-  patientId: qs.get('pid') || 'chain1_'+Math.random().toString(36).slice(2,8),
-  demographics:{ name:'E.K.', age:71, sex:'E' },
-  vitals:{ hr:52, sbp:104, dbp:64, map:77, spo2:95, rr:18 },
-  pathology:{ culprit:'RCA', wall:'inferior', timi:0, rvInvolvement:true, stPattern:'inferior', stented:false, noReflow:false, effusion:false, variant:VARIANT },
-  simRate: 60   // 1 gerçek sn = 60 sim sn → 8-12 dk senaryo hızlanır
+// kısaltmalar: s=istasyon, d=karar
+function s(mod,dom,title,prompt,ev,decisions,opts){ return Object.assign({mod:mod,dom:dom,title:title,prompt:prompt,ev:ev||null,decisions:decisions||[]},opts||{}); }
+function d(id,label,kind,lock,critical){ return {id:id,label:label,kind:kind||'neutral',lock:lock||null,critical:!!critical}; }
+
+/* =============================== 6 ZİNCİR =============================== */
+var CHAINS={
+ 1:{ id:1, nick:'Akut Göğüs Ağrısı & Primer PCI', path:'ACİL → EKG → CathLab → EKO/POCUS',
+   complaint:'58Y erkek, ~1 saattir baskı tarzında göğüs ağrısı, soğuk terleme, bulantı.',
+   dxTitle:'İnferiyor STEMI + Sağ Ventrikül Tutulumu (RCA)', dxWords:['STEMI','RCA','infarkt'], truthDom:'coronary',
+   stations:[
+     s('ACİL','hemodynamic','Triyaj & İlk Stabilizasyon','Monitörize et, damar yolu, ilk ilaç kararları. Hangisi güvenli?',
+        {sum:'İlk değerlendirme: hipotansiyona eğilimli, akciğerler temiz, boyun venleri dolgun',claims:['triage']},
+        [ d('aspirin','Aspirin 300 mg çiğnet','safe'), d('heparin','Antikoagülan (heparin)','safe'),
+          d('nitrat','Dilaltı nitrat ver','trap','RV tutulumlu inferiyor STEMI’de nitrat ön-yükü düşürüp ani hipotansiyon/şok yapar — KONTRENDİKE. Önce IV sıvı ile ön-yükü koru.',true),
+          d('fluid','IV sıvı bolus (ön-yük)','safe') ]),
+     s('EKG','coronary','12-Derivasyon EKG','ST elevasyonu paternini ve sorumlu arteri belirle; gerekirse sağ prekordiyal derivasyon.',
+        {sum:'DII-DIII-aVF ST elevasyonu, V4R’de ST↑ → inferiyor + RV; sorumlu: RCA',claims:['stemi_territory','culprit']},
+        [ d('v4r','Sağ prekordiyal (V4R) ekle','safe'), d('culprit','Sorumlu arter: RCA onayla','safe') ]),
+     s('CathLab','coronary','Primer PCI (Reperfüzyon)','Kapı-balon süresini koru; stent sonrası eski EKG/anjiyo TARİHSEL olur.',
+        {sum:'RCA’ya primer PCI + stent, TIMI 3 akım sağlandı',claims:['reperfusion']},
+        [ d('pci','RCA primer PCI + stent','safe') ], {phaseBreak:'coronary', phaseLabel:'Reperfüzyon sonrası — stent öncesi kanıtlar TARİHSEL'}),
+     s('EKO','hemodynamic','Eko / POCUS','Reperfüzyon sonrası sağ ventrikül fonksiyonu, efüzyon ve mekanik komplikasyon.',
+        {sum:'POCUS: RV dilate/hipokinetik; Varyant B’de perikardiyal efüzyon + hipotansiyon',claims:['rv_function','effusion']},
+        [ d('pocus','POCUS kaydet','safe'), d('timing','Stabil STEMI’de rutin ekoyu reperfüzyondan önce bekletme','safe') ]) ],
+   handoff:{ status:['Reperfüze (TIMI 3), stabil','Reperfüze ama Varyant B: hipotansiyon/efüzyon','Hâlâ tıkalı / reperfüzyon yok'],
+     alarm:['Tekrar göğüs ağrısı + ST yükselmesi (re-oklüzyon)','Yeni üfürüm / ani hipotansiyon (mekanik komplikasyon)','Ateş'] } },
+
+ 2:{ id:2, nick:'Gök Gürültüsü Baş Ağrısı & Pitozis', path:'ACİL → KS → FND → EKG → NŞR',
+   complaint:'48Y kadın, ani başlayan “hayatımın en kötü” baş ağrısı; sağ göz kapağında düşme ve çift görme.',
+   dxTitle:'Anevrizmal Subaraknoid Kanama + Kompresif CN III (IC-PC anevrizma)', dxWords:['SAK','subaraknoid','anevrizma'], truthDom:'neuro',
+   stations:[
+     s('ACİL','hemodynamic','Triyaj & Görüntüleme Kararı','Ani şiddetli baş ağrısı + fokal bulgu. İlk adım?',
+        {sum:'Ani maksimal baş ağrısı, ense sertliği; KB yüksek',claims:['triage']},
+        [ d('ct','Kontrastsız kraniyal BT iste','safe'), d('analgesia','Analjezi + KB kontrolü','safe'),
+          d('lp_direct','Doğrudan LP yap','trap','Papilödem/kitle dışlanmadan doğrudan LP → serebral herniasyon riski. Önce görüntüleme.',true) ]),
+     s('KS','neuro','Kraniyal Sinir Muayenesi','Göz kapağını kaldır, pupil ve bakış yönünü değerlendir.',
+        {sum:'Sağ pitozis, dilate ışığa yanıtsız pupil, göz aşağı-dışa → kompresif CN III',claims:['cn3_compressive']},
+        [ d('lid','Kapağı kaldır / pupil-bakış değerlendir','safe') ]),
+     s('FND','neuro','Fundoskopi','Göz dibinde preretinal kanama ve disk değerlendirmesi.',
+        {sum:'Terson: preretinal/subhyaloid kanama; disk sınırları değerlendirildi',claims:['terson']},
+        [ d('view','Göz dibini incele','safe'),
+          d('tropicamide','Tropikamid damlat','trap','SAK/CN III izleminde pupil anahtarı — Tropikamid farmakolojik dilatasyon pupil takibini bozar, KONTRENDİKE.',true),
+          d('lp_here','Papilödem öncesi doğrudan LP','trap','Fundoskopide papilödem/kitle dışlanmadan LP → herniasyon.',false) ]),
+     s('EKG','rhythm','12-Derivasyon EKG','Bu klinik bağlamda EKG değişikliklerini yorumla.',
+        {sum:'Derin serebral T negatifliği + uzun QT (nörojenik), koroner iskemi değil',claims:['neurogenic_ecg']},
+        [ d('read','Nörojenik değişiklik olarak yorumla','safe'),
+          d('stemi_cath','STEMI sanıp heparin yükle + CathLab’a yolla','trap','Nörojenik EKG’yi STEMI sanıp heparin + kateter → aktif SAK’ta ölümcül kanama. KONTRENDİKE.',true) ]),
+     s('NŞR','neuro','Nöroşirürji — Definitif Tedavi','Nimodipin + KB kontrolü sonrası definitif tedavi.',
+        {sum:'IC-PC anevrizma mikrocerrahi klipaj; post-op CN III izlemi',claims:['aneurysm_secured']},
+        [ d('clip','IC-PC anevrizma klipajı','safe'), d('nimodipine','Nimodipin + KB kontrolü','safe') ],
+        {phaseBreak:'neuro', phaseLabel:'Klipaj sonrası — operasyon öncesi nörolojik kanıtlar TARİHSEL'}) ],
+   handoff:{ status:['Anevrizma güvenli (klipaj), vazospazm izlemi','Henüz güvenli değil — definitif tedavi bekliyor','Nörolojik kötüleşme / yeniden kanama'],
+     alarm:['Bilinç düzeyinde düşme / yeni pupil asimetrisi','Fokal defisit (vazospazm)','Ateş'] } },
+
+ 3:{ id:3, nick:'Kronik Dispneden Akut Solunum Yetmezliğine', path:'OSK → SFT [Faz 1] → ⏲ → ACİL → EKG → VNT [Faz 2]',
+   complaint:'64Y erkek, aylardır eforla artan nefes darlığı ve kronik öksürük (40 paket-yıl sigara).',
+   dxTitle:'KOAH Akut Alevlenme + Akut-Kronik Hiperkapnik Solunum Yetmezliği', dxWords:['KOAH','hiperkapni','oto-PEEP'], truthDom:'respiratory',
+   stations:[
+     s('OSK','respiratory','Faz 1 — Oskültasyon (Poliklinik)','Solunum seslerini dinle.',
+        {sum:'Uzamış ekspiryum, yaygın ronküs/wheezing',claims:['obstruction']},
+        [ d('listen','Dinle & kaydet','safe') ], {phase:1}),
+     s('SFT','respiratory','Faz 1 — Spirometri','Obstrüksiyonu ve reversibiliteyi belirle.',
+        {sum:'FEV1/FVC < LLN, post-bronkodilatör anlamlı düzelme YOK → sabit obstrüksiyon (KOAH)',claims:['fixed_obstruction']},
+        [ d('spiro','Pre/Post-BD spirometri','safe') ], {phase:1}),
+     s('ACİL','respiratory','Faz 2 — Akut Kötüleşme (Acil/YBÜ)','6 ay sonra akut ağır dispne ile geldi. AKG ve ilk kararlar.',
+        {sum:'AKG: kronik zemin HCO3~30 üzerine akut respiratuvar asidoz (pH↓, pCO2↑)',claims:['abg_resp_acidosis']},
+        [ d('abg','Arter kan gazı al','safe'), d('controlled_o2','Kontrollü O2 (hedef SpO2 %88–92)','safe'),
+          d('high_fio2','Yüksek akım %100 O2 ver','trap','KOAH’ta kontrolsüz yüksek FiO2 hiperkapniyi derinleştirir (V/Q + Haldane). Hedef SpO2 %88–92.',true),
+          d('repeat_sft','Akut dispnede tekrar SFT üflet','trap','Akut ağır solunum sıkıntısında zorlu spirometri kontrendike ve yanıltıcı; hastayı yorar.',false) ],
+        {phase:2, phaseBreak:'respiratory', phaseLabel:'Akut alevlenme — Faz 1 poliklinik SFT’si artık TARİHSEL'}),
+     s('EKG','rhythm','Faz 2 — EKG','Kronik akciğer hastalığında ritim/eksen.',
+        {sum:'Multifokal atriyal taşikardi (MAT) + P pulmonale eğilimi',claims:['mat']},
+        [ d('ekg','EKG çek','safe') ], {phase:2}),
+     s('VNT','respiratory','Faz 2 — Ventilatör (NIV/İnvazif)','Oto-PEEP’ten kaçın: uzun ekspiryum zamanı, düşük frekans.',
+        {sum:'NIV; Varyant B’de NIV başarısız → entübasyon. Uzun Te ayarı, oto-PEEP takibi',claims:['vent_settings']},
+        [ d('long_te','Uzun ekspiryum zamanı / düşük frekans','safe'),
+          d('short_te','Kısa ekspiryum / yüksek frekans ayarla','trap','Ekspiryum zamanı yetersizse hava hapsi → oto-PEEP → venöz dönüş düşer, hipotansiyon/barotravma.',true) ],
+        {phase:2}) ],
+   handoff:{ status:['NIV ile düzeliyor (pH yükseliyor)','Varyant B: NIV başarısız, invazif ventilasyon','Kötüleşen asidoz / bilinç bulanıklığı'],
+     alarm:['Düşen pH / yükselen pCO2 (NIV yetersiz)','Ani hipotansiyon (oto-PEEP)','Bilinç bulanıklığı (CO2 narkozu)'] } },
+
+ 4:{ id:4, nick:'Hipertansif Kriz & Görme Bulanıklığı', path:'ACİL → FND → KS/NRO → OSK/EKO',
+   complaint:'52Y erkek, şiddetli baş ağrısı ve bulanık görme; ölçülen KB 225/135 mmHg.',
+   dxTitle:'Malign (Acil) Hipertansiyon — Hedef Organ Hasarı', dxWords:['malign','hedef organ','ensefalopati'], truthDom:'neuro',
+   stations:[
+     s('ACİL','hemodynamic','Triyaj & KB Yönetimi','Hipertansif acil. İlk saat hedefi?',
+        {sum:'KB 225/135; baş ağrısı + görme bulanıklığı; hedef organ değerlendirmesi başlat',claims:['htn_emergency']},
+        [ d('titrate','Kontrollü IV titrasyon (ilk saat %15–20 düşür)','safe'),
+          d('crash','KB’yi ilk saatte 120/80’e indir (>%25)','trap','Ani >%25 düşüş serebral/renal/koroner otoregülasyon sınırını aşar → iskemi. İlk saat %15–20 hedefle.',true) ]),
+     s('FND','neuro','Fundoskopi','Hipertansif retinopati evresini ve diski değerlendir.',
+        {sum:'AV çentiklenme, alev kanamalar, pamuk-atığı, +3.5 D disk ödemi (Evre IV)',claims:['grade4_retinopathy','papilledema']},
+        [ d('view','Göz dibini incele','safe'),
+          d('lp_pre_ct','Papilödem varken BT öncesi LP','trap','Papilödem → kafa içi basınç; BT’siz LP herniasyon riski.',false) ]),
+     s('NRO','neuro','Nörolojik Muayene','Difüz tutulum mu, fokal defisit mi? Yürüyüş/refleks/Babinski ile ayır.',
+        {sum:'Difüz ensefalopati bulguları; fokal defisit/Babinski ile inme ayrımı yapıldı',claims:['encephalopathy_vs_stroke']},
+        [ d('exam','Yürüyüş/refleks/Babinski değerlendir','safe') ]),
+     s('EKO','hemodynamic','Oskültasyon / Eko','Kalp yükü ve akciğer ödemi.',
+        {sum:'S4 galo, sol ventrikül hipertrofisi; akciğer ödemi açısından değerlendirildi',claims:['lvh','pulm_edema']},
+        [ d('echo','S4/LVH/akciğer ödemi değerlendir','safe') ]) ],
+   handoff:{ status:['Kontrollü titrasyonla KB hedefte, organ hasarı stabil','Devam eden ensefalopati/organ hasarı','Nörolojik kötüleşme (inme?)'],
+     alarm:['Yeni fokal defisit (inme)','Göğüs ağrısı / dispne (diseksiyon / akciğer ödemi)','İdrar çıkışında düşme (renal)'] } },
+
+ 5:{ id:5, nick:'Post-op Senkop & Taşikardi', path:'ACİL → OSK → EKG → EKO/POCUS → VNT',
+   complaint:'71Y kadın, kalça protezi sonrası 3. gün ani nefes darlığı ve bayılma.',
+   dxTitle:'Masif Pulmoner Emboli + Obstrüktif (Sağ Kalp) Şok', dxWords:['pulmoner emboli','obstrüktif şok','mcconnell'], truthDom:'hemodynamic',
+   stations:[
+     s('ACİL','hemodynamic','Triyaj & Pretest Olasılık','Yüksek Wells skoru + instabilite.',
+        {sum:'Yüksek Wells; takipne, hipoksi, hipotansiyon',claims:['high_wells']},
+        [ d('treat','Yüksek olasılık + instabilite → ampirik antikoagülasyon/görüntüleme','safe'),
+          d('wait_dimer','Önce D-dimer sonucunu bekle, tedaviyi geciktir','trap','Yüksek pretest olasılıkta D-dimer dışlamaz; instabil hastada tedaviyi geciktirmek ölümcül.',true) ]),
+     s('OSK','respiratory','Oskültasyon','Dispne + hipoksemiye rağmen akciğer sesleri?',
+        {sum:'Akciğer sesleri büyük ölçüde TEMİZ, buna rağmen belirgin hipoksemi (V/Q uyumsuzluğu)',claims:['clear_lungs_hypoxia']},
+        [ d('listen','Dinle & kaydet','safe') ]),
+     s('EKG','rhythm','12-Derivasyon EKG','Sağ kalp zorlanma paterni.',
+        {sum:'Sinüs taşikardisi + S1Q3T3 + V1–V3 RV strain (T negatifliği)',claims:['rv_strain']},
+        [ d('read','RV strain olarak yorumla','safe'),
+          d('ant_stemi','Ön duvar STEMI sanıp CathLab’a yolla','trap','V1–V3 T negatifliği RV strain’dir; ön duvar STEMI sanıp kateter → yanlış yol, tedavi gecikmesi.',true) ]),
+     s('EKO','hemodynamic','Eko / POCUS','Sağ kalp yükü ve tamponad dışlaması.',
+        {sum:'Dilate hipokinetik RV, D-sign, McConnell; tamponad YOK → obstrüktif şok PE kaynaklı',claims:['rv_dilation','tamponade_excluded']},
+        [ d('pocus','POCUS: RV / D-sign / tamponad','safe') ]),
+     s('VNT','hemodynamic','Ventilatör / Hemodinami','Sağ ventrikülü koru.',
+        {sum:'Gerekirse düşük PEEP, dikkatli sıvı; reperfüzyon (tromboliz) kararı',claims:['rv_protective']},
+        [ d('careful','Düşük PEEP + ölçülü sıvı, RV koru','safe'),
+          d('fluid_peep','Agresif litrelerce IV sıvı / yüksek PEEP (≥12)','trap','Obstrüktif RV şokta aşırı sıvı RV’yi daha da gerer; yüksek PEEP venöz dönüşü keser → hemodinamik kollaps.',true) ]) ],
+   handoff:{ status:['Reperfüzyon/antikoagülasyon sonrası stabilize','Obstrüktif şok sürüyor — destek','Kardiyak arrest riski / kötüleşme'],
+     alarm:['Düşen KB + artan taşikardi (RV yetmezliği)','Senkop tekrarı','SpO2 düşüşü'] } },
+
+ 6:{ id:6, nick:'Kronik Otoreden Ataksi ve Diplopiye', path:'OTO → NRO → KS/FND → ACİL',
+   complaint:'29Y erkek, aylardır kötü kokulu kulak akıntısı; son günlerde baş ağrısı ve dengesizlik.',
+   dxTitle:'Kolesteatom → Otojenik Serebellar Apse + KİBAS', dxWords:['kolesteatom','apse','serebellar','KİBAS'], truthDom:'neuro',
+   stations:[
+     s('OTO','neuro','Otoskopi','Kulak zarını değerlendir.',
+        {sum:'Pars flaccida (attik) retraksiyon cebi + kolesteatom; marjinal perforasyon',claims:['cholesteatoma']},
+        [ d('view','Otoskopik inceleme','safe'),
+          d('aminoglycoside','Perfore zara ototoksik aminoglikozid damla','trap','Perfore/marjinal zarda ototoksik aminoglikozidli damla iç kulağa geçer → kalıcı işitme/denge kaybı.',true),
+          d('discharge','Basit otit diye taburcu et','trap','Kolesteatom + nörolojik bulgu taburcu edilemez; intrakraniyal yayılım atlanır.',false) ]),
+     s('NRO','neuro','Nörolojik Muayene','Yürüyüş, tandem, Romberg, refleks ile koordinasyonu değerlendir.',
+        {sum:'Geniş tabanlı ataksi, tandem bozuk, sarkaç refleks; Romberg gözler açıkken de bozuk (serebellar)',claims:['cerebellar_ataxia']},
+        [ d('exam','Serebellar muayene','safe') ]),
+     s('FND','neuro','Fundoskopi / Kraniyal Sinir','KİBAS bulguları.',
+        {sum:'Papilödem (+disk ödemi); KS: CN VI abdüksiyon kısıtlılığı (yalancı lokalizan)',claims:['papilledema','cn6_palsy']},
+        [ d('view','Fundus + CN VI değerlendir','safe'),
+          d('lp_fever','Ateş var diye görüntüleme öncesi LP','trap','Papilödem/kitle (apse) varken LP → herniasyon kilidi. Önce kontrastlı görüntüleme.',true) ]),
+     s('ACİL','neuro','Acil Yönetim & Devir','Definitif tedavi yolu.',
+        {sum:'Kontrastlı BT/MR; üçlü IV antibiyotik (seftriakson+vankomisin+metronidazol); acil cerrahi drenaj (KBB-NŞR)',claims:['definitive_plan']},
+        [ d('image_abx','Kontrastlı görüntüleme + üçlü antibiyotik + cerrahi devir','safe') ]) ],
+   handoff:{ status:['Görüntüleme + antibiyotik başlandı, cerrahi drenaj planlandı','Apse büyüyor / KİBAS artıyor','Bilinç kötüleşmesi / herniasyon riski'],
+     alarm:['Bilinç düzeyinde düşme (KİBAS/herniasyon)','Yeni pupil asimetrisi','Nöbet'] } }
 };
 
-var S = DuctusCore.open({ patientId:SEED.patientId, seed:SEED, forceSeed: qs.get('resume')!=='1' });
-window.ChainSession = S;
+/* =============================== DURUM / MOTOR =============================== */
+var CC={ chainId:null, chain:null, variant:'A', level:'student', idx:0, done:{}, flags:[], handoff:{}, S:null, booted:false };
 
-// durum: tamamlanan istasyonlar, kararlar, uyarılar
-var CH = { station:'triage', done:{}, decisions:{}, flags:[], nitrateGiven:false, pocusBeforeCath:false, cathDone:false, postPciEcgDone:false, culpritCorrect:null, level:LEVEL, handoff:{} };
-function logFlag(type,msg,kind){ CH.flags.push({type:type,msg:msg,kind:kind,atSimMs:S.simNow()}); }
+function openSession(){ CC.S=DuctusCore.open({ patientId:'chain'+CC.chainId+'-'+CC.variant+'-'+Date.now(), forceSeed:true,
+    seed:{ demographics:{}, revisions:{coronary:0,rhythm:0,hemodynamic:0,respiratory:0,neuro:0}, truth:{dx:CC.chain.dxTitle} } }); }
 
-// ---- BroadcastChannel: CathLab'dan gelen PCI sonucu ----
-S.on('state', function(){ renderVitals(); });
-S.on('evidence', function(){ renderEvidence(); renderVitals(); });
-// CathLab chain modundan PCI sonucu geldiğinde (DeployStent zaten state'i günceller)
-S.on('lifecycle', function(d){ /* ileride */ });
-
-// =====================================================================
-//  RENDER: vitaller, kanıt, istasyon durumları
-// =====================================================================
-function renderVitals(){
-  var st=S.getState(), v=st.vitals;
-  var ecgDone = S.getEvidence().some(function(e){return e.modality==='ECG12';});
-  var dxTag = (ecgDone && st.pathology.wall) ? st.pathology.wall.toUpperCase()+' STEMI' : 'Akut Göğüs Ağrısı — Triyaj';
-  $('pWho').innerHTML = st.demographics.name+' · '+st.demographics.age+' '+st.demographics.sex+' <small>· '+dxTag+'</small>';
-  $('vHr').textContent=Math.round(v.hr); $('vBp').textContent=Math.round(v.sbp)+'/'+Math.round(v.dbp);
-  $('vMap').textContent=Math.round(v.map); $('vMap').className='v'+(v.map<65?' bad':''); $('vSpo2').textContent=Math.round(v.spo2); $('vRr').textContent=Math.round(v.rr);
-  $('vBp').className='v'+(v.sbp<90?' bad':'');
+function boot(chainId,variant,level){ CC.chainId=chainId; CC.chain=CHAINS[chainId]; CC.variant=variant||'A'; CC.level=level||CC.level;
+  CC.idx=0; CC.done={}; CC.flags=[]; CC.handoff={}; CC.booted=true; openSession();
+  $('selOverlay').classList.remove('open'); $('jury').classList.remove('open');
+  $('chainTitle').textContent='Zincir #'+chainId+' · '+CC.chain.nick+'  ·  '+CC.chain.path;
+  $('varChip').style.display=''; $('varB').textContent=CC.variant;
+  [].forEach.call($('lvlSeg').children,function(b){ b.classList.toggle('on',b.dataset.lvl===CC.level); });
+  renderRail(); renderStation(0); toast('Zincir #'+chainId+' başladı — tanı öncesi yalnız başvuru yakınması gösterilir.','good');
 }
-function fmtClock(ms){ var s=Math.floor(ms/1000); return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); }
-function renderEvidence(){
-  var list=$('evList'); var evs=S.getEvidence(); if(!evs.length){ list.innerHTML='<div style="font-size:11px;color:var(--ink-3)">Henüz kanıt toplanmadı.</div>'; return; }
-  list.innerHTML = evs.slice().reverse().map(function(e){
-    var stale=S.isStale(e); var tag = !e.quality.assessable?'<span class="tag na">DEĞERLENDİRİLEMEDİ</span>':stale.stale?'<span class="tag hist">TARİHSEL</span>':'<span class="tag cur">GÜNCEL</span>';
-    return '<div class="evc"><div class="top"><span class="md">'+modName(e.modality)+'</span>'+tag+'</div><div class="sm">'+e.summary+'</div><div class="tm">T+'+fmtClock(e.acquiredAtSimMs)+(stale.stale?' · '+stale.staleAreas.join(',')+' değişti':'')+'</div></div>';
-  }).join('');
-}
-function modName(m){ return {ECG12:'12-Derivasyon EKG',angiography:'Koroner Anjiyografi',echo:'Eko / POCUS',triage:'Triyaj Değerlendirme','post-pci-ecg':'Post-PCI EKG'}[m]||m; }
-function markStation(stn,txt,done){ var el=$('s-'+stn); if(el) el.textContent=txt; if(done){ CH.done[stn]=true; document.querySelector('.station[data-stn='+stn+']').classList.add('done'); } }
+function stationDom(i){ return CC.chain.stations[i].dom; }
+function isStaleEv(ev){ try{ return CC.S.isStale(ev).stale; }catch(e){ return false; } }
 
-// =====================================================================
-//  İSTASYONLAR
-// =====================================================================
-var STAGE={
- triage:function(){
-  var st=S.getState(); var rv=st.pathology.rvInvolvement;
-  return '<div class="panelttl">🚑 Acil Değerlendirme</div><div class="panelsub">Kapı anı — ilk değerlendirme, ilaç ve triyaj kararları.</div>'+
-  '<div class="card"><h3>Başvuru</h3><p>71Y erkek, 40 dk önce başlayan baskı tarzı retrosternal göğüs ağrısı; bulantı ve soğuk terleme eşlik ediyor. Muayenede soluk ve terli; nabız yavaş ve düzenli, kan basıncı sınırda, akciğerler bazallerde temiz, juguler venöz dolgunluk hafif artmış. İlk değerlendirme ve stabilizasyon kararlarını verin.</p>'+
-  '<div class="actions">'+
-   '<button onclick="CHAIN.act(\'aspirin\')" id="a-aspirin">Aspirin 300 mg çiğnet</button>'+
-   '<button onclick="CHAIN.act(\'heparin\')" id="a-heparin">Antikoagülan (heparin)</button>'+
-   '<button onclick="CHAIN.act(\'nitrat\')" id="a-nitrat">Dilaltı Nitrat</button>'+
-   '<button onclick="CHAIN.act(\'fluid\')" id="a-fluid">IV sıvı bolus</button>'+
-  '</div>'+
-  '<div id="triageFlags"></div></div>'+
-  '<div class="card"><h3>Sonraki adım</h3><p>Tanıyı doğrulamak ve suçlu bölgeyi lokalize etmek için ilk basamak hangi tetkik? Reperfüzyonu geciktirme.</p>'+
-   '<div class="actions"><button class="pri" onclick="CHAIN.go(\'ecg\')">12-Derivasyon EKG Çek →</button></div></div>';
- },
- ecg:function(){
-  return '<div class="panelttl">💓 12-Derivasyon EKG</div><div class="panelsub">İskemik duvarı ve olası suçlu damarı tanı.</div>'+
-  '<div class="card"><h3>Edinim</h3><canvas class="ecg" id="ecgCanvas" height="220"></canvas>'+
-   '<div class="actions"><button class="pri" onclick="CHAIN.acquireECG()" id="a-ecg">EKG Çek & Kaydet</button>'+
-   '<button onclick="CHAIN.act(\'v4r\')" id="a-v4r">Sağ prekordiyal (V4R) ekle</button></div></div>'+
-  '<div class="card" id="ecgQ" style="display:none"><h3>Suçlu bölge / damar?</h3>'+
-   '<div class="opts" id="culpritOpts">'+
-    optRow('culprit','rca','İnferior STEMI (DII-DIII-aVF ↑) — suçlu <b>dominant RCA</b>')+
-    optRow('culprit','lad','Anteriyor STEMI (V1-V4 ↑) — suçlu LAD')+
-    optRow('culprit','lcx','Lateral STEMI (I-aVL-V5-V6) — suçlu Cx')+
-   '</div>'+
-   '<div class="actions"><button class="pri" onclick="CHAIN.submitCulprit()">Onayla</button></div><div id="ecgFlags"></div></div>';
- },
- echo:function(){
-  var st=S.getState();
-  return '<div class="panelttl">🫀 Eko / POCUS</div><div class="panelsub">Yatak başı ultrason — endikasyon zamanlaması önemlidir.</div>'+
-  '<div class="card"><h3>POCUS</h3><div class="pocus" id="pocusView"><span style="font-size:11px;color:var(--ink-3)">POCUS çekilmedi</span></div>'+
-   '<div class="actions"><button class="pri" onclick="CHAIN.acquirePOCUS()" id="a-pocus">POCUS Çek & Kaydet</button>'+
-   '<button onclick="window.open(\'eko/\',\'_blank\',\'noopener\')">Tam 3D Eko modülünü aç</button></div>'+
-   '<div id="echoFlags"></div></div>';
- },
- cath:function(){
-  var resident = CH.level==='resident';
-  var st=S.getState();
-  return '<div class="panelttl">🩻 CathLab — Reperfüzyon</div><div class="panelsub">'+(resident?'Girişimsel mod: işlemi bizzat yapın.':'TUS modu: işlem ekibine devredin, sonucu değerlendirin.')+'</div>'+
-  '<div class="card"><h3>Durum</h3><p>Suçlu: <b>dominant RCA</b>, '+(st.pathology.stented?'<span style="color:#8fe3bf">stentlendi — TIMI '+st.pathology.timi+(st.pathology.noReflow?' · no-reflow':'')+'</span>':'TIMI 0 oklüzyon, reperfüzyon bekliyor')+'.</p>'+
-   '<div class="actions">'+
-    (resident
-      ? '<button class="pri" onclick="CHAIN.openCathLab()">CathLab İstasyonunu Aç (yeni sekme) →</button><button onclick="CHAIN.simCath()">Sonucu bu sekmede simüle et</button>'
-      : '<button class="pri" onclick="CHAIN.simCath()">İşlem ekibine devret (primer PCI) →</button>')+
-   '</div><div id="cathFlags"></div></div>'+
-  '<div class="card" id="postPciCard" style="display:'+(st.pathology.stented?'block':'none')+'"><h3>İşlem sonrası yeniden değerlendirme</h3><p>Reperfüzyon sonrası yeni 12-derivasyon EKG — ST yanıtı ve ritim.</p>'+
-   '<div class="actions"><button class="pri" onclick="CHAIN.postPciECG()" id="a-postecg">Post-PCI EKG Çek →</button></div><div id="postPciFlags"></div></div>';
- },
- handoff:function(){
-  var evs=S.getEvidence();
-  var evOpts = evs.map(function(e){ var stale=S.isStale(e); return '<label><input type="checkbox" name="ho-ev" value="'+e.id+'"><span>'+modName(e.modality)+' <span class="tm mono" style="color:var(--ink-3)">T+'+fmtClock(e.acquiredAtSimMs)+'</span> — '+e.summary+(stale.stale?' <span class="tag hist">TARİHSEL</span>':' <span class="tag cur">GÜNCEL</span>')+'</span></label>'; }).join('');
-  return '<div class="panelttl">📋 Yapılandırılmış Hasta Devri (Handoff)</div><div class="panelsub">Serbest metin değil — kararlarınızı toplanan kanıtlara bağlayın.</div>'+
-  '<div class="card"><h3>1) Güncel klinik durum nedir?</h3><div class="opts">'+
-    optRow('ho-status','reperfused','Suçlu RCA açıldı (TIMI 3), reperfüze — reperfüzyon ritmi/bradikardi izleniyor')+
-    optRow('ho-status','occluded','Damar hâlâ tıkalı / reperfüzyon sağlanamadı')+
-    optRow('ho-status','noreflow','Epikardiyal açık ama no-reflow (doku perfüzyonu bozuk)')+
-    optRow('ho-status','shock','Post-op hipotansiyon / efüzyon şüphesi — hemodinamik instabil')+
-  '</div></div>'+
-  '<div class="card"><h3>2) Bunu hangi GÜNCEL kanıt destekliyor?</h3><p style="font-size:11px;color:var(--ink-3);margin-bottom:6px">Müdahale öncesi eski EKG/anjiyoyu güncel kanıt diye bağlamayın.</p><div class="opts">'+evOpts+'</div></div>'+
-  '<div class="card"><h3>3) Henüz doğrulanmamış belirsizlik nedir?</h3><div class="opts">'+
-    optRow('ho-unc','tissue','Doku düzeyi reperfüzyon (miyokardiyal blush) tam doğrulanmadı')+
-    optRow('ho-unc','lv','LV fonksiyonu / duvar hareketi henüz değerlendirilmedi')+
-    optRow('ho-unc','none','Belirsizlik yok')+
-  '</div></div>'+
-  '<div class="card"><h3>4) Takipte hangi bulgu acil yeniden değerlendirme gerektirir?</h3><div class="opts">'+
-    optRow('ho-trig','hypo','Yeni hipotansiyon / JVD → RV infarkt veya tamponad; acil POCUS')+
-    optRow('ho-trig','st','ST elevasyonunun tekrar yükselmesi → reoklüzyon')+
-    optRow('ho-trig','brady','Kötüleşen bradikardi/AV blok → geçici pace')+
-  '</div></div>'+
-  '<div class="actions"><button class="pri" onclick="CHAIN.submitHandoff()">Devri Tamamla & Zincir Jürisi →</button></div>';
- }
+function renderRail(){ var r=$('rail'), h='<h4>İstasyon Zinciri</h4>'; var lastPhase=null;
+  CC.chain.stations.forEach(function(st,i){ if(st.phase&&st.phase!==lastPhase){ h+='<div class="phasebar">Faz '+st.phase+'</div>'; lastPhase=st.phase; }
+    var cls='station'+(i===CC.idx?' cur':'')+(CC.done[i]?' done':'');
+    h+='<div class="'+cls+'" data-i="'+i+'"><div class="ic">'+st.mod+'</div><div><div class="nm">'+st.title+'</div><div class="st">'+(CC.done[i]?'tamamlandı':MODNAME[st.mod]||st.mod)+'</div></div></div>'; });
+  h+='<div class="phasebar">Kapanış</div><div class="station" data-i="handoff"><div class="ic">📋</div><div><div class="nm">Hasta Devri</div><div class="st">4 yapılandırılmış soru + jüri</div></div></div>';
+  r.innerHTML=h;
+  [].forEach.call(r.querySelectorAll('.station'),function(el){ el.onclick=function(){ var i=el.dataset.i; if(i==='handoff'){ if(allStationsDone()) renderHandoff(); else toast('Önce istasyonları tamamlayın.','warn'); } else renderStation(+i); }; });
+}
+function allStationsDone(){ return CC.chain.stations.every(function(_,i){ return CC.done[i]; }); }
+
+function renderStation(i){ CC.idx=i; renderRail(); var st=CC.chain.stations[i], p=$('panel');
+  var href=HREF[st.mod];
+  var h='<div class="panelttl">'+st.title+'</div>'+
+    '<div class="panelsub"><b>Başvuru:</b> '+CC.chain.complaint+'<br>'+st.prompt+'</div>';
+  // modül aç + inceleme
+  h+='<div class="card"><h3>'+(MODNAME[st.mod]||st.mod)+' İstasyonu</h3>';
+  h+='<div class="actions">';
+  if(href) h+='<button class="pri" onclick="openModule(\''+st.mod+'\','+i+')">↗ '+MODNAME[st.mod]+' simülatörünü aç (yeni sekme)</button>';
+  if(st.ev) h+='<button id="cap-'+i+'" onclick="captureEv('+i+')">🔎 İncele &amp; Kanıt Kaydet</button>';
+  h+='</div>';
+  if(!href) h+='<div class="hint">Bu modalite yatak-başı inceleme olarak bu kart içinde değerlendirilir.</div>';
+  h+='<div id="evbox-'+i+'"></div></div>';
+  // klinik karar
+  if(st.decisions&&st.decisions.length){ h+='<div class="card"><h3>Klinik Karar</h3><div class="actions" id="dec-'+i+'">';
+    st.decisions.forEach(function(dec){ h+='<button class="'+(dec.kind==='trap'?'trap ':'')+'" id="d-'+i+'-'+dec.id+'" onclick="decide('+i+',\''+dec.id+'\')">'+dec.label+'</button>'; });
+    h+='</div><div id="decflags-'+i+'"></div></div>'; }
+  // ilerleme
+  h+='<div class="actions"><button class="pri" onclick="nextStation('+i+')">Bu istasyonu tamamla →</button></div>';
+  p.innerHTML=h; renderEvBox(i); renderDecFlags(i);
+}
+function renderEvBox(i){ var box=$('evbox-'+i); if(!box)return; var st=CC.chain.stations[i]; if(!st.ev)return;
+  if(CC.done['ev'+i]){ var evObj=CC.capturedEv&&CC.capturedEv[i]; var stale=evObj?isStaleEv(evObj):false;
+    box.innerHTML='<div class="evrow"><span>'+st.ev.sum+'</span><span class="tag '+(stale?'stale':'fresh')+'">'+(stale?'TARİHSEL':'GÜNCEL')+'</span></div>'; }
+  else box.innerHTML='<div class="hint">Kanıt henüz kaydedilmedi.</div>';
+}
+function renderDecFlags(i){ var box=$('decflags-'+i); if(!box)return; var mine=CC.flags.filter(function(f){return f.station===i;});
+  box.innerHTML=mine.map(function(f){ return '<div class="flag '+(f.kind==='trap'?'red':f.kind==='safe'?'green':'amber')+'">'+f.msg+'</div>'; }).join(''); }
+
+window.openModule=function(mod,i){ var href=HREF[mod]; if(!href){ toast('Bu modalite inline değerlendirilir.','warn'); return; }
+  var url=href+(href.indexOf('?')<0?'?':'&')+'chain=1&chainId='+CC.chainId+'&pid='+encodeURIComponent(CC.S.getState().patientId);
+  window.open(url,'_blank','noopener'); toast(MODNAME[mod]+' yeni sekmede açıldı — gerçek kanıt üretip buraya dönün.','good'); };
+
+window.captureEv=function(i){ var st=CC.chain.stations[i]; if(!st.ev||CC.done['ev'+i])return;
+  CC.capturedEv=CC.capturedEv||{}; var rec=CC.S.addEvidence({ modality:st.mod, summary:st.ev.sum, claims:st.ev.claims, dependsOn:{} });
+  CC.capturedEv[i]=rec; CC.done['ev'+i]=true; var b=$('cap-'+i); if(b){b.classList.add('done');b.textContent='✓ Kanıt kaydedildi';}
+  renderEvBox(i); toast('Kanıt kaydedildi: '+MODNAME[st.mod],'good'); };
+
+window.decide=function(i,decId){ var st=CC.chain.stations[i], dec=st.decisions.find(function(x){return x.id===decId;}); if(!dec)return;
+  var b=$('d-'+i+'-'+decId);
+  if(dec.kind==='trap'){ logFlag(i,'trap','🔒 GÜVENLİK KİLİDİ — '+dec.label+': '+dec.lock, dec.critical, decId);
+    if(b){ b.style.borderColor='rgba(196,86,95,.6)'; b.style.color='#e88b92'; } toast('🔒 Kontrendikasyon engellendi: '+dec.label,'bad'); }
+  else if(dec.kind==='safe'){ logFlag(i,'safe','✓ Uygun karar: '+dec.label, false, decId); if(b)b.classList.add('done'); }
+  else { logFlag(i,'neutral',dec.label+' uygulandı.', false, decId); }
+  renderDecFlags(i);
 };
-function optRow(name,val,html){ return '<label onclick="CHAIN.pick(this)"><input type="radio" name="'+name+'" value="'+val+'"><span>'+html+'</span></label>'; }
+function logFlag(station,kind,msg,critical,decId){ CC.flags.push({station:station,kind:kind,msg:msg,critical:!!critical,decId:decId,mod:CC.chain.stations[station]?CC.chain.stations[station].mod:null}); }
 
-// =====================================================================
-//  ETKİLEŞİM
-// =====================================================================
-var CHAIN = {
-  go:function(stn){ CH.station=stn; document.querySelectorAll('.station').forEach(function(s){s.classList.toggle('on',s.dataset.stn===stn);}); $('stage').innerHTML=STAGE[stn](); afterRender(stn); },
-  pick:function(lbl){ var grp=lbl.parentElement.querySelectorAll('label'); grp.forEach(function(x){x.classList.remove('sel');}); lbl.classList.add('sel'); lbl.querySelector('input').checked=true; },
-  act:function(a){
-    var st=S.getState();
-    if(a==='aspirin'){ S.dispatch({type:'AdministerDrug',payload:{name:'Aspirin 300mg',area:'coronary'}}); CH.decisions.aspirin=true; $('a-aspirin').disabled=true; $('a-aspirin').textContent='✓ Aspirin verildi'; }
-    else if(a==='heparin'){ S.dispatch({type:'AdministerDrug',payload:{name:'Heparin',area:'coronary'}}); CH.decisions.heparin=true; $('a-heparin').disabled=true; $('a-heparin').textContent='✓ Heparin verildi'; }
-    else if(a==='nitrat'){ CH.nitrateGiven=true; CH.decisions.nitrat=true;
-      // RV tutulumunda nitrat → ani hipotansiyon
-      S.dispatch({type:'AdministerDrug',payload:{name:'Dilaltı nitrat',area:'hemodynamic',vitals:{sbp:72,dbp:48,map:56},bump:['hemodynamic']}});
-      logFlag('NITRATE_IN_RV','Sağ ventrikül tutulumunda nitrat → preload düşüşü ve ani hipotansiyon (SBP 72). İnferior/RV STEMI\'de nitrat görecelidir/kontrendike.','bad');
-      $('triageFlags').innerHTML='<div class="flag bad">⚠ Nitrat sonrası ani hipotansiyon (SBP 72) — RV tutulumunda nitrattan kaçınılmalıydı. IV sıvı ile toparlanır.</div>';
-      $('a-nitrat').disabled=true; toast('⚠ RV infarktında nitrat → hipotansiyon'); }
-    else if(a==='fluid'){ S.dispatch({type:'AdministerDrug',payload:{name:'IV sıvı bolus',area:'hemodynamic',vitals:{sbp:Math.min(110,st.vitals.sbp+22),map:Math.min(80,st.vitals.map+14)},bump:['hemodynamic']}}); $('a-fluid').disabled=true; $('a-fluid').textContent='✓ Sıvı verildi'; CH.decisions.fluid=true; }
-    else if(a==='v4r'){ CH.decisions.v4r=true; $('a-v4r').disabled=true; $('a-v4r').textContent='✓ V4R: RV tutulumu teyit'; S.update({pathology:{rvConfirmed:true}}); toast('V4R: ST↑ — sağ ventrikül infarktı teyit'); }
-    renderVitals();
-  },
-  acquireECG:function(){
-    var st=S.getState(); var pat = st.pathology.stented ? 'ST gerileme' : 'DII-DIII-aVF ST elevasyonu, I-aVL resiprok çökme';
-    drawECG(st.pathology.stented?'resolved':'inferior');
-    var ev=S.addEvidence({modality:'ECG12', summary:'İnferior STEMI paterni: '+pat, quality:{assessable:true,regionsSeen:['II','III','aVF']}});
-    CH.decisions.ecgDone=true; markStation('ecg','çekildi',true); $('ecgQ').style.display='block'; $('a-ecg').disabled=true; $('a-ecg').textContent='✓ EKG kaydedildi'; renderEvidence();
-    toast('12-derivasyon EKG kaydedildi (GÜNCEL kanıt)');
-  },
-  submitCulprit:function(){
-    var v=(document.querySelector('input[name=culprit]:checked')||{}).value;
-    if(!v){ toast('Bir seçenek işaretleyin'); return; }
-    CH.culpritCorrect = (v==='rca');
-    $('ecgFlags').innerHTML = CH.culpritCorrect
-      ? '<div class="flag ok">✓ Doğru: İnferior STEMI → dominant RCA. Bradikardi/AV blok ve RV tutulumu beklenir. Hızlı reperfüzyon planı.</div>'
-      : '<div class="flag bad">✗ Yanlış lokalizasyon. DII-DIII-aVF ST elevasyonu inferior duvarı → dominant RCA (veya Cx) gösterir; patern ve klinik uyumsuz.</div>';
-    toast(CH.culpritCorrect?'Doğru suçlu damar':'Suçlu damar yanlış');
-    setTimeout(function(){ document.querySelector('.station[data-stn=cath]'); },10);
-  },
-  acquirePOCUS:function(){
-    var st=S.getState(); var variant=st.pathology.variant; var preCath=!st.pathology.stented;
-    var findings, assessable=true, kind, flag;
-    if(variant==='B' && (st.vitals.sbp<90 || st.pathology.effusion)){
-      findings='Perikardda ince efüzyon + dilate IVC, hiperdinamik RV — hipotansiyon ayırıcı tanısı (efüzyon/RV).'; kind='ok';
-      flag='<div class="flag ok">✓ Endikasyon doğru: hemodinamik instabilitede yatak başı POCUS altın standart (efüzyon/RV/LV hızlı ayrımı).</div>';
-    } else if(preCath){
-      findings='İnferior-bazal hipokinezi; perikard serbest, IVC normal (stabil hasta).'; kind='warn'; CH.pocusBeforeCath=true;
-      logFlag('UNNEEDED_IMAGING','Stabil STEMI\'de reperfüzyon öncesi rutin eko kapı-balon süresini geciktirdi; yönetimi değiştirmez.','warn');
-      flag='<div class="flag warn">⚠ Yönetimi değiştirmeyecek ek görüntüleme reperfüzyonu geciktirdi (kapı-balon ↑). Stabil STEMI\'de önce reperfüzyon.</div>';
-    } else {
-      findings='İnferior duvar hareketinde kısmi düzelme, perikard serbest.'; kind='ok'; flag='';
-    }
-    $('pocusView').innerHTML='<div style="padding:14px;font-size:12px;color:var(--ink-2);line-height:1.6">'+findings+'</div>';
-    // eko klip bağlamı: müdahale öncesi klip "tarihsel/sentetik" olarak işaretlenir
-    var era = st.echoContext.clipEra;
-    var ev=S.addEvidence({modality:'echo', summary:findings+(preCath&&era==='historical'?' (kalibre klip tarihsel kayıt olarak sunuldu)':''), quality:{assessable:assessable,regionsSeen:['RV','perikard','inferior duvar']}});
-    if(flag) $('echoFlags').innerHTML=flag;
-    markStation('echo','çekildi',true); $('a-pocus').disabled=true; renderEvidence();
-  },
-  simCath:function(){
-    var st=S.getState(); if(st.pathology.stented){ toast('İşlem zaten yapıldı'); return; }
-    var variant=st.pathology.variant;
-    // primer PCI: RCA stent → DeployStent (coronary+rhythm revizyonu artar)
-    S.dispatch({type:'DeployStent',payload:{timi:3, noReflow:false}});
-    // reperfüzyon ritmi: bradikardi/AIVR
-    S.update({ vitals:{ hr:46 } });
-    S.addEvidence({modality:'angiography', summary:'Primer PCI: dominant RCA proksimal oklüzyona DES, final TIMI 3.', quality:{assessable:true,regionsSeen:['RCA','PDA','PL']}});
-    if(variant==='B'){
-      // varyant B: işlem sonrası hipotansiyon / efüzyon şüphesi (ezbere tamponad değil)
-      S.update({ vitals:{ sbp:84,dbp:52,map:63 }, pathology:{ effusion:true } });
-      logFlag('POST_PCI_HYPOTENSION','İşlem sonrası hipotansiyon gelişti — efüzyon/RV/kanama ayrımı için POCUS endikasyonu doğdu.','warn');
-      toast('Primer PCI tamam (TIMI 3) · ⚠ işlem sonrası hipotansiyon — POCUS düşün');
-    } else {
-      toast('Primer PCI tamam — RCA TIMI 3, reperfüzyon bradikardisi');
-    }
-    CH.cathDone=true; markStation('cath','PCI yapıldı',true); renderVitals(); renderEvidence(); CHAIN.go('cath');
-  },
-  openCathLab:function(){
-    var st=S.getState();
-    var url='ductuslab-cathlab.html?chain=1&case=3&pid='+encodeURIComponent(st.patientId);
-    window.open(url,'_blank','noopener');
-    toast('CathLab yeni sekmede açıldı — işlemi orada yapın, sonuç bu hastaya canlı yansıyacak');
-    // not: CathLab chain modunda DeployStent'i BroadcastChannel ile yollar → S.on(state) günceller
-  },
-  postPciECG:function(){
-    var st=S.getState(); if(!st.pathology.stented){ toast('Önce reperfüzyon'); return; }
-    drawECGto(null); // sadece kayıt
-    S.addEvidence({modality:'post-pci-ecg', summary:'Post-PCI: inferior ST elevasyonunda gerileme; sinüs bradikardisi (reperfüzyon).', quality:{assessable:true,regionsSeen:['II','III','aVF']}});
-    CH.postPciEcgDone=true; $('postPciFlags').innerHTML='<div class="flag ok">✓ İşlem sonrası GÜNCEL EKG alındı — ST gerilemesi reperfüzyonu destekler. Eski STEMI\'li EKG artık tarihsel kayıttır.</div>';
-    $('a-postecg').disabled=true; renderEvidence(); markStation('cath','PCI + post-EKG',true);
-  },
-  submitHandoff:function(){
-    var status=(document.querySelector('input[name=ho-status]:checked')||{}).value;
-    var unc=(document.querySelector('input[name=ho-unc]:checked')||{}).value;
-    var trig=(document.querySelector('input[name=ho-trig]:checked')||{}).value;
-    var linkedEv=[].slice.call(document.querySelectorAll('input[name=ho-ev]:checked')).map(function(c){return c.value;});
-    if(!status||!unc||!trig||!linkedEv.length){ toast('4 alanı da doldurun (en az 1 kanıt bağlayın)'); return; }
-    CH.handoff={status:status,unc:unc,trig:trig,linkedEv:linkedEv};
-    buildJury();
-  }
+window.nextStation=function(i){ var st=CC.chain.stations[i];
+  // faz/müdahale kırılımı → ilgili alan revizyonu artar, önceki kanıt TARİHSEL olur
+  if(st.phaseBreak){ var dom=st.phaseBreak, cur=CC.S.getRevisions()[dom]; var patch={}; patch[dom]=cur+1; CC.S.update({revisions:patch});
+    toast('⏲ '+(st.phaseLabel||('Revizyon: '+dom))+'','warn'); }
+  CC.done[i]=true; renderRail();
+  var nxt=i+1; if(nxt<CC.chain.stations.length) renderStation(nxt);
+  else if(allStationsDone()) renderHandoff(); else { var firstUndone=CC.chain.stations.findIndex(function(_,k){return !CC.done[k];}); renderStation(firstUndone<0?i:firstUndone); }
 };
-window.CHAIN=CHAIN;
 
-function afterRender(stn){
-  if(stn==='ecg'){ drawECG(S.getState().pathology.stented?'resolved':'inferior'); if(CH.decisions.ecgDone){ $('ecgQ').style.display='block'; } }
-  if(stn==='echo'){ var st=S.getState(); }
+/* =============================== HANDOFF =============================== */
+function renderHandoff(){ CC.idx='handoff'; renderRail(); var ch=CC.chain, p=$('panel');
+  var evs=CC.S.getEvidence();
+  var h='<div class="panelttl">📋 Yapılandırılmış Hasta Devri (Handoff)</div>'+
+    '<div class="panelsub">Serbest metin değil — her yanıtı topladığınız <b>güncel</b> kanıta bağlayın. TARİHSEL kanıt seçerseniz işaretlenir.</div>';
+  // Q1 Güncel Durum
+  h+='<div class="card"><div class="ho-q"><div class="q">1) Güncel Durum</div>'+ch.handoff.status.map(function(o,k){
+     return '<label onclick="hoPick(\'status\','+k+',this)"><input type="radio" name="status"><span>'+o+'</span></label>'; }).join('')+'</div></div>';
+  // Q2 Destekleyen Güncel Kanıt (stale işaretli)
+  h+='<div class="card"><div class="ho-q"><div class="q">2) Devri Destekleyen Güncel Kanıt</div>'+
+     (evs.length?evs.map(function(e){ var stale=CC.S.isStale(e).stale;
+       return '<label onclick="hoPick(\'evidence\',\''+e.id+'\',this)"><input type="radio" name="evidence"><span>'+MODNAME[e.modality]+' — '+e.summary+' <span class="tag '+(stale?'stale':'fresh')+'">'+(stale?'TARİHSEL':'GÜNCEL')+'</span></span></label>'; }).join('')
+      :'<div class="hint">Kanıt kaydedilmemiş.</div>')+'</div></div>';
+  // Q3 Kalan Belirsizlik
+  var unc=['Henüz netleşmeyen ayırıcı tanı var','Tedavi yanıtı izlemde','Komplikasyon riski sürüyor'];
+  h+='<div class="card"><div class="ho-q"><div class="q">3) Kalan Belirsizlik</div>'+unc.map(function(o,k){
+     return '<label onclick="hoPick(\'unc\','+k+',this)"><input type="radio" name="unc"><span>'+o+'</span></label>'; }).join('')+'</div></div>';
+  // Q4 Kötüleşme Alarm Kriteri
+  h+='<div class="card"><div class="ho-q"><div class="q">4) Kötüleşme / Alarm Kriteri</div>'+ch.handoff.alarm.map(function(o,k){
+     return '<label onclick="hoPick(\'alarm\','+k+',this)"><input type="radio" name="alarm"><span>'+o+'</span></label>'; }).join('')+'</div></div>';
+  h+='<div class="actions"><button class="pri" onclick="submitHandoff()">Devri Tamamla &amp; Zincir Jürisi →</button></div>';
+  p.innerHTML=h;
 }
-// istasyon rail tıklama
-document.querySelectorAll('.station').forEach(function(s){ s.addEventListener('click',function(){ CHAIN.go(s.dataset.stn); }); });
-// düzey seçimi
-$('lvlSel').querySelectorAll('button').forEach(function(b){ b.addEventListener('click',function(){ CH.level=b.dataset.lvl; $('lvlSel').querySelectorAll('button').forEach(function(x){x.classList.toggle('on',x===b);}); toast(b.dataset.lvl==='resident'?'Girişimsel mod: CathLab istasyonunu bizzat yapın':'TUS modu: işlemi devredin'); if(CH.station==='cath') CHAIN.go('cath'); }); });
+window.hoPick=function(key,val,el){ CC.handoff[key]=val; var grp=el.parentNode.querySelectorAll('label'); [].forEach.call(grp,function(l){l.classList.remove('sel');}); el.classList.add('sel');
+  if(key==='evidence'){ var ev=CC.S.getEvidence().find(function(e){return e.id===val;}); CC.handoff.evidenceStale=ev?CC.S.isStale(ev).stale:false; } };
 
-// =====================================================================
-//  EKG ÇİZİM (basit 12-derivasyon şeridi)
-// =====================================================================
-function drawECG(pattern){ var c=$('ecgCanvas'); if(!c) return; drawECGto(c,pattern); }
-function drawECGto(c,pattern){ if(!c){ c=$('ecgCanvas'); if(!c) return; }
-  var dpr=Math.min(2,window.devicePixelRatio||1); c.width=c.clientWidth*dpr; c.height=220*dpr; var x=c.getContext('2d'); x.scale(dpr,dpr);
-  var W=c.clientWidth, H=220; x.fillStyle='#05080e'; x.fillRect(0,0,W,H);
-  var leads=['I','II','III','aVR','aVL','aVF','V1','V2','V3','V4','V5','V6']; var cols=6, rows=2, cw=W/cols, rh=H/rows;
-  var stLeads = pattern==='inferior'?{'II':1,'III':1.2,'aVF':1,'I':-0.4,'aVL':-0.5}:{};
-  x.strokeStyle='rgba(95,227,154,.9)'; x.lineWidth=1.3;
-  for(var i=0;i<12;i++){ var cx0=(i%cols)*cw, cy0=Math.floor(i/cols)*rh+rh*0.5; var st=stLeads[leads[i]]||0;
-    x.fillStyle='rgba(159,176,198,.5)'; x.font='9px "JetBrains Mono"'; x.fillText(leads[i],cx0+4,cy0-rh*0.32);
-    x.strokeStyle='rgba(95,227,154,.9)'; x.beginPath();
-    for(var px=0;px<cw-6;px++){ var t=px/(cw-6); var ph=(t*2)%1; var v=qrs(ph,st); var yy=cy0-v*rh*0.3; if(px===0)x.moveTo(cx0+3+px,yy); else x.lineTo(cx0+3+px,yy); }
-    x.stroke();
-  }
-}
-function qrs(ph,st){ var g=function(c,w){return Math.exp(-((ph-c)*(ph-c))/(2*w*w));}; return 0.08*g(0.12,0.018)-0.1*g(0.19,0.006)+1.0*g(0.21,0.009)-0.22*g(0.235,0.007)+0.28*g(0.42,0.05)+st*g(0.3,0.1); }
+window.submitHandoff=function(){ if(CC.handoff.status==null||CC.handoff.evidence==null||CC.handoff.unc==null||CC.handoff.alarm==null){ toast('Dört devir sorusunu da yanıtlayın.','warn'); return; }
+  if(CC.handoff.evidenceStale) logFlag('handoff','trap','🔒 STALE_EVIDENCE_USED — Devri TARİHSEL (süresi geçmiş) kanıta dayandırdınız; faz/müdahale sonrası o alan revize oldu.',true,'stale');
+  buildJury(); };
 
-// =====================================================================
-//  ZİNCİR JÜRİSİ
-// =====================================================================
-function buildJury(){
-  var st=S.getState(); var ho=CH.handoff; var evs=S.getEvidence();
-  var warns=[], good=[];
-  // handoff kanıt tazeliği
-  var staleLinked = ho.linkedEv.filter(function(id){ var e=evs.filter(function(x){return x.id===id;})[0]; return e && S.isStale(e).stale; });
-  if(staleLinked.length){ warns.push({c:'STALE_EVIDENCE_USED', m:'Güncel durum için '+staleLinked.length+' adet TARİHSEL (müdahale öncesi) kanıt bağlandı. Stent sonrası eski EKG/anjiyo güncel kanıt sayılamaz.'}); }
-  else { good.push('Devirde yalnızca güncel (post-PCI) kanıt bağlandı'); }
-  // durum doğruluğu
-  var realStatus = st.pathology.stented ? (st.pathology.effusion||st.vitals.sbp<90?'shock':(st.pathology.noReflow?'noreflow':'reperfused')) : 'occluded';
-  var statusOk = ho.status===realStatus;
-  if(statusOk) good.push('Güncel klinik durum doğru beyan edildi'); else warns.push({c:'STATUS_MISMATCH', m:'Beyan edilen durum ("'+hoStatusText(ho.status)+'") gerçek duruma ("'+hoStatusText(realStatus)+'") uymuyor.'});
-
-  // kategori puanları
-  var c1=40; // Tanı & lokalizasyon
-  if(CH.culpritCorrect) c1+=35; else if(CH.culpritCorrect===false) c1-=10; if(CH.decisions.ecgDone) c1+=15; if(CH.decisions.v4r) c1+=10; c1=clampN(c1);
-  var c2=60; // Acil yönetim & kontrendikasyon
-  if(CH.decisions.aspirin) c2+=12; if(CH.decisions.heparin) c2+=6;
-  if(CH.nitrateGiven) c2-=30; else c2+=12;
-  if(CH.nitrateGiven && CH.decisions.fluid) c2+=8; // kurtarma
-  c2=clampN(c2);
-  var c3=60; // Zamanlama & görüntüleme kararı
-  if(st.pathology.variant==='B'){ var pocusDone=evs.some(function(e){return e.modality==='echo';}); if(pocusDone) c3+=25; else c3-=15; }
-  else { if(CH.pocusBeforeCath) c3-=25; else c3+=20; }
-  if(st.pathology.stented) c3+=10; else c3-=30; // reperfüzyon sağlandı mı
-  c3=clampN(c3);
-  var c4=50; // Kanıt bütünlüğü & devir
-  if(!staleLinked.length) c4+=25; else c4-=30;
-  if(statusOk) c4+=15; else c4-=15;
-  if(CH.postPciEcgDone) c4+=10;
-  if(ho.unc && ho.unc!=='none') c4+=5;
-  c4=clampN(c4);
-  var overall=Math.round(c1*0.25+c2*0.25+c3*0.25+c4*0.25);
-
-  // kritik kilit
-  var crit=[];
-  if(!st.pathology.stented) crit.push('Reperfüzyon sağlanmadı — tıkalı suçlu damarla hasta devredildi');
-  if(st.pathology.effusion && ho.trig!=='hypo' && !evs.some(function(e){return e.modality==='echo'&&!S.isStale(e).stale;})) { /* efüzyon var ama POCUS/takip tetikleyici yok */ crit.push('İşlem sonrası efüzyon/hipotansiyon tanınmadı ve takip tetikleyicisi tanımlanmadı'); }
-  var locked=crit.length>0;
-  var vTxt=locked?'KRİTİK — GÜVENLİ DEVİR SAĞLANMADI':(overall>=85?'MÜKEMMEL ZİNCİR YÖNETİMİ':overall<55?'YETERSİZ — GELİŞTİRİLMELİ':'KABUL EDİLEBİLİR ZİNCİR');
-  var vCls=locked?'crit':(overall>=85?'ok':overall<55?'warn':'ok');
-
-  var cat=function(nm,pc,items){ return '<div class="jcat"><div style="display:flex;justify-content:space-between"><span style="font-weight:600;font-size:12.5px">'+nm+'</span><span class="mono" style="color:var(--accent)">'+pc+'/100</span></div><ul>'+items.map(function(i){return '<li>'+i+'</li>';}).join('')+'</ul></div>'; };
-  $('jurySheet').innerHTML =
-    '<h2>Vaka Zinciri Jürisi</h2><div class="sub">Akut göğüs ağrısından güvenli hasta devrine — karar zinciriniz ve kanıt bütünlüğünüz değerlendirildi (Varyant '+st.pathology.variant+' · '+(CH.level==='resident'?'Girişimsel':'TUS')+').</div>'+
-    '<div class="scoreHead"><div><div class="bigscore">'+overall+'<small>/100</small></div><div style="font-size:10px;color:var(--ink-3)">Tanı %25 · Acil Yönetim %25 · Zamanlama&Görüntüleme %25 · Kanıt&Devir %25</div></div><div class="verdict '+vCls+'">'+vTxt+'</div></div>'+
-    (locked?'<div class="jcat" style="border-color:rgba(216,95,106,.6);background:rgba(216,95,106,.08)"><div style="color:#f1b0b7;font-weight:600;margin-bottom:4px">🔒 Kritik</div><ul>'+crit.map(function(x){return '<li>⚠ '+x+'</li>';}).join('')+'</ul></div>':'')+
-    (warns.length?'<div class="jcat" style="border-color:rgba(216,95,106,.5)"><div style="color:#f1b0b7;font-weight:600;margin-bottom:4px">⚠ Kanıt / Beyan Sorunları</div><ul>'+warns.map(function(w){return '<li><b>'+w.c+'</b> — '+w.m+'</li>';}).join('')+'</ul></div>':'')+
-    (good.length?'<div class="jcat" style="border-color:rgba(89,184,138,.4)"><div style="color:#8fe3bf;font-weight:600;margin-bottom:4px">✓ İyi</div><ul>'+good.map(function(g){return '<li>'+g+'</li>';}).join('')+'</ul></div>':'')+
-    cat('Tanı & Lokalizasyon',c1,['Suçlu damar: '+(CH.culpritCorrect?'doğru (RCA)':'yanlış/eksik'),'12-der EKG: '+(CH.decisions.ecgDone?'çekildi':'eksik')+(CH.decisions.v4r?' · V4R ile RV teyit':'')])+
-    cat('Acil Yönetim & Kontrendikasyon',c2,['Aspirin: '+(CH.decisions.aspirin?'verildi':'eksik'),'Nitrat kararı: '+(CH.nitrateGiven?'⚠ RV tutulumunda nitrat verildi (hipotansiyon)':'doğru — RV\'de nitrattan kaçınıldı')])+
-    cat('Zamanlama & Görüntüleme Kararı',c3,[ st.pathology.variant==='B'?('POCUS (şokta): '+(evs.some(function(e){return e.modality==='echo';})?'uygun — endikasyon doğru':'eksik — instabilitede atlanmamalı')) : ('Reperfüzyon öncesi gereksiz görüntüleme: '+(CH.pocusBeforeCath?'⚠ var (kapı-balon gecikmesi)':'yok')), 'Reperfüzyon: '+(st.pathology.stented?'sağlandı (TIMI '+st.pathology.timi+')':'⚠ sağlanmadı')])+
-    cat('Kanıt Bütünlüğü & Devir',c4,['Devirde tarihsel kanıt kullanımı: '+(staleLinked.length?'⚠ '+staleLinked.length+' adet (STALE_EVIDENCE_USED)':'yok'),'Güncel durum beyanı: '+(statusOk?'doğru':'hatalı'),'Post-PCI yeniden değerlendirme: '+(CH.postPciEcgDone?'yapıldı':'eksik')])+
-    '<div class="jcat"><div style="font-weight:600;margin-bottom:4px">Klinik Not</div><div style="font-size:11.5px;color:var(--ink-2);line-height:1.6">'+chainClinical(st)+'</div></div>'+
-    '<div class="actions" style="margin-top:12px">'+
-      '<button class="bridgebtn" style="background:rgba(95,168,216,.14);border-color:rgba(95,168,216,.45);color:#bfe0f5" onclick="window.open(\'eko/\',\'_blank\')">Eko\'da duvar hareketi</button>'+
-      '<button class="bridgebtn" style="background:rgba(95,168,216,.14);border-color:rgba(95,168,216,.45);color:#bfe0f5" onclick="window.open(\'acil/\',\'_blank\')">Acil Konsol</button>'+
-      '<button class="pri" onclick="restartCase()">Yeni Vaka Zinciri</button>'+
-      '<button onclick="document.getElementById(\'jury\').classList.remove(\'open\')">Kapat</button></div>';
+/* =============================== JÜRİ =============================== */
+function buildJury(){ var ch=CC.chain, flags=CC.flags; var clampN=function(x){return Math.max(0,Math.min(100,Math.round(x)));};
+  var trapHit=flags.filter(function(f){return f.kind==='trap';});
+  var critHit=trapHit.filter(function(f){return f.critical;});
+  var safeHit=flags.filter(function(f){return f.kind==='safe';});
+  var evs=CC.S.getEvidence();
+  // 1 Kanıt Bütünlüğü
+  var c1=60+Math.min(evs.length,CC.chain.stations.length)*10; if(CC.handoff.evidenceStale)c1-=40; c1=clampN(c1);
+  // 2 Tuzak / Güvenlik
+  var c2=100; critHit.forEach(function(){c2-=45;}); trapHit.filter(function(f){return !f.critical;}).forEach(function(){c2-=15;}); c2=clampN(c2);
+  // 3 Klinik Karar & Sıralama
+  var c3=40+safeHit.length*12; if(critHit.length)c3-=20; c3=clampN(c3);
+  // 4 Hasta Devri
+  var c4=55; if(CC.handoff.status!=null)c4+=12; if(CC.handoff.alarm!=null)c4+=12; if(CC.handoff.unc!=null)c4+=11; if(CC.handoff.evidence!=null&&!CC.handoff.evidenceStale)c4+=10; if(CC.handoff.evidenceStale)c4-=25; c4=clampN(c4);
+  var overall=Math.round(c1*0.25+c2*0.3+c3*0.25+c4*0.2);
+  var col=function(v){return v>=75?'#8fe3bf':v>=55?'#d9a441':'#e88b92';};
+  function cat(name,v,notes){ return '<div class="jcat"><div class="r"><span>'+name+'</span><span class="mono" style="color:'+col(v)+'">'+v+'</span></div><div class="bar"><span style="width:'+v+'%;background:'+col(v)+'"></span></div>'+
+    notes.map(function(n){return '<div class="hint">'+n+'</div>';}).join('')+'</div>'; }
+  var fl=''; flags.filter(function(f){return f.kind==='trap';}).forEach(function(f){ fl+='<div class="flag '+(f.critical?'red':'amber')+'">'+f.msg+'</div>'; });
+  if(!trapHit.length) fl+='<div class="flag green">Kritik kontrendikasyon tuzağına düşülmedi.</div>';
+  $('jurySheet').innerHTML='<h2>Zincir #'+ch.id+' Jürisi</h2>'+
+    '<div class="sub">'+ch.nick+' — '+(CC.level==='resident'?'Asistan/Girişimsel':'TUS/Öğrenci')+' · Varyant '+CC.variant+'. Gerçek tanı: <b>'+ch.dxTitle+'</b></div>'+
+    '<div class="jcat" style="border-color:rgba(111,163,200,.3)"><div class="r"><span>Genel Zincir Skoru</span><span class="mono" style="font-size:20px;color:'+col(overall)+'">'+overall+'</span></div></div>'+
+    cat('Kanıt Bütünlüğü (güncellik/modalite)',c1,['Kaydedilen kanıt: '+evs.length+'/'+ch.stations.length, CC.handoff.evidenceStale?'⚠ Devir TARİHSEL kanıta dayandırıldı':'Devir güncel kanıta dayandı'])+
+    cat('Tuzak & Güvenlik',c2,[ critHit.length?('⚠ '+critHit.length+' kritik kontrendikasyon'):'Kritik kontrendikasyondan kaçınıldı', 'Toplam tuzak: '+trapHit.length ])+
+    cat('Klinik Karar & Sıralama',c3,['Uygun karar: '+safeHit.length])+
+    cat('Hasta Devri (Handoff)',c4,['4 soru: '+['status','evidence','unc','alarm'].filter(function(k){return CC.handoff[k]!=null;}).length+'/4 yanıtlandı'])+
+    '<div style="margin-top:12px">'+fl+'</div>'+
+    '<div class="actions" style="margin-top:14px"><button class="pri" onclick="document.getElementById(\'jury\').classList.remove(\'open\')">Kapat</button><button onclick="showSelector()">⇄ Başka Zincir</button></div>';
   $('jury').classList.add('open');
 }
-function hoStatusText(s){ return {reperfused:'reperfüze (TIMI 3)',occluded:'tıkalı/reperfüzyon yok',noreflow:'no-reflow',shock:'hipotansiyon/efüzyon'}[s]||s; }
-function clampN(x){ return Math.max(0,Math.min(100,Math.round(x))); }
-function chainClinical(st){
-  if(!st.pathology.stented) return 'Reperfüzyon sağlanmadan devir yapıldı: RCA oklüzyonu sürerse inferior+RV transmural nekroz, AV blok ve kardiyojenik şok ilerler. Zaman = miyokart.';
-  if(st.pathology.effusion||st.vitals.sbp<90) return 'İşlem sonrası hipotansiyon/efüzyon: ayırıcı tanıda RV infarktı, perikardiyal efüzyon/tamponad, retroperitoneal kanama ve stent trombozu var. Yatak başı POCUS ve hemodinamik destek önceliklidir.';
-  return 'Başarılı primer PCI (RCA TIMI 3). Reperfüzyon bradikardisi/AIVR (Bezold-Jarisch) beklenir, genelde geçici. Epikardiyal TIMI 3 ≠ doku perfüzyonu; takipte LV fonksiyonu ve blush izlenir.';
+
+/* =============================== SEÇİCİ / UI =============================== */
+function showSelector(){ var h='<h2>🩺 6 Entegre Nöbet & Vaka Zinciri</h2><div class="sub">12 modül tam entegre — ductus-core v1.1 ile truth sızmazlığı, alan-bazlı revizyon ve kanıt güncelliği. Mod ve varyant seçin, bir zincir açın. Tanı öncesi spoiler yok.</div>';
+  h+='<div class="actions" style="margin-bottom:6px"><div class="seg" id="selLvl"><button class="'+(CC.level==='student'?'on':'')+'" data-lvl="student">TUS / Öğrenci</button><button class="'+(CC.level==='resident'?'on':'')+'" data-lvl="resident">Asistan / Girişimsel</button></div>'+
+    '<div class="seg" id="selVar"><button class="'+(CC.variant==='A'?'on':'')+'" data-v="A">Varyant A</button><button class="'+(CC.variant==='B'?'on':'')+'" data-v="B">Varyant B</button></div></div>';
+  h+='<div class="selgrid">';
+  Object.keys(CHAINS).forEach(function(k){ var c=CHAINS[k];
+    h+='<div class="selcard" onclick="pickChain('+k+')"><div class="cx">ZİNCİR #'+k+'</div><div class="ct">'+c.nick+'</div><div class="cc">'+c.complaint+'</div><div class="cm">'+c.path+'</div></div>'; });
+  h+='</div>';
+  $('selSheet').innerHTML=h; $('selOverlay').classList.add('open'); $('jury').classList.remove('open');
+  [].forEach.call($('selLvl').children,function(b){ b.onclick=function(){ CC.level=b.dataset.lvl; [].forEach.call($('selLvl').children,function(x){x.classList.toggle('on',x===b);}); }; });
+  [].forEach.call($('selVar').children,function(b){ b.onclick=function(){ CC.variant=b.dataset.v; [].forEach.call($('selVar').children,function(x){x.classList.toggle('on',x===b);}); }; });
 }
+window.pickChain=function(k){ boot(k,CC.variant,CC.level); };
+window.showSelector=showSelector;
 
-window.restartCase=function(){ try{ sessionStorage.removeItem(S.key); localStorage.removeItem(S.key); }catch(e){} location.href='ductuslab-case-chain.html'; };
+function toast(msg,kind){ var host=$('toastHost'); var t=document.createElement('div'); t.className='toast'+(kind?' '+kind:''); t.textContent=msg; host.innerHTML=''; host.appendChild(t);
+  setTimeout(function(){ t.style.opacity='0'; t.style.transition='.4s'; setTimeout(function(){ if(t.parentNode)t.remove(); },420); },3400); }
 
-// =====================================================================
-//  CANLI SAAT + BAŞLAT
-// =====================================================================
-function tick(){ $('simClock').textContent=fmtClock(S.simNow()); requestAnimationFrame(tick); }
-// düzey URL'den
-if(LEVEL==='resident'){ CH.level='resident'; $('lvlSel').querySelectorAll('button').forEach(function(x){x.classList.toggle('on',x.dataset.lvl==='resident');}); }
-$('chainSub').textContent='#1 — Akut Göğüs Ağrısı → Reperfüzyon → Devir · Varyant '+VARIANT;
-renderVitals(); renderEvidence(); CHAIN.go('triage'); tick();
+$('switchBtn').onclick=showSelector;
+$('homeBtn').onclick=function(){ location.href='index.html'; };
+[].forEach.call($('lvlSeg').children,function(b){ b.onclick=function(){ CC.level=b.dataset.lvl; [].forEach.call($('lvlSeg').children,function(x){x.classList.toggle('on',x===b);}); toast(CC.level==='resident'?'Asistan/Girişimsel mod':'TUS/Öğrenci mod'); }; });
+
+var simClockT=Date.now();
+function tick(){ var ms=Date.now()-simClockT; var s=Math.floor(ms/1000); $('simClock').textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); requestAnimationFrame(tick); }
+
+/* =============================== TEST API =============================== */
+window.CC2={
+  chains:function(){ return Object.keys(CHAINS).map(Number); },
+  boot:function(id,variant,level){ boot(id,variant||'A',level||'student'); return true; },
+  // tanı öncesi spoiler denetimi: gösterilen başvuru + istasyon başlıkları dx kelimesi içermemeli
+  // tanı öncesi, her zaman görünen metin: başvuru yakınması + seçici nick + istasyon BAŞLIKLARI (muayene prompt'ları ve tıklama-sonrası geri bildirim öğretimdir, denetim dışı)
+  spoilerCheck:function(id){ var c=CHAINS[id]; var vis=[c.complaint, c.nick].concat(c.stations.map(function(st){return st.title;})).join(' ').toLowerCase();
+    var leak=c.dxWords.filter(function(w){ return vis.indexOf(w.toLowerCase())>=0; }); return {clean:leak.length===0, leaked:leak}; },
+  // kritik tuzağı tetikle → güvenlik kilidi bayrağı dönmeli
+  fireCriticalTrap:function(id){ boot(id,'A','student'); var c=CHAINS[id]; var found=null;
+    c.stations.forEach(function(st,i){ st.decisions.forEach(function(dec){ if(dec.kind==='trap'&&dec.critical&&!found){ renderStation(i); decide(i,dec.id); found={station:i,decId:dec.id}; } }); });
+    var trapFlag=CC.flags.find(function(f){return f.kind==='trap'&&f.critical;});
+    return { fired:!!found, locked:!!trapFlag, msg:trapFlag?trapFlag.msg:null }; },
+  // faz/müdahale → revizyon artışı + eski kanıt TARİHSEL
+  phaseStaleCheck:function(id){ boot(id,'A','student'); var c=CHAINS[id];
+    var pbIdx=c.stations.findIndex(function(st){return st.phaseBreak;}); if(pbIdx<0) return {hasPhase:false};
+    var dom=c.stations[pbIdx].phaseBreak;
+    // phaseBreak'ten ÖNCEki ilk kanıtı yakala
+    var earlyIdx=-1; for(var i=0;i<pbIdx;i++){ if(c.stations[i].ev){ earlyIdx=i; break; } }
+    if(earlyIdx<0) earlyIdx=pbIdx; captureEv(earlyIdx); var earlyEv=CC.capturedEv[earlyIdx];
+    var rev0=CC.S.getRevisions()[dom]; var staleBefore=CC.S.isStale(earlyEv).stale;
+    nextStation(pbIdx); // faz kırılımı
+    var rev1=CC.S.getRevisions()[dom]; var staleAfter=CC.S.isStale(earlyEv).stale;
+    return { hasPhase:true, dom:dom, rev0:rev0, rev1:rev1, bumped:rev1>rev0, staleBefore:staleBefore, staleAfter:staleAfter }; },
+  // handoff'ta TARİHSEL kanıt seçilince STALE_EVIDENCE_USED
+  handoffStaleFlag:function(id){ var r=this.phaseStaleCheck(id); if(!r.hasPhase) return {na:true};
+    // tüm istasyonları tamamla
+    CC.chain.stations.forEach(function(_,i){ CC.done[i]=true; });
+    var staleEv=CC.S.getEvidence().find(function(e){return CC.S.isStale(e).stale;});
+    CC.handoff={status:0,unc:0,alarm:0}; CC.handoff.evidence=staleEv?staleEv.id:null; CC.handoff.evidenceStale=staleEv?true:false;
+    submitHandoff(); var f=CC.flags.find(function(x){return x.decId==='stale';});
+    return { picked:!!staleEv, flagged:!!f, msg:f?f.msg:null }; },
+  state:function(){ return {chainId:CC.chainId, idx:CC.idx, flags:CC.flags.length, revisions:CC.S?CC.S.getRevisions():null}; }
+};
+
+showSelector(); tick();
 window.CHAIN_READY=true;
-})();
 </script>
 </body>
 </html>
