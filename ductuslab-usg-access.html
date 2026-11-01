@@ -53,13 +53,17 @@ body{background:radial-gradient(1200px 800px at 70% -10%,#0a1424 0%,var(--bg-0) 
 .usg-hud{position:absolute;left:10px;bottom:10px;font-family:var(--mono);font-size:10.5px;color:#8fb8d8;z-index:6;text-shadow:0 1px 3px #000;line-height:1.6;pointer-events:none}
 .usg-hud .depthbar{color:#6c7889}
 .freeze-tag{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:var(--mono);font-size:22px;font-weight:700;color:rgba(217,164,65,.5);letter-spacing:.2em;z-index:6;display:none}
-.stage-foot{flex:0 0 auto;border-top:1px solid var(--line);background:var(--glass);padding:8px 12px;max-height:40vh;overflow-y:auto}
-.toolrow{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start}
-.toolgrp{display:flex;flex-direction:column;gap:5px;padding:7px 9px;border:1px solid var(--line);border-radius:10px;background:var(--glass-2);min-width:120px}
-.toolgrp .lbl{font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3);white-space:nowrap;display:flex;justify-content:space-between;gap:8px}
-.toolgrp .lbl b{color:var(--accent);font-family:var(--mono);font-weight:600}
-.toolgrp .rowbtns{display:flex;gap:5px;flex-wrap:wrap}
-.slider{width:100%;accent-color:var(--accent);height:26px}
+.stage-foot{flex:0 0 auto;border-top:1px solid var(--line);background:var(--glass);padding:7px 10px;overflow:hidden}
+.toolrow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;align-items:stretch}
+.toolcol{display:flex;flex-direction:column;gap:2px;padding:6px 8px;border:1px solid var(--line);border-radius:10px;background:var(--glass-2);min-width:0}
+.toolcol .lbl{font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:2px}
+.toolcol .cl{font-size:9px;letter-spacing:.03em;text-transform:uppercase;color:var(--ink-3);display:flex;justify-content:space-between;margin:2px 0 0}
+.toolcol .cl b{color:var(--accent);font-family:var(--mono);font-weight:600}
+.rowbtns{display:flex;gap:4px;flex-wrap:wrap;margin:2px 0}
+.rowbtns .btn.sm{flex:1 1 auto;min-height:30px;padding:5px 6px}
+button[disabled]{opacity:.38;cursor:not-allowed;filter:grayscale(.5)}
+#syringe{width:100%;height:44px;margin-top:4px;border:1px solid var(--line-2);border-radius:7px;background:#06101c;display:block}
+.slider{width:100%;accent-color:var(--accent);height:22px;margin:0}
 .console{flex:1;min-width:330px;max-width:420px;border-left:1px solid var(--line);background:var(--bg-1);display:flex;flex-direction:column;min-height:0}
 .console-scroll{overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:11px}
 .console-scroll::-webkit-scrollbar{width:9px}.console-scroll::-webkit-scrollbar-thumb{background:#1b2638;border-radius:6px}
@@ -202,8 +206,8 @@ const PROFILES={
    depthMm:40,fieldMm:38,
    anat(){ return {
      vessels:[
-       Vessel({name:'İnternal Juguler Ven',c:[4,16,0],r:6.5,type:'vein',flow:0.18,compress:1.0,behind:'carotid'}),
-       Vessel({name:'Karotis Arter',c:[3,25,0],r:4.2,type:'artery',flow:0.55,compress:0.12,pulsatile:true})
+       Vessel({name:'İnternal Juguler Ven',c:[5,13,0],r:6.0,type:'vein',flow:0.18,compress:1.0,behind:'carotid'}),
+       Vessel({name:'Karotis Arter',c:[2,24,0],r:4.2,type:'artery',flow:0.55,compress:0.12,pulsatile:true})
      ],
      pleura:null, ribs:[], effusion:null, heart:null,
      skinY:0, muscleBand:[3,9], overlap:0.6
@@ -262,9 +266,9 @@ const PROFILES={
 const ENG={
   prof:'ijv', profile:PROFILES.ijv, anat:PROFILES.ijv.anat(), level:'student', examMode:false,
   step:0, t:0, control:'probe',
-  probe:{x:0, z:0, tilt:0, rot:0, press:0, gain:0.5, depth:40, doppler:false, mmode:false},
-  needle:{entryX:-18, angleDeg:40, depthMm:0, active:false, aspirate:false},
-  wire:{out:true, lenCm:0, placed:false}, dilator:false, catheter:false, drainMl:0, agitatedSaline:false,
+  probe:{x:0, z:0, tilt:0, rot:0, press:0, gain:0.5, depth:40, doppler:false, mmode:false, roi:{x0:-14,y0:5,x1:14,y1:26}},
+  needle:{entryX:-18, angleDeg:40, yOffset:0, depthMm:0, active:false, aspirate:false, ribApproach:null},
+  wire:{out:true, lenCm:0, placed:false, pos:null, inArtery:false}, dilator:false, catheter:false, drainMl:0, agitatedSaline:false,
   frozen:false, evidence:[], wirePlacementRevision:0,
   vitals:{spo2:97, hr:84, rhythm:'sinüs', st:0, bp:'118/74'},
   flags:[], complications:{}, mmodeData:[], ecgStrip:[],
@@ -284,6 +288,7 @@ uniform vec4 uEff;  uniform float uEffOn;      // cx,cy,rx,ry  (efüzyon elips)
 uniform vec4 uHeart; uniform float uHeartOn;   // cx,cy,rx,ry
 uniform float uNeedleOn; uniform vec4 uNeedle; // ax,ay,bx,by  (kesit içindeki şaft izdüşümü)
 uniform float uTipInSlice, uTipX, uTipY;
+uniform float uProfType,uWireOn,uWireLong; uniform vec2 uWirePos; uniform vec4 uRoi; // ROI: x0,y0,x1,y1 (mm)
 // --- 3B doku-kilitli gürültü (worldPos'a bağlı) ---
 float hash3(vec3 p){ p=fract(p*0.3183099+vec3(0.1,0.2,0.3)); p*=17.0; return fract(p.x*p.y*p.z*(p.x+p.y+p.z)); }
 float vnoise(vec3 p){ vec3 i=floor(p),f=fract(p); f=f*f*(3.0-2.0*f);
@@ -305,14 +310,27 @@ void main(){
   lat+=sin(uTilt)*dep*0.0;                  // tilt in-plane kayma (walk-down)
   vec3 wp=vec3(lat+uProbeX, dep, 0.0);      // kesit düzlemi z=0 (elevasyon merkezinde)
   vec3 beamDir=normalize(vec3(sin(uTilt),cos(uTilt),0.0));
-  // --- temel doku: yumuşak doku speckle + cilt/kas bandı ---
-  float tis=0.22+0.42*speckle(wp+vec3(0.0,0.0,uTime*0.0));
-  tis*= (0.5+0.5*clamp(1.0-dep/uDepthMm,0.0,1.0)); // derinlikle sönüm (daha koyu doku → yapılar belirginleşir)
-  // cilt + kas bandı
-  if(dep<2.0) tis=mix(tis,0.75,smoothstep(2.0,0.0,dep));
+  // --- KATMANLI yumuşak doku (fasya düzlemleri) — profType: 0 boyun, 1 göğüs, 2 kardiyak ---
+  float sp=speckle(wp);
+  float tis=0.20+0.40*sp;
+  tis*= (0.5+0.5*clamp(1.0-dep/uDepthMm,0.0,1.0));
   float col=tis;
-  float atten=1.0;         // gölge/sönüm çarpanı (üstteki yapılar)
   float shadow=1.0;
+  float Lx=lat+uProbeX;
+  col=mix(col,0.88,smoothstep(0.9,0.0,abs(dep-0.6))*0.9);            // dermis (parlak ince hat)
+  if(dep>0.9 && dep<3.2) col=mix(col,0.15+0.12*sp,0.55);            // cilt altı yağ (hipoekoik)
+  if(uProfType<0.5){ // BOYUN: SKM kası çizgili + fasya + karotis kılıfı + tiroid medial
+    if(dep>3.0 && dep<12.5){ float stri=0.5+0.5*sin(dep*2.6+Lx*0.15+sp*1.6);  // SKM pennat çizgilenme
+      col=mix(col,0.40+0.14*sp+0.12*stri,0.75);
+      col=mix(col,0.9,exp(-pow((dep-3.1)*2.2,2.0))*0.7);             // yüzeyel fasya (parlak hat)
+      col=mix(col,0.9,exp(-pow((dep-12.3)*2.0,2.0))*0.6); }          // derin servikal fasya
+    // karotis kılıfı: İJV ile karotis arası ekojenik sınır (damarları ayıran parlak hat)
+    col=mix(col,0.85,exp(-pow((dep-18.5)*1.6,2.0))*0.4*step(abs(Lx-3.0),9.0));
+    if(abs(Lx+20.0)<9.0 && dep>9.0 && dep<24.0){ col=mix(col,0.46+0.13*sp,0.6); // tiroid lobu (medial, homojen)
+      col=mix(col,0.9,exp(-pow((abs(Lx+20.0)-9.0)*1.4,2.0))*0.5); } // tiroid kapsülü
+  } else { // GÖĞÜS/KARDİYAK: pektoral kas bandı
+    if(dep>3.0 && dep<9.0){ col=mix(col,0.28+0.12*sp,0.55); col=mix(col,0.78,smoothstep(0.5,0.0,abs(dep-3.1))*0.5); }
+  }
   // --- kaburga/klavikula: parlak ön yüz + arkasında akustik gölge ---
   for(int i=0;i<4;i++){ if(i>=uNRib)break; vec3 rb=uRib[i];
     float d=length(vec2(lat+uProbeX-rb.x,dep-rb.y));
@@ -322,22 +340,31 @@ void main(){
     // arkasında gölge (dep > rib.y ve lateralde kaburga genişliğinde)
     if(dep>rb.y && abs(lat+uProbeX-rb.x)<rb.z*0.95){ shadow*= mix(0.12,1.0,smoothstep(0.0,10.0,dep-rb.y)*0.0+0.0); }
   }
-  // --- damarlar: anekoik lümen + parlak duvar; bası ile kollaps (compressRemain) ---
-  float vesselLumen=0.0; float dopVel=0.0; float isArtery=0.0;
+  // --- damarlar: her damar BAĞIMSIZ çizilir (asla tek "8" deliğinde birleşmez) ---
+  //  ven: yüzeyel, oval, ince tek duvar, solunumla çap değişir, bası ile kollabe
+  //  arter: derin-medial, yuvarlak, KALIN çift duvar (intima-media), pulsatil çeper
+  float vesselLumen=0.0; float dopVel=0.0; float isArtery=0.0; float lumE=1.0;
   for(int i=0;i<6;i++){ if(i>=uNV)break;
-    vec3 c=uVC[i].xyz; float r=uVC[i].w*uVX[i].y;        // kalan yarıçap (bası)
-    float ry=r; float rx=r;
-    // kollaps: veni y ekseninde yassılaştır (compressRemain küçükse)
-    ry=r*mix(1.0,0.35,clamp(1.0-uVX[i].y,0.0,1.0))*(uVA[i].w<0.5?mix(1.0,0.25,uPress):1.0);
-    float pr=uVX[i].z; // pulsatil yarıçap oynaması (arter)
-    rx=r*(1.0+pr); ry=ry*(1.0+pr);
-    vec2 pc=vec2(lat+uProbeX-c.x, dep-c.y);
+    float isArt=uVA[i].w;
+    vec3 c=uVC[i].xyz; float baseR=uVC[i].w*uVX[i].y;              // bası ile kalan
+    float resp=(isArt<0.5)?(1.0+0.05*sin(uTime*1.4)):1.0;         // ven: solunum
+    float puls=(isArt>0.5)?(0.05*sin(uTime*6.2)):0.0;             // arter: pulsasyon
+    float rx,ry;
+    if(isArt<0.5){ rx=baseR*1.3*resp; ry=baseR*0.82*resp; }       // ven oval (kollaps uVX.y ile baseR'ye zaten girdi)
+    else { rx=baseR*(1.0+puls); ry=baseR*(1.0+puls); }            // arter yuvarlak
+    vec2 pc=vec2(Lx-c.x, dep-c.y);
     float e=length(vec2(pc.x/max(rx,0.3),pc.y/max(ry,0.3)));
-    if(e<1.0){ vesselLumen=1.0; isArtery=uVA[i].w; dopVel=uVX[i].x*(uVA[i].w>0.5?(0.6+0.4*sin(uTime*6.0)):1.0); }
-    // duvar
-    col=mix(col,0.9,smoothstep(1.18,1.0,e)*step(e,1.18)*0.7);
+    if(e<1.0){ col=mix(col,0.03+0.025*speckle(wp*2.0),0.94);      // anekoik lümen (bu damara özel)
+      vesselLumen=1.0; isArtery=isArt; lumE=e;
+      dopVel=uVX[i].x*(isArt>0.5?(0.5+0.5*max(0.0,sin(uTime*6.0))):1.0); }
+    if(isArt<0.5){ // ince tek duvar (e=1'de ince parlak halka)
+      col=mix(col,0.9,exp(-pow((e-1.0)*13.0,2.0))*0.75);
+    } else { // kalın çift duvar: intima(parlak) + media(hipoekoik) + adventisya(parlak)
+      col=mix(col,0.95,exp(-pow((e-1.0)*15.0,2.0))*0.82);
+      col=mix(col,0.3,exp(-pow((e-1.13)*16.0,2.0))*0.5);
+      col=mix(col,0.9,exp(-pow((e-1.25)*14.0,2.0))*0.7);
+    }
   }
-  if(vesselLumen>0.5){ col=mix(col, 0.04+0.03*speckle(wp*2.0), 0.9); } // anekoik + hafif düşük-kazanç gürültü
   // --- plevra hattı + A-çizgileri + kayma/barkod ---
   if(uPleuraOn>0.5){
     float pd=uPleuraY;
@@ -368,10 +395,17 @@ void main(){
     float aniso=abs(nd.x); // ışına (dikey) dik şaft parlar; dikey şaft söner  (basitleştirilmiş)
     float shaft=smoothstep(0.9,0.0,dd)*(0.35+0.65*aniso);
     col=mix(col,0.98,shaft);
-    // bevel uç: B noktasında ayrı parlak nokta
-    float tip=smoothstep(1.1,0.0,length(P-B)); col=mix(col,1.0,tip*0.9);
+    // bevel uç: B noktasında ayrı parlak metalik nokta
+    float tip=smoothstep(1.1,0.0,length(P-B)); col=mix(col,1.0,tip*0.95);
     // reverberasyon / comet-tail: şaftın hemen altında azalan paralel yankı
     if(P.y>proj.y && dd<1.2){ float rv=0.0; for(int k=1;k<5;k++){ rv+=smoothstep(0.6,0.0,abs(dd))*exp(-float(k)*0.5)*smoothstep(1.2,0.0,abs((P.y-proj.y)-float(k)*1.6)); } col=mix(col,0.9,clamp(rv,0.0,0.6)); }
+    // dar akustik gölge (uç/şaftın altında derin yapı silinir)
+    if(P.y>B.y && abs(P.x-B.x)<0.9){ shadow*=mix(0.45,1.0,smoothstep(0.0,7.0,P.y-B.y)); }
+  }
+  // --- kılavuz tel: lümen içinde parlak ekojenik nokta (kısa eksen) / kesintisiz çizgi (uzun eksen) ---
+  if(uWireOn>0.5){
+    if(uWireLong<0.5){ float wd=smoothstep(0.8,0.0,length(vec2(Lx-uWirePos.x,dep-uWirePos.y))); col=mix(col,1.0,wd*0.95); }
+    else { float wl=smoothstep(0.55,0.0,abs(dep-uWirePos.y))*step(abs(Lx-uWirePos.x),16.0); col=mix(col,1.0,wl*0.92); }
   }
   // kesit içindeki "parlak şaft noktası" (out-of-plane ucu sanma illüzyonu) için vurgulu nokta
   if(uTipInSlice>0.5){ float t=smoothstep(1.2,0.0,length(vec2(lat+uProbeX-uTipX,dep-uTipY))); col=mix(col,1.0,t*0.85); }
@@ -387,14 +421,16 @@ void main(){
   // --- Renkli Doppler kaplaması (v_toward = -dot(v,beamDir)) ---
   vec3 rgb=vec3(col);
   if(uDoppler>0.5 && vesselLumen>0.5){
-    // v_toward = -dot(v,beamDir): ışın-akış açısıyla ölçeklenir (90° dik → renk kaybolur = açı tuzağı)
-    float vt=dopVel*uDopAngle;    // dopVel işaretli (ven/arter ters yön — isme bağlı DEĞİL)
-    float ang=abs(vt);
-    if(uDopAngle>0.08 && ang>0.02){
-      float aliased=fract(ang*1.4);
-      vec3 flow = vt>0.0? mix(vec3(0.2,0.0,0.0),vec3(1.0,0.25,0.15),ang) : mix(vec3(0.0,0.0,0.2),vec3(0.2,0.5,1.0),ang);
-      if(ang>0.7){ flow=mix(flow,vec3(0.3,1.0,0.4),aliased); } // aliasing
-      rgb=mix(rgb,flow,0.75);
+    // yalnız sürüklenebilir ROI kutusu içinde renklendir; parabolik hız (merkez hızlı/çeper yavaş)
+    if(Lx>uRoi.x && Lx<uRoi.z && dep>uRoi.y && dep<uRoi.w){
+      float vt=dopVel*uDopAngle*(1.0-0.65*lumE);     // v_toward, parabolik profil
+      float ang=abs(vt);
+      if(uDopAngle>0.08 && ang>0.015){
+        float aliased=fract(ang*1.6);
+        vec3 flow = vt>0.0? mix(vec3(0.22,0.0,0.0),vec3(1.0,0.35,0.15),ang) : mix(vec3(0.0,0.0,0.22),vec3(0.2,0.55,1.0),ang);
+        if(ang>0.62){ flow=mix(flow,vec3(0.4,1.0,0.5),aliased); } // aliasing (Nyquist aşımı)
+        rgb=mix(rgb,flow,0.72);
+      }
     }
   }
   rgb*=mask;                     // sektör yelpazesi dışı siyah
@@ -411,7 +447,7 @@ function initGL(){
   gl.useProgram(prog);
   buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
   var pl=gl.getAttribLocation(prog,'p');gl.enableVertexAttribArray(pl);gl.vertexAttribPointer(pl,2,gl.FLOAT,false,0,0);
-  ['uRes','uTime','uDepthMm','uFieldMm','uGain','uPress','uTilt','uDoppler','uSector','uProbeX','uNV','uVC','uVA','uVX','uNRib','uRib','uPleuraY','uPleuraOn','uSliding','uPneumo','uABeat','uDopAngle','uEff','uEffOn','uHeart','uHeartOn','uNeedleOn','uNeedle','uTipInSlice','uTipX','uTipY'].forEach(function(n){uni[n]=gl.getUniformLocation(prog,n);});
+  ['uRes','uTime','uDepthMm','uFieldMm','uGain','uPress','uTilt','uDoppler','uSector','uProbeX','uNV','uVC','uVA','uVX','uNRib','uRib','uPleuraY','uPleuraOn','uSliding','uPneumo','uABeat','uDopAngle','uEff','uEffOn','uHeart','uHeartOn','uNeedleOn','uNeedle','uTipInSlice','uTipX','uTipY','uProfType','uWireOn','uWireLong','uWirePos','uRoi'].forEach(function(n){uni[n]=gl.getUniformLocation(prog,n);});
   resizeGL();
 }
 function resizeGL(){ var w=glcv.clientWidth,h=glcv.clientHeight; IW=Math.max(64,Math.min(900,Math.round(w*0.55))); IH=Math.max(64,Math.round(IW*h/Math.max(w,1))); glcv.width=IW; glcv.height=IH; if(gl)gl.viewport(0,0,IW,IH); var ov=$('overlay'); ov.width=w; ov.height=h; }
@@ -421,13 +457,16 @@ window.addEventListener('resize',function(){resizeGL();drawGuide();});
 // Kesit düzlemi: dünya z = probe.z (elevasyon). Kısa eksen damar (axis z) her z'de aynı kesit.
 function sigmaE(depthY){ return 1.2 + 0.03*Math.max(0,depthY); }   // elevational yarı-kalınlık (mm), derinlikle artar
 function beamDir(){ var t=ENG.probe.tilt; return [Math.sin(t),Math.cos(t),0]; }
+// Y-Offset (İğne Yanal Hizası): iğne giriş noktasının kesit düzleminden elevasyon (z) kayması.
+// 0 → tam düzlem içi (şaftın tamamı görünür). Arttıkça iğne düzleme açılı girer (out-of-plane SONUÇ).
+function needleOOP(){ return clamp((ENG.needle.yOffset||0)*7, 0, 60)*Math.PI/180; }  // yOffset mm → oop açı
 function needleDir(){
-  var n=ENG.needle, a=n.angleDeg*Math.PI/180, oop=(n.oopDeg||0)*Math.PI/180;
+  var n=ENG.needle, a=n.angleDeg*Math.PI/180, oop=needleOOP();
   var cx=ENG.anat.vessels.length?ENG.anat.vessels[0].c[0]:0;
   var sx=(cx>=n.entryX)?1:-1;
   return vnorm([ sx*Math.cos(a)*Math.cos(oop), Math.sin(a), Math.cos(a)*Math.sin(oop) ]);
 }
-function needleEntry(){ var n=ENG.needle; return [n.entryX, 0, (ENG.probe.z - (n.backoffZ||0))]; }
+function needleEntry(){ var n=ENG.needle; return [n.entryX, 0, (ENG.probe.z - (n.yOffset||0))]; }
 function needleTip(){ var E=needleEntry(),d=needleDir(); return vadd(E, vscale(d, ENG.needle.depthMm)); }
 function pointInVesselXY(x,y,v){ var rr=v.r*(v._open==null?1:v._open); var ry=rr*((v.type==='vein')?1:1); var dx=(x-v.c[0])/Math.max(rr,0.3), dy=(y-v.c[1])/Math.max(ry,0.3); return (dx*dx+dy*dy)<1.0; }
 function tipInsideVessel(v){ var T=needleTip(); // 3B: damar ekseni z → kesit x-y
@@ -506,7 +545,7 @@ function pushMmodeColumn(){ var pat=mmodePattern(); if(pat==='n/a')return;
 /* ======================= RENDER DÖNGÜSÜ ======================= */
 let running=true,last=0;
 function loop(ts){ if(!running){return;} var dt=last?Math.min(0.05,(ts-last)/1000):0.016; last=ts; ENG.t+=dt;
-  if(!ENG.frozen){ applyCompression(); stepPhysics(dt); renderGL(); drawOverlay(); drawGuide(); if(ENG.probe.mmode){ if(Math.random()<0.5)pushMmodeColumn(); drawMmode(); } }
+  if(!ENG.frozen){ applyCompression(); stepPhysics(dt); renderGL(); drawOverlay(); drawGuide(); drawSyringe(); if(ENG.probe.mmode){ if(Math.random()<0.5)pushMmodeColumn(); drawMmode(); } }
   updateReadouts();
   requestAnimationFrame(loop);
 }
@@ -555,19 +594,32 @@ function renderGL(){ if(!gl)return; gl.useProgram(prog); gl.viewport(0,0,IW,IH);
   if(seg){ gl.uniform4f(uni.uNeedle,seg.a[0],seg.a[1],seg.b[0],seg.b[1]); setU1('uNeedleOn',1);} else setU1('uNeedleOn',0);
   var ns=ENG.needle.active?needleState():null;
   if(ns && ns.tipInSlice){ setU1('uTipInSlice',1); setU1('uTipX',ns.tip[0]); setU1('uTipY',ns.tip[1]); } else setU1('uTipInSlice',0);
+  // profil tipi + Doppler ROI + kılavuz tel
+  var pt=(ENG.prof==='ijv')?0:(ENG.prof==='pericardio')?2:1; setU1('uProfType',pt);
+  var roi=pr.roi; gl.uniform4f(uni.uRoi,roi.x0,roi.y0,roi.x1,roi.y1);
+  setU1('uWireOn',ENG.wire.placed?1:0); setU1('uWireLong',(Math.abs(pr.rot)>Math.PI/4)?1:0);
+  var wp2=ENG.wire.pos||(A.vessels[0]?[A.vessels[0].c[0],A.vessels[0].c[1]]:[0,15]); gl.uniform2f(uni.uWirePos,wp2[0],wp2[1]);
   gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
 }
 
 /* ======================= OVERLAY (ölçek, giriş çizgisi) ======================= */
 function drawOverlay(){ var ov=$('overlay'),x=ov.getContext('2d'); x.clearRect(0,0,ov.width,ov.height);
-  var W=ov.width,H=ov.height,P=ENG.profile;
-  // derinlik skalası (sağ kenar cm işaretleri)
-  x.strokeStyle='rgba(143,184,216,.35)';x.fillStyle='rgba(143,184,216,.6)';x.font='10px monospace';x.lineWidth=1;
-  for(var cm=1;cm*10<=P.depthMm;cm++){ var yy=H*(cm*10/P.depthMm); x.beginPath();x.moveTo(W-7,yy);x.lineTo(W,yy);x.stroke(); x.fillText(cm+'',W-22,yy+3); }
-  // iğne giriş çizgisi (deri yüzeyinden hedefe doğru kesikli — rehber)
-  if(ENG.needle.active){ var seg=visibleShaftSeg();
-    if(seg){ var a=mm2px(seg.a[0],seg.a[1]),b=mm2px(seg.b[0],seg.b[1]);
-      x.strokeStyle='rgba(217,164,65,.0)'; } }
+  var W=ov.width,H=ov.height,P=ENG.profile,pr=ENG.probe; x.font='11px monospace'; x.textAlign='left';
+  // prob/frekans etiketi (üst-orta)
+  x.fillStyle='rgba(143,184,216,.85)'; x.fillText(P.sector?'P4-2 Fazlı · 3.5 MHz · MI 0.9':'L12-5 Lineer · 10 MHz · MI 0.7', W*0.5-80, 15);
+  // derinlik cetveli (sağ kenar) 0..N cm
+  x.strokeStyle='rgba(143,184,216,.4)';x.fillStyle='rgba(143,184,216,.72)';x.lineWidth=1;
+  for(var mm=0;mm<=P.depthMm;mm+=5){ var yy=H*(mm/P.depthMm); var major=(mm%10===0); x.beginPath();x.moveTo(W-(major?9:5),yy);x.lineTo(W,yy);x.stroke(); if(major){ x.fillText((mm/10)+'',W-25,yy+(mm===0?11:4)); } }
+  // odak üçgeni (sarı, sol kenar)
+  var fy=H*0.6; x.fillStyle='#e9c84a'; x.beginPath();x.moveTo(5,fy);x.lineTo(14,fy-5);x.lineTo(14,fy+5);x.closePath();x.fill();
+  // Doppler ROI kutusu (kesikli sarı, sürüklenebilir) + renk barı
+  if(pr.doppler){ var a=mm2px(pr.roi.x0,pr.roi.y0),b=mm2px(pr.roi.x1,pr.roi.y1);
+    x.strokeStyle='#e9c84a';x.setLineDash([6,4]);x.lineWidth=1.5;x.strokeRect(a[0],a[1],b[0]-a[0],b[1]-a[1]);x.setLineDash([]);
+    x.fillStyle='#e9c84a';x.fillText('Doppler ROI ⇕',a[0]+3,a[1]-4);
+    var barX=W-46,barY=28,barH=72; var g=x.createLinearGradient(0,barY,0,barY+barH); g.addColorStop(0,'#ff5a30');g.addColorStop(0.5,'#0c1420');g.addColorStop(1,'#3a8bff');
+    x.fillStyle=g;x.fillRect(barX,barY,9,barH); x.strokeStyle='rgba(160,176,196,.4)';x.strokeRect(barX,barY,9,barH);
+    x.fillStyle='rgba(200,213,227,.82)';x.fillText('+'+'',barX-10,barY+6);x.fillText('cm/s',barX-4,barY-4);x.fillText('−',barX-8,barY+barH);
+  }
 }
 function mm2px(xmm,ymm){ var ov=$('overlay'),P=ENG.profile; var u=(xmm-ENG.probe.x)/P.fieldMm+0.5; var v=ymm/P.depthMm; return [u*ov.width, v*ov.height]; }
 
@@ -613,9 +665,11 @@ function drawMmode(){ var c=$('mmode'),x=c.getContext('2d'),W=230,H=150; x.clear
 /* ======================= PROFİL YÜKLEME ======================= */
 function loadProfile(key){ ENG.prof=key; ENG.profile=PROFILES[key]; ENG.anat=PROFILES[key].anat();
   ENG.step=0; ENG.t=0; ENG.control='probe'; ENG.frozen=false; ENG.evidence=[]; ENG.wirePlacementRevision=0;
-  ENG.probe={x:0,z:0,tilt:0,rot:0,press:0,gain:0.5,depth:ENG.profile.depthMm,doppler:false,mmode:false};
-  ENG.needle={entryX:-18,angleDeg:40,oopDeg:0,backoffZ:0,depthMm:0,active:false,aspirate:false};
-  ENG.wire={out:true,lenCm:0,placed:false}; ENG.dilator=false; ENG.catheter=false; ENG.drainMl=0; ENG.agitatedSaline=false;
+  var P=ENG.profile;
+  ENG.probe={x:0,z:0,tilt:0,rot:0,press:0,gain:0.5,depth:P.depthMm,doppler:false,mmode:false,
+    roi:{x0:-P.fieldMm*0.34,y0:P.depthMm*0.12,x1:P.fieldMm*0.34,y1:P.depthMm*0.6}};
+  ENG.needle={entryX:-18,angleDeg:40,yOffset:0,depthMm:0,active:false,aspirate:false,ribApproach:null};
+  ENG.wire={out:true,lenCm:0,placed:false,pos:null,inArtery:false}; ENG.dilator=false; ENG.catheter=false; ENG.drainMl=0; ENG.agitatedSaline=false;
   ENG.vitals={spo2:97,hr:84,rhythm:'sinüs',st:0,bp:'118/74'}; ENG.complications={}; ENG.flags=[]; ENG.mmodeData=[]; ENG.ecgStrip=[];
   [].forEach.call($('profSeg').children,function(b){b.classList.toggle('on',b.dataset.prof===key);});
   $('profTag').textContent=ENG.profile.sector?'sektör prob':'lineer prob';
@@ -640,65 +694,135 @@ function updateStatusbar(){ var sb=$('statusbar'); var ns=ENG.needle.active?need
     '<span><span class="k">Sonraki</span> '+nextTxt+'</span>'; }
 
 /* ======================= KONTROLLER ======================= */
-function tg(label,inner){ var d=document.createElement('div');d.className='toolgrp';d.innerHTML='<div class="lbl">'+label+'</div>';var w=document.createElement('div');w.innerHTML=inner;d.appendChild(w);return d; }
 function slider(id,min,max,val,step){ return '<input class="slider" type="range" id="'+id+'" min="'+min+'" max="'+max+'" value="'+val+'" step="'+(step||1)+'">'; }
-function buildControls(){ var f=$('toolrow'); f.innerHTML='';
-  // aktif kontrol
-  var g0=tg('Aktif Kontrol','<div class="rowbtns"><button class="btn sm" id="ctrlProbe">Prob</button><button class="btn sm" id="ctrlNeedle">İğne</button></div>'); f.appendChild(g0);
-  // prob
-  var gp=tg('Prob · <b id="lblPress">bası '+ENG.probe.press+'</b>',
-    'Kaydır X '+slider('sldX',-20,20,ENG.probe.x)+
-    'Tilt/Fan '+slider('sldTilt',-30,30,0)+
-    'Rotasyon '+slider('sldRot',0,90,0)+
-    'Bası '+slider('sldPress',0,100,ENG.probe.press)+
-    'Kazanç '+slider('sldGain',0,100,Math.round(ENG.probe.gain*100))+
-    '<div class="rowbtns" style="margin-top:4px"><button class="btn sm" id="btnDoppler">Renkli Doppler</button><button class="btn sm" id="btnMmode">M-Mod</button></div>'+
-    '<div class="rowbtns" style="margin-top:4px"><button class="btn sm" id="btnFreeze">Dondur</button><button class="btn sm" id="btnEvidence">📌 Kanıt Kaydet</button></div>'); f.appendChild(gp);
-  // iğne
-  var gn=tg('İğne & İşlem','Giriş X '+slider('sldEntry',-30,10,ENG.needle.entryX)+
-    'Açı '+slider('sldAngle',15,65,ENG.needle.angleDeg)+
-    'Out-of-plane '+slider('sldOOP',0,40,ENG.needle.oopDeg)+
-    '<div class="rowbtns" style="margin-top:4px"><button class="btn sm" id="btnNeedleOn">İğneyi Yerleştir</button><button class="btn sm" id="btnAdvance">İlerlet +1mm</button><button class="btn sm" id="btnRetract">Geri Çek</button></div>'+
-    '<div class="rowbtns" style="margin-top:4px"><button class="btn sm" id="btnAspirate">Aspirasyon</button></div>'); f.appendChild(gn);
-  // işleme özgü
-  var proc='';
-  if(ENG.prof==='ijv'||ENG.prof==='subclavian'){ proc='<div class="rowbtns"><button class="btn sm" id="btnWireAdv">J-Tel İlerlet</button><button class="btn sm" id="btnWireBack">Tel Çek</button></div>'+
-    '<div class="rowbtns" style="margin-top:4px"><button class="btn sm" id="btnDilator">Dilatör</button><button class="btn sm" id="btnCath">Kateter</button><button class="btn sm" id="btnWireOut">Tel Çıkar ✓</button></div>'; }
-  else if(ENG.prof==='pericardio'){ proc='<div class="rowbtns"><button class="btn sm" id="btnSaline">Ajite Salin</button><button class="btn sm" id="btnDrain">Kontrollü Drenaj</button></div>'; }
-  else if(ENG.prof==='thoracentesis'){ proc='<div class="rowbtns"><button class="btn sm" id="btnRibUp">Üst Oluk</button><button class="btn sm" id="btnRibLow">Alt Kosta Üst Kenarı</button></div>'+
-    '<div class="rowbtns" style="margin-top:4px"><button class="btn sm" id="btnDrain">Kontrollü Drenaj</button></div>'; }
-  var gproc=tg('İşlem Grubu',proc); f.appendChild(gproc);
-  bindControls();
+function procButtons(){
+  if(ENG.prof==='ijv'||ENG.prof==='subclavian') return '<div class="rowbtns"><button class="btn sm" id="btnWireAdv">J-Tel İlerlet</button><button class="btn sm" id="btnWireBack">Tel Çek</button></div>'+
+    '<div class="rowbtns"><button class="btn sm" id="btnDilator">Dilatör</button></div>'+
+    '<div class="rowbtns"><button class="btn sm" id="btnCath">Kateter</button><button class="btn sm" id="btnWireOut">Teli Çıkar ✓</button></div>'+
+    (ENG.prof==='subclavian'?'<div class="rowbtns"><button class="btn sm" id="btnMmodeCheck">İşlem Sonu M-Mod Dışlama</button></div>':'');
+  if(ENG.prof==='pericardio') return '<div class="rowbtns"><button class="btn sm" id="btnSaline">Ajite Salin</button></div>'+
+    '<div class="rowbtns"><button class="btn sm" id="btnDrain">Kontrollü Drenaj</button></div>';
+  if(ENG.prof==='thoracentesis') return '<div class="rowbtns"><button class="btn sm" id="btnRibUp">Üst Kosta Alt Oluğu</button><button class="btn sm" id="btnRibLow">Alt Kosta Üst Kenarı</button></div>'+
+    '<div class="rowbtns"><button class="btn sm" id="btnDrain">Kontrollü Drenaj (≤1.5 L)</button></div>'+
+    '<div class="rowbtns"><button class="btn sm" id="btnSlideCheck">Lung Sliding Kontrol</button></div>';
+  return '';
+}
+function buildControls(){ var f=$('toolrow');
+  var c1='<div class="lbl">1 · Prob Kontrolleri</div>'+
+    '<div class="rowbtns"><button class="btn sm" id="ctrlProbe">Prob</button><button class="btn sm" id="ctrlNeedle">İğne</button></div>'+
+    '<label class="cl">Kaydır X</label>'+slider('sldX',-20,20,ENG.probe.x)+
+    '<label class="cl">Tilt/Fan</label>'+slider('sldTilt',-30,30,0)+
+    '<label class="cl">Rotasyon <span style="color:var(--ink-3)">0°kısa↔90°uzun</span></label>'+slider('sldRot',0,90,0)+
+    '<label class="cl">Prob Basısı <b id="lblPress">0</b></label>'+slider('sldPress',0,100,0)+
+    '<label class="cl">Kazanç</label>'+slider('sldGain',0,100,50)+
+    '<div class="rowbtns"><button class="btn sm" id="btnDoppler">Doppler</button><button class="btn sm" id="btnMmode">M-Mod</button></div>'+
+    '<div class="rowbtns"><button class="btn sm" id="btnFreeze">Dondur</button><button class="btn sm" id="btnEvidence">📌 Kanıt</button></div>';
+  var c2='<div class="lbl">2 · İğne & Enjektör</div>'+
+    '<div class="rowbtns"><button class="btn sm" id="btnNeedleOn">İğneyi Yerleştir</button></div>'+
+    '<label class="cl">İğne İlerletme Derinliği <b id="lblDepth">0.0 mm</b></label>'+slider('sldDepth',0,50,0,0.5)+
+    '<div class="rowbtns"><button class="btn sm" id="btnRetract">−1 mm</button><button class="btn sm" id="btnAdvance">+1 mm</button><button class="btn sm" id="btnAspirate">Aspirasyon</button></div>'+
+    '<label class="cl">Giriş X</label>'+slider('sldEntry',-30,10,ENG.needle.entryX)+
+    '<label class="cl">Açı</label>'+slider('sldAngle',15,65,ENG.needle.angleDeg)+
+    '<label class="cl">İğne Yanal Hizası (Y-Offset) <b id="lblY">0 mm</b></label>'+slider('sldY',0,15,0,0.5)+
+    '<canvas id="syringe" width="240" height="44"></canvas>';
+  var c3='<div class="lbl">3 · '+((ENG.prof==='ijv'||ENG.prof==='subclavian')?'Seldinger Adımları':'Drenaj Adımları')+'</div>'+procButtons()+
+    '<div class="hint" id="lockHint" style="margin-top:2px"></div>';
+  f.innerHTML='<div class="toolcol">'+c1+'</div><div class="toolcol">'+c2+'</div><div class="toolcol">'+c3+'</div>';
+  bindControls(); updateLocks(); drawSyringe();
 }
 function bindControls(){
   $('ctrlProbe').onclick=function(){ENG.control='probe';refreshCtrl();};
   $('ctrlNeedle').onclick=function(){ENG.control='needle';refreshCtrl();};
-  var map={sldX:['probe','x'],sldTilt:['probe','tiltDeg'],sldRot:['probe','rotDeg'],sldPress:['probe','press'],sldGain:['probe','gain100'],sldEntry:['needle','entryX'],sldAngle:['needle','angleDeg'],sldOOP:['needle','oopDeg']};
-  Object.keys(map).forEach(function(id){ var el=$(id); if(!el)return; el.addEventListener('input',function(){ var v=+el.value;
-    if(id==='sldTilt'){ ENG.probe.tilt=v*Math.PI/180; } else if(id==='sldRot'){ ENG.probe.rot=v*Math.PI/180; }
-    else if(id==='sldGain'){ ENG.probe.gain=v/100; } else if(id==='sldPress'){ ENG.probe.press=v; $('lblPress').textContent='bası '+v; }
-    else if(map[id][0]==='probe'){ ENG.probe[map[id][1]]=v; } else { ENG.needle[map[id][1]]=v; }
-  }); });
+  function bind(id,fn){ var el=$(id); if(el)el.addEventListener('input',function(){fn(+el.value);}); }
+  bind('sldX',function(v){ENG.probe.x=v;});
+  bind('sldTilt',function(v){ENG.probe.tilt=v*Math.PI/180;});
+  bind('sldRot',function(v){ENG.probe.rot=v*Math.PI/180;});
+  bind('sldPress',function(v){ENG.probe.press=v;$('lblPress').textContent=v;});
+  bind('sldGain',function(v){ENG.probe.gain=v/100;});
+  bind('sldEntry',function(v){ENG.needle.entryX=v;});
+  bind('sldAngle',function(v){ENG.needle.angleDeg=v;});
+  bind('sldY',function(v){ENG.needle.yOffset=v;$('lblY').textContent=v+' mm';});
+  bind('sldDepth',function(v){ ENG.needle.active=true; ENG.needle.depthMm=v; $('lblDepth').textContent=v.toFixed(1)+' mm'; onNeedleMoved(); });
   $('btnDoppler').onclick=function(){ENG.probe.doppler=!ENG.probe.doppler;this.classList.toggle('on',ENG.probe.doppler);};
   $('btnMmode').onclick=function(){ENG.probe.mmode=!ENG.probe.mmode;this.classList.toggle('on',ENG.probe.mmode);$('mmodeWrap').style.display=ENG.probe.mmode?'block':'none';};
   $('btnFreeze').onclick=function(){ENG.frozen=!ENG.frozen;this.classList.toggle('on',ENG.frozen);$('freezeTag').style.display=ENG.frozen?'block':'none';};
   $('btnEvidence').onclick=function(){captureEvidence();};
-  $('btnNeedleOn').onclick=function(){ENG.needle.active=!ENG.needle.active;this.classList.toggle('on',ENG.needle.active);if(ENG.needle.active&&ENG.step<1)setStep(1);};
-  $('btnAdvance').onclick=function(){advanceNeedle(1);};
-  $('btnRetract').onclick=function(){advanceNeedle(-2);};
-  $('btnAspirate').onclick=function(){aspirate();this.classList.toggle('on',ENG.needle.aspirate);};
-  if($('btnWireAdv'))$('btnWireAdv').onclick=function(){advanceWire(2);};
-  if($('btnWireBack'))$('btnWireBack').onclick=function(){advanceWire(-2);};
-  if($('btnWireOut'))$('btnWireOut').onclick=function(){ENG.wire.out=true;toast('Kılavuz tel çıkarıldı ✓','ok');};
-  if($('btnDilator'))$('btnDilator').onclick=function(){advanceDilator();};
-  if($('btnCath'))$('btnCath').onclick=function(){placeCatheter();};
-  if($('btnSaline'))$('btnSaline').onclick=function(){agitatedSaline();};
-  if($('btnDrain'))$('btnDrain').onclick=function(){controlledDrain();};
-  if($('btnRibUp'))$('btnRibUp').onclick=function(){ENG.needle.ribApproach='upper_groove';toast('Yaklaşım: üst kostanın ALT oluğu — DİKKAT interkostal demet!','warn');};
-  if($('btnRibLow'))$('btnRibLow').onclick=function(){ENG.needle.ribApproach='lower_edge';toast('Yaklaşım: alt kostanın ÜST kenarı (güvenli)','ok');};
+  $('btnNeedleOn').onclick=function(){ENG.needle.active=!ENG.needle.active;this.classList.toggle('on',ENG.needle.active);if(ENG.needle.active&&ENG.step<1)setStep(1);updateLocks();};
+  $('btnAdvance').onclick=function(){advanceNeedle(1);if($('sldDepth'))$('sldDepth').value=ENG.needle.depthMm;if($('lblDepth'))$('lblDepth').textContent=ENG.needle.depthMm.toFixed(1)+' mm';};
+  $('btnRetract').onclick=function(){advanceNeedle(-1);if($('sldDepth'))$('sldDepth').value=ENG.needle.depthMm;if($('lblDepth'))$('lblDepth').textContent=ENG.needle.depthMm.toFixed(1)+' mm';};
+  $('btnAspirate').onclick=function(){aspirate();this.classList.toggle('on',ENG.needle.aspirate);updateLocks();};
+  if($('btnWireAdv'))$('btnWireAdv').onclick=function(){ if(this.disabled)return; advanceWire(2);updateLocks();};
+  if($('btnWireBack'))$('btnWireBack').onclick=function(){ advanceWire(-2);updateLocks();};
+  if($('btnWireOut'))$('btnWireOut').onclick=function(){ if(this.disabled)return; if(!ENG.catheter){toast('Önce kateter yerleştirilmeli','warn');return;} ENG.wire.out=true;ENG.wire.placed=false;toast('Kılavuz tel çıkarıldı ✓','ok');setStep(4);updateLocks();};
+  if($('btnDilator'))$('btnDilator').onclick=function(){ if(this.disabled)return; advanceDilator();updateLocks();};
+  if($('btnCath'))$('btnCath').onclick=function(){ if(this.disabled)return; placeCatheter();updateLocks();};
+  if($('btnSaline'))$('btnSaline').onclick=function(){ if(this.disabled)return; agitatedSaline();updateLocks();};
+  if($('btnDrain'))$('btnDrain').onclick=function(){ if(this.disabled)return; controlledDrain();updateLocks();};
+  if($('btnMmodeCheck'))$('btnMmodeCheck').onclick=function(){ ENG.probe.mmode=true;$('mmodeWrap').style.display='block'; toast('İşlem sonu M-Mod: '+(mmodePattern()==='barcode'?'BARKOD — pnömotoraks VAR!':'kumsal — pnömotoraks yok ✓'),mmodePattern()==='barcode'?'bad':'ok'); if(mmodePattern()!=='barcode')setStep(4); };
+  if($('btnSlideCheck'))$('btnSlideCheck').onclick=function(){ toast('Lung sliding: '+(lungSliding()?'MEVCUT ✓ (pnömotoraks yok)':'KAYIP — pnömotoraks!'),lungSliding()?'ok':'bad'); if(lungSliding())setStep(4); };
+  if($('btnRibUp'))$('btnRibUp').onclick=function(){ENG.needle.ribApproach='upper_groove';[].forEach.call(this.parentNode.children,function(b){b.classList.remove('on');});this.classList.add('on');toast('Yaklaşım: üst kostanın ALT oluğu — DİKKAT interkostal demet!','warn');};
+  if($('btnRibLow'))$('btnRibLow').onclick=function(){ENG.needle.ribApproach='lower_edge';[].forEach.call(this.parentNode.children,function(b){b.classList.remove('on');});this.classList.add('on');toast('Yaklaşım: alt kostanın ÜST kenarı (güvenli) ✓','ok');};
   refreshCtrl();
 }
 function refreshCtrl(){ if($('ctrlProbe'))$('ctrlProbe').classList.toggle('on',ENG.control==='probe'); if($('ctrlNeedle'))$('ctrlNeedle').classList.toggle('on',ENG.control==='needle'); }
+function onNeedleMoved(){ drawSyringe(); updateLocks(); if(ENG.needle.active&&ENG.step<1)setStep(1); }
+
+/* ======================= DURUM MAKİNESİ KİLİTLERİ ======================= */
+function dis(id,locked,why){ var b=$(id); if(!b)return; b.disabled=!!locked; if(locked){ b.title=why||''; } else { b.removeAttribute('title'); } }
+function bloodAspirated(){ return ENG.complications._aspVein||ENG.complications._aspArtery||ENG.complications._aspFluid; }
+function updateLocks(){
+  var hint='';
+  if(ENG.prof==='ijv'||ENG.prof==='subclavian'){
+    var wireLocked=!bloodAspirated(); dis('btnWireAdv',wireLocked,'Önce iğne ucundan kan/sıvı aspire edilmeli');
+    var dilLocked=!ENG.wire.placed; dis('btnDilator',dilLocked,'Önce J-tel lümene yerleştirilmeli');
+    var cathLocked=!ENG.dilator; dis('btnCath',cathLocked,'Önce dilatör ile trakt genişletilmeli');
+    var outLocked=!ENG.catheter; dis('btnWireOut',outLocked,'Önce kateter yerleştirilmeli');
+    if(wireLocked)hint='① İğneyle ven lümenine gir, kan aspire et → sonra J-Tel açılır.';
+    else if(dilLocked)hint='② J-Tel\'i lümene ilerlet (kısa+uzun eksen doğrula) → sonra Dilatör.';
+    else if(dilLocked===false&&!ENG.catheter)hint='③ Dilatör → Kateter → Teli Çıkar sırasıyla.';
+    else hint='④ Kateter yerleşti; teli çıkar ve son doğrulama yap.';
+  } else if(ENG.prof==='pericardio'){
+    var salLocked=!(ENG.needle.active&&ENG.needle.depthMm>0); dis('btnSaline',salLocked,'Önce iğneyi ilerlet');
+    var drainLocked=!ENG.complications._salineOk; dis('btnDrain',drainLocked,'Önce ajite salin ile perikard boşluğu doğrulanmalı');
+    hint=salLocked?'İğneyi en derin efüzyon cebine ilerlet.':(drainLocked?'Ajite salin ile konumu doğrula.':'Kontrollü/kademeli drenaj yap.');
+  } else if(ENG.prof==='thoracentesis'){
+    var drainLocked2=!ENG.complications._aspFluid; dis('btnDrain',drainLocked2,'Önce plevral sıvı aspire edilmeli');
+    hint=ENG.needle.ribApproach?(drainLocked2?'Kosta üst kenarından gir, plevral sıvı aspire et.':'≤1.5 L kontrollü boşalt, sonra lung sliding.'):'Önce giriş yaklaşımını seç (alt kosta üst kenarı güvenli).';
+  }
+  if($('lockHint'))$('lockHint').textContent=hint;
+}
+
+/* ======================= CANLI ENJEKTÖR (kan flaşı) ======================= */
+function syringeContent(){
+  if(!ENG.needle.aspirate) return {fill:0,color:'#0a1626',label:'aspirasyon kapalı'};
+  var ns=ENG.needle.active?needleState():null; if(!ns) return {fill:0,color:'#0a1626',label:'—'};
+  var v=(ENG.anat.vessels||[]).find(function(vv){return tipInsideVessel(vv);});
+  var A=ENG.anat, tip=ns.tip;
+  // plevra/subklavyen hava
+  if((ENG.prof==='subclavian')&&A.pleura&&tip[1]>=A.pleura.depth-0.5){ return {fill:0.4,color:'#9db4c8',bubbles:true,label:'HAVA kabarcığı — plevra!'}; }
+  if(ENG.prof==='thoracentesis'&&A.effusion){ var inEff=Math.hypot((tip[0]-A.effusion.cx)/A.effusion.rx,(tip[1]-A.effusion.cy)/A.effusion.ry)<1; if(inEff) return {fill:0.75,color:'#d9b24a',label:'plevral sıvı (seröz)'}; }
+  if(ENG.prof==='pericardio'&&A.effusion){ var inEff2=Math.hypot((tip[0]-A.effusion.cx)/A.effusion.rx,(tip[1]-A.effusion.cy)/A.effusion.ry)<1; if(inEff2 && !ENG.complications.myocardial) return {fill:0.7,color:'#b4493a',label:'perikardiyal (defibrine) kan'}; }
+  if(!v) return {fill:0.05,color:'#1a2636',resist:true,label:'doku içi — kan yok'};
+  if(v.type==='vein'){ var shock=(ENG.shock==null?(ENG.prof==='ijv'):ENG.shock); return {fill:0.8,color:shock?'#6e1f22':'#7a1d24',pulse:false,label:shock?'koyu/yavaş venöz':'koyu bordo venöz (non-pulsatil)'}; }
+  return {fill:0.85,color:'#e23b2e',pulse:true,label:'PARLAK KIRMIZI — pulsatil arteriyel!'};
+}
+function drawSyringe(){ var c=$('syringe'); if(!c)return; var x=c.getContext('2d'),W=c.width,H=c.height; x.clearRect(0,0,W,H); x.fillStyle='#06101c';x.fillRect(0,0,W,H);
+  var bx=6,by=10,bw=W-54,bh=H-20; // silindir
+  var s=syringeContent();
+  // dolgu
+  var fw=bw*clamp(s.fill,0,1);
+  x.fillStyle=s.color; x.fillRect(bx,by,fw,bh);
+  if(s.bubbles){ x.fillStyle='rgba(255,255,255,.7)'; for(var i=0;i<6;i++){ x.beginPath();x.arc(bx+8+i*9,by+bh*0.5+Math.sin(i+ENG.t*3)*4,2.2,0,TAU);x.fill(); } }
+  if(s.pulse){ var pw=fw*(0.9+0.1*Math.max(0,Math.sin(ENG.t*6.2))); x.fillStyle='rgba(255,120,90,.5)';x.fillRect(bx+fw-4,by,4,bh); }
+  // silindir çerçeve + ölçek
+  x.strokeStyle='#4f6782';x.lineWidth=1.2;x.strokeRect(bx,by,bw,bh);
+  x.strokeStyle='rgba(160,176,196,.3)'; for(var k=1;k<6;k++){ var gx=bx+bw*k/6; x.beginPath();x.moveTo(gx,by);x.lineTo(gx,by+4);x.stroke(); }
+  // piston
+  var px=bx+bw*clamp(s.fill,0.05,1); x.fillStyle=s.resist?'#c4565f':'#8fb8d8'; x.fillRect(px,by-2,4,bh+4);
+  x.fillStyle='#223247';x.fillRect(bx+bw,by+bh*0.25,46,bh*0.5); // şırınga ucu/parmaklık
+  // etiket
+  x.fillStyle='#cbd5e3';x.font='8px monospace';x.fillText(s.label,bx+2,H-3);
+}
 
 /* ======================= İĞNE / SELDİNGER EYLEMLERİ ======================= */
 function advanceNeedle(mm){ if(!ENG.needle.active){ENG.needle.active=true;} ENG.needle.depthMm=clamp(ENG.needle.depthMm+mm,0,ENG.profile.depthMm*1.4);
@@ -719,16 +843,22 @@ function advanceNeedle(mm){ if(!ENG.needle.active){ENG.needle.active=true;} ENG.
   if(ENG.needle.active&&ENG.step<1)setStep(1);
   updateStatusbar();
 }
-function aspirate(){ ENG.needle.aspirate=!ENG.needle.aspirate; if(!ENG.needle.aspirate)return;
-  var ns=needleState(), v=(ENG.anat.vessels||[]).find(function(vv){return tipInsideVessel(vv);});
-  if(!v){ toast('Aspirasyon: kan gelmiyor (lümen dışı)','warn'); $('aspRead').textContent='kan yok'; return; }
-  if(v.type==='vein'){ var hypox=(ENG.prof==='ijv'); toast('Aspirasyon: '+(hypox?'koyu/yavaş venöz kan (hipoksemik — renge güvenme!)':'venöz kan geldi'),''); ENG.complications._aspVein=true; if(ENG.step<2)setStep(2); }
-  else { toast('Aspirasyon: PARLAK/PULSATİL arteriyel kan — ARTER! İğneyi çek, bası.','bad'); ENG.complications._aspArtery=true; }
+function aspirate(){ ENG.needle.aspirate=!ENG.needle.aspirate; drawSyringe(); if(!ENG.needle.aspirate)return;
+  var ns=needleState(), A=ENG.anat, tip=ns.tip;
+  // efüzyon sıvısı (perikard/torasentez)
+  if(A.effusion){ var inEff=Math.hypot((tip[0]-A.effusion.cx)/A.effusion.rx,(tip[1]-A.effusion.cy)/A.effusion.ry)<1;
+    if(inEff && !ENG.complications.myocardial){ ENG.complications._aspFluid=true; toast('Aspirasyon: '+(ENG.prof==='thoracentesis'?'seröz plevral sıvı':'perikardiyal kan (defibrine, pıhtılaşmaz)')+' geldi ✓','ok'); $('aspRead').textContent='sıvı ✓'; if(ENG.step<2)setStep(2); return; } }
+  var v=(ENG.anat.vessels||[]).find(function(vv){return tipInsideVessel(vv);});
+  if(!v){ toast('Aspirasyon: kan gelmiyor (doku içi — lümen dışı)','warn'); $('aspRead').textContent='kan yok'; return; }
+  if(v.type==='vein'){ var hypox=(ENG.prof==='ijv'); toast('Aspirasyon: '+(hypox?'koyu/yavaş venöz kan (hipoksemik/şok — RENGE güvenme, bası+dalga formu!)':'koyu bordo venöz kan (non-pulsatil)'),''); ENG.complications._aspVein=true; if(ENG.step<2)setStep(2); }
+  else { toast('Aspirasyon: PARLAK KIRMIZI, NABIZLA FIŞKIRAN arteriyel kan — ARTER! İğneyi çek, 3-5 dk bası.','bad'); ENG.complications._aspArtery=true; }
   $('aspRead').textContent=v.type==='vein'?'venöz':'ARTER';
 }
 function advanceWire(cm){ ENG.wire.lenCm=clamp(ENG.wire.lenCm+cm,0,30); ENG.wire.out=false; ENG.wire.placed=ENG.wire.lenCm>1;
   var inArtery=ENG.complications._aspArtery||false;
   ENG.wire.inArtery=inArtery;
+  var tv=(ENG.anat.vessels||[]).find(function(vv){return tipInsideVessel(vv);})||(ENG.anat.vessels||[])[0];
+  if(tv) ENG.wire.pos=[tv.c[0],tv.c[1]];
   if(ENG.wire.lenCm>20){ triggerComplication('ves','Kılavuz tel >20 cm — sağ ventrikülde VES (ventriküler ektopi)! Teli geri çek.'); ENG.vitals.rhythm='VES'; }
   if(Math.abs(cm)>0){ ENG.wirePlacementRevision++; markEvidenceHistorical(); }
   if(ENG.step<3)setStep(3);
@@ -908,9 +1038,9 @@ window.USG={
   complications:function(){ return Object.assign({},ENG.complications); },
   // şaftı-uç-sanma illüzyonu kurulumu: out-of-plane geometride şaft kesitte parlar, gerçek uç karotiste
   setupIllusion:function(){ loadProfile('ijv'); ENG.probe.z=0; ENG.probe.press=0;
-    // iğne kesitin arkasından (z<0) dik + out-of-plane ilerler → şaft kesiti İJV'de parlar,
-    // gerçek uç ise kesit dışına (z) çıkıp arkadaki karotise girer.
-    ENG.needle.entryX=0; ENG.needle.angleDeg=70; ENG.needle.oopDeg=45; ENG.needle.backoffZ=4; ENG.needle.active=true;
+    // yüksek Y-Offset → iğne düzleme açılı girer: şaft kesiti İJV'de parlar, gerçek uç
+    // kesit dışına (z) çıkıp arkadaki karotise geçer.
+    ENG.needle.entryX=-8; ENG.needle.angleDeg=55; ENG.needle.yOffset=4.5; ENG.needle.active=true;
     ENG.needle.depthMm=27;
     return needleState(); },
   declare:function(dx){ if(dx)$('dxSel').value=dx; evaluate(); return $('juryOut').innerText; },
