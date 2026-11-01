@@ -301,9 +301,9 @@ float speckle(vec3 wp){ // doku-kilitli benek (worldPos mm) — prob kayınca do
 }
 // elips/damar kesiti alanı: ekran (x lateral mm, y derinlik mm). Damar kesiti = eksenin kesit düzlemini kestiği elips.
 void main(){
-  vec2 uv=gl_FragCoord.xy/uRes;            // 0..1
+  vec2 uv=gl_FragCoord.xy/uRes;            // 0..1 (gl_FragCoord.y: 0=ALT)
   float lat=(uv.x-0.5)*uFieldMm;           // lateral mm
-  float dep=uv.y*uDepthMm;                 // derinlik mm (üst=cilt)
+  float dep=(1.0-uv.y)*uDepthMm;           // TEK DOĞRU DERİNLİK: dep=0 DAİMA ekranın EN ÜSTÜ (cilt)
   // sektör geometrisi: ışınlar apeksten yelpazelenir
   float beamAng=0.0;
   if(uSector>0.5){ beamAng=(uv.x-0.5)*0.9; lat=sin(beamAng)*dep; }
@@ -324,10 +324,11 @@ void main(){
       col=mix(col,0.40+0.14*sp+0.12*stri,0.75);
       col=mix(col,0.9,exp(-pow((dep-3.1)*2.2,2.0))*0.7);             // yüzeyel fasya (parlak hat)
       col=mix(col,0.9,exp(-pow((dep-12.3)*2.0,2.0))*0.6); }          // derin servikal fasya
-    // karotis kılıfı: İJV ile karotis arası ekojenik sınır (damarları ayıran parlak hat)
-    col=mix(col,0.85,exp(-pow((dep-18.5)*1.6,2.0))*0.4*step(abs(Lx-3.0),9.0));
-    if(abs(Lx+20.0)<9.0 && dep>9.0 && dep<24.0){ col=mix(col,0.46+0.13*sp,0.6); // tiroid lobu (medial, homojen)
-      col=mix(col,0.9,exp(-pow((abs(Lx+20.0)-9.0)*1.4,2.0))*0.5); } // tiroid kapsülü
+    // karotis kılıfı: İJV ile karotis arası yumuşak ekojenik sınır (sert dikdörtgen değil)
+    col=mix(col,0.8,exp(-pow((dep-18.5)*1.5,2.0))*exp(-pow((Lx-3.0)*0.13,2.0))*0.3*(0.7+0.3*sp));
+    // tiroid lobu (medial, homojen, yumuşak kenarlı — dikey sütun artefaktı yok)
+    float thy=smoothstep(-16.0,-24.0,Lx)*smoothstep(26.0,8.0,dep)*smoothstep(8.0,12.0,dep);
+    col=mix(col,0.46+0.12*sp,thy*0.55);
   } else { // GÖĞÜS/KARDİYAK: pektoral kas bandı
     if(dep>3.0 && dep<9.0){ col=mix(col,0.28+0.12*sp,0.55); col=mix(col,0.78,smoothstep(0.5,0.0,abs(dep-3.1))*0.5); }
   }
@@ -349,20 +350,24 @@ void main(){
     vec3 c=uVC[i].xyz; float baseR=uVC[i].w*uVX[i].y;              // bası ile kalan
     float resp=(isArt<0.5)?(1.0+0.05*sin(uTime*1.4)):1.0;         // ven: solunum
     float puls=(isArt>0.5)?(0.05*sin(uTime*6.2)):0.0;             // arter: pulsasyon
-    float rx,ry;
-    if(isArt<0.5){ rx=baseR*1.3*resp; ry=baseR*0.82*resp; }       // ven oval (kollaps uVX.y ile baseR'ye zaten girdi)
-    else { rx=baseR*(1.0+puls); ry=baseR*(1.0+puls); }            // arter yuvarlak
-    vec2 pc=vec2(Lx-c.x, dep-c.y);
-    float e=length(vec2(pc.x/max(rx,0.3),pc.y/max(ry,0.3)));
+    float e;
+    if(uWireLong<0.5){ // KISA EKSEN (transvers): damar dik kesilir → yuvarlak/oval lümen
+      float rx,ry;
+      if(isArt<0.5){ rx=baseR*1.3*resp; ry=baseR*0.82*resp; } else { rx=baseR*(1.0+puls); ry=baseR*(1.0+puls); }
+      e=length(vec2((Lx-c.x)/max(rx,0.3),(dep-c.y)/max(ry,0.3)));
+    } else { // UZUN EKSEN (longitudinal): damar boyunca paralel → ekran boyu uzanan yatay boru/kanal
+      float ry=(isArt<0.5)?baseR*0.82*resp:baseR*(1.0+puls);
+      e=abs(dep-c.y)/max(ry,0.3);                                 // yalnız derinlik; lateral boyunca uzanır
+    }
     if(e<1.0){ col=mix(col,0.03+0.025*speckle(wp*2.0),0.94);      // anekoik lümen (bu damara özel)
       vesselLumen=1.0; isArtery=isArt; lumE=e;
       dopVel=uVX[i].x*(isArt>0.5?(0.5+0.5*max(0.0,sin(uTime*6.0))):1.0); }
     if(isArt<0.5){ // ince tek duvar (e=1'de ince parlak halka)
       col=mix(col,0.9,exp(-pow((e-1.0)*13.0,2.0))*0.75);
-    } else { // kalın çift duvar: intima(parlak) + media(hipoekoik) + adventisya(parlak)
-      col=mix(col,0.95,exp(-pow((e-1.0)*15.0,2.0))*0.82);
-      col=mix(col,0.3,exp(-pow((e-1.13)*16.0,2.0))*0.5);
-      col=mix(col,0.9,exp(-pow((e-1.25)*14.0,2.0))*0.7);
+    } else { // kalın tek-bütün cidar (intima-media-adventisya) — hedef tahtası değil
+      col=mix(col,0.93,exp(-pow((e-1.0)*16.0,2.0))*0.8);
+      col=mix(col,0.4,exp(-pow((e-1.11)*20.0,2.0))*0.3);
+      col=mix(col,0.85,exp(-pow((e-1.2)*16.0,2.0))*0.45);
     }
   }
   // --- plevra hattı + A-çizgileri + kayma/barkod ---
@@ -386,36 +391,35 @@ void main(){
     float ring=smoothstep(0.86,0.99,e)*smoothstep(1.12,0.99,e);       // ince parlak perikard/duvar halkası
     col=mix(col,0.95,ring*0.8);
   }
-  // --- iğne: açıya bağlı ekojenite (anizotropi) + bevel uç + reverberasyon kuyruğu ---
+  // --- iğne: ciltten (üstten) girip açısına göre aşağı-ortaya iner; ince metalik hat + bevel uç ---
   if(uNeedleOn>0.5){
-    vec2 A=uNeedle.xy, B=uNeedle.zw; vec2 P=vec2(lat+uProbeX,dep);
+    vec2 A=uNeedle.xy, B=uNeedle.zw; vec2 P=vec2(Lx,dep);
     vec2 AB=B-A; float L2=dot(AB,AB); float tt=clamp(dot(P-A,AB)/max(L2,0.001),0.0,1.0);
     vec2 proj=A+AB*tt; float dd=length(P-proj);
-    vec2 nd=normalize(AB);
-    float aniso=abs(nd.x); // ışına (dikey) dik şaft parlar; dikey şaft söner  (basitleştirilmiş)
-    float shaft=smoothstep(0.9,0.0,dd)*(0.35+0.65*aniso);
-    col=mix(col,0.98,shaft);
-    // bevel uç: B noktasında ayrı parlak metalik nokta
-    float tip=smoothstep(1.1,0.0,length(P-B)); col=mix(col,1.0,tip*0.95);
-    // reverberasyon / comet-tail: şaftın hemen altında azalan paralel yankı
-    if(P.y>proj.y && dd<1.2){ float rv=0.0; for(int k=1;k<5;k++){ rv+=smoothstep(0.6,0.0,abs(dd))*exp(-float(k)*0.5)*smoothstep(1.2,0.0,abs((P.y-proj.y)-float(k)*1.6)); } col=mix(col,0.9,clamp(rv,0.0,0.6)); }
-    // dar akustik gölge (uç/şaftın altında derin yapı silinir)
-    if(P.y>B.y && abs(P.x-B.x)<0.9){ shadow*=mix(0.45,1.0,smoothstep(0.0,7.0,P.y-B.y)); }
+    vec2 nd=normalize(AB+vec2(0.0001,0.0));
+    float aniso=0.45+0.55*abs(nd.x);                              // ışına dik şaft parlar
+    float shaft=exp(-pow(dd*1.5,2.0))*aniso;                      // ince (~1.2 mm) parlak hat
+    col=mix(col,0.98,clamp(shaft,0.0,1.0));
+    float tip=exp(-pow(length(P-B)*1.25,2.0)); col=mix(col,1.0,tip*0.95);  // parlak bevel ucu
+    // ince comet-tail (ucun biraz ALTINDA sönümlenen) — kare kutu yok
+    if(dep>B.y+0.6){ float ct=exp(-(dep-B.y)*0.6)*exp(-pow((P.x-B.x)*1.6,2.0)); col=mix(col,0.8,clamp(ct,0.0,0.22)); }
+    // dar akustik gölge (ucun altında derin yapı silikleşir) — yumuşak gaussian stripe
+    if(dep>B.y){ shadow*=1.0-0.35*exp(-pow((P.x-B.x)*1.1,2.0))*smoothstep(0.0,2.0,dep-B.y)*exp(-(dep-B.y)*0.12); }
   }
-  // --- kılavuz tel: lümen içinde parlak ekojenik nokta (kısa eksen) / kesintisiz çizgi (uzun eksen) ---
+  // --- kılavuz tel: kısa eksen parlak nokta / uzun eksen lümen içi J-kavisli ekojenik çizgi ---
   if(uWireOn>0.5){
-    if(uWireLong<0.5){ float wd=smoothstep(0.8,0.0,length(vec2(Lx-uWirePos.x,dep-uWirePos.y))); col=mix(col,1.0,wd*0.95); }
-    else { float wl=smoothstep(0.55,0.0,abs(dep-uWirePos.y))*step(abs(Lx-uWirePos.x),16.0); col=mix(col,1.0,wl*0.92); }
+    if(uWireLong<0.5){ float wd=exp(-pow(length(vec2(Lx-uWirePos.x,dep-uWirePos.y))*1.3,2.0)); col=mix(col,1.0,wd*0.95); }
+    else { float wy=uWirePos.y + 1.6*sin((Lx+18.0)*0.08);        // hafif J-kavis (lümen içinde)
+      float wl=exp(-pow((dep-wy)*1.6,2.0))*smoothstep(20.0,17.0,abs(Lx-uWirePos.x)); col=mix(col,1.0,wl*0.92); }
   }
-  // kesit içindeki "parlak şaft noktası" (out-of-plane ucu sanma illüzyonu) için vurgulu nokta
-  if(uTipInSlice>0.5){ float t=smoothstep(1.2,0.0,length(vec2(lat+uProbeX-uTipX,dep-uTipY))); col=mix(col,1.0,t*0.85); }
+  // (uç kesitteyse zaten iğne bevel ucu çiziyor — ayrı nokta çizilmez)
   // --- kazanç + gölge + vinyet ---
   col*=shadow;
   col*= (0.5+1.3*uGain);
   // sektör dışı maske — apeksten derinliğe açılan yelpaze
   float mask=1.0;
-  if(uSector>0.5){ float halfW=0.04+uv.y*0.52; mask=smoothstep(halfW+0.02,halfW-0.02,abs(uv.x-0.5)); }
-  float vig=smoothstep(1.0,0.4,length(uv-vec2(0.5,0.35))*1.1);
+  if(uSector>0.5){ float dn=dep/uDepthMm; float halfW=0.04+dn*0.52; mask=smoothstep(halfW+0.02,halfW-0.02,abs(uv.x-0.5)); } // apeks üstte, derine açılır
+  float vig=smoothstep(1.0,0.4,length(uv-vec2(0.5,0.5))*1.05);
   col*= (0.78+0.22*vig);
   col=clamp(col,0.0,1.0);
   // --- Renkli Doppler kaplaması (v_toward = -dot(v,beamDir)) ---
@@ -450,7 +454,7 @@ function initGL(){
   ['uRes','uTime','uDepthMm','uFieldMm','uGain','uPress','uTilt','uDoppler','uSector','uProbeX','uNV','uVC','uVA','uVX','uNRib','uRib','uPleuraY','uPleuraOn','uSliding','uPneumo','uABeat','uDopAngle','uEff','uEffOn','uHeart','uHeartOn','uNeedleOn','uNeedle','uTipInSlice','uTipX','uTipY','uProfType','uWireOn','uWireLong','uWirePos','uRoi'].forEach(function(n){uni[n]=gl.getUniformLocation(prog,n);});
   resizeGL();
 }
-function resizeGL(){ var w=glcv.clientWidth,h=glcv.clientHeight; IW=Math.max(64,Math.min(900,Math.round(w*0.55))); IH=Math.max(64,Math.round(IW*h/Math.max(w,1))); glcv.width=IW; glcv.height=IH; if(gl)gl.viewport(0,0,IW,IH); var ov=$('overlay'); ov.width=w; ov.height=h; }
+function resizeGL(){ var w=glcv.clientWidth,h=glcv.clientHeight; IW=Math.max(64,Math.min(1200,Math.round(w*0.82))); IH=Math.max(64,Math.round(IW*h/Math.max(w,1))); glcv.width=IW; glcv.height=IH; if(gl)gl.viewport(0,0,IW,IH); var ov=$('overlay'); ov.width=w; ov.height=h; }
 window.addEventListener('resize',function(){resizeGL();drawGuide();});
 
 /* ======================= KESİT DÜZLEMİ & İĞNE 3B GEOMETRİSİ ======================= */
@@ -589,8 +593,8 @@ function renderGL(){ if(!gl)return; gl.useProgram(prog); gl.viewport(0,0,IW,IH);
   // efüzyon
   if(A.effusion){ gl.uniform4f(uni.uEff,A.effusion.cx,A.effusion.cy,A.effusion.rx,A.effusion.ry); setU1('uEffOn',1);} else setU1('uEffOn',0);
   if(A.heart){ gl.uniform4f(uni.uHeart,A.heart.cx,A.heart.cy,A.heart.rx,A.heart.ry); setU1('uHeartOn',1);} else setU1('uHeartOn',0);
-  // iğne (görünen segment) + kesit içi gerçek uç
-  var seg=ENG.needle.active?visibleShaftSeg():null;
+  // iğne (görünen segment) — tel yerleştiyse iğne çekilmiş sayılır (gösterme)
+  var seg=(ENG.needle.active&&!ENG.wire.placed)?visibleShaftSeg():null;
   if(seg){ gl.uniform4f(uni.uNeedle,seg.a[0],seg.a[1],seg.b[0],seg.b[1]); setU1('uNeedleOn',1);} else setU1('uNeedleOn',0);
   var ns=ENG.needle.active?needleState():null;
   if(ns && ns.tipInSlice){ setU1('uTipInSlice',1); setU1('uTipX',ns.tip[0]); setU1('uTipY',ns.tip[1]); } else setU1('uTipInSlice',0);
