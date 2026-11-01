@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DuctusLab · USG-Access — POCUS Eşliğinde İğne & Seldinger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" />
+<style>
+:root{
+  --bg-0:#040812;--bg-1:#070c17;--bg-2:#0b1220;--bg-3:#101829;
+  --glass:rgba(13,20,34,.66);--glass-2:rgba(17,26,43,.55);
+  --line:rgba(160,176,196,.10);--line-2:rgba(160,176,196,.18);
+  --ink:#e4e9f1;--ink-2:#a6b1c2;--ink-3:#6c7889;
+  --accent:#6fa3c8;--accent-2:#4f7fa3;--accent-dim:rgba(111,163,200,.14);
+  --amber:#d9a441;--amber-dim:rgba(217,164,65,.14);
+  --ok:#5a9f7f;--ok-dim:rgba(90,159,127,.16);
+  --alert:#c4565f;--alert-dim:rgba(196,86,95,.16);--violet:#9a86c9;
+  --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:"JetBrains Mono","SF Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}html,body{height:100%}
+body{background:radial-gradient(1200px 800px at 70% -10%,#0a1424 0%,var(--bg-0) 60%);color:var(--ink);font-family:var(--sans);font-size:13.5px;overflow:hidden;touch-action:none}
+.app{display:flex;flex-direction:column;height:100vh;min-height:0}
+.topbar{display:flex;align-items:center;gap:12px;padding:8px 14px;border-bottom:1px solid var(--line);background:var(--glass);backdrop-filter:blur(12px);flex:0 0 auto;z-index:30;flex-wrap:wrap}
+.wordmark{font-weight:700;letter-spacing:.04em;font-size:14px}.wordmark em{color:var(--accent);font-style:normal}
+.vsep{width:1px;height:20px;background:var(--line-2)}.product{color:var(--ink-2);font-size:12px}.spacer{flex:1}
+.btn{font-family:var(--sans);font-size:12px;color:var(--ink-2);background:var(--glass-2);border:1px solid var(--line-2);border-radius:9px;padding:7px 11px;cursor:pointer;transition:.15s;white-space:nowrap;min-height:34px}
+.btn:hover{color:var(--ink);border-color:var(--accent-2);background:var(--accent-dim)}
+.btn.on{color:#fff;background:var(--accent-dim);border-color:var(--accent)}
+.btn.sm{padding:5px 8px;font-size:11px;min-height:30px}
+.seg{display:flex;border:1px solid var(--line-2);border-radius:9px;overflow:hidden}.seg button{border:0;border-radius:0;background:transparent}.seg button+button{border-left:1px solid var(--line-2)}
+.profseg button{font-size:11.5px}
+/* stepper */
+.stepper{display:flex;align-items:stretch;gap:0;padding:7px 14px 0;background:var(--bg-1);border-bottom:1px solid var(--line);flex:0 0 auto;overflow-x:auto}
+.step{display:flex;align-items:center;gap:7px;padding:6px 12px;color:var(--ink-3);font-size:11.5px;white-space:nowrap;position:relative}
+.step .dot{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--line-2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--ink-3);flex:0 0 auto}
+.step.active{color:var(--ink)}.step.active .dot{border-color:var(--accent);color:#fff;background:var(--accent-dim)}
+.step.done .dot{border-color:var(--ok);color:var(--ok)}
+.step:not(:last-child)::after{content:"›";margin-left:6px;color:var(--ink-3);opacity:.6}
+.statusbar{display:flex;gap:14px;flex-wrap:wrap;align-items:center;padding:6px 14px;background:var(--bg-1);border-bottom:1px solid var(--line);font-size:11.5px;color:var(--ink-2);flex:0 0 auto}
+.statusbar b{color:var(--ink);font-weight:600}.statusbar .k{color:var(--ink-3);text-transform:uppercase;letter-spacing:.05em;font-size:10px}
+.main{flex:1;display:flex;min-height:0}
+.stage{flex:1.5;min-width:0;position:relative;display:flex;flex-direction:column;background:#02040a}
+.scan-wrap{flex:1;position:relative;min-height:0;overflow:hidden}
+#usg{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:crosshair;background:#000}
+#overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.guide-wrap{position:absolute;top:10px;left:10px;width:240px;height:170px;background:rgba(5,9,16,.82);border:1px solid var(--line-2);border-radius:10px;z-index:6;overflow:hidden;backdrop-filter:blur(6px)}
+#guide{width:240px;height:170px;display:block}
+.guide-lbl{position:absolute;top:6px;left:9px;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);z-index:7}
+.mmode-wrap{position:absolute;top:10px;right:10px;width:230px;height:150px;background:rgba(5,9,16,.86);border:1px solid var(--line-2);border-radius:10px;z-index:6;display:none;overflow:hidden}
+#mmode{width:230px;height:150px;display:block}.mmode-lbl{position:absolute;top:6px;left:9px;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);z-index:7}
+.usg-hud{position:absolute;left:10px;bottom:10px;font-family:var(--mono);font-size:10.5px;color:#8fb8d8;z-index:6;text-shadow:0 1px 3px #000;line-height:1.6;pointer-events:none}
+.usg-hud .depthbar{color:#6c7889}
+.freeze-tag{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:var(--mono);font-size:22px;font-weight:700;color:rgba(217,164,65,.5);letter-spacing:.2em;z-index:6;display:none}
+.stage-foot{flex:0 0 auto;border-top:1px solid var(--line);background:var(--glass);padding:8px 12px;max-height:40vh;overflow-y:auto}
+.toolrow{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start}
+.toolgrp{display:flex;flex-direction:column;gap:5px;padding:7px 9px;border:1px solid var(--line);border-radius:10px;background:var(--glass-2);min-width:120px}
+.toolgrp .lbl{font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3);white-space:nowrap;display:flex;justify-content:space-between;gap:8px}
+.toolgrp .lbl b{color:var(--accent);font-family:var(--mono);font-weight:600}
+.toolgrp .rowbtns{display:flex;gap:5px;flex-wrap:wrap}
+.slider{width:100%;accent-color:var(--accent);height:26px}
+.console{flex:1;min-width:330px;max-width:420px;border-left:1px solid var(--line);background:var(--bg-1);display:flex;flex-direction:column;min-height:0}
+.console-scroll{overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:11px}
+.console-scroll::-webkit-scrollbar{width:9px}.console-scroll::-webkit-scrollbar-thumb{background:#1b2638;border-radius:6px}
+.card{border:1px solid var(--line);border-radius:12px;background:var(--glass);padding:11px 12px}
+.card h3{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);font-weight:600;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.eyebrow{font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3)}
+.mini{font-size:11.5px;color:var(--ink-2);line-height:1.5}
+.rdg{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.cell{border:1px solid var(--line);border-radius:9px;padding:7px 8px;background:var(--bg-2)}
+.cell .k{font-size:9.5px;color:var(--ink-3);text-transform:uppercase}.cell .v{font-family:var(--mono);font-size:13px;font-weight:600;margin-top:2px}
+.v.ok{color:#8fe3bf}.v.warn{color:var(--amber)}.v.bad{color:#e88b92}
+.evlist{display:flex;flex-direction:column;gap:6px;margin-top:4px}
+.evitem{display:flex;gap:8px;align-items:center;font-size:11px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg-2)}
+.evitem .thumb{width:38px;height:30px;border-radius:5px;border:1px solid var(--line-2);flex:0 0 auto;background:#05media}
+.evitem.hist{opacity:.5}
+.evitem .tag{margin-left:auto;font-size:9px;padding:2px 6px;border-radius:5px}
+.tag-cur{color:var(--ok);background:var(--ok-dim)}.tag-his{color:var(--ink-3);background:#141c2a}
+.btn-primary{width:100%;font-size:13px;font-weight:600;color:#06131d;background:linear-gradient(135deg,#7ec0e8,#5a9bc4);border:0;border-radius:10px;padding:11px;cursor:pointer;min-height:44px}
+.jury-cat{margin:7px 0;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--bg-2)}
+.jury-cat .row{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:600}
+.bar{height:6px;border-radius:4px;background:#17202f;margin-top:6px;overflow:hidden}.bar>span{display:block;height:100%;border-radius:4px}
+.flag{font-size:11px;padding:7px 9px;border-radius:8px;margin-top:6px;border:1px solid;line-height:1.45}
+.flag.red{color:#e88b92;border-color:rgba(196,86,95,.45);background:var(--alert-dim)}
+.flag.amber{color:var(--amber);border-color:rgba(217,164,65,.45);background:var(--amber-dim)}
+.flag.green{color:#8fe3bf;border-color:rgba(90,159,127,.45);background:var(--ok-dim)}
+.hint{font-size:10.5px;color:var(--ink-3);margin-top:6px;line-height:1.45}
+.debrief{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.debrief canvas{width:100%;height:120px;border:1px solid var(--line-2);border-radius:8px;background:#02040a;display:block}
+.debrief .dl{font-size:9.5px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+#toastBox{position:fixed;left:20px;bottom:70px;display:flex;flex-direction:column;gap:8px;z-index:60;max-width:380px}
+.toast{background:rgba(10,16,28,.95);border:1px solid var(--line-2);border-left:3px solid var(--accent);border-radius:9px;padding:9px 13px;font-size:12px;color:var(--ink);box-shadow:0 8px 28px rgba(0,0,0,.45);line-height:1.45}
+.toast.warn{border-left-color:var(--amber)}.toast.bad{border-left-color:var(--alert)}.toast.ok{border-left-color:var(--ok)}
+.vitals{position:absolute;right:10px;bottom:10px;z-index:6;display:flex;gap:10px;font-family:var(--mono);font-size:11px;background:rgba(5,9,16,.8);border:1px solid var(--line-2);border-radius:9px;padding:6px 10px}
+.vitals .vt{display:flex;flex-direction:column;align-items:center}.vitals .vt .n{font-size:14px;font-weight:600}.vitals .vt .u{font-size:8.5px;color:var(--ink-3)}
+@media(max-width:1100px){.console{max-width:none;min-width:280px}}
+@media(max-width:960px){.main{flex-direction:column}.console{max-width:none;border-left:0;border-top:1px solid var(--line)}.guide-wrap{width:180px;height:128px}#guide{width:180px;height:128px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <span class="wordmark">Ductus<em>Lab</em></span><span class="vsep"></span>
+    <span class="product">USG-Access · POCUS Eşliğinde İğne & Seldinger</span>
+    <span class="spacer"></span>
+    <div class="seg profseg" id="profSeg">
+      <button class="btn sm on" data-prof="ijv">İJV CVC</button>
+      <button class="btn sm" data-prof="subclavian">Subklavyen</button>
+      <button class="btn sm" data-prof="pericardio">Perikardiyosentez</button>
+      <button class="btn sm" data-prof="thoracentesis">Torasentez</button>
+    </div>
+    <div class="seg" id="levelSeg"><button class="btn sm on" data-lvl="student">TUS/Öğrenci</button><button class="btn sm" data-lvl="resident">Asistan/Keşfet</button></div>
+    <button class="btn sm" id="examToggle">🔒 Gizli Vaka</button>
+    <button class="btn sm" id="homeBtn">← Anasayfa</button>
+  </div>
+
+  <div class="stepper" id="stepper"></div>
+  <div class="statusbar" id="statusbar"></div>
+
+  <div class="main">
+    <div class="stage">
+      <div class="scan-wrap">
+        <canvas id="usg"></canvas>
+        <canvas id="overlay"></canvas>
+        <div class="guide-wrap"><div class="guide-lbl" id="guideLbl">3B Yerleşim Kılavuzu</div><canvas id="guide" width="240" height="170"></canvas></div>
+        <div class="mmode-wrap" id="mmodeWrap"><div class="mmode-lbl">M-Mod · Plevra</div><canvas id="mmode" width="230" height="150"></canvas></div>
+        <div class="usg-hud" id="usgHud"></div>
+        <div class="freeze-tag" id="freezeTag">● DONDURULDU</div>
+        <div class="vitals" id="vitals"></div>
+      </div>
+      <div class="stage-foot"><div class="toolrow" id="toolrow"></div></div>
+    </div>
+
+    <div class="console">
+      <div class="console-scroll">
+        <div class="card">
+          <h3>Vaka / Girişim <span class="eyebrow" id="profTag"></span></h3>
+          <div class="mini" id="caseStem"></div>
+        </div>
+        <div class="card">
+          <h3>Gerçek Zamanlı Değerlendirme</h3>
+          <div class="rdg">
+            <div class="cell"><div class="k">Aktif Kontrol</div><div class="v" id="ctrlRead">Prob</div></div>
+            <div class="cell"><div class="k">Uç ↔ Kesit</div><div class="v" id="tipRead">—</div></div>
+            <div class="cell"><div class="k">Prob Basısı</div><div class="v" id="compRead">0</div></div>
+            <div class="cell"><div class="k">Aspirasyon</div><div class="v" id="aspRead">—</div></div>
+          </div>
+          <div class="mini" id="findNote" style="margin-top:8px;color:var(--ink-3)"></div>
+        </div>
+        <div class="card" id="evCard">
+          <h3>Kanıt Kareleri <span class="eyebrow" id="evCount">0</span></h3>
+          <div class="mini">Dondur → <b>📌 Kanıt Kaydet</b> ile kısa/uzun eksen doğrulamasını yakala.</div>
+          <div class="evlist" id="evList"></div>
+        </div>
+        <div class="card">
+          <h3>Tanı / Beyan & Jüri</h3>
+          <span class="eyebrow">İşlem sonucu beyanı</span>
+          <select id="dxSel" class="slider" style="width:100%;margin-top:5px;background:var(--bg-2);color:var(--ink);border:1px solid var(--line-2);border-radius:9px;padding:9px;height:auto;cursor:pointer"></select>
+          <button class="btn-primary" id="declareBtn" style="margin-top:9px">Beyanı Değerlendir</button>
+          <div id="juryOut" style="margin-top:11px"></div>
+        </div>
+        <div class="card" style="border-color:rgba(154,134,201,.25)">
+          <h3>Öğretim Notu</h3><div class="mini" id="teachNote">İşlemi tamamlayın veya beyan edin.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="toastBox"></div>
+
+<script>
+/* ============================================================================
+ *  DuctusLab · USG-Access — POCUS Eşliğinde Girişimsel İğne & Seldinger
+ *  TEK 3B GERÇEK: Görüntü (akustik motor), çarpışma (swept needle) ve jüri
+ *  AYNI sayısal anatomiden (ENG.anat) türer. Doku-kilitli 3B speckle; gerçek
+ *  elevational beam thickness → "şaftı uç sanma" illüzyonu milimetrik ölçülür.
+ * ========================================================================== */
+const $=id=>document.getElementById(id);
+const clamp=(x,a,b)=>x<a?a:x>b?b:x;
+const lerp=(a,b,t)=>a+(b-a)*t;
+const TAU=Math.PI*2;
+function vlen(a){return Math.hypot(a[0],a[1],a[2]);}
+function vsub(a,b){return [a[0]-b[0],a[1]-b[1],a[2]-b[2]];}
+function vadd(a,b){return [a[0]+b[0],a[1]+b[1],a[2]+b[2]];}
+function vscale(a,s){return [a[0]*s,a[1]*s,a[2]*s];}
+function vdot(a,b){return a[0]*b[0]+a[1]*b[1]+a[2]*b[2];}
+function vnorm(a){var l=vlen(a)||1;return [a[0]/l,a[1]/l,a[2]/l];}
+
+/* ======================= ANATOMİ PROFİLLERİ (tek gerçek) =======================
+ * Dünya koordinatı mm: x = cilt boyunca lateral, y = derinlik (0 cilt, + aşağı),
+ * z = elevasyon (kısa eksende prob dışı / uzun eksen damar boyu).
+ * Damar: 3B eksenli silindir. type: 'vein'|'artery'. compress: bası ile kollaps.
+ */
+function Vessel(o){return Object.assign({c:[0,15,0],r:5,axis:[0,0,1],type:'vein',flow:0.3,compress:1.0,name:'ven',pulsatile:false,behind:null},o);}
+
+const PROFILES={
+ ijv:{
+   key:'ijv',name:'Sağ İJV Santral Kateter (Tam Seldinger)',sector:false,
+   stem:'Hipovolemik, başı sola aşırı çevrilmiş hasta. Sağ internal juguler ven ile karotis arter yüksek örtüşmede. Kısa eksende tarayıp dinamik uç takibiyle veni kanüle edin; tam Seldinger ile kateter yerleştirin.',
+   teach:'İJV CVC: Önce bası/Doppler ile ven (kollabe, non-pulsatil, Doppler düşük hız) ↔ karotis (yuvarlak, pulsatil, yüksek hız) ayrımı. Out-of-plane "walk-down" ile ucu adım adım takip et — şaftın parlak kesiti ucu değildir! Tel lümende hem kısa hem uzun eksende doğrulanmadan dilatatör İLERLETME (arteriyel dilatasyon felaketi). Tel >20 cm itilirse VES.',
+   depthMm:40,fieldMm:38,
+   anat(){ return {
+     vessels:[
+       Vessel({name:'İnternal Juguler Ven',c:[4,16,0],r:6.5,type:'vein',flow:0.18,compress:1.0,behind:'carotid'}),
+       Vessel({name:'Karotis Arter',c:[3,25,0],r:4.2,type:'artery',flow:0.55,compress:0.12,pulsatile:true})
+     ],
+     pleura:null, ribs:[], effusion:null, heart:null,
+     skinY:0, muscleBand:[3,9], overlap:0.6
+   };},
+   steps:['Ön Tarama (Bası & Doppler)','Dinamik Uç Takibi & Giriş','Aspirasyon & Erişim Doğrulama','Kılavuz Tel / Dilatör / Kateter','Son Doğrulama & Komplikasyon'],
+   dx:[['ijv_success','Başarılı İJV kanülasyonu (venöz, tel lümende doğrulandı)'],['arterial_puncture','Karotis ponksiyonu — iğneyi çektim, bası'],['arterial_dilation','Arteriyel dilatasyon felaketi'],['pneumothorax','İyatrojenik pnömotoraks'],['abandon','İşlemi bıraktım / başka bölge']]
+ },
+ subclavian:{
+   key:'subclavian',name:'İnfraklaviküler Aksiller/Subklavyen Ven CVC',sector:false,
+   stem:'Klavikula ve kostanın akustik gölgesi altında aksiller/subklavyen ven; hemen altında parlak kayan plevra hattı. Veni kanüle edin, plevra ponksiyonundan kaçının, işlem sonu pnömotoraks dışlayın.',
+   teach:'Subklavyen/aksiller CVC: Klavikula+kosta gölgesi haritasını çıkar. İğne ucunu her an gör; dik/kontrolsüz ilerleme plevrayı deler → pnömotoraks (lung sliding kaybı + M-modda barkod + SpO₂ düşüşü). İşlem sonu aynı taraf ön göğüs USG ile pnömotoraks dışlama ZORUNLU.',
+   depthMm:45,fieldMm:42,
+   anat(){ return {
+     vessels:[
+       Vessel({name:'Aksiller/Subklavyen Ven',c:[6,18,0],r:6.0,type:'vein',flow:0.22,compress:0.9}),
+       Vessel({name:'Aksiller Arter',c:[-3,24,0],r:4.0,type:'artery',flow:0.5,compress:0.15,pulsatile:true})
+     ],
+     pleura:{depth:30,present:true,sliding:true}, ribs:[{x:-14,y:11,r:7},{x:16,y:12,r:7}],
+     effusion:null, heart:null, skinY:0, muscleBand:[3,8], clavicle:{x:0,y:7,r:9}
+   };},
+   steps:['Gölge Haritası & Doppler','Dinamik Uç Takibi & Giriş','Aspirasyon & Erişim Doğrulama','Kılavuz Tel / Dilatör / Kateter','Pnömotoraks Dışlama (M-Mod)'],
+   dx:[['sc_success','Başarılı subklavyen kanülasyonu (pnömotoraks yok)'],['pneumothorax','İyatrojenik pnömotoraks'],['arterial_puncture','Aksiller arter ponksiyonu'],['arterial_dilation','Arteriyel dilatasyon felaketi'],['abandon','İşlemi bıraktım']]
+ },
+ pericardio:{
+   key:'pericardio',name:'Kardiyak Tamponadda USG Perikardiyosentez (ESC)',sector:true,
+   stem:'Tamponad. Sektör probla subksifoid/parasternal pencere. En derin efüzyon cebinden, LIMA (internal torasik arter, sternum 1–2 cm laterali) ve akciğer korunarak giriş. Ajite salin ile perikardı doğrula, kontrollü boşalt.',
+   teach:'Perikardiyosentez (ESC): En geniş efüzyon cebi + en kısa cilt mesafesini seç. Renkli Doppler ile LIMA\'yı tanı ve koru. İğne miyokarda değerse EKG\'de ST elevasyonu (injury current). Ajite salin perikard boşluğunu doğrular. Perikardiyal dekompresyon sendromundan kaçınmak için kontrollü/kademeli drenaj.',
+   depthMm:90,fieldMm:80,
+   anat(){ return {
+     vessels:[ Vessel({name:'LIMA (internal torasik a.)',c:[-16,10,0],r:1.8,type:'artery',flow:0.45,compress:0.1,pulsatile:true}) ],
+     pleura:{depth:120,present:false,sliding:true},
+     ribs:[{x:-26,y:9,r:8},{x:24,y:9,r:8}],
+     effusion:{cx:2,cy:46,rx:36,ry:30,depthPocket:66},
+     heart:{cx:2,cy:52,rx:19,ry:15,wall:4}, skinY:0, muscleBand:[3,7]
+   };},
+   steps:['Pencere & En Derin Cep','İğne Girişi (LIMA Koru)','Perikard Doğrulama (Ajite Salin)','Kontrollü Drenaj','Son Değerlendirme'],
+   dx:[['peri_success','Başarılı perikardiyal drenaj (ajite salin + kontrollü)'],['myocardial','Miyokard ponksiyonu (ST elevasyonu)'],['lima_injury','LIMA yaralanması'],['rapid_decompression','Perikardiyal dekompresyon sendromu'],['abandon','İşlemi bıraktım']]
+ },
+ thoracentesis:{
+   key:'thoracentesis',name:'Plevral Efüzyonda USG Torasentez (BTS)',sector:false,
+   stem:'Oturur pozisyonda plevral efüzyon. Diyafram/karaciğer-dalak sınırı ve kosta gölgeleri. ALTTAKİ kostanın ÜST kenarından gir (interkostal arter koru). ≤1.5 L kontrollü boşalt, işlem sonu lung sliding kontrol et.',
+   teach:'Torasentez (BTS): Efüzyonu diyafram üstünde doğrula; solunumla karaciğer/dalak yukarı gelir. ALT kostanın ÜST kenarından gir — üst kostanın alt oluğundan girersen interkostal arter+ven+sinir demetini yaralarsın (hemotoraks). CVC dilatatörü YOK. ≤1.5 L boşalt; öksürük/göğüs sıkışması veya >1.5 L → re-ekspansiyon ödemi. Sonra lung sliding kontrol.',
+   depthMm:70,fieldMm:60,
+   anat(){ return {
+     vessels:[], pleura:{depth:22,present:true,sliding:true},
+     ribs:[{x:-16,y:12,r:7,icaTop:true},{x:16,y:12,r:7,icaTop:true}],
+     effusion:{cx:0,cy:40,rx:40,ry:24,pleural:true,depthPocket:30},
+     diaphragm:{y:60}, heart:null, skinY:0, muscleBand:[3,8]
+   };},
+   steps:['Efüzyon & Diyafram Doğrula','Kosta Üst Kenarı Giriş','Aspirasyon & Plevral Sıvı','Kontrollü Drenaj (≤1.5 L)','Lung Sliding Kontrol'],
+   dx:[['thora_success','Başarılı torasentez (≤1.5 L, komplikasyonsuz)'],['ica_injury','İnterkostal arter yaralanması (hemotoraks)'],['pneumothorax','İyatrojenik pnömotoraks'],['reexpansion','Re-ekspansiyon akciğer ödemi'],['abandon','İşlemi bıraktım']]
+ }
+};
+
+/* ======================= DURUM ======================= */
+const ENG={
+  prof:'ijv', profile:PROFILES.ijv, anat:PROFILES.ijv.anat(), level:'student', examMode:false,
+  step:0, t:0, control:'probe',
+  probe:{x:0, z:0, tilt:0, rot:0, press:0, gain:0.5, depth:40, doppler:false, mmode:false},
+  needle:{entryX:-18, angleDeg:40, depthMm:0, active:false, aspirate:false},
+  wire:{out:true, lenCm:0, placed:false}, dilator:false, catheter:false, drainMl:0, agitatedSaline:false,
+  frozen:false, evidence:[], wirePlacementRevision:0,
+  vitals:{spo2:97, hr:84, rhythm:'sinüs', st:0, bp:'118/74'},
+  flags:[], complications:{}, mmodeData:[], ecgStrip:[],
+  _mx:0,_my:0,dragging:false
+};
+
+/* ======================= WEBGL AKUSTİK MOTOR ======================= */
+let gl, glcv=$('usg'), prog, buf, uni={}, IW=560, IH=440;
+const FRAG=`
+precision highp float;
+uniform vec2 uRes; uniform float uTime;
+uniform float uDepthMm,uFieldMm,uGain,uPress,uTilt,uDoppler,uSector,uProbeX;
+uniform int uNV; uniform vec4 uVC[6]; uniform vec4 uVA[6]; uniform vec4 uVX[6]; // c.xyz+r ; axis.xyz+type ; flow,compressRemain,pulsR,0
+uniform int uNRib; uniform vec3 uRib[4];       // x,y,r (ekranda kesit)
+uniform float uPleuraY,uPleuraOn,uSliding,uPneumo,uABeat,uDopAngle;
+uniform vec4 uEff;  uniform float uEffOn;      // cx,cy,rx,ry  (efüzyon elips)
+uniform vec4 uHeart; uniform float uHeartOn;   // cx,cy,rx,ry
+uniform float uNeedleOn; uniform vec4 uNeedle; // ax,ay,bx,by  (kesit içindeki şaft izdüşümü)
+uniform float uTipInSlice, uTipX, uTipY;
+// --- 3B doku-kilitli gürültü (worldPos'a bağlı) ---
+float hash3(vec3 p){ p=fract(p*0.3183099+vec3(0.1,0.2,0.3)); p*=17.0; return fract(p.x*p.y*p.z*(p.x+p.y+p.z)); }
+float vnoise(vec3 p){ vec3 i=floor(p),f=fract(p); f=f*f*(3.0-2.0*f);
+  float n000=hash3(i),n100=hash3(i+vec3(1,0,0)),n010=hash3(i+vec3(0,1,0)),n110=hash3(i+vec3(1,1,0));
+  float n001=hash3(i+vec3(0,0,1)),n101=hash3(i+vec3(1,0,1)),n011=hash3(i+vec3(0,1,1)),n111=hash3(i+vec3(1,1,1));
+  return mix(mix(mix(n000,n100,f.x),mix(n010,n110,f.x),f.y),mix(mix(n001,n101,f.x),mix(n011,n111,f.x),f.y),f.z);
+}
+float speckle(vec3 wp){ // doku-kilitli benek (worldPos mm) — prob kayınca dokuyla kayar
+  float s=vnoise(wp*1.7)*0.6+vnoise(wp*3.9)*0.3+vnoise(wp*8.3)*0.2; return s;
+}
+// elips/damar kesiti alanı: ekran (x lateral mm, y derinlik mm). Damar kesiti = eksenin kesit düzlemini kestiği elips.
+void main(){
+  vec2 uv=gl_FragCoord.xy/uRes;            // 0..1
+  float lat=(uv.x-0.5)*uFieldMm;           // lateral mm
+  float dep=uv.y*uDepthMm;                 // derinlik mm (üst=cilt)
+  // sektör geometrisi: ışınlar apeksten yelpazelenir
+  float beamAng=0.0;
+  if(uSector>0.5){ beamAng=(uv.x-0.5)*0.9; lat=sin(beamAng)*dep; }
+  lat+=sin(uTilt)*dep*0.0;                  // tilt in-plane kayma (walk-down)
+  vec3 wp=vec3(lat+uProbeX, dep, 0.0);      // kesit düzlemi z=0 (elevasyon merkezinde)
+  vec3 beamDir=normalize(vec3(sin(uTilt),cos(uTilt),0.0));
+  // --- temel doku: yumuşak doku speckle + cilt/kas bandı ---
+  float tis=0.22+0.42*speckle(wp+vec3(0.0,0.0,uTime*0.0));
+  tis*= (0.5+0.5*clamp(1.0-dep/uDepthMm,0.0,1.0)); // derinlikle sönüm (daha koyu doku → yapılar belirginleşir)
+  // cilt + kas bandı
+  if(dep<2.0) tis=mix(tis,0.75,smoothstep(2.0,0.0,dep));
+  float col=tis;
+  float atten=1.0;         // gölge/sönüm çarpanı (üstteki yapılar)
+  float shadow=1.0;
+  // --- kaburga/klavikula: parlak ön yüz + arkasında akustik gölge ---
+  for(int i=0;i<4;i++){ if(i>=uNRib)break; vec3 rb=uRib[i];
+    float d=length(vec2(lat+uProbeX-rb.x,dep-rb.y));
+    if(d<rb.z){ // kemik içi: güçlü ön yüz ekosu
+      float front=smoothstep(rb.z,rb.z-1.2,d)*step(dep,rb.y);
+      col=mix(col,0.95,front*0.9); }
+    // arkasında gölge (dep > rib.y ve lateralde kaburga genişliğinde)
+    if(dep>rb.y && abs(lat+uProbeX-rb.x)<rb.z*0.95){ shadow*= mix(0.12,1.0,smoothstep(0.0,10.0,dep-rb.y)*0.0+0.0); }
+  }
+  // --- damarlar: anekoik lümen + parlak duvar; bası ile kollaps (compressRemain) ---
+  float vesselLumen=0.0; float dopVel=0.0; float isArtery=0.0;
+  for(int i=0;i<6;i++){ if(i>=uNV)break;
+    vec3 c=uVC[i].xyz; float r=uVC[i].w*uVX[i].y;        // kalan yarıçap (bası)
+    float ry=r; float rx=r;
+    // kollaps: veni y ekseninde yassılaştır (compressRemain küçükse)
+    ry=r*mix(1.0,0.35,clamp(1.0-uVX[i].y,0.0,1.0))*(uVA[i].w<0.5?mix(1.0,0.25,uPress):1.0);
+    float pr=uVX[i].z; // pulsatil yarıçap oynaması (arter)
+    rx=r*(1.0+pr); ry=ry*(1.0+pr);
+    vec2 pc=vec2(lat+uProbeX-c.x, dep-c.y);
+    float e=length(vec2(pc.x/max(rx,0.3),pc.y/max(ry,0.3)));
+    if(e<1.0){ vesselLumen=1.0; isArtery=uVA[i].w; dopVel=uVX[i].x*(uVA[i].w>0.5?(0.6+0.4*sin(uTime*6.0)):1.0); }
+    // duvar
+    col=mix(col,0.9,smoothstep(1.18,1.0,e)*step(e,1.18)*0.7);
+  }
+  if(vesselLumen>0.5){ col=mix(col, 0.04+0.03*speckle(wp*2.0), 0.9); } // anekoik + hafif düşük-kazanç gürültü
+  // --- plevra hattı + A-çizgileri + kayma/barkod ---
+  if(uPleuraOn>0.5){
+    float pd=uPleuraY;
+    float pl=smoothstep(1.4,0.0,abs(dep-pd)); // parlak plevra
+    // kayan nokta (sliding) — pnömotoraksta yok
+    float slide=(uPneumo>0.5)?0.0:(0.5+0.5*sin((lat+uProbeX)*0.6+uTime*5.0));
+    col=mix(col,0.92,pl*(0.7+0.3*slide));
+    // A-çizgileri (plevra altında eşit aralıklı tekrar)
+    for(int k=1;k<4;k++){ float ay=pd+float(k)*pd; col=mix(col,0.6,smoothstep(1.0,0.0,abs(dep-ay))*0.25*step(dep,uDepthMm)); }
+    if(dep>pd+1.5) shadow*=0.82; // plevra altı akciğer: derin yapı görülmez
+  }
+  // --- perikardiyal/plevral efüzyon: anekoik cep ---
+  if(uEffOn>0.5){ vec2 ec=vec2(lat+uProbeX-uEff.x,dep-uEff.y); float e=length(vec2(ec.x/uEff.z,ec.y/uEff.w));
+    if(e<1.0){ col=mix(col,0.02+0.02*speckle(wp*2.2),0.95); } float erim=smoothstep(0.9,1.0,e)*smoothstep(1.12,1.0,e); col=mix(col,0.88,erim*0.7); }
+  // --- kalp duvarı (perikardiyosentez) ---
+  if(uHeartOn>0.5){ vec2 hc=vec2(lat+uProbeX-uHeart.x,dep-uHeart.y); float e=length(vec2(hc.x/uHeart.z,hc.y/uHeart.w));
+    float beat=1.0+0.05*sin(uTime*6.2); e/=beat;
+    if(e<0.99){ col=mix(col,0.22+0.28*speckle(wp*2.5),0.92); }        // miyokard (orta-gri)
+    float ring=smoothstep(0.86,0.99,e)*smoothstep(1.12,0.99,e);       // ince parlak perikard/duvar halkası
+    col=mix(col,0.95,ring*0.8);
+  }
+  // --- iğne: açıya bağlı ekojenite (anizotropi) + bevel uç + reverberasyon kuyruğu ---
+  if(uNeedleOn>0.5){
+    vec2 A=uNeedle.xy, B=uNeedle.zw; vec2 P=vec2(lat+uProbeX,dep);
+    vec2 AB=B-A; float L2=dot(AB,AB); float tt=clamp(dot(P-A,AB)/max(L2,0.001),0.0,1.0);
+    vec2 proj=A+AB*tt; float dd=length(P-proj);
+    vec2 nd=normalize(AB);
+    float aniso=abs(nd.x); // ışına (dikey) dik şaft parlar; dikey şaft söner  (basitleştirilmiş)
+    float shaft=smoothstep(0.9,0.0,dd)*(0.35+0.65*aniso);
+    col=mix(col,0.98,shaft);
+    // bevel uç: B noktasında ayrı parlak nokta
+    float tip=smoothstep(1.1,0.0,length(P-B)); col=mix(col,1.0,tip*0.9);
+    // reverberasyon / comet-tail: şaftın hemen altında azalan paralel yankı
+    if(P.y>proj.y && dd<1.2){ float rv=0.0; for(int k=1;k<5;k++){ rv+=smoothstep(0.6,0.0,abs(dd))*exp(-float(k)*0.5)*smoothstep(1.2,0.0,abs((P.y-proj.y)-float(k)*1.6)); } col=mix(col,0.9,clamp(rv,0.0,0.6)); }
+  }
+  // kesit içindeki "parlak şaft noktası" (out-of-plane ucu sanma illüzyonu) için vurgulu nokta
+  if(uTipInSlice>0.5){ float t=smoothstep(1.2,0.0,length(vec2(lat+uProbeX-uTipX,dep-uTipY))); col=mix(col,1.0,t*0.85); }
+  // --- kazanç + gölge + vinyet ---
+  col*=shadow;
+  col*= (0.5+1.3*uGain);
+  // sektör dışı maske — apeksten derinliğe açılan yelpaze
+  float mask=1.0;
+  if(uSector>0.5){ float halfW=0.04+uv.y*0.52; mask=smoothstep(halfW+0.02,halfW-0.02,abs(uv.x-0.5)); }
+  float vig=smoothstep(1.0,0.4,length(uv-vec2(0.5,0.35))*1.1);
+  col*= (0.78+0.22*vig);
+  col=clamp(col,0.0,1.0);
+  // --- Renkli Doppler kaplaması (v_toward = -dot(v,beamDir)) ---
+  vec3 rgb=vec3(col);
+  if(uDoppler>0.5 && vesselLumen>0.5){
+    // v_toward = -dot(v,beamDir): ışın-akış açısıyla ölçeklenir (90° dik → renk kaybolur = açı tuzağı)
+    float vt=dopVel*uDopAngle;    // dopVel işaretli (ven/arter ters yön — isme bağlı DEĞİL)
+    float ang=abs(vt);
+    if(uDopAngle>0.08 && ang>0.02){
+      float aliased=fract(ang*1.4);
+      vec3 flow = vt>0.0? mix(vec3(0.2,0.0,0.0),vec3(1.0,0.25,0.15),ang) : mix(vec3(0.0,0.0,0.2),vec3(0.2,0.5,1.0),ang);
+      if(ang>0.7){ flow=mix(flow,vec3(0.3,1.0,0.4),aliased); } // aliasing
+      rgb=mix(rgb,flow,0.75);
+    }
+  }
+  rgb*=mask;                     // sektör yelpazesi dışı siyah
+  gl_FragColor=vec4(rgb,1.0);
+}`;
+const VERT=`attribute vec2 p;void main(){gl_Position=vec4(p,0.0,1.0);}`;
+
+function initGL(){
+  gl=glcv.getContext('webgl',{antialias:true,preserveDrawingBuffer:true})||glcv.getContext('experimental-webgl');
+  if(!gl){ $('usgHud').textContent='WebGL yok'; return; }
+  function sh(t,s){var o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);if(!gl.getShaderParameter(o,gl.COMPILE_STATUS))console.error(gl.getShaderInfoLog(o));return o;}
+  prog=gl.createProgram();gl.attachShader(prog,sh(gl.VERTEX_SHADER,VERT));gl.attachShader(prog,sh(gl.FRAGMENT_SHADER,FRAG));gl.linkProgram(prog);
+  if(!gl.getProgramParameter(prog,gl.LINK_STATUS))console.error(gl.getProgramInfoLog(prog));
+  gl.useProgram(prog);
+  buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+  var pl=gl.getAttribLocation(prog,'p');gl.enableVertexAttribArray(pl);gl.vertexAttribPointer(pl,2,gl.FLOAT,false,0,0);
+  ['uRes','uTime','uDepthMm','uFieldMm','uGain','uPress','uTilt','uDoppler','uSector','uProbeX','uNV','uVC','uVA','uVX','uNRib','uRib','uPleuraY','uPleuraOn','uSliding','uPneumo','uABeat','uDopAngle','uEff','uEffOn','uHeart','uHeartOn','uNeedleOn','uNeedle','uTipInSlice','uTipX','uTipY'].forEach(function(n){uni[n]=gl.getUniformLocation(prog,n);});
+  resizeGL();
+}
+function resizeGL(){ var w=glcv.clientWidth,h=glcv.clientHeight; IW=Math.max(64,Math.min(900,Math.round(w*0.55))); IH=Math.max(64,Math.round(IW*h/Math.max(w,1))); glcv.width=IW; glcv.height=IH; if(gl)gl.viewport(0,0,IW,IH); var ov=$('overlay'); ov.width=w; ov.height=h; }
+window.addEventListener('resize',function(){resizeGL();drawGuide();});
+
+/* ======================= KESİT DÜZLEMİ & İĞNE 3B GEOMETRİSİ ======================= */
+// Kesit düzlemi: dünya z = probe.z (elevasyon). Kısa eksen damar (axis z) her z'de aynı kesit.
+function sigmaE(depthY){ return 1.2 + 0.03*Math.max(0,depthY); }   // elevational yarı-kalınlık (mm), derinlikle artar
+function beamDir(){ var t=ENG.probe.tilt; return [Math.sin(t),Math.cos(t),0]; }
+function needleDir(){
+  var n=ENG.needle, a=n.angleDeg*Math.PI/180, oop=(n.oopDeg||0)*Math.PI/180;
+  var cx=ENG.anat.vessels.length?ENG.anat.vessels[0].c[0]:0;
+  var sx=(cx>=n.entryX)?1:-1;
+  return vnorm([ sx*Math.cos(a)*Math.cos(oop), Math.sin(a), Math.cos(a)*Math.sin(oop) ]);
+}
+function needleEntry(){ var n=ENG.needle; return [n.entryX, 0, (ENG.probe.z - (n.backoffZ||0))]; }
+function needleTip(){ var E=needleEntry(),d=needleDir(); return vadd(E, vscale(d, ENG.needle.depthMm)); }
+function pointInVesselXY(x,y,v){ var rr=v.r*(v._open==null?1:v._open); var ry=rr*((v.type==='vein')?1:1); var dx=(x-v.c[0])/Math.max(rr,0.3), dy=(y-v.c[1])/Math.max(ry,0.3); return (dx*dx+dy*dy)<1.0; }
+function tipInsideVessel(v){ var T=needleTip(); // 3B: damar ekseni z → kesit x-y
+  if(Math.abs(v.axis[2])>0.9){ return pointInVesselXY(T[0],T[1],v); }
+  return pointInVesselXY(T[0],T[1],v);
+}
+// İğne durumunun tek gerçeği: şaftı-uç-sanma illüzyonu dahil
+function needleState(){
+  var E=needleEntry(), d=needleDir(), L=ENG.needle.depthMm, T=needleTip(), pz=ENG.probe.z;
+  // şaftın kesit düzlemini kestiği nokta
+  var crossS = (Math.abs(d[2])>1e-4)? (pz - E[2])/d[2] : Infinity;
+  var crossPt = (isFinite(crossS))? vadd(E, vscale(d, crossS)) : null;
+  var shaftCrossesSlice = isFinite(crossS) && crossS>=0 && crossS<=L;
+  // kesit içinde görünen en derin şaft noktası (illüzyon kaynağı)
+  var tipElevDist = Math.abs(T[2]-pz);
+  var tipInSlice = tipElevDist <= sigmaE(T[1]);
+  // gerçek uç arka duvar ponksiyonu? (İJV arkasında karotis / ven arka duvarı)
+  var posteriorPunctured=false, inVesselName=null;
+  (ENG.anat.vessels||[]).forEach(function(v){ if(tipInsideVessel(v)){ inVesselName=v.name; } });
+  var ijv=(ENG.anat.vessels||[]).find(function(v){return v.behind;});
+  if(ijv){ var behind=(ENG.anat.vessels||[]).find(function(v){return v.name.indexOf('Karotis')>=0||v.name.indexOf('arter')>=0||v.type==='artery';});
+    if(behind && tipInsideVessel(behind)) posteriorPunctured=true;
+    // ven arka duvarını geçip daha derine
+    if(T[1] > ijv.c[1]+ijv.r*(ijv._open==null?1:ijv._open) && Math.abs(T[0]-ijv.c[0])<ijv.r) posteriorPunctured=true;
+  }
+  // kesitte görünen parlak şaft noktası var mı (gerçek uç olmasa da)
+  var brightShaftInSlice = shaftCrossesSlice && crossPt && crossPt[1]>0 && crossPt[1]<ENG.profile.depthMm;
+  return { tipInSlice:tipInSlice, brightShaftInSlice:brightShaftInSlice, posteriorPunctured:posteriorPunctured,
+    tipToSliceMm:+tipElevDist.toFixed(2), tip:T, crossPt:crossPt, inVesselName:inVesselName, L:L };
+}
+// Kesit içinde görünen şaft segmenti (görüntü için) — x,y izdüşümü
+function visibleShaftSeg(){
+  var E=needleEntry(), d=needleDir(), L=ENG.needle.depthMm, pz=ENG.probe.z;
+  if(L<=0) return null;
+  var first=null,last=null,N=64;
+  for(var i=0;i<=N;i++){ var s=L*i/N; var P=vadd(E,vscale(d,s));
+    if(Math.abs(P[2]-pz)<=sigmaE(P[1])){ if(first==null)first=[P[0],P[1]]; last=[P[0],P[1]]; } }
+  if(!first) return null; return {a:first,b:last};
+}
+
+/* ======================= BASI / KOMPRESYON (transmural) ======================= */
+function vesselLumenPressure(v){
+  if(v.type==='vein') return 8;
+  var shock=(ENG.shock==null)?(ENG.prof==='ijv'):ENG.shock; // İJV vakası hipovolemik; test override edebilir
+  return shock?52:92;
+}
+function vesselOpenFrac(v){
+  var Pext=ENG.probe.press*0.9;                 // prob basısı → mmHg
+  var Plum=vesselLumenPressure(v);
+  var range=(v.type==='vein')?10:42;            // ven keskin kollabe, arter dirençli
+  var f=1 - (Pext-Plum)/range; return clamp(f,0,1);
+}
+function applyCompression(){ (ENG.anat.vessels||[]).forEach(function(v){ v._open=vesselOpenFrac(v); }); }
+
+/* ======================= DOPPLER AÇISI ======================= */
+function beamToFlowAngleDeg(v){
+  // kısa eksen (rot~0): ışın damar eksenine ~dik → ~90°; uzun eksen (rot~90) + tilt ile açı kazanılır
+  var rot=ENG.probe.rot, tilt=ENG.probe.tilt;
+  // damar ekseni çoğunlukla z. prob rot=90° ile kesit uzun eksen → ışın-akış açısı tilt'e bağlanır
+  var align=Math.abs(Math.sin(rot));            // 0 kısa eksen → 0 hizalanma ; 1 uzun eksen
+  var ang = 90 - align*(90 - Math.abs(tilt*180/Math.PI)); // uzun eksen+tilt → açı düşer
+  return clamp(ang,0,90);
+}
+function dopplerVelocity(v, angleDeg){ var a=(angleDeg==null?beamToFlowAngleDeg(v):angleDeg)*Math.PI/180;
+  var vt=v.flow*Math.cos(a); return vt; }   // 90° → ~0 (açı tuzağı)
+
+/* ======================= M-MOD (plevra) ======================= */
+function lungSliding(){ if(!ENG.anat.pleura||!ENG.anat.pleura.present) return null;
+  return !(ENG.complications.pneumothorax); }
+function mmodePattern(){ var s=lungSliding(); if(s==null) return 'n/a'; return s?'seashore':'barcode'; }
+function pushMmodeColumn(){ var pat=mmodePattern(); if(pat==='n/a')return;
+  ENG.mmodeData.push({t:ENG.t, sliding:(pat==='seashore'), pulse:(ENG.vitals.hr)});
+  if(ENG.mmodeData.length>230) ENG.mmodeData.shift();
+}
+
+/* ======================= RENDER DÖNGÜSÜ ======================= */
+let running=true,last=0;
+function loop(ts){ if(!running){return;} var dt=last?Math.min(0.05,(ts-last)/1000):0.016; last=ts; ENG.t+=dt;
+  if(!ENG.frozen){ applyCompression(); stepPhysics(dt); renderGL(); drawOverlay(); drawGuide(); if(ENG.probe.mmode){ if(Math.random()<0.5)pushMmodeColumn(); drawMmode(); } }
+  updateReadouts();
+  requestAnimationFrame(loop);
+}
+function startLoop(){ if(!running){running=true;last=0;requestAnimationFrame(loop);} } function stopLoop(){ running=false; }
+
+function stepPhysics(dt){
+  // vitaller / EKG: miyokard ponksiyonu → ST; tel >20cm → VES
+  var v=ENG.vitals;
+  if(ENG.complications.pneumothorax){ v.spo2=Math.max(78, v.spo2-8*dt); }
+  if(ENG.complications.myocardial){ v.st=Math.min(4, v.st+2*dt); } else { v.st=Math.max(0, v.st-1*dt); }
+  // ECG şerit örnek
+  ENG.ecgStrip.push({t:ENG.t, ves:ENG.complications.ves?1:0, st:v.st}); if(ENG.ecgStrip.length>200)ENG.ecgStrip.shift();
+}
+
+function setU1(n,x){ if(uni[n])gl.uniform1f(uni[n],x); }
+function renderGL(){ if(!gl)return; gl.useProgram(prog); gl.viewport(0,0,IW,IH);
+  var P=ENG.profile, A=ENG.anat, pr=ENG.probe;
+  gl.uniform2f(uni.uRes,IW,IH);
+  setU1('uTime',ENG.t); setU1('uDepthMm',P.depthMm); setU1('uFieldMm',P.fieldMm);
+  setU1('uGain',pr.gain); setU1('uPress',pr.press/100); setU1('uTilt',pr.tilt);
+  setU1('uDoppler',pr.doppler?1:0); setU1('uSector',P.sector?1:0); setU1('uProbeX',pr.x);
+  var dopAngF=(A.vessels&&A.vessels.length)?Math.cos(beamToFlowAngleDeg(A.vessels[0])*Math.PI/180):0; setU1('uDopAngle',Math.abs(dopAngF));
+  // damarlar
+  var vc=new Float32Array(24), va=new Float32Array(24), vx=new Float32Array(24);
+  var nv=Math.min(6,A.vessels.length);
+  for(var i=0;i<nv;i++){ var v=A.vessels[i]; var open=(v._open==null?1:v._open);
+    vc[i*4]=v.c[0];vc[i*4+1]=v.c[1];vc[i*4+2]=v.c[2];vc[i*4+3]=v.r;
+    va[i*4]=v.axis[0];va[i*4+1]=v.axis[1];va[i*4+2]=v.axis[2];va[i*4+3]=(v.type==='artery')?1:0;
+    var pulseR=(v.pulsatile)?0.06*Math.sin(ENG.t*6.2):0;
+    var dir=(v.type==='vein')?-1:1;   // ven/arter fizyolojik olarak ters yön (renk isme değil yöne bağlı)
+    vx[i*4]=v.flow*dir;vx[i*4+1]=open;vx[i*4+2]=pulseR;vx[i*4+3]=0;
+  }
+  gl.uniform1i(uni.uNV,nv); gl.uniform4fv(uni.uVC,vc); gl.uniform4fv(uni.uVA,va); gl.uniform4fv(uni.uVX,vx);
+  // kaburga
+  var rib=new Float32Array(12), nr=Math.min(4,(A.ribs||[]).length);
+  for(var r=0;r<nr;r++){ rib[r*3]=A.ribs[r].x;rib[r*3+1]=A.ribs[r].y;rib[r*3+2]=A.ribs[r].r; }
+  gl.uniform1i(uni.uNRib,nr); gl.uniform3fv(uni.uRib,rib);
+  // plevra
+  setU1('uPleuraY', A.pleura?A.pleura.depth:999); setU1('uPleuraOn', A.pleura&&A.pleura.present?1:0);
+  setU1('uSliding', A.pleura&&A.pleura.sliding?1:0); setU1('uPneumo', ENG.complications.pneumothorax?1:0); setU1('uABeat',ENG.vitals.hr);
+  // efüzyon
+  if(A.effusion){ gl.uniform4f(uni.uEff,A.effusion.cx,A.effusion.cy,A.effusion.rx,A.effusion.ry); setU1('uEffOn',1);} else setU1('uEffOn',0);
+  if(A.heart){ gl.uniform4f(uni.uHeart,A.heart.cx,A.heart.cy,A.heart.rx,A.heart.ry); setU1('uHeartOn',1);} else setU1('uHeartOn',0);
+  // iğne (görünen segment) + kesit içi gerçek uç
+  var seg=ENG.needle.active?visibleShaftSeg():null;
+  if(seg){ gl.uniform4f(uni.uNeedle,seg.a[0],seg.a[1],seg.b[0],seg.b[1]); setU1('uNeedleOn',1);} else setU1('uNeedleOn',0);
+  var ns=ENG.needle.active?needleState():null;
+  if(ns && ns.tipInSlice){ setU1('uTipInSlice',1); setU1('uTipX',ns.tip[0]); setU1('uTipY',ns.tip[1]); } else setU1('uTipInSlice',0);
+  gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+}
+
+/* ======================= OVERLAY (ölçek, giriş çizgisi) ======================= */
+function drawOverlay(){ var ov=$('overlay'),x=ov.getContext('2d'); x.clearRect(0,0,ov.width,ov.height);
+  var W=ov.width,H=ov.height,P=ENG.profile;
+  // derinlik skalası (sağ kenar cm işaretleri)
+  x.strokeStyle='rgba(143,184,216,.35)';x.fillStyle='rgba(143,184,216,.6)';x.font='10px monospace';x.lineWidth=1;
+  for(var cm=1;cm*10<=P.depthMm;cm++){ var yy=H*(cm*10/P.depthMm); x.beginPath();x.moveTo(W-7,yy);x.lineTo(W,yy);x.stroke(); x.fillText(cm+'',W-22,yy+3); }
+  // iğne giriş çizgisi (deri yüzeyinden hedefe doğru kesikli — rehber)
+  if(ENG.needle.active){ var seg=visibleShaftSeg();
+    if(seg){ var a=mm2px(seg.a[0],seg.a[1]),b=mm2px(seg.b[0],seg.b[1]);
+      x.strokeStyle='rgba(217,164,65,.0)'; } }
+}
+function mm2px(xmm,ymm){ var ov=$('overlay'),P=ENG.profile; var u=(xmm-ENG.probe.x)/P.fieldMm+0.5; var v=ymm/P.depthMm; return [u*ov.width, v*ov.height]; }
+
+/* ======================= 3B YERLEŞİM KILAVUZU ======================= */
+function drawGuide(){ var c=$('guide'),x=c.getContext('2d'),W=240,H=170; x.clearRect(0,0,W,H);
+  x.fillStyle='#070d18';x.fillRect(0,0,W,H);
+  // yan görünüm: cilt yüzeyi, prob, kesit yelpazesi, dış iğne şaftı
+  var skinY=44, cx=W*0.5+ENG.probe.x*1.4;
+  // doku bloğu
+  var g=x.createLinearGradient(0,skinY,0,H); g.addColorStop(0,'#1a2740');g.addColorStop(1,'#0c1322'); x.fillStyle=g; x.fillRect(0,skinY,W,H-skinY);
+  // cilt çizgisi
+  x.strokeStyle='#4f6782';x.lineWidth=2;x.beginPath();x.moveTo(0,skinY);x.lineTo(W,skinY);x.stroke();
+  // prob
+  x.fillStyle='#2a3a52';x.fillRect(cx-26,skinY-14,52,14); x.fillStyle='#6fa3c8';x.fillRect(cx-24,skinY-3,48,3);
+  // ultrason kesit yelpazesi (yarı saydam)
+  x.save();x.globalAlpha=0.16;x.fillStyle='#6fa3c8';x.beginPath();x.moveTo(cx,skinY);
+  var sp=ENG.profile.sector?36:20; x.lineTo(cx-sp,H);x.lineTo(cx+sp,H);x.closePath();x.fill();x.restore();
+  // SPOILER kuralı: öğrenci/sınav → doku altı yapılar gizli
+  var reveal=(ENG.level==='resident'&&!ENG.examMode);
+  if(reveal){ (ENG.anat.vessels||[]).forEach(function(v){ var vy=skinY+v.c[1]*1.5, vx=cx+v.c[0]*1.4, rr=v.r*1.4*(v._open==null?1:v._open);
+      x.fillStyle=(v.type==='artery')?'rgba(196,86,95,.5)':'rgba(111,163,200,.5)'; x.beginPath();x.ellipse(vx,vy,rr, v.type==='vein'?rr*(0.4+0.6*(v._open==null?1:v._open)):rr,0,0,TAU);x.fill(); }); }
+  // dış iğne şaftı (deri üstü her zaman görünür; deri altı gerçek uç öğrenci modunda gizli)
+  if(ENG.needle.active){ var E=needleEntry(), d=needleDir();
+    var ex=cx+E[0]*1.4, ey=skinY; x.strokeStyle='#d9a441';x.lineWidth=2.4;x.beginPath();x.moveTo(ex-d[0]*40,ey-d[1]*40);x.lineTo(ex,ey);x.stroke();
+    if(reveal){ var T=needleTip(); x.strokeStyle='#f0c060';x.beginPath();x.moveTo(ex,ey);x.lineTo(cx+T[0]*1.4,skinY+T[1]*1.5);x.stroke();
+      x.fillStyle='#fff';x.beginPath();x.arc(cx+T[0]*1.4,skinY+T[1]*1.5,2.5,0,TAU);x.fill(); } }
+  $('guideLbl').textContent=reveal?'3B Kılavuz · KEŞFET (şeffaf)':'3B Kılavuz · yüzey (doku altı gizli)';
+}
+
+/* ======================= M-MOD ÇİZİM ======================= */
+function drawMmode(){ var c=$('mmode'),x=c.getContext('2d'),W=230,H=150; x.clearRect(0,0,W,H); x.fillStyle='#02040a';x.fillRect(0,0,W,H);
+  var plY=H*0.4, n=ENG.mmodeData.length;
+  for(var i=0;i<n;i++){ var col=i*(W/230); var d=ENG.mmodeData[i];
+    // plevra üstü: düz çizgiler (deniz/gökyüzü); plevra altı: kayma varsa kumsal (grenli), yoksa barkod (düz çizgi)
+    x.fillStyle='rgba(180,200,220,.5)'; for(var yy=4;yy<plY;yy+=5){ x.fillRect(col,yy,1,1); }
+    if(d.sliding){ for(var yy2=plY+3;yy2<H-3;yy2+=2){ if(Math.random()<0.6)x.fillRect(col,yy2,1,1); } } // kumsal grenli
+    else { x.fillStyle='rgba(150,170,190,.45)'; for(var yy3=plY+3;yy3<H-3;yy3+=5){ x.fillRect(col,yy3,1,1); } } // barkod düz çizgi
+  }
+  x.strokeStyle='#8fb8d8';x.lineWidth=1;x.beginPath();x.moveTo(0,plY);x.lineTo(W,plY);x.stroke();
+  x.fillStyle='#6c7889';x.font='9px monospace';x.fillText(mmodePattern()==='seashore'?'Kumsal (normal)':'Barkod (pnömotoraks)',6,H-6);
+}
+
+/* ======================= PROFİL YÜKLEME ======================= */
+function loadProfile(key){ ENG.prof=key; ENG.profile=PROFILES[key]; ENG.anat=PROFILES[key].anat();
+  ENG.step=0; ENG.t=0; ENG.control='probe'; ENG.frozen=false; ENG.evidence=[]; ENG.wirePlacementRevision=0;
+  ENG.probe={x:0,z:0,tilt:0,rot:0,press:0,gain:0.5,depth:ENG.profile.depthMm,doppler:false,mmode:false};
+  ENG.needle={entryX:-18,angleDeg:40,oopDeg:0,backoffZ:0,depthMm:0,active:false,aspirate:false};
+  ENG.wire={out:true,lenCm:0,placed:false}; ENG.dilator=false; ENG.catheter=false; ENG.drainMl=0; ENG.agitatedSaline=false;
+  ENG.vitals={spo2:97,hr:84,rhythm:'sinüs',st:0,bp:'118/74'}; ENG.complications={}; ENG.flags=[]; ENG.mmodeData=[]; ENG.ecgStrip=[];
+  [].forEach.call($('profSeg').children,function(b){b.classList.toggle('on',b.dataset.prof===key);});
+  $('profTag').textContent=ENG.profile.sector?'sektör prob':'lineer prob';
+  $('caseStem').textContent=(ENG.level==='student'||ENG.examMode)?ENG.profile.stem:ENG.profile.stem;
+  $('teachNote').textContent=(ENG.level==='student'||ENG.examMode)?'Öğretim notu "Beyanı Değerlendir" sonrası açılır.':ENG.profile.teach;
+  $('mmodeWrap').style.display='none'; $('freezeTag').style.display='none';
+  buildStepper(); buildControls(); buildDxSelect(); renderEvidence(); $('juryOut').innerHTML=''; $('findNote').textContent='';
+  resizeGL();
+}
+
+/* ======================= STEPPER ======================= */
+function buildStepper(){ var s=$('stepper'); s.innerHTML=''; ENG.profile.steps.forEach(function(name,i){
+  var d=document.createElement('div'); d.className='step'+(i===ENG.step?' active':(i<ENG.step?' done':''));
+  d.innerHTML='<span class="dot">'+(i<ENG.step?'✓':(i+1))+'</span>'+name; s.appendChild(d); }); updateStatusbar(); }
+function setStep(i){ ENG.step=clamp(i,0,ENG.profile.steps.length-1); buildStepper(); }
+function updateStatusbar(){ var sb=$('statusbar'); var ns=ENG.needle.active?needleState():null;
+  var nextTxt=ENG.profile.steps[Math.min(ENG.step+1,ENG.profile.steps.length-1)];
+  var lastEv=ENG.evidence.length?ENG.evidence[ENG.evidence.length-1].label:'—';
+  sb.innerHTML='<span><span class="k">Aktif Kontrol</span> <b>'+(ENG.control==='probe'?'Prob':'İğne')+'</b></span>'+
+    '<span><span class="k">Adım</span> <b>'+(ENG.step+1)+'/'+ENG.profile.steps.length+'</b> '+ENG.profile.steps[ENG.step]+'</span>'+
+    '<span><span class="k">Son Kanıt</span> <b>'+lastEv+'</b></span>'+
+    '<span><span class="k">Sonraki</span> '+nextTxt+'</span>'; }
+
+/* ======================= KONTROLLER ======================= */
+function tg(label,inner){ var d=document.createElement('div');d.className='toolgrp';d.innerHTML='<div class="lbl">'+label+'</div>';var w=document.createElement('div');w.innerHTML=inner;d.appendChild(w);return d; }
+function slider(id,min,max,val,step){ return '<input class="slider" type="range" id="'+id+'" min="'+min+'" max="'+max+'" value="'+val+'" step="'+(step||1)+'">'; }
+function buildControls(){ var f=$('toolrow'); f.innerHTML='';
+  // aktif kontrol
+  var g0=tg('Aktif Kontrol','<div class="rowbtns"><button class="btn sm" id="ctrlProbe">Prob</button><button class="btn sm" id="ctrlNeedle">İğne</button></div>'); f.appendChild(g0);
+  // prob
+  var gp=tg('Prob · <b id="lblPress">bası '+ENG.probe.press+'</b>',
+    'Kaydır X '+slider('sldX',-20,20,ENG.probe.x)+
+    'Tilt/Fan '+slider('sldTilt',-30,30,0)+
+    'Rotasyon '+slider('sldRot',0,90,0)+
+    'Bası '+slider('sldPress',0,100,ENG.probe.press)+
+    'Kazanç '+slider('sldGain',0,100,Math.round(ENG.probe.gain*100))+
+    '<div class="rowbtns" style="margin-top:4px"><button class="btn sm" id="btnDoppler">Renkli Doppler</button><button class="btn sm" id="btnMmode">M-Mod</button></div>'+
+    '<div class="rowbtns" style="margin-top:4px"><button class="btn sm" id="btnFreeze">Dondur</button><button class="btn sm" id="btnEvidence">📌 Kanıt Kaydet</button></div>'); f.appendChild(gp);
+  // iğne
+  var gn=tg('İğne & İşlem','Giriş X '+slider('sldEntry',-30,10,ENG.needle.entryX)+
+    'Açı '+slider('sldAngle',15,65,ENG.needle.angleDeg)+
+    'Out-of-plane '+slider('sldOOP',0,40,ENG.needle.oopDeg)+
+    '<div class="rowbtns" style="margin-top:4px"><button class="btn sm" id="btnNeedleOn">İğneyi Yerleştir</button><button class="btn sm" id="btnAdvance">İlerlet +1mm</button><button class="btn sm" id="btnRetract">Geri Çek</button></div>'+
+    '<div class="rowbtns" style="margin-top:4px"><button class="btn sm" id="btnAspirate">Aspirasyon</button></div>'); f.appendChild(gn);
+  // işleme özgü
+  var proc='';
+  if(ENG.prof==='ijv'||ENG.prof==='subclavian'){ proc='<div class="rowbtns"><button class="btn sm" id="btnWireAdv">J-Tel İlerlet</button><button class="btn sm" id="btnWireBack">Tel Çek</button></div>'+
+    '<div class="rowbtns" style="margin-top:4px"><button class="btn sm" id="btnDilator">Dilatör</button><button class="btn sm" id="btnCath">Kateter</button><button class="btn sm" id="btnWireOut">Tel Çıkar ✓</button></div>'; }
+  else if(ENG.prof==='pericardio'){ proc='<div class="rowbtns"><button class="btn sm" id="btnSaline">Ajite Salin</button><button class="btn sm" id="btnDrain">Kontrollü Drenaj</button></div>'; }
+  else if(ENG.prof==='thoracentesis'){ proc='<div class="rowbtns"><button class="btn sm" id="btnRibUp">Üst Oluk</button><button class="btn sm" id="btnRibLow">Alt Kosta Üst Kenarı</button></div>'+
+    '<div class="rowbtns" style="margin-top:4px"><button class="btn sm" id="btnDrain">Kontrollü Drenaj</button></div>'; }
+  var gproc=tg('İşlem Grubu',proc); f.appendChild(gproc);
+  bindControls();
+}
+function bindControls(){
+  $('ctrlProbe').onclick=function(){ENG.control='probe';refreshCtrl();};
+  $('ctrlNeedle').onclick=function(){ENG.control='needle';refreshCtrl();};
+  var map={sldX:['probe','x'],sldTilt:['probe','tiltDeg'],sldRot:['probe','rotDeg'],sldPress:['probe','press'],sldGain:['probe','gain100'],sldEntry:['needle','entryX'],sldAngle:['needle','angleDeg'],sldOOP:['needle','oopDeg']};
+  Object.keys(map).forEach(function(id){ var el=$(id); if(!el)return; el.addEventListener('input',function(){ var v=+el.value;
+    if(id==='sldTilt'){ ENG.probe.tilt=v*Math.PI/180; } else if(id==='sldRot'){ ENG.probe.rot=v*Math.PI/180; }
+    else if(id==='sldGain'){ ENG.probe.gain=v/100; } else if(id==='sldPress'){ ENG.probe.press=v; $('lblPress').textContent='bası '+v; }
+    else if(map[id][0]==='probe'){ ENG.probe[map[id][1]]=v; } else { ENG.needle[map[id][1]]=v; }
+  }); });
+  $('btnDoppler').onclick=function(){ENG.probe.doppler=!ENG.probe.doppler;this.classList.toggle('on',ENG.probe.doppler);};
+  $('btnMmode').onclick=function(){ENG.probe.mmode=!ENG.probe.mmode;this.classList.toggle('on',ENG.probe.mmode);$('mmodeWrap').style.display=ENG.probe.mmode?'block':'none';};
+  $('btnFreeze').onclick=function(){ENG.frozen=!ENG.frozen;this.classList.toggle('on',ENG.frozen);$('freezeTag').style.display=ENG.frozen?'block':'none';};
+  $('btnEvidence').onclick=function(){captureEvidence();};
+  $('btnNeedleOn').onclick=function(){ENG.needle.active=!ENG.needle.active;this.classList.toggle('on',ENG.needle.active);if(ENG.needle.active&&ENG.step<1)setStep(1);};
+  $('btnAdvance').onclick=function(){advanceNeedle(1);};
+  $('btnRetract').onclick=function(){advanceNeedle(-2);};
+  $('btnAspirate').onclick=function(){aspirate();this.classList.toggle('on',ENG.needle.aspirate);};
+  if($('btnWireAdv'))$('btnWireAdv').onclick=function(){advanceWire(2);};
+  if($('btnWireBack'))$('btnWireBack').onclick=function(){advanceWire(-2);};
+  if($('btnWireOut'))$('btnWireOut').onclick=function(){ENG.wire.out=true;toast('Kılavuz tel çıkarıldı ✓','ok');};
+  if($('btnDilator'))$('btnDilator').onclick=function(){advanceDilator();};
+  if($('btnCath'))$('btnCath').onclick=function(){placeCatheter();};
+  if($('btnSaline'))$('btnSaline').onclick=function(){agitatedSaline();};
+  if($('btnDrain'))$('btnDrain').onclick=function(){controlledDrain();};
+  if($('btnRibUp'))$('btnRibUp').onclick=function(){ENG.needle.ribApproach='upper_groove';toast('Yaklaşım: üst kostanın ALT oluğu — DİKKAT interkostal demet!','warn');};
+  if($('btnRibLow'))$('btnRibLow').onclick=function(){ENG.needle.ribApproach='lower_edge';toast('Yaklaşım: alt kostanın ÜST kenarı (güvenli)','ok');};
+  refreshCtrl();
+}
+function refreshCtrl(){ if($('ctrlProbe'))$('ctrlProbe').classList.toggle('on',ENG.control==='probe'); if($('ctrlNeedle'))$('ctrlNeedle').classList.toggle('on',ENG.control==='needle'); }
+
+/* ======================= İĞNE / SELDİNGER EYLEMLERİ ======================= */
+function advanceNeedle(mm){ if(!ENG.needle.active){ENG.needle.active=true;} ENG.needle.depthMm=clamp(ENG.needle.depthMm+mm,0,ENG.profile.depthMm*1.4);
+  var ns=needleState();
+  // komplikasyon tespiti (tek gerçekten)
+  var A=ENG.anat;
+  // plevra ponksiyonu
+  if(A.pleura&&A.pleura.present){ var T=ns.tip; if(T[1]>=A.pleura.depth-0.5 && ENG.prof!=='thoracentesis'){ triggerPneumo(); }
+    if(ENG.prof==='thoracentesis' && T[1]>=A.pleura.depth+6){ triggerPneumo(); } }
+  // kosta yaklaşımı (torasentez interkostal arter)
+  if(ENG.prof==='thoracentesis'){ (A.ribs||[]).forEach(function(rb){ if(Math.abs(ns.tip[0]-rb.x)<rb.r*1.1 && ns.tip[1]>=rb.y-2 && ns.tip[1]<=rb.y+3 && ENG.needle.ribApproach==='upper_groove'){ triggerComplication('ica_injury','İnterkostal arter yaralanması — hemotoraks! (üst kosta alt oluğu)'); } }); }
+  // miyokard
+  if(A.heart){ var hc=A.heart; var e=Math.hypot((ns.tip[0]-hc.cx)/(hc.rx),(ns.tip[1]-hc.cy)/(hc.ry)); if(e<1.0){ triggerComplication('myocardial','İğne miyokardda — EKG\'de ST elevasyonu (injury current)!'); }
+    // LIMA
+    var lima=(A.vessels||[])[0]; if(lima&&lima.name.indexOf('LIMA')>=0 && pointInVesselXY(ns.tip[0],ns.tip[1],lima)){ triggerComplication('lima_injury','LIMA yaralanması!'); } }
+  // arka duvar / karotis
+  if(ns.posteriorPunctured && (ENG.prof==='ijv'||ENG.prof==='subclavian')){ ENG.complications._posterior=true; }
+  if(ENG.needle.active&&ENG.step<1)setStep(1);
+  updateStatusbar();
+}
+function aspirate(){ ENG.needle.aspirate=!ENG.needle.aspirate; if(!ENG.needle.aspirate)return;
+  var ns=needleState(), v=(ENG.anat.vessels||[]).find(function(vv){return tipInsideVessel(vv);});
+  if(!v){ toast('Aspirasyon: kan gelmiyor (lümen dışı)','warn'); $('aspRead').textContent='kan yok'; return; }
+  if(v.type==='vein'){ var hypox=(ENG.prof==='ijv'); toast('Aspirasyon: '+(hypox?'koyu/yavaş venöz kan (hipoksemik — renge güvenme!)':'venöz kan geldi'),''); ENG.complications._aspVein=true; if(ENG.step<2)setStep(2); }
+  else { toast('Aspirasyon: PARLAK/PULSATİL arteriyel kan — ARTER! İğneyi çek, bası.','bad'); ENG.complications._aspArtery=true; }
+  $('aspRead').textContent=v.type==='vein'?'venöz':'ARTER';
+}
+function advanceWire(cm){ ENG.wire.lenCm=clamp(ENG.wire.lenCm+cm,0,30); ENG.wire.out=false; ENG.wire.placed=ENG.wire.lenCm>1;
+  var inArtery=ENG.complications._aspArtery||false;
+  ENG.wire.inArtery=inArtery;
+  if(ENG.wire.lenCm>20){ triggerComplication('ves','Kılavuz tel >20 cm — sağ ventrikülde VES (ventriküler ektopi)! Teli geri çek.'); ENG.vitals.rhythm='VES'; }
+  if(Math.abs(cm)>0){ ENG.wirePlacementRevision++; markEvidenceHistorical(); }
+  if(ENG.step<3)setStep(3);
+  updateStatusbar();
+}
+function advanceDilator(){ ENG.dilator=true;
+  // tel lümen içinde (hem kısa hem uzun eksen) doğrulanmadan + tel arterde → felaket
+  var confirmed=evidenceConfirmsWire();
+  if(ENG.wire.inArtery){ triggerComplication('arterial_dilation','ARTERIAL_DILATION_CATASTROPHE — tel karotiste iken dilatatör ilerletildi! Büyük arteriyel yaralanma.'); }
+  else if(!confirmed){ toast('Dilatör: tel lümen içinde (kısa+uzun eksen) DOĞRULANMADAN ilerletildi — riskli!','warn'); }
+  else { toast('Dilatör güvenle ilerletildi (tel doğrulandı)','ok'); }
+  if(ENG.step<3)setStep(3);
+}
+function placeCatheter(){ ENG.catheter=true; if(ENG.wire.out){ toast('Kateter yerleştirildi; tel çıkarıldı ✓','ok'); setStep(4); } else { toast('Kateter öncesi kılavuz teli ÇIKARMALISIN!','warn'); } }
+function agitatedSaline(){ ENG.agitatedSaline=true; var ns=needleState(); var inEff=ENG.anat.effusion&&(Math.hypot((ns.tip[0]-ENG.anat.effusion.cx)/ENG.anat.effusion.rx,(ns.tip[1]-ENG.anat.effusion.cy)/ENG.anat.effusion.ry)<1);
+  if(ENG.complications.myocardial){ toast('Ajite salin KALP BOŞLUĞUNDA görüldü — iğne ventrikülde, perikardda değil!','bad'); }
+  else if(inEff){ toast('Ajite salin PERİKARD boşluğunda kabarcıklandı ✓ — doğru konum','ok'); ENG.complications._salineOk=true; if(ENG.step<3)setStep(3); }
+  else { toast('Ajite salin: kabarcık görülmedi — uç perikard cebinde değil','warn'); } }
+function controlledDrain(){ ENG.drainMl+=500;
+  if(ENG.prof==='thoracentesis'){ if(ENG.drainMl>1500){ triggerComplication('reexpansion','>1.5 L boşaltıldı — re-ekspansiyon akciğer ödemi riski! Öksürük/göğüs sıkışması.'); } else { toast('Kontrollü drenaj: '+ENG.drainMl+' mL (≤1.5 L sınırı)',''); } }
+  else { if(ENG.drainMl>1200){ toast('Hızlı/aşırı boşaltma — perikardiyal dekompresyon sendromu riski; kademeli boşalt','warn'); triggerComplication('rapid_decompression','Perikardiyal dekompresyon sendromu riski (hızlı drenaj)'); } else { toast('Kontrollü perikardiyal drenaj: '+ENG.drainMl+' mL',''); } }
+  if(ENG.step<4)setStep(4); }
+function triggerPneumo(){ if(ENG.complications.pneumothorax)return; triggerComplication('pneumothorax','Plevra delindi — İYATROJENİK PNÖMOTORAKS! Lung sliding kayboldu, M-modda barkod, SpO₂ düşüyor.'); if(ENG.anat.pleura)ENG.anat.pleura.sliding=false; }
+function triggerComplication(key,msg){ if(ENG.complications[key])return; ENG.complications[key]=true; toast(msg,'bad'); beep(200,0.12); }
+
+/* ======================= KANIT KARELERİ ======================= */
+function captureEvidence(){ var axis=(Math.abs(ENG.probe.rot)<Math.PI/4)?'short':'long';
+  var thumb=null; try{ thumb=$('usg').toDataURL('image/jpeg',0.4); }catch(e){}
+  var ns=ENG.needle.active?needleState():null;
+  var ev={ id:ENG.evidence.length+1, axis:axis, label:(axis==='short'?'Kısa eksen':'Uzun eksen'), t:ENG.t,
+    wireRev:ENG.wirePlacementRevision, wirePlaced:ENG.wire.placed, wireInArtery:ENG.wire.inArtery||false,
+    status:'current', thumb:thumb, tipInSlice:ns?ns.tipInSlice:null, showsWire:ENG.wire.placed };
+  ENG.evidence.push(ev); renderEvidence(); toast('📌 Kanıt kaydı: '+ev.label+(ev.showsWire?' · tel görünür':''),'ok'); updateStatusbar(); }
+function markEvidenceHistorical(){ ENG.evidence.forEach(function(e){ if(e.wireRev<ENG.wirePlacementRevision && e.showsWire){ e.status='historical'; } }); renderEvidence(); }
+function evidenceStatus(id){ var e=ENG.evidence.find(function(x){return x.id===id;}); return e?e.status:null; }
+function evidenceConfirmsWire(){ var shortOk=ENG.evidence.some(function(e){return e.status==='current'&&e.axis==='short'&&e.showsWire;});
+  var longOk=ENG.evidence.some(function(e){return e.status==='current'&&e.axis==='long'&&e.showsWire;}); return shortOk&&longOk; }
+function renderEvidence(){ var l=$('evList'); l.innerHTML=''; $('evCount').textContent=ENG.evidence.length;
+  ENG.evidence.slice().reverse().forEach(function(e){ var d=document.createElement('div'); d.className='evitem'+(e.status==='historical'?' hist':'');
+    var im=e.thumb?('<img class="thumb" src="'+e.thumb+'">'):'<div class="thumb"></div>';
+    d.innerHTML=im+'<span>'+e.label+(e.showsWire?' · tel':'')+'</span><span class="tag '+(e.status==='current'?'tag-cur':'tag-his')+'">'+(e.status==='current'?'GÜNCEL':'TARİHSEL')+'</span>';
+    l.appendChild(d); }); }
+
+/* ======================= OKUMALAR / VİTALLER ======================= */
+function updateReadouts(){ $('ctrlRead').textContent=ENG.control==='probe'?'Prob':'İğne';
+  var ns=ENG.needle.active?needleState():null;
+  if(ns){ var cls=ns.tipInSlice?'ok':(ns.brightShaftInSlice?'warn':''); $('tipRead').textContent=ns.tipToSliceMm+' mm'+(ns.brightShaftInSlice&&!ns.tipInSlice?' (şaft!)':''); $('tipRead').className='v '+cls; }
+  else { $('tipRead').textContent='—'; $('tipRead').className='v'; }
+  $('compRead').textContent=ENG.probe.press;
+  // HUD
+  var P=ENG.profile,pr=ENG.probe;
+  $('usgHud').innerHTML='Derinlik <b>'+P.depthMm+' mm</b> · Kazanç '+Math.round(pr.gain*100)+' · '+(pr.doppler?'Renkli Doppler':'B-Mod')+(pr.mmode?' · M-Mod':'')+'<br>Prob: '+(Math.abs(pr.rot)<Math.PI/4?'Kısa eksen':'Uzun eksen')+' · Tilt '+Math.round(pr.tilt*180/Math.PI)+'°';
+  // vitals
+  var v=ENG.vitals; $('vitals').innerHTML=
+    '<div class="vt"><span class="n" style="color:'+(v.spo2<90?'#e88b92':'#8fe3bf')+'">'+Math.round(v.spo2)+'</span><span class="u">SpO₂</span></div>'+
+    '<div class="vt"><span class="n">'+v.hr+'</span><span class="u">HR</span></div>'+
+    '<div class="vt"><span class="n" style="color:'+(v.st>0.8?'#e88b92':'#a6b1c2')+'">'+(v.st>0.3?'↑ST':'—')+'</span><span class="u">EKG</span></div>'+
+    '<div class="vt"><span class="n" style="font-size:11px">'+(v.rhythm==='VES'?'VES':v.bp)+'</span><span class="u">'+(v.rhythm==='VES'?'ritim':'KB')+'</span></div>';
+  updateStatusbar();
+}
+
+/* ======================= JÜRİ ======================= */
+function buildDxSelect(){ var s=$('dxSel'); s.innerHTML=''; ENG.profile.dx.forEach(function(d){ var o=document.createElement('option');o.value=d[0];o.textContent=d[1];s.appendChild(o);}); }
+function evaluate(){ var dx=$('dxSel').value, cats=[], flags=[], C=ENG.complications;
+  var truthSuccess = ENG.prof==='ijv'?'ijv_success':ENG.prof==='subclavian'?'sc_success':ENG.prof==='pericardio'?'peri_success':'thora_success';
+  // 1) Teknik
+  var tech=100;
+  if(ENG.evidence.length<1)tech-=25;
+  if((ENG.prof==='ijv'||ENG.prof==='subclavian')&&ENG.dilator&&!evidenceConfirmsWire())tech-=30;
+  if(ENG.needle.active&&needleState().brightShaftInSlice&&!needleState().tipInSlice)tech-=10;
+  tech=clamp(tech,0,100);
+  // 2) Güvenlik / Komplikasyon
+  var safety=100;
+  ['arterial_dilation','pneumothorax','myocardial','lima_injury','ica_injury','ves','reexpansion','rapid_decompression'].forEach(function(k){ if(C[k]){ safety-=(k==='arterial_dilation'||k==='myocardial'||k==='ica_injury')?45:25; } });
+  if(C._aspArtery&&ENG.prof!=='pericardio') flags.push({cls:'amber',t:'Arteriyel aspirasyon oldu — iğne çekilip bası uygulanmalı; venöz sanıp ilerleme en sık felaket zinciridir.'});
+  safety=clamp(safety,0,100);
+  // 3) Kanıt / Doğrulama
+  var ev=100; if((ENG.prof==='ijv'||ENG.prof==='subclavian')){ if(!evidenceConfirmsWire())ev-=40; }
+  if(ENG.prof==='pericardio'&&!C._salineOk)ev-=30;
+  ev=clamp(ev,0,100);
+  // 4) Klinik Karar (doğru beyan + işlem akışı)
+  var dxOk=(dx===truthSuccess && Object.keys(C).filter(function(k){return k[0]!=='_';}).length===0);
+  var decision= dxOk?100 : (dx!==truthSuccess && hadComplication()? 70 : 30);
+  // bayraklar
+  if(C.arterial_dilation)flags.push({cls:'red',t:'ARTERIAL_DILATION_CATASTROPHE: Kılavuz tel lümende (kısa+uzun eksen) doğrulanmadan ve/veya arterdeyken dilatatör ilerletildi.'});
+  if(C.pneumothorax){ flags.push({cls:'red',t:'İYATROJENİK PNÖMOTORAKS: Plevra ponksiyonu. Lung sliding kaybı + M-modda barkod. İşlem sonu USG ile dışlama zorunluydu.'}); if(ENG.prof==='subclavian'&&!ENG.probe.mmode)flags.push({cls:'amber',t:'İşlem sonu M-Mod ile pnömotoraks dışlaması yapılmadı.'}); }
+  if(C.ica_injury)flags.push({cls:'red',t:'İNTERKOSTAL ARTER YARALANMASI: Üst kostanın alt oluğundan girildi. Kural: ALT kostanın ÜST kenarından gir.'});
+  if(C.myocardial)flags.push({cls:'red',t:'MİYOKARD PONKSİYONU: ST elevasyonu. En derin efüzyon cebi + ajite salin doğrulaması atlanmış.'});
+  if(C.lima_injury)flags.push({cls:'red',t:'LIMA YARALANMASI: Sternum 1–2 cm laterali — Renkli Doppler ile tanınıp korunmalıydı.'});
+  if(C.ves)flags.push({cls:'amber',t:'Kılavuz tel >20 cm itildi → VES. Teli kısaltın (uç RA-SVC bileşkesinde).'});
+  if(C.reexpansion)flags.push({cls:'amber',t:'>1.5 L boşaltıldı → re-ekspansiyon ödemi riski.'});
+  if(C.rapid_decompression)flags.push({cls:'amber',t:'Hızlı perikardiyal boşaltma → dekompresyon sendromu.'});
+  cats.push(['Teknik',Math.round(tech),(ENG.evidence.length)+' kanıt · '+(ENG.needle.active?'uç takibi aktif':'iğne pasif')]);
+  cats.push(['Güvenlik / Komplikasyon',Math.round(safety),hadComplication()?'komplikasyon var':'komplikasyon yok']);
+  cats.push(['Kanıt / Doğrulama',Math.round(ev),(ENG.prof==='ijv'||ENG.prof==='subclavian')?(evidenceConfirmsWire()?'tel kısa+uzun eksen ✓':'tel doğrulaması eksik'):(C._salineOk?'ajite salin ✓':'doğrulama eksik')]);
+  cats.push(['Klinik Karar',Math.round(decision),dxOk?'doğru beyan + temiz işlem':'beyan/işlem tutarsız']);
+  var overall=Math.round(tech*0.22+safety*0.33+ev*0.22+decision*0.23);
+  renderJury(overall,cats,flags); $('teachNote').textContent=ENG.profile.teach;
+  renderDebrief(); reportChain(dx,overall,flags.length); beep(overall>=70?700:300,0.12);
+}
+function hadComplication(){ return Object.keys(ENG.complications).some(function(k){return k[0]!=='_';}); }
+function renderJury(overall,cats,flags){ var col=overall>=75?'#8fe3bf':overall>=55?'#d9a441':'#e88b92';
+  var h='<div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:13px">USG-Access Jüri Karnesi</b><span class="mono" style="font-size:22px;font-weight:700;color:'+col+'">'+overall+'</span></div>';
+  cats.forEach(function(c){ var cc=c[1]>=75?'#8fe3bf':c[1]>=55?'#d9a441':'#e88b92'; h+='<div class="jury-cat"><div class="row"><span>'+c[0]+'</span><span class="mono" style="color:'+cc+'">'+c[1]+'</span></div><div class="bar"><span style="width:'+c[1]+'%;background:'+cc+'"></span></div><div class="hint">'+c[2]+'</div></div>'; });
+  flags.forEach(function(f){ h+='<div class="flag '+f.cls+'">'+f.t+'</div>'; }); if(!flags.length)h+='<div class="flag green">Komplikasyon ve kural ihlali yok; kanıt-temelli güvenli işlem.</div>';
+  h+='<div id="debriefBox" style="margin-top:10px"></div>';
+  $('juryOut').innerHTML=h; }
+function renderDebrief(){ var box=$('debriefBox'); if(!box)return;
+  box.innerHTML='<div class="eyebrow">2B USG Kaydın ↔ 3B Şeffaf Anatomi Gerçeği</div><div class="debrief"><div><div class="dl">Senin kanıt karen</div><canvas id="dbgA" width="200" height="120"></canvas></div><div><div class="dl">3B Gerçek (şeffaf)</div><canvas id="dbgB" width="200" height="120"></canvas></div></div><div class="hint" id="dbgNote"></div>';
+  var a=$('dbgA').getContext('2d'); a.fillStyle='#02040a';a.fillRect(0,0,200,120);
+  var lastEv=ENG.evidence[ENG.evidence.length-1];
+  if(lastEv&&lastEv.thumb){ var img=new Image(); img.onload=function(){a.drawImage(img,0,0,200,120);}; img.src=lastEv.thumb; } else { a.fillStyle='#6c7889';a.font='10px monospace';a.fillText('kanıt yok',10,60); }
+  // 3B gerçek: ucun gerçek yeri
+  var b=$('dbgB').getContext('2d'); b.fillStyle='#070d18';b.fillRect(0,0,200,120);
+  var skinY=20,cx=100;
+  (ENG.anat.vessels||[]).forEach(function(v){ b.fillStyle=(v.type==='artery')?'rgba(196,86,95,.6)':'rgba(111,163,200,.6)'; b.beginPath();b.ellipse(cx+v.c[0]*2,skinY+v.c[1]*2,v.r*2,v.r*2*(v.type==='vein'?(v._open==null?1:v._open):1),0,0,TAU);b.fill(); b.fillStyle='#cbd5e3';b.font='8px monospace';b.fillText(v.name.split(' ')[0],cx+v.c[0]*2-10,skinY+v.c[1]*2);});
+  if(ENG.needle.active){ var ns=needleState(); var tx=cx+ns.tip[0]*2, ty=skinY+ns.tip[1]*2;
+    b.strokeStyle='#d9a441';b.lineWidth=2;b.beginPath();b.moveTo(cx+ENG.needle.entryX*2,skinY);b.lineTo(tx,ty);b.stroke();
+    b.fillStyle=ns.posteriorPunctured?'#e88b92':'#fff';b.beginPath();b.arc(tx,ty,3,0,TAU);b.fill();
+    $('dbgNote').innerHTML='Gerçek uç ↔ kesit: <b>'+ns.tipToSliceMm+' mm</b> elevasyon. '+(ns.brightShaftInSlice&&!ns.tipInSlice?'<span style="color:#e88b92">Kesitteki parlak nokta ŞAFTtı; gerçek uç '+(ns.posteriorPunctured?'arka duvarı geçmiş.':'kesit dışında.')+'</span>':(ns.tipInSlice?'Gerçek uç kesitte doğrulanmış ✓':'Uç kesit dışında.')); }
+}
+function label(arr,k){ var r=arr.find(function(x){return x[0]===k;}); return r?r[1]:k; }
+
+/* ======================= AUDIO / TOAST ======================= */
+var AC=null,soundOn=true; function beep(f,d){ if(!soundOn)return; try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();if(AC.state!=='running'&&AC.resume)AC.resume();var o=AC.createOscillator(),g=AC.createGain();o.frequency.value=f;o.type='sine';g.gain.value=0.0001;o.connect(g);g.connect(AC.destination);var t=AC.currentTime;g.gain.exponentialRampToValueAtTime(0.05,t+0.01);g.gain.exponentialRampToValueAtTime(0.0001,t+d);o.start(t);o.stop(t+d+0.02);}catch(e){} }
+function toast(msg,kind){ var t=document.createElement('div');t.className='toast'+(kind?' '+kind:'');t.textContent=msg;$('toastBox').appendChild(t);setTimeout(function(){t.style.opacity='0';t.style.transition='.4s';setTimeout(function(){t.remove();},420);},3600); }
+
+/* ======================= UI BAĞLAMA (Pointer Events) ======================= */
+function bindUI(){
+  [].forEach.call($('profSeg').children,function(b){ b.onclick=function(){ loadProfile(b.dataset.prof); }; });
+  [].forEach.call($('levelSeg').children,function(b){ b.onclick=function(){ [].forEach.call($('levelSeg').children,function(x){x.classList.remove('on');}); b.classList.add('on'); ENG.level=b.dataset.lvl; loadProfile(ENG.prof); }; });
+  $('examToggle').onclick=function(){ ENG.examMode=!ENG.examMode; this.classList.toggle('on',ENG.examMode); loadProfile(ENG.prof); };
+  $('homeBtn').onclick=function(){ if(inSuite())window.parent.DuctusSuite.openPortal(); else location.href='index.html'; };
+  $('declareBtn').onclick=evaluate;
+  // canvas pointer: aktif kontrol prob ise probu kaydır; iğne ise giriş/açı
+  var sc=$('usg');
+  function pt(e){ var r=sc.getBoundingClientRect(); return {x:(e.clientX-r.left)/r.width, y:(e.clientY-r.top)/r.height}; }
+  sc.addEventListener('pointerdown',function(e){ ENG.dragging=true; sc.setPointerCapture(e.pointerId); ENG._p=pt(e); });
+  sc.addEventListener('pointermove',function(e){ if(!ENG.dragging)return; var p=pt(e),P=ENG.profile;
+    if(ENG.control==='probe'){ ENG.probe.x=clamp(ENG.probe.x+(p.x-ENG._p.x)*P.fieldMm,-20,20); if($('sldX'))$('sldX').value=ENG.probe.x; }
+    else { ENG.needle.entryX=clamp((p.x-0.5)*P.fieldMm+ENG.probe.x,-30,10); if($('sldEntry'))$('sldEntry').value=ENG.needle.entryX; }
+    ENG._p=p; });
+  sc.addEventListener('pointerup',function(e){ ENG.dragging=false; });
+  window.addEventListener('message',function(e){ var d=e.data; if(!d||!d.ductus)return; if(d.type==='suite:pause'||d.type==='suite:module:deactivate')stopLoop(); else if(d.type==='suite:resume'||d.type==='suite:module:activate')startLoop(); });
+}
+function inSuite(){ try{ return window.parent&&window.parent!==window&&window.parent.DuctusSuite; }catch(e){ return false; } }
+
+/* ======================= CASE CHAIN KÖPRÜSÜ ======================= */
+function reportChain(dx,score,nFlags){ try{ if(!window.__chainS)return; window.__chainS.addEvidence({modality:'pocus_access',summary:'USG girişim: '+ENG.profile.name+' (skor '+score+')',claims:['vascular_access'],quality:{assessable:nFlags===0,regionsSeen:['usg']}}); }catch(e){} }
+(function initChain(){ var qs=new URLSearchParams(location.search); if(qs.get('chain')!=='1')return;
+  var sc=document.createElement('script');sc.src='ductus-core.js';
+  sc.onload=function(){ try{ window.__chainS=DuctusCore.open({patientId:qs.get('pid')}); toast('🩺 Entegre vaka zinciri — USG erişim paylaşılan hastaya yansıyacak.','ok'); DuctusCore.connectLifecycle({onDeactivate:stopLoop,onActivate:startLoop}); }catch(e){} }; document.head.appendChild(sc); })();
+
+/* ======================= TEST API (window.USG) ======================= */
+window.USG={
+  loadProfile:function(k){ loadProfile(k); return ENG.prof; },
+  setProbe:function(o){ Object.assign(ENG.probe,o); if(o.tiltDeg!=null)ENG.probe.tilt=o.tiltDeg*Math.PI/180; if(o.rotDeg!=null)ENG.probe.rot=o.rotDeg*Math.PI/180; return ENG.probe; },
+  rotateProbe:function(deg){ ENG.probe.rot=deg*Math.PI/180; return deg; },
+  setNeedle:function(o){ Object.assign(ENG.needle,o); ENG.needle.active=true; return ENG.needle; },
+  setEntry:function(x,angle){ ENG.needle.entryX=x; if(angle!=null)ENG.needle.angleDeg=angle; ENG.needle.active=true; return ENG.needle; },
+  setRibApproach:function(a){ ENG.needle.ribApproach=a; return a; },
+  advance:function(mm){ advanceNeedle(mm); return ENG.needle.depthMm; },
+  retract:function(mm){ advanceNeedle(-Math.abs(mm)); return ENG.needle.depthMm; },
+  needleState:function(){ return needleState(); },
+  vesselState:function(name){ applyCompression(); var v=(ENG.anat.vessels||[]).find(function(x){return x.name.indexOf(name)>=0||x.type===name;}); return v?{name:v.name,type:v.type,openFrac:+((v._open==null?vesselOpenFrac(v):v._open).toFixed(3))}:null; },
+  setPress:function(p){ ENG.probe.press=p; applyCompression(); return p; },
+  setShock:function(b){ ENG.shock=!!b; applyCompression(); return ENG.shock; },
+  dopplerVelocity:function(name,angleDeg){ var v=(ENG.anat.vessels||[]).find(function(x){return x.name.indexOf(name)>=0||x.type===name;}); return v?+dopplerVelocity(v,angleDeg).toFixed(3):null; },
+  captureEvidence:function(){ captureEvidence(); return ENG.evidence[ENG.evidence.length-1].id; },
+  evidenceStatus:function(id){ return evidenceStatus(id); },
+  moveWire:function(cm){ advanceWire(cm); return {lenCm:ENG.wire.lenCm,rev:ENG.wirePlacementRevision}; },
+  setWireInArtery:function(b){ ENG.complications._aspArtery=!!b; ENG.wire.inArtery=!!b; return b; },
+  advanceDilator:function(){ advanceDilator(); return ENG.complications.arterial_dilation?'ARTERIAL_DILATION_CATASTROPHE':'ok'; },
+  puncturePleura:function(){ triggerPneumo(); return mmodePattern(); },
+  mmodePattern:function(){ return mmodePattern(); },
+  lungSliding:function(){ return lungSliding(); },
+  complications:function(){ return Object.assign({},ENG.complications); },
+  // şaftı-uç-sanma illüzyonu kurulumu: out-of-plane geometride şaft kesitte parlar, gerçek uç karotiste
+  setupIllusion:function(){ loadProfile('ijv'); ENG.probe.z=0; ENG.probe.press=0;
+    // iğne kesitin arkasından (z<0) dik + out-of-plane ilerler → şaft kesiti İJV'de parlar,
+    // gerçek uç ise kesit dışına (z) çıkıp arkadaki karotise girer.
+    ENG.needle.entryX=0; ENG.needle.angleDeg=70; ENG.needle.oopDeg=45; ENG.needle.backoffZ=4; ENG.needle.active=true;
+    ENG.needle.depthMm=27;
+    return needleState(); },
+  declare:function(dx){ if(dx)$('dxSel').value=dx; evaluate(); return $('juryOut').innerText; },
+  juryFlags:function(dx){ if(dx)$('dxSel').value=dx; evaluate(); return [].slice.call($('juryOut').querySelectorAll('.flag')).map(function(f){return f.className+'|'+f.textContent;}); },
+  step:function(){ return ENG.step; }, profileKey:function(){ return ENG.prof; },
+  _eng:ENG
+};
+
+/* ======================= INIT ======================= */
+function init(){ initGL(); buildStepper(); buildControls(); buildDxSelect(); loadProfile('ijv'); bindUI(); requestAnimationFrame(loop); }
+init();
+</script>
+</body>
+</html>
