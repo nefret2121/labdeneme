@@ -24,6 +24,7 @@ body{background:radial-gradient(1200px 800px at 70% -10%,#0a1424,var(--bg0) 60%)
 .caseseg button.on{background:linear-gradient(135deg,#49a6e6,#36bd8e);color:#05121c;font-weight:700}
 .btn{font-family:var(--sans);font-size:12px;color:var(--ink2);background:rgba(17,26,43,.55);border:1px solid var(--line2);border-radius:8px;padding:6px 11px;cursor:pointer;transition:.15s}
 .btn:hover{color:var(--ink);border-color:var(--accent2);background:var(--accentd)}.btn.sm{padding:5px 8px;font-size:11px}
+.btn[disabled],button[disabled]{opacity:.34;cursor:not-allowed;filter:grayscale(.5)}.btn[disabled]:hover{color:var(--ink2);border-color:var(--line2);background:rgba(17,26,43,.55)}
 .btn.pri{background:linear-gradient(135deg,#7ec0e8,#5a9bc4);color:#06131d;font-weight:600;border:0}
 .main{flex:1;display:flex;min-height:0}
 .scopewrap{flex:1.5;min-width:0;position:relative;display:flex;flex-direction:column;background:#05070c}
@@ -186,7 +187,7 @@ var CASES={
 var ENG={ caseId:1, cas:CASES[1], level:'student',
   blade:'mac', head:'sniff', depth:0.0, lift:0.0, pitch:0.0, burp:false, suctioned:false, bloodLevel:0,
   preox:false, eto2:21, spo2:98, etco2:38, hr:92, sbp:138, dbp:82, apnea:false, apneaT:0, ventilating:false,
-  induction:null, paralytic:null, blockState:'none', blockT:0, mapDelta:0, dentalWarning:false, dentalCount:0, laryngospasm:false, cordPhase:0, t:0, drag:null, minSpo2:98,
+  induction:null, paralytic:null, blockState:'none', blockT:0, mapDelta:0, dentalWarning:false, dentalCount:0, laryngospasm:false, shake:0, laryngoMap:0, cordPhase:0, t:0, drag:null, minSpo2:98,
   tool:null, stylet:false, styletOut:false, ettDepth:0, cuff:false, ettLoc:null, holdup:null, target:'glottis',
   bougieDepth:0, bougieLoc:null, clicks:0, carinaHoldup:false, lmaPlaced:false, cicoStep:0, attempts:0,
   ventBreaths:0, lastEtco2:0, auscult:null, verified:false, instr:0, instrDepth:0, declared:null, soundOn:true };
@@ -202,7 +203,10 @@ function exposure(){ if(ENG.depth<0.15) return 0; var e=headFactor()+depthFactor
   if(ENG.cas.id===4) e=Math.min(e,0.0); return e; }
 function pogo(){ return Math.round(clamp(exposure(),0,1)*100); }
 function cormack(){ var p=pogo(); if(p>=80)return 'I'; if(p>=50)return 'IIa'; if(p>=25)return 'IIb'; if(p>=6)return 'III'; return 'IV'; }
-function cordAperture(){ if(ENG.blockState==='full') return 1.0; if(ENG.laryngospasm) return 0.04; if(ENG.blockState==='onset') return lerp(0.45,1.0,clamp(ENG.blockT/45,0,1)); return 0.42+0.18*Math.sin(ENG.cordPhase); }
+function cordAperture(){ if(ENG.blockState==='full') return 1.0; if(ENG.laryngospasm) return 0.03;
+  if(ENG.blockState==='onset') return clamp(lerp(0.40,0.9,clamp(ENG.blockT/45,0,1))+0.05*Math.sin(ENG.cordPhase),0,0.97);
+  // indüksiyon var ama blok oturmadı VEYA uyanık (henüz temas yok): yarı-açık, solunumla hareketli — tam abduksiyon DEĞİL
+  return 0.33+0.14*Math.sin(ENG.cordPhase); }
 function viewStage(){ if(ENG.depth<0.28) return 'oral'; return clamp(exposure(),0,1)<0.3?'epiglottis':'glottis'; }
 
 /* ============ FİZYOLOJİ ============ */
@@ -213,15 +217,19 @@ function physTick(dt){ ENG.t+=dt;
   if(ENG.preox && !ENG.apnea) ENG.eto2=lerp(ENG.eto2,90,dt*0.5);
   if(ENG.ventilating){ ENG.apnea=false; ENG.spo2=lerp(ENG.spo2, ENG.ettLoc==='esophagus'?70:99, dt*0.8); }
   if(ENG.apnea && !ENG.ventilating){ ENG.apneaT+=dt; var res=safeApneaReserve(),f=ENG.apneaT/res,tg=f<0.6?99:clamp(99-(f-0.6)/0.5*44,40,99); ENG.spo2=lerp(ENG.spo2,tg,dt*1.5); }
-  if(ENG.spo2<85) ENG.hr=lerp(ENG.hr, ENG.spo2<70?40:135, dt*0.5); else ENG.hr=lerp(ENG.hr,ENG.cas.vit.hr,dt*0.3);
+  // laringospazm: sempatik fırlama (HR yüksek), KB artışı, ekran sarsıntısı (hasta öğürüyor/bucking)
+  if(ENG.laryngospasm){ ENG.hr=lerp(ENG.hr,154,dt*0.9); ENG.laryngoMap=Math.min(26,(ENG.laryngoMap||0)+dt*70); ENG.shake=Math.max(ENG.shake||0,0.35+0.25*Math.abs(Math.sin(ENG.t*20))); }
+  else { ENG.laryngoMap=Math.max(0,(ENG.laryngoMap||0)-dt*34); ENG.shake=Math.max(0,(ENG.shake||0)-dt*3.0);
+    if(ENG.spo2<85) ENG.hr=lerp(ENG.hr, ENG.spo2<70?40:135, dt*0.5); else ENG.hr=lerp(ENG.hr,ENG.cas.vit.hr,dt*0.3); }
   ENG.bloodLevel=ENG.cas.secretion*(ENG.suctioned?0.08:1.0); ENG.minSpo2=Math.min(ENG.minSpo2,ENG.spo2);
 }
-function getMAP(){ return Math.round((ENG.cas.vit.sbp+ENG.mapDelta)*0.33+(ENG.cas.vit.dbp+ENG.mapDelta*0.7)*0.67); }
+function effMapDelta(){ return ENG.mapDelta+(ENG.laryngoMap||0); }
+function getMAP(){ var md=effMapDelta(); return Math.round((ENG.cas.vit.sbp+md)*0.33+(ENG.cas.vit.dbp+md*0.7)*0.67); }
 
 /* ============ RSI İLAÇLARI ============ */
 function giveDrug(id){
   if(id==='preo2'){ ENG.preox=true; scopeToast('Pre-oksijenasyon — EtO2 yükseliyor (hedef ≥%85).','good'); renderRSI(); updateStepper(); return; }
-  if(['propofol','etomidat','ketamin'].indexOf(id)>=0){ if(ENG.induction)return; ENG.induction=id;
+  if(['propofol','etomidat','ketamin'].indexOf(id)>=0){ if(ENG.induction)return; ENG.induction=id; ENG.laryngospasm=false; /* sedasyon öğürme/spazmı baskılar */
     if(id==='propofol'){ ENG.mapDelta+=(ENG.cas.id===3?-38:-16); logRSI(ENG.cas.id===3?'red':'amber', ENG.cas.id===3?'🔒 Şokta Propofol → ağır hipotansiyon/kollaps. Ketamin/Etomidat gerekliydi.':'Propofol: doz-bağımlı hipotansiyon.'); }
     else if(id==='etomidat'){ ENG.mapDelta+=-3; logRSI('green','Etomidat: hemodinamik nötr.'); } else { ENG.mapDelta+=(ENG.cas.id===3?4:2); logRSI('green','Ketamin: şok/hipovolemide KB korunur.'); }
     scopeToast('İndüksiyon: '+id,'good'); renderRSI(); updateStepper(); return; }
@@ -232,7 +240,13 @@ function ventilateRescue(){ ENG.ventilating=true; scopeToast('Maske ile oksijenl
 function logRSI(k,m){ var d=document.createElement('div'); d.className='flag '+k; d.textContent=m; $('rsiFlags').appendChild(d); }
 
 /* ============ AŞAMA 2 ============ */
-function selectTool(id){ ENG.tool=id; ENG.instr=(id==='ett'?1:id==='bougie'?2:0); ENG.holdup=null; if(id==='lma')placeLMA(); if(id==='cico')ENG.cicoStep=0; if(['ett','bougie'].indexOf(id)>=0)ENG.attempts++; renderTools(); updateStepper(); }
+function deviceReady(){ return !!(ENG.ettLoc || ENG.lmaPlaced || ENG.cicoStep>=4); }
+function selectTool(id){
+  // MUTUALLY EXCLUSIVE: araç değişiminde çakışanları temizle
+  if(id!=='lma' && ENG.lmaPlaced){ ENG.lmaPlaced=false; ENG.ventilating=false; logTool('amber','Aktif LMA çıkarıldı (araç değişimi).'); }
+  if(id==='lma'){ ENG.ettLoc=null; ENG.ettDepth=0; ENG.cuff=false; ENG.instr=0; ENG.bougieLoc=null; ENG.clicks=0; ENG.carinaHoldup=false; }
+  if(id==='ett' && ENG.bougieLoc){ ENG.bougieLoc=null; ENG.clicks=0; ENG.carinaHoldup=false; }
+  ENG.tool=id; ENG.instr=(id==='ett'?1:id==='bougie'?2:0); ENG.holdup=null; if(id==='lma')placeLMA(); if(id==='cico')ENG.cicoStep=0; if(['ett','bougie'].indexOf(id)>=0)ENG.attempts++; renderTools(); updateStepper(); }
 function advanceETT(cm){ ENG.ettDepth=cm; ENG.instr=1; ENG.instrDepth=clamp((cm-14)/16,0,1);
   if(ENG.blade==='dblade' && !ENG.stylet){ ENG.ettLoc='esophagus'; ENG.holdup=null; }
   else if(ENG.blade==='dblade' && ENG.stylet && !ENG.styletOut && cm>20){ ENG.holdup='ANTERIOR_TRACHEAL_HOLDUP'; ENG.ettDepth=Math.min(cm,20); ENG.instrDepth=clamp(6/16,0,1); ENG.ettLoc=null; logTool('red','🔒 ANTERIOR_TRACHEAL_HOLDUP — kavisli uç ön trakeal duvara takıldı. "Stileti Geri Çek [R]".'); }
@@ -246,8 +260,11 @@ function insertBougie(loc){ ENG.tool='bougie'; ENG.instr=2; ENG.bougieLoc=loc;
 function railETT(){ if(ENG.bougieLoc){ ENG.ettLoc=(ENG.bougieLoc==='trachea'?'trachea':'esophagus'); ENG.ettDepth=22; ENG.tool='ett'; ENG.instr=1; ENG.instrDepth=0.5; logTool(ENG.ettLoc==='trachea'?'green':'amber','ETT buji üzerinden → '+(ENG.ettLoc==='trachea'?'trakea (22 cm)':'özofagus')); renderTools(); updateStepper(); } }
 function placeLMA(){ ENG.lmaPlaced=true; ENG.attempts++; if(ENG.cas.id===4){ logTool('red','Ağır anjiyoödem: LMA sızdırıyor — CAN’T INTUBATE CAN’T OXYGENATE. CICO’ya geçin.'); ENG.spo2=Math.min(ENG.spo2,86); } else { logTool('green','LMA yerleşti — geçici ventilasyon (Plan B).'); ENG.ventilating=true; } renderTools(); }
 function cicoAdvance(){ ENG.cicoStep++; var s=['Krikotiroid membran palpe edildi','Skalpel No.10 yatay kesi + 90° çevirme','Buji membrandan ilerletildi','6.0 kafflı tüp + Ambu — oksijenasyon sağlandı']; if(ENG.cicoStep<=4){ logTool(ENG.cicoStep===4?'green':'amber','eFONA '+ENG.cicoStep+'/4: '+s[ENG.cicoStep-1]); if(ENG.cicoStep===4){ ENG.ettLoc='trachea'; ENG.ventilating=true; ENG.spo2=Math.max(ENG.spo2,90); } } renderTools(); }
-function inflateCuff(b){ ENG.cuff=b; logTool('green', b?'Kaf şişirildi.':'Kaf indirildi.'); renderTools(); updateStepper(); }
-function logTool(k,m){ var d=document.createElement('div'); d.className='flag '+k; d.textContent=m; $('toolFlags').appendChild(d); }
+function inflateCuff(b){
+  if(b){ if(!deviceReady()){ logTool('amber','Önce bir havayolu cihazı (ETT/LMA/eFONA) yerleştirin.'); renderTools(); return; }
+    if(ENG.tool==='ett' && ENG.ettLoc && ENG.ettDepth<19){ logTool('red','🔒 Kaf vokal kord hizasında (<19 cm) — vokal kord travması / faringeal kaf sızıntısı. Tüpü ≥19 cm ilerletip şişirin.'); renderTools(); return; } }
+  ENG.cuff=b; logTool('green', b?'Kaf şişirildi.':'Kaf indirildi.'); renderTools(); updateStepper(); }
+function logTool(k,m){ var box=$('toolFlags'); var d=document.createElement('div'); d.className='flag '+k; d.textContent=m; box.appendChild(d); while(box.children.length>2) box.removeChild(box.firstChild); }
 
 /* ============ AMBU + OSKÜLTASYON + CO2 WASHOUT ============ */
 function ambuBreath(){ ENG.ventBreaths++; var loc=ENG.ettLoc;
@@ -267,63 +284,158 @@ var cv=$('scopeCv'), g2=cv.getContext('2d');
 function resizeScope(){ var r=cv.getBoundingClientRect(); cv.width=Math.max(2,r.width*1.3); cv.height=Math.max(2,r.height*1.3); }
 window.addEventListener('resize',resizeScope);
 function vessels(ctx,cx,cy,R,seed){ ctx.save(); ctx.globalAlpha=0.16; ctx.strokeStyle='#7a1414'; for(var i=0;i<26;i++){ var a=(i*2.1+seed)%6.28; var r0=R*0.1, r1=R*(0.5+0.5*((i*37)%100)/100); ctx.lineWidth=R*0.006; ctx.beginPath(); var x=cx+Math.cos(a)*r0,y=cy+Math.sin(a)*r0; ctx.moveTo(x,y); for(var s=1;s<=5;s++){ a+=((((i*7+s*13)%100)/100)-0.5)*0.5; var rr=lerp(r0,r1,s/5); ctx.lineTo(cx+Math.cos(a)*rr, cy+Math.sin(a)*rr); } ctx.stroke(); } ctx.restore(); }
+function arnd(n){ var x=Math.sin(n*127.1+0.7)*43758.5453; return x-Math.floor(x); }
 function drawOral(ctx,cx,cy,R){
-  // dil sırtı (alt, papillalı)
-  var tg=ctx.createRadialGradient(cx,cy+R*0.9,R*0.2,cx,cy+R*0.9,R*1.1); tg.addColorStop(0,'#c86a60');tg.addColorStop(1,'#9c4840');
-  ctx.fillStyle=tg; ctx.beginPath(); ctx.ellipse(cx,cy+R*0.85,R*1.05,R*0.8,0,0,6.28); ctx.fill();
-  ctx.fillStyle='rgba(150,60,55,.5)'; for(var i=0;i<60;i++){ var a=Math.random()*6.28,r=Math.random()*R*0.7; ctx.beginPath(); ctx.arc(cx+Math.cos(a)*r*0.9, cy+R*0.55+Math.sin(a)*r*0.5, R*0.012,0,6.28); ctx.fill(); }
-  // sert/yumuşak damak kemeri (üst)
-  ctx.strokeStyle='rgba(210,150,140,.5)'; ctx.lineWidth=R*0.03; ctx.beginPath(); ctx.arc(cx,cy-R*0.95,R*0.8,0.2,Math.PI-0.2); ctx.stroke();
-  // üst kesici diş dizisi
-  ctx.fillStyle='#f0ead8'; for(var t=-3;t<=3;t++){ var tx=cx+t*R*0.14, ty=cy-R*0.78+Math.abs(t)*R*0.02; ctx.beginPath(); roundRect(ctx,tx-R*0.05,ty-R*0.07,R*0.1,R*0.14,R*0.03); ctx.fill(); }
-  // küçük doğal uvula
-  var ug=ctx.createLinearGradient(cx,cy-R*0.55,cx,cy-R*0.25); ug.addColorStop(0,'#c86a60');ug.addColorStop(1,'#b05850');
-  ctx.fillStyle=ug; ctx.beginPath(); ctx.moveTo(cx-R*0.04,cy-R*0.55); ctx.quadraticCurveTo(cx,cy-R*0.18,cx+R*0.04,cy-R*0.55); ctx.arc(cx,cy-R*0.55,R*0.04,0,Math.PI,true); ctx.fill();
-  // arka faringeal duvar (orta, koyu)
-  ctx.fillStyle='rgba(60,18,16,.5)'; ctx.beginPath(); ctx.ellipse(cx,cy-R*0.15,R*0.3,R*0.4,0,0,6.28); ctx.fill();
+  // --- dil sırtı (alt): kadifemsi, median sulkus, yumuşak papilla, nemli parlaklık ---
+  var tg=ctx.createRadialGradient(cx,cy+R*0.85,R*0.12,cx,cy+R*0.95,R*1.3); tg.addColorStop(0,'#d1766b');tg.addColorStop(0.65,'#b2584f');tg.addColorStop(1,'#8c3f39');
+  ctx.fillStyle=tg; ctx.beginPath(); ctx.ellipse(cx,cy+R*0.9,R*1.12,R*0.84,0,0,6.28); ctx.fill();
+  ctx.save(); ctx.beginPath(); ctx.ellipse(cx,cy+R*0.9,R*1.12,R*0.84,0,0,6.28); ctx.clip();
+  // kadifemsi papilla dokusu — çok sayıda yumuşak düşük-alfa benek (stabil, titremesiz)
+  for(var i=0;i<460;i++){ var a=arnd(i*1.7)*6.28, r=Math.sqrt(arnd(i*2.3+5))*R*1.0;
+    var px=cx+Math.cos(a)*r, py=cy+R*0.55+Math.sin(a)*r*0.62;
+    ctx.fillStyle='rgba('+(205+(arnd(i*3.1)-0.5)*44|0)+','+(108+(arnd(i*5.3)-0.5)*30|0)+',100,'+(0.045+arnd(i*7.7)*0.055)+')';
+    ctx.beginPath(); ctx.arc(px,py,R*0.009*(0.6+arnd(i*9.1)),0,6.28); ctx.fill(); }
+  // median sulkus (yumuşak oluk)
+  ctx.strokeStyle='rgba(118,46,42,.45)'; ctx.lineWidth=R*0.016; ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(cx,cy+R*0.35); ctx.quadraticCurveTo(cx,cy+R*0.95,cx,cy+R*1.55); ctx.stroke();
+  // nemli üst parlaklık
+  var sh=ctx.createRadialGradient(cx-R*0.25,cy+R*0.45,0,cx-R*0.25,cy+R*0.45,R*0.7); sh.addColorStop(0,'rgba(255,228,220,.16)');sh.addColorStop(1,'rgba(255,228,220,0)'); ctx.fillStyle=sh; ctx.fillRect(cx-R,cy,2*R,R*1.6);
+  ctx.restore();
+  // --- arka faringeal duvar (orta, derin, yumuşak) ---
+  var pg=ctx.createRadialGradient(cx,cy-R*0.08,R*0.04,cx,cy-R*0.08,R*0.46); pg.addColorStop(0,'rgba(66,20,18,.72)');pg.addColorStop(0.7,'rgba(120,54,48,.25)');pg.addColorStop(1,'rgba(150,80,72,0)');
+  ctx.fillStyle=pg; ctx.beginPath(); ctx.ellipse(cx,cy-R*0.1,R*0.34,R*0.44,0,0,6.28); ctx.fill();
+  // --- sert damak (üst, soluk pembe-sarımsı rugae) ---
+  var arcY=cy-R*0.86;
+  ctx.save(); ctx.fillStyle='rgba(212,150,138,.55)'; ctx.beginPath(); ctx.moveTo(cx-R*0.72,arcY+R*0.2); ctx.quadraticCurveTo(cx,arcY-R*0.1,cx+R*0.72,arcY+R*0.2); ctx.quadraticCurveTo(cx,arcY+R*0.42,cx-R*0.72,arcY+R*0.2); ctx.fill();
+  ctx.strokeStyle='rgba(188,122,112,.4)'; ctx.lineWidth=R*0.008; for(var rg=0;rg<4;rg++){ var yy=arcY+R*0.08+rg*R*0.05; ctx.beginPath(); ctx.moveTo(cx-R*0.3,yy); ctx.quadraticCurveTo(cx,yy+R*0.03,cx+R*0.3,yy); ctx.stroke(); }
+  ctx.restore();
+  // --- gingiva (pembe diş eti kemeri) + bitişik dişler ---
+  function archY(fx){ return arcY + R*0.14 - Math.sin(fx*Math.PI)*R*0.07; }   // ortada hafif yukarı kavis
+  var span=R*1.52;
+  // diş eti bandı
+  var gg=ctx.createLinearGradient(cx,arcY,cx,arcY+R*0.26); gg.addColorStop(0,'#d98f86');gg.addColorStop(1,'#bd6a64');
+  ctx.fillStyle=gg; ctx.beginPath();
+  for(var s=0;s<=24;s++){ var fx=s/24, x=cx+(fx-0.5)*span, y=archY(fx)-R*0.02; s===0?ctx.moveTo(x,y):ctx.lineTo(x,y); }
+  for(var s2=24;s2>=0;s2--){ var fx=s2/24, x=cx+(fx-0.5)*span, y=archY(fx)+R*0.12; ctx.lineTo(x,y); }
+  ctx.closePath(); ctx.fill();
+  // bitişik dişler: kesiciler ortada (geniş-düz), kaninler yanda (sivri-uzun)
+  var nT=12, tw=span/nT;
+  for(var t=0;t<nT;t++){ var fx=(t+0.5)/nT, x=cx+(fx-0.5)*span, y=archY(fx)+R*0.085;
+    var mid=Math.abs(fx-0.5)*2; var isCanine=(fx<0.24||fx>0.76); var th=R*(0.1+(isCanine?0.035:0.0)) - mid*R*0.01;
+    var dg=ctx.createLinearGradient(x-tw/2,0,x+tw/2,0); dg.addColorStop(0,'#e7dfc9');dg.addColorStop(0.45,'#fbf7ea');dg.addColorStop(1,'#dcd2bc');
+    ctx.fillStyle=dg; ctx.beginPath();
+    if(isCanine){ ctx.moveTo(x-tw*0.42,y); ctx.lineTo(x+tw*0.42,y); ctx.lineTo(x+tw*0.3,y+th*0.78); ctx.quadraticCurveTo(x,y+th,x-tw*0.3,y+th*0.78); ctx.closePath(); }
+    else { roundRect(ctx,x-tw*0.44,y,tw*0.88,th,R*0.018); }
+    ctx.fill(); ctx.strokeStyle='rgba(170,158,136,.45)'; ctx.lineWidth=R*0.004; ctx.stroke();
+    // komşu diş sutur gölgesi
+    ctx.strokeStyle='rgba(120,100,80,.25)'; ctx.lineWidth=R*0.006; ctx.beginPath(); ctx.moveTo(x-tw*0.46,y+th*0.1); ctx.lineTo(x-tw*0.46,y+th*0.9); ctx.stroke();
+  }
+  // uvula (damak ortasından küçük sarkıntı)
+  var ug=ctx.createLinearGradient(cx,cy-R*0.5,cx,cy-R*0.24); ug.addColorStop(0,'#c86a60');ug.addColorStop(1,'#ad5750');
+  ctx.fillStyle=ug; ctx.beginPath(); ctx.moveTo(cx-R*0.035,cy-R*0.5); ctx.quadraticCurveTo(cx,cy-R*0.18,cx+R*0.035,cy-R*0.5); ctx.arc(cx,cy-R*0.5,R*0.035,0,Math.PI,true); ctx.fill();
 }
 function drawGlottis(ctx,cx,gy,R,ap,edema){
   // yalancı kordlar (pembe vestibüler plikalar)
   ctx.fillStyle='#c76a62'; ctx.beginPath(); ctx.moveTo(cx-R*0.05,gy-R*0.3); ctx.quadraticCurveTo(cx-R*0.42,gy-R*0.05,cx-R*0.32,gy+R*0.34); ctx.quadraticCurveTo(cx-R*0.15,gy+R*0.2,cx-R*0.05,gy-R*0.3); ctx.fill();
   ctx.beginPath(); ctx.moveTo(cx+R*0.05,gy-R*0.3); ctx.quadraticCurveTo(cx+R*0.42,gy-R*0.05,cx+R*0.32,gy+R*0.34); ctx.quadraticCurveTo(cx+R*0.15,gy+R*0.2,cx+R*0.05,gy-R*0.3); ctx.fill();
-  // piriform sinüsler (dış, koyu oluk)
-  ctx.fillStyle='rgba(40,12,12,.6)'; ctx.beginPath(); ctx.ellipse(cx-R*0.5,gy+R*0.1,R*0.1,R*0.22,0.3,0,6.28); ctx.fill(); ctx.beginPath(); ctx.ellipse(cx+R*0.5,gy+R*0.1,R*0.1,R*0.22,-0.3,0,6.28); ctx.fill();
-  // rima glottidis — koyu trakea üçgeni (ters V)
+  // piriform sinüsler → yumuşak mukozal gölge geçişi (keskin oval değil)
+  for(var psgn=-1;psgn<=1;psgn+=2){ var ppx=cx+psgn*R*0.47, ppy=gy+R*0.08;
+    var pgr=ctx.createRadialGradient(ppx,ppy,R*0.02,ppx,ppy,R*0.22); pgr.addColorStop(0,'rgba(72,26,24,.5)');pgr.addColorStop(0.55,'rgba(120,56,50,.26)');pgr.addColorStop(1,'rgba(150,82,74,0)');
+    ctx.fillStyle=pgr; ctx.beginPath(); ctx.ellipse(ppx,ppy,R*0.15,R*0.28,psgn*0.22,0,6.28); ctx.fill(); }
+  // rima glottidis — koyu trakea üçgeni (ters V) + GÖRÜNÜR C-halka trakeal kıkırdaklar
   var gap=(R*0.015+ap*R*0.11)*(1-edema*0.7);
-  ctx.save(); ctx.beginPath(); ctx.moveTo(cx,gy-R*0.26); ctx.lineTo(cx-R*0.2-gap,gy+R*0.3); ctx.lineTo(cx+R*0.2+gap,gy+R*0.3); ctx.closePath(); ctx.clip();
-  var trg=ctx.createLinearGradient(cx,gy-R*0.26,cx,gy+R*0.3); trg.addColorStop(0,'#1a0808');trg.addColorStop(0.5,'#0a0303');trg.addColorStop(1,'#000'); ctx.fillStyle=trg; ctx.fillRect(cx-R,gy-R,2*R,2*R);
-  // C-halka trakea (soluk arklar derine)
-  ctx.strokeStyle='rgba(180,120,110,.3)'; ctx.lineWidth=R*0.012; for(var i=1;i<=4;i++){ ctx.beginPath(); ctx.arc(cx,gy+R*0.1+i*R*0.09,R*0.14-i*0.012*R,0.2,Math.PI-0.2); ctx.stroke(); } ctx.restore();
+  var bw=R*0.2*(0.28+0.72*clamp(ap/0.45,0,1));   // kord taban genişliği: düşük ap (laringospazm/addüksiyon) → sımsıkı kapanır
+  ctx.save(); ctx.beginPath(); ctx.moveTo(cx,gy-R*0.26); ctx.lineTo(cx-bw-gap,gy+R*0.32); ctx.lineTo(cx+bw+gap,gy+R*0.32); ctx.closePath(); ctx.clip();
+  var trg=ctx.createLinearGradient(cx,gy-R*0.26,cx,gy+R*0.5); trg.addColorStop(0,'#200b09');trg.addColorStop(0.5,'#100505');trg.addColorStop(1,'#000'); ctx.fillStyle=trg; ctx.fillRect(cx-R,gy-R,2*R,2*R);
+  // derine doğru küçülen 5 adet açık renkli C-şekilli trakeal kıkırdak halka
+  for(var i=1;i<=5;i++){ var ry=gy-R*0.02+i*R*0.082, rw=R*(0.2-i*0.028); if(rw<R*0.03)break;
+    var ca=ctx.createLinearGradient(cx,ry-rw*0.4,cx,ry+rw*0.4); ca.addColorStop(0,'rgba(226,184,172,'+(0.55-i*0.07)+')');ca.addColorStop(1,'rgba(150,98,90,'+(0.25-i*0.035)+')');
+    ctx.strokeStyle=ca; ctx.lineWidth=R*(0.032-i*0.004); ctx.lineCap='round'; ctx.beginPath(); ctx.arc(cx,ry,rw,0.22,Math.PI-0.22); ctx.stroke();
+    ctx.strokeStyle='rgba(16,5,5,.45)'; ctx.lineWidth=R*0.008; ctx.beginPath(); ctx.arc(cx,ry+rw*0.14,rw*0.96,0.3,Math.PI-0.3); ctx.stroke(); }
+  ctx.restore();
   // gerçek vokal kordlar (sedef/fildişi, keskin kenar, ön komissür)
   ctx.lineJoin='round';
   for(var sgn=-1;sgn<=1;sgn+=2){ var ig=ctx.createLinearGradient(cx,gy,cx+sgn*R*0.25,gy); ig.addColorStop(0,'#fbfaf4');ig.addColorStop(1,'#d9d4c4');
-    ctx.fillStyle=ig; ctx.beginPath(); ctx.moveTo(cx+sgn*gap,gy-R*0.25); ctx.lineTo(cx+sgn*(R*0.2+gap),gy+R*0.29); ctx.lineTo(cx+sgn*(R*0.2+gap+R*0.05),gy+R*0.29); ctx.quadraticCurveTo(cx+sgn*(gap+R*0.05),gy-R*0.1,cx+sgn*(gap+R*0.03),gy-R*0.25); ctx.closePath(); ctx.fill();
+    ctx.fillStyle=ig; ctx.beginPath(); ctx.moveTo(cx+sgn*gap,gy-R*0.25); ctx.lineTo(cx+sgn*(bw+gap),gy+R*0.29); ctx.lineTo(cx+sgn*(bw+gap+R*0.05),gy+R*0.29); ctx.quadraticCurveTo(cx+sgn*(gap+R*0.05),gy-R*0.1,cx+sgn*(gap+R*0.03),gy-R*0.25); ctx.closePath(); ctx.fill();
     ctx.strokeStyle='rgba(120,110,95,.5)'; ctx.lineWidth=R*0.006; ctx.stroke(); }
-  // aritenoid tepeleri (arka, iki loblu pembe) + interaritenoid çentik
-  ctx.fillStyle='#d98f82'; ctx.beginPath(); ctx.ellipse(cx-R*0.12,gy+R*0.33,R*0.1,R*0.09,0,0,6.28); ctx.fill(); ctx.beginPath(); ctx.ellipse(cx+R*0.12,gy+R*0.33,R*0.1,R*0.09,0,0,6.28); ctx.fill();
-  // özofagus girişi (aritenoidlerin altı, büzüşük yatay yarık)
-  ctx.strokeStyle='rgba(30,8,8,.8)'; ctx.lineWidth=R*0.03; ctx.beginPath(); ctx.moveTo(cx-R*0.16,gy+R*0.45); ctx.quadraticCurveTo(cx,gy+R*0.49,cx+R*0.16,gy+R*0.45); ctx.stroke();
+  // aritenoid kabartıları — organik, ariepiglottik kıvrımla bütünleşik (iki ayrı top + gülen çizgi DEĞİL)
+  for(var asgn=-1;asgn<=1;asgn+=2){ var ax=cx+asgn*R*0.15, ay=gy+R*0.34;
+    var ag=ctx.createRadialGradient(ax-asgn*R*0.03,ay-R*0.03,0,ax,ay,R*0.16); ag.addColorStop(0,'#e3998b');ag.addColorStop(0.65,'#cc7c70');ag.addColorStop(1,'#a85f54');
+    ctx.fillStyle=ag; ctx.beginPath();
+    ctx.moveTo(cx+asgn*(bw+gap),gy+R*0.27);
+    ctx.quadraticCurveTo(ax+asgn*R*0.12,ay-R*0.08, ax+asgn*R*0.05,ay+R*0.1);
+    ctx.quadraticCurveTo(cx+asgn*R*0.05,ay+R*0.08, cx,gy+R*0.4);
+    ctx.quadraticCurveTo(cx+asgn*R*0.08,gy+R*0.32, cx+asgn*(bw+gap),gy+R*0.27); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle='rgba(180,96,86,.4)'; ctx.lineWidth=R*0.018; ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(ax+asgn*R*0.04,ay+R*0.02); ctx.quadraticCurveTo(cx+asgn*R*0.34,gy-R*0.05,cx+asgn*R*0.26,gy-R*0.26); ctx.stroke(); }
+  // interaritenoid çentik — yumuşak gölge
+  var ign=ctx.createRadialGradient(cx,gy+R*0.41,0,cx,gy+R*0.41,R*0.1); ign.addColorStop(0,'rgba(48,14,12,.5)');ign.addColorStop(1,'rgba(48,14,12,0)'); ctx.fillStyle=ign; ctx.beginPath(); ctx.ellipse(cx,gy+R*0.41,R*0.075,R*0.05,0,0,6.28); ctx.fill();
+  // özofagus girişi (yumuşak büzüşük yarık)
+  ctx.strokeStyle='rgba(34,10,10,.6)'; ctx.lineWidth=R*0.022; ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(cx-R*0.15,gy+R*0.47); ctx.quadraticCurveTo(cx,gy+R*0.5,cx+R*0.15,gy+R*0.47); ctx.stroke();
 }
 function drawEpiglottis(ctx,cx,cy,R,lift,edema){
   var ey=cy-R*0.08 - lift*R*0.42, w=R*(0.46+edema*0.2), h=R*(0.34-lift*0.12+edema*0.12);
-  var eg=ctx.createLinearGradient(cx,ey-h,cx,ey+h); eg.addColorStop(0,'#d9a08a');eg.addColorStop(0.6,'#c47e6e');eg.addColorStop(1,'#b06858');
-  ctx.fillStyle=eg; ctx.beginPath(); ctx.moveTo(cx-w,ey); ctx.quadraticCurveTo(cx-w*0.9,ey-h,cx,ey-h*0.95); ctx.quadraticCurveTo(cx+w*0.9,ey-h,cx+w,ey);
-  ctx.quadraticCurveTo(cx+w*0.5,ey+h, cx+R*0.05,ey+h*0.95); ctx.quadraticCurveTo(cx,ey+h*0.7,cx-R*0.05,ey+h*0.95); ctx.quadraticCurveTo(cx-w*0.5,ey+h,cx-w,ey); ctx.closePath(); ctx.fill();
-  ctx.strokeStyle='rgba(150,90,75,.6)'; ctx.lineWidth=R*0.01; ctx.beginPath(); ctx.moveTo(cx,ey-h*0.8); ctx.lineTo(cx,ey+h*0.85); ctx.stroke(); // median ridge
+  var eg=ctx.createLinearGradient(cx,ey-h,cx,ey+h); eg.addColorStop(0,'#dca890');eg.addColorStop(0.55,'#c8826e');eg.addColorStop(1,'#b06858');
+  function leaf(){ ctx.beginPath(); ctx.moveTo(cx-w,ey); ctx.quadraticCurveTo(cx-w*0.9,ey-h,cx,ey-h*0.95); ctx.quadraticCurveTo(cx+w*0.9,ey-h,cx+w,ey);
+    ctx.quadraticCurveTo(cx+w*0.5,ey+h, cx+R*0.05,ey+h*0.95); ctx.quadraticCurveTo(cx,ey+h*0.7,cx-R*0.05,ey+h*0.95); ctx.quadraticCurveTo(cx-w*0.5,ey+h,cx-w,ey); ctx.closePath(); }
+  ctx.fillStyle=eg; leaf(); ctx.fill();
+  // sarımsı kıkırdak kenar parlaması (serbest kenar)
+  ctx.strokeStyle='rgba(226,198,122,.5)'; ctx.lineWidth=R*0.015; ctx.lineJoin='round'; ctx.beginPath(); ctx.moveTo(cx-w,ey); ctx.quadraticCurveTo(cx-w*0.9,ey-h,cx,ey-h*0.95); ctx.quadraticCurveTo(cx+w*0.9,ey-h,cx+w,ey); ctx.stroke();
+  // yüzey damarları (ince, dallı — sert median çizgi DEĞİL)
+  ctx.save(); leaf(); ctx.clip(); ctx.strokeStyle='rgba(150,42,38,.32)'; ctx.lineWidth=R*0.006;
+  for(var v=0;v<6;v++){ var vx=cx+(v-2.5)*w*0.28; ctx.beginPath(); ctx.moveTo(vx,ey+h*0.75); ctx.quadraticCurveTo(vx+(arnd(v*3.3)-0.5)*w*0.3,ey, vx+(arnd(v*5.1+2)-0.5)*w*0.22,ey-h*0.6); ctx.stroke(); }
+  // hafif median vaskuler iz (çok yumuşak)
+  ctx.strokeStyle='rgba(150,80,66,.2)'; ctx.lineWidth=R*0.012; ctx.beginPath(); ctx.moveTo(cx,ey-h*0.7); ctx.quadraticCurveTo(cx+R*0.01,ey,cx,ey+h*0.8); ctx.stroke();
+  ctx.restore();
   // speküler ıslaklık
-  ctx.fillStyle='rgba(255,240,230,.25)'; ctx.beginPath(); ctx.ellipse(cx-w*0.3,ey-h*0.3,w*0.25,h*0.18,-0.4,0,6.28); ctx.fill();
+  ctx.fillStyle='rgba(255,240,230,.22)'; ctx.beginPath(); ctx.ellipse(cx-w*0.3,ey-h*0.3,w*0.25,h*0.18,-0.4,0,6.28); ctx.fill();
 }
 function drawInstrument(ctx,cx,cy,R){
-  var toTrachea=(ENG.target==='glottis'); var tipY = toTrachea? cy-R*0.0 : cy+R*0.42; var tipX= toTrachea? cx : cx+R*0.0;
-  var prog=ENG.instrDepth; var sx=cx+R*0.85, sy=cy+R*0.9; var mx=cx+R*0.4, my=cy+R*0.4;
-  var ex=lerp(sx,tipX,prog), ey=lerp(sy,tipY,prog);
-  ctx.lineCap='round';
-  if(ENG.instr===1){ // ETT şeffaf PVC
-    ctx.strokeStyle='rgba(210,225,235,.55)'; ctx.lineWidth=R*0.17; ctx.beginPath(); ctx.moveTo(sx,sy); ctx.quadraticCurveTo(mx,my,ex,ey); ctx.stroke();
-    ctx.strokeStyle='rgba(60,110,200,.9)'; ctx.lineWidth=R*0.02; ctx.beginPath(); ctx.moveTo(sx,sy); ctx.quadraticCurveTo(mx,my,ex,ey); ctx.stroke(); // radyoopak mavi
-    ctx.strokeStyle='#111'; ctx.lineWidth=R*0.03; ctx.beginPath(); var bx=lerp(sx,ex,0.72),by=lerp(sy,ey,0.72); ctx.arc(bx,by,R*0.09,0,6.28); ctx.stroke(); // kord derinlik halkası
-    if(ENG.cuff){ ctx.fillStyle='rgba(200,220,235,.4)'; ctx.beginPath(); ctx.ellipse(lerp(sx,ex,0.4),lerp(sy,ey,0.4),R*0.14,R*0.1,0,0,6.28); ctx.fill(); }
-  } else if(ENG.instr===2){ ctx.strokeStyle='#3a6fd8'; ctx.lineWidth=R*0.05; ctx.beginPath(); ctx.moveTo(sx,sy); ctx.quadraticCurveTo(mx,my,ex,ey); ctx.stroke(); ctx.fillStyle='#2a5fc8'; ctx.beginPath(); ctx.arc(ex,ey,R*0.04,0,6.28); ctx.fill(); }
+  var toTrachea=(ENG.target==='glottis');
+  var prog=clamp(ENG.instrDepth,0,1);
+  var sx=cx+R*1.28, sy=cy+R*1.32;                 // KADRAJ DIŞI sağ-alt (hep ekran kenarından girer)
+  var mx=cx+R*0.6, my=cy+R*0.52;                   // kavis kontrol noktası
+  var p0x=cx+R*0.34, p0y=cy+R*0.6;                 // prog=0: uç alt kenarda (ağızdan yeni giriyor)
+  var tipX= toTrachea? cx : cx+R*0.06;
+  var tipY= toTrachea? cy-R*0.04 : cy+R*0.46;      // ilerledikçe uç kordlardan trakeaya girer
+  var ex=lerp(p0x,tipX,prog), ey=lerp(p0y,tipY,prog);
+  function qpt(t){ var mt=1-t; return [mt*mt*sx+2*mt*t*mx+t*t*ex, mt*mt*sy+2*mt*t*my+t*t*ey]; }
+  function qtan(t){ var dx=2*(1-t)*(mx-sx)+2*t*(ex-mx), dy=2*(1-t)*(my-sy)+2*t*(ey-my); var l=Math.hypot(dx,dy)||1; return [dx/l,dy/l]; }
+  ctx.lineCap='round'; ctx.lineJoin='round';
+  if(ENG.instr===1){ // --- GERÇEKÇİ ŞEFFAF PVC ETT ---
+    var W=R*0.165;
+    ctx.strokeStyle='rgba(18,28,42,.3)'; ctx.lineWidth=W*1.16; ctx.beginPath(); ctx.moveTo(sx,sy); ctx.quadraticCurveTo(mx,my,ex,ey); ctx.stroke(); // dış gölge
+    ctx.strokeStyle='rgba(223,235,245,.5)'; ctx.lineWidth=W; ctx.beginPath(); ctx.moveTo(sx,sy); ctx.quadraticCurveTo(mx,my,ex,ey); ctx.stroke(); // şeffaf PVC gövde
+    ctx.strokeStyle='rgba(42,58,84,.28)'; ctx.lineWidth=W*0.5; ctx.beginPath(); ctx.moveTo(sx,sy); ctx.quadraticCurveTo(mx,my,ex,ey); ctx.stroke(); // iç lümen
+    ctx.strokeStyle='rgba(255,255,255,.5)'; ctx.lineWidth=W*0.16; ctx.beginPath();
+    for(var t=0;t<=1.001;t+=0.05){ var p=qpt(t),tn=qtan(t); var hx=p[0]-tn[1]*W*0.3, hy=p[1]+tn[0]*W*0.3; t===0?ctx.moveTo(hx,hy):ctx.lineTo(hx,hy); } ctx.stroke(); // parlak highlight şeridi
+    ctx.strokeStyle='rgba(44,92,205,.9)'; ctx.lineWidth=W*0.1; ctx.beginPath(); ctx.moveTo(sx,sy); ctx.quadraticCurveTo(mx,my,ex,ey); ctx.stroke(); // mavi radyoopak çizgi
+    // cm ölçü çizgileri 18·20·22
+    [[0.28,'22'],[0.40,'20'],[0.52,'18']].forEach(function(mk){ var p=qpt(mk[0]),tn=qtan(mk[0]); var nx=-tn[1],ny=tn[0];
+      ctx.strokeStyle='rgba(28,38,52,.85)'; ctx.lineWidth=W*0.09; ctx.beginPath(); ctx.moveTo(p[0]-nx*W*0.46,p[1]-ny*W*0.46); ctx.lineTo(p[0]+nx*W*0.46,p[1]+ny*W*0.46); ctx.stroke();
+      ctx.fillStyle='rgba(40,50,66,.85)'; ctx.font=(R*0.046)+'px monospace'; ctx.textAlign='center'; ctx.fillText(mk[1],p[0]+nx*W*0.95,p[1]+ny*W*0.95); ctx.textAlign='start'; });
+    // siyah vokal kord derinlik bandı (~kord hizası işareti)
+    var pb=qpt(0.64),tb=qtan(0.64),nbx=-tb[1],nby=tb[0];
+    ctx.strokeStyle='#121212'; ctx.lineCap='butt';
+    [-1,1].forEach(function(o){ var c=qpt(0.64+o*0.03),tc=qtan(0.64+o*0.03),cnx=-tc[1],cny=tc[0];
+      ctx.lineWidth=W*0.12; ctx.beginPath(); ctx.moveTo(c[0]-cnx*W*0.5,c[1]-cny*W*0.5); ctx.lineTo(c[0]+cnx*W*0.5,c[1]+cny*W*0.5); ctx.stroke(); });
+    ctx.lineCap='round';
+    // kaf (şişikse)
+    if(ENG.cuff){ var pc=qpt(0.8),tc=qtan(0.8); ctx.save(); ctx.translate(pc[0],pc[1]); ctx.rotate(Math.atan2(tc[1],tc[0]));
+      var cg=ctx.createLinearGradient(0,-W*0.6,0,W*0.6); cg.addColorStop(0,'rgba(216,230,242,.6)');cg.addColorStop(0.5,'rgba(190,210,228,.45)');cg.addColorStop(1,'rgba(205,222,236,.55)');
+      ctx.fillStyle=cg; ctx.beginPath(); ctx.ellipse(0,0,W*0.95,W*0.64,0,0,6.28); ctx.fill(); ctx.strokeStyle='rgba(150,180,205,.5)';ctx.lineWidth=R*0.004;ctx.stroke(); ctx.restore(); }
+    // --- bevel / Murphy uç ---
+    var tp=qpt(1),tt=qtan(1), ang=Math.atan2(tt[1],tt[0]);
+    ctx.save(); ctx.translate(tp[0],tp[1]); ctx.rotate(ang);
+    var bg=ctx.createLinearGradient(-W*0.4,0,W*0.6,0); bg.addColorStop(0,'rgba(223,235,245,.55)');bg.addColorStop(1,'rgba(198,216,230,.32)');
+    ctx.fillStyle=bg; ctx.beginPath(); ctx.moveTo(-W*0.5,-W*0.5); ctx.lineTo(W*0.55,-W*0.08); ctx.lineTo(W*0.18,W*0.5); ctx.lineTo(-W*0.5,W*0.5); ctx.closePath(); ctx.fill(); // eğik bevel uç
+    ctx.strokeStyle='rgba(150,180,205,.5)'; ctx.lineWidth=R*0.004; ctx.stroke();
+    ctx.fillStyle='rgba(28,42,64,.55)'; ctx.beginPath(); ctx.ellipse(W*0.02,-W*0.3,W*0.15,W*0.1,0,0,6.28); ctx.fill(); // Murphy gözü
+    ctx.restore();
+  } else if(ENG.instr===2){ // buji — ince sarımsı, Coudé uç
+    ctx.strokeStyle='rgba(18,28,42,.3)'; ctx.lineWidth=R*0.06; ctx.beginPath(); ctx.moveTo(sx,sy); ctx.quadraticCurveTo(mx,my,ex,ey); ctx.stroke();
+    ctx.strokeStyle='#e8d48a'; ctx.lineWidth=R*0.044; ctx.beginPath(); ctx.moveTo(sx,sy); ctx.quadraticCurveTo(mx,my,ex,ey); ctx.stroke();
+    ctx.strokeStyle='rgba(255,255,255,.4)'; ctx.lineWidth=R*0.012; ctx.beginPath(); ctx.moveTo(sx,sy); ctx.quadraticCurveTo(mx,my,ex,ey); ctx.stroke();
+    var tp2=qpt(1),tt2=qtan(1); ctx.save(); ctx.translate(tp2[0],tp2[1]); ctx.rotate(Math.atan2(tt2[1],tt2[0])-0.5); ctx.fillStyle='#d8c070'; ctx.beginPath(); ctx.ellipse(0,0,R*0.05,R*0.024,0,0,6.28); ctx.fill(); ctx.restore();
+  }
 }
 function drawBladeTip(ctx,cx,cy,R){ // yalnız üst kenarda kavisli mat metalik profil
   var yTop=cy-R*0.95 + ENG.lift*R*0.06; ctx.save();
@@ -337,7 +449,8 @@ function drawBladeTip(ctx,cx,cy,R){ // yalnız üst kenarda kavisli mat metalik 
 function roundRect(ctx,x,y,w,h,r){ ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); }
 function renderScope(){ var w=cv.width,h=cv.height; var cx=w/2,cy=h*0.5,R=Math.min(w,h)*0.46;
   g2.fillStyle='#000'; g2.fillRect(0,0,w,h);
-  g2.save(); g2.beginPath(); g2.arc(cx,cy,R,0,6.28); g2.clip();
+  var _sh=ENG.shake||0, shx=_sh?Math.sin(ENG.t*33)*R*0.035*_sh:0, shy=_sh?Math.cos(ENG.t*41)*R*0.03*_sh:0;
+  g2.save(); g2.translate(shx,shy); g2.beginPath(); g2.arc(cx,cy,R,0,6.28); g2.clip();
   var bg=g2.createRadialGradient(cx,cy,R*0.15,cx,cy,R); bg.addColorStop(0,'#b0564c');bg.addColorStop(0.7,'#8a3c34');bg.addColorStop(1,'#4c1a16'); g2.fillStyle=bg; g2.fillRect(cx-R,cy-R,2*R,2*R);
   vessels(g2,cx,cy,R,ENG.cas.id*13);
   var stage=viewStage(), exp=clamp(exposure(),0,1);
@@ -401,7 +514,7 @@ function loop(ts){ if(!running)return; var dt=last?Math.min(0.05,(ts-last)/1000)
 function updateHUD(){
   $('spo2v').textContent=Math.round(ENG.spo2); $('spo2v').className='mv '+(ENG.spo2<85?'crit':ENG.spo2<92?'warn':'o2');
   $('etco2v').textContent=Math.round(ENG.etco2); $('hrv').textContent=Math.round(ENG.hr);
-  $('bpv').textContent=Math.round(ENG.cas.vit.sbp+ENG.mapDelta)+'/'+Math.round(ENG.cas.vit.dbp+ENG.mapDelta*0.7)+' ('+getMAP()+')'; $('bpv').className='mv '+(getMAP()<60?'crit':getMAP()<70?'warn':'');
+  var md=effMapDelta(); $('bpv').textContent=Math.round(ENG.cas.vit.sbp+md)+'/'+Math.round(ENG.cas.vit.dbp+md*0.7)+' ('+getMAP()+')'; $('bpv').className='mv '+(getMAP()<60?'crit':getMAP()<70?'warn':(ENG.laryngospasm?'warn':''));
   var m=Math.floor(ENG.t/60),s=Math.floor(ENG.t%60); $('monClock').textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
   var apN=''; if(ENG.apnea){ apN='Apne '+Math.round(ENG.apneaT)+' sn · güvenli rezerv ~'+Math.round(safeApneaReserve())+' sn ('+(ENG.preox?'pre-O2 ✓':'pre-O2 YOK ⚠')+')'; } else if(ENG.preox){ apN='Pre-O2: EtO2 ~%'+Math.round(ENG.eto2); } $('apneaNote').textContent=apN;
   var reveal=(ENG.level==='resident'); ENG.dentalWarning=(leverAmt()>0.15);
@@ -450,8 +563,8 @@ function renderSliders(){ var r=$('sliderRow');
 function renderTubeRow(){ var r=$('tubeRow'); var ettOn=(ENG.tool==='ett');
   r.innerHTML='<div class="toolgrp"><span class="lbl">Hedef</span><div class="seg" id="tgtSeg"><button data-t="glottis">Glottis (Anterior)</button><button data-t="esophagus">Özofagus Hattı</button></div></div>'+
     (ettOn?'<div class="toolgrp"><span class="lbl">İlerletme</span><div class="sld"><input type="range" id="sl_ett" min="14" max="28" step="0.5" value="'+(ENG.ettDepth||16)+'"><span class="v" id="v_ett">'+(ENG.ettDepth||16)+' cm</span></div></div>':'')+
-    '<button class="btn sm" id="popBtn">Stileti Çek [R]</button><button class="btn sm" id="cuffBtn">'+(ENG.cuff?'Kafı İndir [K]':'Kafı Şişir [K]')+'</button>'+
-    '<button class="btn sm pri" id="ambuBtn">💨 Ambu Sık (6) [V]</button><button class="btn sm pri" id="auscBtn">🩺 5-Odak Dinle [O]</button>';
+    '<button class="btn sm" id="popBtn"'+(ENG.stylet?'':' disabled')+'>Stileti Çek [R]</button><button class="btn sm" id="cuffBtn"'+(deviceReady()?'':' disabled')+'>'+(ENG.cuff?'Kafı İndir [K]':'Kafı Şişir [K]')+'</button>'+
+    '<button class="btn sm pri" id="ambuBtn"'+(deviceReady()?'':' disabled')+'>💨 Ambu Sık (6) [V]</button><button class="btn sm pri" id="auscBtn">🩺 5-Odak Dinle [O]</button>';
   [].forEach.call($('tgtSeg').children,function(b){ b.className=(b.dataset.t===ENG.target?'on':''); b.onclick=function(){ ENG.target=b.dataset.t; renderTubeRow(); }; });
   if($('sl_ett'))$('sl_ett').oninput=function(){ advanceETT(+this.value); $('v_ett').textContent=(+this.value)+' cm'; };
   $('popBtn').onclick=function(){ withdrawStylet(); }; $('cuffBtn').onclick=function(){ inflateCuff(!ENG.cuff); };
@@ -477,10 +590,13 @@ window.addEventListener('keydown',function(e){ var k=e.key.toLowerCase(); var ta
   if(k==='w'){ENG.depth=clamp(ENG.depth+0.04,0,1);renderSliders();} else if(k==='s'){ENG.depth=clamp(ENG.depth-0.04,0,1);renderSliders();}
   else if(k==='q')ENG.pitch=clamp(ENG.pitch-0.05,0,1); else if(k==='e'){ if(ENG.tool==='ett')advanceETT((ENG.ettDepth||16)+1); else ENG.pitch=clamp(ENG.pitch+0.05,0,1); }
   else if(k==='b')ENG.burp=!ENG.burp; else if(k==='a')doSuction(); else if(k==='r')withdrawStylet(); else if(k==='k')inflateCuff(!ENG.cuff);
-  else if(k==='v'){ for(var i=0;i<6;i++)ambuBreath(); scopeToast('6 soluk Ambu — EtCO2 '+Math.round(ENG.etco2),ENG.ettLoc==='trachea'?'good':'bad'); } else if(k==='o'){ var a=auscultate(); renderTools(); }
+  else if(k==='v'){ if(!deviceReady()){ scopeToast('Önce havayolu cihazı yerleştirin (Ambu için). Maske oksijenasyonu RSI panelinden.','warn'); } else { for(var i=0;i<6;i++)ambuBreath(); scopeToast('6 soluk Ambu — EtCO2 '+Math.round(ENG.etco2),ENG.ettLoc==='trachea'?'good':'bad'); } } else if(k==='o'){ var a=auscultate(); renderTools(); }
   else return; buildScopeTools(); onMove(); });
 function onMove(){ if(leverAmt()>0.15 && !ENG._dentCounted){ ENG.dentalCount++; ENG._dentCounted=true; } if(leverAmt()<=0.15)ENG._dentCounted=false;
-  if(ENG.depth>0.4 && ENG.blockState==='none' && !ENG.laryngospasm){ ENG.laryngospasm=true; scopeToast('⚠ Laringospazm / öğürme — paralizi oturmadan bıçak temas etti!','bad'); } updateStepper(); }
+  // UYANIK HASTA (indüksiyon YOK) + bıçak >%35 → öğürme/laringospazm + sempatik fırlama + ekran sarsıntısı
+  if(!ENG.induction && ENG.depth>0.35 && !ENG.laryngospasm){ ENG.laryngospasm=true; ENG.shake=1.3;
+    ENG.hr=Math.min(172,ENG.hr+42); scopeToast('⚠ Uyanık hastada laringoskopi — öğürme ve laringospazm! Önce indüksiyon + paralizi verin.','bad'); }
+  updateStepper(); }
 
 /* ============ AŞAMA 3 — DAS 2025 JÜRİ ============ */
 function openJury(){ var p=$('jurySheet'); var statusOpts=['Endotrakeal (trakeal) yerleşim 21–23 cm','Sağ ana bronş yerleşimi','Özofagus entübasyonu — tüp çekilmeli','Supraglottik LMA kurtarma','CICO eFONA krikotiroidotomi','Doğrulanmadı'];
