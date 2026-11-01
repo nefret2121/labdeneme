@@ -227,25 +227,32 @@ function gaitStep(dt){
 
 /* ======================= THREE.JS SAHNE ======================= */
 let renderer,scene,cam,fig={},gl=$('gl'),grid;
-function tube(r,color){ var m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,1,12),new THREE.MeshStandardMaterial({color:color,roughness:.7})); m.userData.r=r; m.castShadow=true; return m; }
-function ball(r,color){ var m=new THREE.Mesh(new THREE.SphereGeometry(r,16,16),new THREE.MeshStandardMaterial({color:color,roughness:.6})); m.castShadow=true; return m; }
+function tube(r,color,rough){ var m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,1,20,1),new THREE.MeshStandardMaterial({color:color,roughness:(rough==null?.62:rough),metalness:0})); m.userData.r=r; m.castShadow=true; m.receiveShadow=true; return m; }
+function ball(r,color,rough){ var m=new THREE.Mesh(new THREE.SphereGeometry(r,26,20),new THREE.MeshStandardMaterial({color:color,roughness:(rough==null?.58:rough),metalness:0})); m.castShadow=true; m.receiveShadow=true; return m; }
 function setTube(mesh,a,b){ var ax=new THREE.Vector3(a.x,a.y,a.z),bx=new THREE.Vector3(b.x,b.y,b.z),d=bx.clone().sub(ax),len=Math.max(d.length(),0.001);
   mesh.scale.set(1,len,1); mesh.position.copy(ax.add(bx).multiplyScalar(0.5)); mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize()); }
 function initGL(){
-  renderer=new THREE.WebGLRenderer({canvas:gl,antialias:true}); renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1)); renderer.shadowMap.enabled=true;
-  scene=new THREE.Scene(); scene.background=new THREE.Color(0x070b14); scene.fog=new THREE.Fog(0x070b14,7,18);
+  renderer=new THREE.WebGLRenderer({canvas:gl,antialias:true}); renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1));
+  renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  if('outputColorSpace' in renderer) renderer.outputColorSpace=THREE.SRGBColorSpace;
+  scene=new THREE.Scene(); scene.background=new THREE.Color(0x0e1626); scene.fog=new THREE.Fog(0x0e1626,9,22);
   cam=new THREE.PerspectiveCamera(42,2,0.1,100);
-  scene.add(new THREE.HemisphereLight(0x9fb4d0,0x202830,0.8));
-  var dir=new THREE.DirectionalLight(0xffffff,0.95); dir.position.set(3,6,4); dir.castShadow=true; dir.shadow.mapSize.set(1024,1024); var sc=dir.shadow.camera; sc.left=-4;sc.right=4;sc.top=4;sc.bottom=-4; scene.add(dir);
-  var grd=new THREE.Mesh(new THREE.PlaneGeometry(80,10),new THREE.MeshStandardMaterial({color:0x0c1422,roughness:1})); grd.rotation.x=-Math.PI/2; grd.receiveShadow=true; scene.add(grd);
-  grid=new THREE.GridHelper(80,160,0x1b2a40,0x14202f); grid.position.y=0.002; scene.add(grid);
-  var cloth=0x44618a, clothR=0x5a6f8f, skin=0x86a7c4, dark=0x263150;
-  fig.pelvis=ball(0.1,cloth); fig.pelvisBar=tube(0.05,cloth); fig.torso=tube(0.13,cloth); fig.head=ball(0.13,skin); fig.neck=tube(0.05,skin);
-  ['L','R'].forEach(function(s){ var c=(s==='R'?clothR:cloth);
-    fig['thigh'+s]=tube(0.07,c); fig['shank'+s]=tube(0.06,c); fig['heel'+s]=tube(0.05,dark); fig['toe'+s]=tube(0.045,dark);
-    fig['uarm'+s]=tube(0.05,skin); fig['farm'+s]=tube(0.045,skin);
-    fig['knee'+s]=ball(0.055,c); fig['ankle'+s]=ball(0.05,c); fig['shoulder'+s]=ball(0.05,(s==='R'?0xd98a7a:0x7ab0c4)); // R/L renk işareti
-    fig['hip'+s]=ball(0.06,c); fig['elbow'+s]=ball(0.04,skin);
+  scene.add(new THREE.HemisphereLight(0xbcd2ea,0x2a3340,0.72));
+  var dir=new THREE.DirectionalLight(0xfff4e6,1.25); dir.position.set(3.5,7,4.5); dir.castShadow=true; dir.shadow.mapSize.set(2048,2048); dir.shadow.radius=5; dir.shadow.bias=-0.0005; var sc=dir.shadow.camera; sc.left=-4;sc.right=4;sc.top=4;sc.bottom=-4; scene.add(dir);
+  var fill=new THREE.DirectionalLight(0x9fc0e0,0.5); fill.position.set(-5,3,2); scene.add(fill);
+  var rim=new THREE.DirectionalLight(0xdfeeff,0.7); rim.position.set(-2,4,-6); scene.add(rim);
+  var grd=new THREE.Mesh(new THREE.PlaneGeometry(80,16),new THREE.MeshStandardMaterial({color:0x141f33,roughness:.96,metalness:0})); grd.rotation.x=-Math.PI/2; grd.receiveShadow=true; scene.add(grd);
+  grid=new THREE.GridHelper(80,160,0x273a56,0x1a2740); grid.position.y=0.002; scene.add(grid);
+  // --- materyaller: cilt + klinik kıyafet ---
+  var skin=0xcf9d7a, skinD=0xbe8b69, scrubs=0x3f8597, shorts=0x2b4668, shoe=0x2c3340;
+  fig.pelvis=ball(0.11,shorts,.85); fig.pelvisBar=tube(0.055,shorts,.85); fig.torso=tube(0.14,scrubs,.82); fig.head=ball(0.13,skin,.52); fig.neck=tube(0.052,skin,.55);
+  // saç kepi (başın çocuğu — yön-bağımsız)
+  var hair=new THREE.Mesh(new THREE.SphereGeometry(0.133,24,18,0,Math.PI*2,0,Math.PI*0.6),new THREE.MeshStandardMaterial({color:0x2a2420,roughness:.92,metalness:0})); hair.position.y=0.012; hair.castShadow=true; fig.head.add(hair);
+  ['L','R'].forEach(function(s){
+    fig['thigh'+s]=tube(0.072,skin,.6); fig['shank'+s]=tube(0.058,skin,.6); fig['heel'+s]=tube(0.052,shoe,.7); fig['toe'+s]=tube(0.046,shoe,.7);
+    fig['uarm'+s]=tube(0.05,skin,.6); fig['farm'+s]=tube(0.044,skin,.6);
+    fig['knee'+s]=ball(0.056,skin,.6); fig['ankle'+s]=ball(0.052,skin,.6); fig['shoulder'+s]=ball(0.058,scrubs,.82); fig['should_mk'+s]=ball(0.022,(s==='R'?0xe06a56:0x46b0e0),.4); // R/L işaret
+    fig['hip'+s]=ball(0.062,shorts,.85); fig['elbow'+s]=ball(0.042,skin,.6); fig['hand'+s]=ball(0.05,skin,.6);
   });
   // muayene sedyesi + refleks çekici
   fig.bench=new THREE.Mesh(new THREE.BoxGeometry(0.5,0.07,0.64),new THREE.MeshStandardMaterial({color:0x33455f,roughness:.85})); fig.bench.castShadow=true; fig.bench.receiveShadow=true;
@@ -331,6 +338,8 @@ function poseUpright(){
     else { var ax=shoulder.x+(side==='L'?sw:-sw)*0.5; elbow={x:ax,y:shoulder.y-0.24,z:sgn*0.19}; hand={x:elbow.x+0.02,y:elbow.y-0.22,z:sgn*0.2}; }
     setTube(fig['uarm'+side],shoulder,elbow); setTube(fig['farm'+side],elbow,hand);
     fig['shoulder'+side].position.set(shoulder.x,shoulder.y,shoulder.z); fig['elbow'+side].position.set(elbow.x,elbow.y,elbow.z);
+    if(fig['hand'+side])fig['hand'+side].position.set(hand.x,hand.y,hand.z);
+    if(fig['should_mk'+side])fig['should_mk'+side].position.set(shoulder.x-0.02,shoulder.y+0.055,shoulder.z+sgn*0.045);
   });
   if(ENG.mode==='romberg'){ var sx=ENG.swayX||0; fig.head.position.z+=sx*0.3; fig.pelvis.position.z+=sx*0.12; }
 }
@@ -360,6 +369,8 @@ function poseSeated(){
     if(ENG.flick&&ENG.flick.side===side&&['c5','c6','c7'].indexOf(ENG.flick.root)>=0){ var amp=flickAmp(), dir=(ENG.flick.root==='c7'?-1:1); hand.y+=dir*amp*0.24; hand.x-=(dir>0?Math.abs(amp)*0.1:0); }
     setTube(fig['uarm'+side],shoulder,elbow); setTube(fig['farm'+side],elbow,hand);
     fig['shoulder'+side].position.set(shoulder.x,shoulder.y,shoulder.z); fig['elbow'+side].position.set(elbow.x,elbow.y,elbow.z);
+    if(fig['hand'+side])fig['hand'+side].position.set(hand.x,hand.y,hand.z);
+    if(fig['should_mk'+side])fig['should_mk'+side].position.set(shoulder.x-0.02,shoulder.y+0.055,shoulder.z+sgn*0.045);
   });
   ENG.boneDev=0;
   // sedye: üst tabla + iki ayak
