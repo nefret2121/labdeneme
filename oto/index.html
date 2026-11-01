@@ -381,7 +381,7 @@ void main(){
   float spec=pow(max(dot(n,h),0.0),POWER);
   float diff=clamp(n.z,0.0,1.0);
   // --- taban zar rengi: inci-gri + hafif sıcaklık + konkav radyal parlaklık ---
-  vec3 pearl=vec3(0.80,0.77,0.745);
+  vec3 pearl=vec3(0.81,0.765,0.73);
   vec3 col=pearl*(0.95+0.07*smoothstep(1.0,0.2,r));    // merkeze doğru hafif parlak (konkav yüzey)
   col*=(1.0+0.035*noise(uv*4.0+5.0));                  // ince cilt mozaiği (titremesiz)
   // yarı saydam derin yapı: inkus uzun kolu — postero-süperior soluk iz
@@ -393,7 +393,7 @@ void main(){
   float fibN=noise(vec2(ang*5.0,r*8.0));
   float radialFib=sin(ang*64.0+fibN*2.0);             // pars tensa radyal kollajen lifleri
   float circFib=sin(r*30.0+fibN*1.5);                 // sirküler lifler
-  col*=(0.93+0.05*radialFib*smoothstep(0.12,0.75,r)*(0.55+0.5*fibN)+0.02*circFib*(0.55+0.5*fibN));
+  col*=(0.95+0.028*radialFib*smoothstep(0.22,0.8,r)*(0.5+0.5*fibN)+0.014*circFib*(0.5+0.5*fibN));
   // fibröz annulus (periferik yoğun halka) + sirkümferensiyel damarlar
   float annR=smoothstep(0.80,0.95,r)*smoothstep(1.02,0.95,r);
   col=mix(col,vec3(0.86,0.80,0.74),annR*0.35);
