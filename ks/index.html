@@ -56,8 +56,9 @@ body{background:radial-gradient(1200px 800px at 70% -10%,#0a1424 0%,var(--bg-0) 
 .stage-foot .btn.sm{padding:4px 7px;font-size:11px}
 input[type=range]{-webkit-appearance:none;height:4px;border-radius:3px;background:linear-gradient(90deg,#1a2234,#30405c);outline:none;cursor:pointer}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);border:2px solid #0a1120;cursor:pointer}
-.gaze-grid{display:grid;grid-template-columns:repeat(3,26px);grid-template-rows:repeat(3,22px);gap:3px}
-.gaze-grid button{border:1px solid var(--line-2);background:var(--glass-2);color:var(--ink-2);border-radius:5px;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+.gaze-grid{display:grid;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(3,24px);gap:3px}
+.gaze-hint{font-size:9.5px;line-height:1.25;color:var(--ink-2);opacity:.78;max-width:138px;margin-top:5px}
+.gaze-grid button{border:1px solid var(--line-2);background:var(--glass-2);color:var(--ink-2);border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
 .gaze-grid button:hover{border-color:var(--accent-2);color:var(--ink)}
 .gaze-grid button.on{background:var(--accent-dim);border-color:var(--accent);color:#fff}
 /* ---- console ---- */
@@ -150,6 +151,7 @@ select:focus{outline:none;border-color:var(--accent-2)}
           <div class="toolgrp">
             <span class="lbl">Bakış (H)</span>
             <div class="gaze-grid" id="gazeGrid"></div>
+            <div class="gaze-hint">⟲ Ayna görünümü — etiketler hastaya göre: <b>sağ</b> = hastanın sağı (göz ekranda sola bakar).</div>
           </div>
           <div class="toolgrp">
             <span class="lbl">Yakın 15cm</span>
@@ -912,7 +914,7 @@ function updateReadouts(){
 function gazeLabel(g){ return {center:'merkez','up':'yukarı','down':'aşağı','left':'sola','right':'sağa','up-left':'sol-üst','up-right':'sağ-üst','down-left':'sol-alt','down-right':'sağ-alt'}[g]||g; }
 
 /* ---- gaze grid ---- */
-var GAZE_CELLS=[['up-left','↖'],['up','↑'],['up-right','↗'],['left','←'],['center','•'],['right','→'],['down-left','↙'],['down','↓'],['down-right','↘']];
+var GAZE_CELLS=[['up-right','sağ↑'],['up','↑'],['up-left','sol↑'],['right','sağ'],['center','•'],['left','sol'],['down-right','sağ↓'],['down','↓'],['down-left','sol↓']];
 function buildGazeGrid(){
   var g=$('gazeGrid'); g.innerHTML='';
   GAZE_CELLS.forEach(function(c){ var b=document.createElement('button'); b.textContent=c[1]; b.dataset.g=c[0]; if(c[0]==='center')b.classList.add('on');
