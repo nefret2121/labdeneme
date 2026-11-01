@@ -4,24 +4,29 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DuctusLab | Acil Yatak Başı Klinik Konsol (AKG · Ventilatör · EKG · Skor)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" />
   <style>
     :root {
-      --bg-main: #04070e;
-      --bg-panel: #080e1a;
-      --bg-card: #0c1526;
-      --bg-sub: #050a14;
-      --border: #192841;
-      --sky: #38bdf8;
-      --emerald: #10b981;
-      --amber: #fbbf24;
-      --rose: #f43f5e;
-      --purple: #a855f7;
-      --text: #f1f5f9;
-      --muted: #8496b0;
+      --bg-main: #040812;
+      --bg-panel: rgba(13,20,34,.72);
+      --bg-card: rgba(17,26,43,.55);
+      --bg-sub: #090f1b;
+      --border: rgba(160,176,196,.14);
+      --line-soft: rgba(160,176,196,.10);
+      --sky: #6fa3c8;
+      --emerald: #5a9f7f;
+      --amber: #d9a441;
+      --rose: #c4565f;
+      --purple: #9a86c9;
+      --text: #e4e9f1;
+      --muted: #9aa7ba;
+      --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: var(--sans);
       background: var(--bg-main);
       color: var(--text);
       min-height: 100dvh;
@@ -30,11 +35,13 @@
       display: flex;
       flex-direction: column;
     }
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .mono { font-family: var(--mono); }
 
     header {
       background: var(--bg-panel);
       border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+      position: sticky; top: 0; z-index: 30;
       padding: 10px 16px;
       display: flex;
       align-items: center;
@@ -63,7 +70,7 @@
       border-radius: 8px;
       padding: 7px 12px;
       font-size: 12px;
-      font-weight: 700;
+      font-weight: 600;
       transition: all 0.15s ease;
     }
     button:hover { border-color: var(--sky); }
@@ -98,6 +105,7 @@
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: 12px;
+      backdrop-filter: blur(10px);
       padding: 14px;
       display: flex;
       flex-direction: column;
@@ -105,7 +113,7 @@
     }
     .card-title {
       font-size: 11px;
-      font-weight: 800;
+      font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.6px;
       color: var(--muted);
@@ -243,9 +251,9 @@
     </div>
 
     <div class="nav-tabs">
-      <button id="tabBtn-abg" class="active-sky" onclick="switchModule('abg')">🩸 1. Kan Gazı & Ventilatör Ayarı</button>
-      <button id="tabBtn-ecg" onclick="switchModule('ecg')">⚡ 2. EKG Kriter & Acil İlaç Dozu</button>
-      <button id="tabBtn-score" onclick="switchModule('score')">🧭 3. Ayırıcı Tanı & Skorlama</button>
+      <button id="tabBtn-abg" class="active-sky" onclick="switchModule('abg')">1. Kan Gazı & Ventilatör Ayarı</button>
+      <button id="tabBtn-ecg" onclick="switchModule('ecg')">2. EKG Kriter & Acil İlaç Dozu</button>
+      <button id="tabBtn-score" onclick="switchModule('score')">3. Ayırıcı Tanı & Skorlama</button>
       <button class="top-link" onclick="goPortal()" title="Diğer DuctusLab modülleri">Modüller</button>
     </div>
   </header>
@@ -263,7 +271,7 @@
       <!-- SOL GİRİŞ PANELİ -->
       <div class="card">
         <div class="card-title">
-          <span>🧪 Hızlı Hazır Acil Vakaları</span>
+          <span>Hızlı Hazır Acil Vakaları</span>
           <span style="color:var(--sky);">Tek Tıkla Yükle</span>
         </div>
         <div class="preset-row">
@@ -343,17 +351,17 @@
         </div>
 
         <div class="card">
-          <div class="card-title"><span>🔬 Adım Adım Asit-Baz & Oksijenasyon Analizi</span></div>
+          <div class="card-title"><span>Adım Adım Asit-Baz & Oksijenasyon Analizi</span></div>
           <div id="abgSteps" class="step-list"></div>
         </div>
 
         <div class="card" style="border-color:rgba(56,189,248,0.4);">
           <div class="card-title">
-            <span style="color:var(--sky);">🫁 Önerilen Mekanik Ventilatör Başlangıç & Düzeltme Ayarları</span>
+            <span style="color:var(--sky);">Önerilen Mekanik Ventilatör Başlangıç & Düzeltme Ayarları</span>
             <span id="pbwBadge" class="mono" style="color:var(--amber);">PBW: 70.6 kg</span>
           </div>
           <div id="ventTiles" class="vent-grid"></div>
-          <button class="bridge-btn" id="btnToVent" onclick="sendToVentilator()">🫁 Bu Ayarları Ventilasyon Simülatöründe Canlı Test Et</button>
+          <button class="bridge-btn" id="btnToVent" onclick="sendToVentilator()">Bu Ayarları Ventilasyon Simülatöründe Canlı Test Et</button>
           <div class="bridge-note" id="ventBridgeNote">VT · RR · PEEP · FiO₂ · İ:E ve seçilen akciğer fenotipi canlı VC-CMV simülatörüne yüklenir.</div>
           <div id="ventWarnings" class="step-list" style="margin-top:4px;"></div>
         </div>
@@ -365,7 +373,7 @@
     <!-- ===================================================================== -->
     <section id="mod-ecg" class="grid-main hidden">
       <div class="card">
-        <div class="card-title"><span>⚡ 1. Yatak Başı EKG & Ritim Paterni Seçin</span></div>
+        <div class="card-title"><span>1. Yatak Başı EKG & Ritim Paterni Seçin</span></div>
         <div class="field">
           <label>Baskın EKG / Klinik Senaryo</label>
           <select id="ecg_pattern" onchange="evaluateECGProtocol()">
@@ -393,7 +401,7 @@
           <label class="check-row"><span>AV Disosiasyon, Füzyon veya Yakalama (Capture) vuruları var</span><input type="checkbox" class="brug-chk" onchange="evaluateECGProtocol()"></label>
         </div>
 
-        <div class="card-title" style="margin-top:4px;"><span>⚖️ Hasta Kilosu (İnfüzyon Pompa Hızı İçin)</span></div>
+        <div class="card-title" style="margin-top:4px;"><span>Hasta Kilosu (İnfüzyon Pompa Hızı İçin)</span></div>
         <div class="field">
           <label>Tahmini Vücut Ağırlığı: <strong id="lblWeight" class="mono" style="color:var(--sky);">75 kg</strong></label>
           <input type="range" id="in_weight" min="40" max="140" value="75" oninput="evaluateECGProtocol()">
@@ -407,7 +415,7 @@
         </div>
 
         <div class="card">
-          <div class="card-title"><span>💉 Adım Adım Müdahale & Ampul Sulandırma Reçetesi</span></div>
+          <div class="card-title"><span>Adım Adım Müdahale & Ampul Sulandırma Reçetesi</span></div>
           <div id="ecgSteps" class="step-list"></div>
         </div>
 
@@ -470,7 +478,7 @@
 
       <!-- SAĞ: PULMONER EMBOLİ WELLS + YAŞ DÜZELTMELİ D-DİMER + KIRMIZI BAYRAKLAR -->
       <div class="card">
-        <div class="card-title"><span style="color:var(--sky);">🫁 Pulmoner Emboli: Wells + Yaş Düzeltmeli D-Dimer Eşiği</span></div>
+        <div class="card-title"><span style="color:var(--sky);">Pulmoner Emboli: Wells + Yaş Düzeltmeli D-Dimer Eşiği</span></div>
         <div class="field">
           <label>Hasta Yaşı (50 Yaş Üstü D-Dimer Eşiği İçin)</label>
           <input type="number" id="pe_age" value="64" oninput="calcScores()">
@@ -503,7 +511,7 @@
     function suiteTrack(ev, data) { try { if (inSuite()) window.parent.DuctusSuite.track(MODULE_ID, ev, data || {}); } catch (e) {} }
     function goPortal() { if (inSuite()) window.parent.DuctusSuite.openPortal(); else window.location.href = '../'; }
     if (inSuite()) document.addEventListener('DOMContentLoaded', () => { document.head.insertAdjacentHTML('beforeend', '<style>body > header { display: none !important; }</style>'); });
-    const TAB_META = { abg: '🩸 Kan Gazı & Ventilatör', ecg: '⚡ EKG & İlaç Dozu', score: '🧭 Ayırıcı Tanı & Skor' };
+    const TAB_META = { abg: 'Kan Gazı & Ventilatör', ecg: 'EKG & İlaç Dozu', score: 'Ayırıcı Tanı & Skor' };
     let currentTab = 'abg';
     function publishModuleBar() {
       if (!inSuite() || !window.parent.DuctusSuite.setModuleBar) return;
