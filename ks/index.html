@@ -490,6 +490,13 @@ function resize(){
 window.addEventListener('resize',resize);
 
 var MM_R=5.3; // 1 mm yarıçap → px (iris ~11.7mm çap)
+// stabil pseudo-rastgele (kare başına titremesin)
+function hsh(n){ var x=Math.sin(n*127.1+0.7)*43758.5453; return x-Math.floor(x); }
+// cilt gözenek dokusu (bir kez üretilir, tekrar kullanılır)
+var _pore=null;
+function porePattern(){ if(_pore)return _pore; var c=document.createElement('canvas'); c.width=c.height=160; var p=c.getContext('2d');
+  for(var i=0;i<3200;i++){ var x=hsh(i*1.3)*160,y=hsh(i*2.7+9)*160,a=hsh(i*3.9+3); p.fillStyle='rgba('+(a>0.5?'255,238,222':'118,78,54')+','+(0.03+hsh(i*5.1)*0.05)+')'; p.beginPath(); p.arc(x,y,0.5+hsh(i*7.3)*1.2,0,6.283); p.fill(); }
+  _pore=ctx.createPattern(c,'repeat'); return _pore; }
 function faceLayout(){
   var cx=VW/2, cy=VH*0.46, sep=Math.min(VW*0.23,210), eyeR=68;
   return { cy:cy, L:{x:cx+sep}, R:{x:cx-sep}, eyeR:eyeR };   // ekranda: R solda, L sağda
@@ -532,13 +539,20 @@ function drawEye(eye,cx,cy,R,amb){
   ctx.beginPath();
   palpebral(cx,cy,R);
   ctx.closePath(); ctx.clip();
-  // sklera dolgu
+  // sklera dolgu — hafif sıcak/nemli, alt-dış köşede sarımsı
   var sg=ctx.createLinearGradient(cx,cy-R,cx,cy+R);
-  sg.addColorStop(0,'#eef1f4'); sg.addColorStop(1,'#d6dde4');
+  sg.addColorStop(0,'#eef0f2'); sg.addColorStop(0.55,'#e8e6e2'); sg.addColorStop(1,'#dcd6cc');
   ctx.fillStyle=sg; ctx.fillRect(cx-R*1.6,cy-R,R*3.2,R*2);
-  // sklera damarlanması
-  ctx.strokeStyle='rgba(176,72,74,'+(0.28)+')'; ctx.lineWidth=1.1;
+  // üst kapak gölgesi (sklera üstünü koyulaştır — küreselllik)
+  var ush=ctx.createLinearGradient(cx,cy-R*0.9,cx,cy+R*0.1); ush.addColorStop(0,'rgba(66,48,38,.34)'); ush.addColorStop(1,'rgba(66,48,38,0)');
+  ctx.fillStyle=ush; ctx.fillRect(cx-R*1.6,cy-R,R*3.2,R);
+  // sklera damarlanması (ince)
+  ctx.strokeStyle='rgba(176,72,74,0.22)'; ctx.lineWidth=0.9;
   drawVessels(cx,cy,R,eye);
+  // karunkül (iç kantus — pembe)
+  var nasalX=cx+(eye==='R'?1:-1)*R*1.2;
+  var cg2=ctx.createRadialGradient(nasalX,cy+R*0.05,1,nasalX,cy+R*0.05,R*0.2); cg2.addColorStop(0,'rgba(214,140,128,.85)'); cg2.addColorStop(1,'rgba(200,120,110,0)');
+  ctx.fillStyle=cg2; ctx.beginPath(); ctx.ellipse(nasalX,cy+R*0.05,R*0.13,R*0.19,0,0,6.283); ctx.fill();
   // --- globe (iris+pupil) konumu ---
   var gx=cx+o.h*R*0.42 + (o._nys||0)*R, gy=cy+o.v*R*0.42;
   // konverjans-retraksiyon: globe geri+içe sıçrama
@@ -581,41 +595,64 @@ function drawTag(text,x,y,align){
 // tek parça sürekli üst yüz: şakaktan şakağa alın/kaş/glabella/nazal köprü/elmacık
 function drawFace(F,amb){
   var skin=skinTone(amb), R=F.eyeR, cx=VW/2, cy=F.cy;
-  var halfSpan=(F.L.x-F.R.x)/2;             // göz merkezleri arası yarı mesafe
+  var halfSpan=(F.L.x-F.R.x)/2;
   var rx=halfSpan+R*2.1, ry=R*2.9;
   ctx.save();
-  // 1) ana cilt kütlesi — merkezde dolu, kenarda şeffaf (yumuşak vinyet)
+  // 1) ana cilt kütlesi
   var g=ctx.createRadialGradient(cx,cy-R*0.3,R*0.6, cx,cy-R*0.2,rx*1.02);
-  g.addColorStop(0,skin.hi); g.addColorStop(0.42,skin.mid); g.addColorStop(0.72,skin.mid); g.addColorStop(1,'rgba(0,0,0,0)');
+  g.addColorStop(0,skin.hi); g.addColorStop(0.4,skin.mid); g.addColorStop(0.74,skin.mid); g.addColorStop(0.9,skin.lo); g.addColorStop(1,'rgba(0,0,0,0)');
   ctx.fillStyle=g; ctx.beginPath(); ctx.ellipse(cx,cy-R*0.25,rx,ry,0,0,6.283); ctx.fill();
-  // 2) alın vurgusu (üstte biraz daha aydınlık)
+  // 1b) cilt gözenek dokusu (yüz elipsine klipli)
+  ctx.save(); ctx.beginPath(); ctx.ellipse(cx,cy-R*0.25,rx*0.96,ry*0.96,0,0,6.283); ctx.clip(); ctx.globalAlpha=0.55; ctx.fillStyle=porePattern(); ctx.fillRect(cx-rx,cy-ry*1.3,rx*2,ry*2.6); ctx.globalAlpha=1; ctx.restore();
+  // 2) alın vurgusu
   var fg=ctx.createRadialGradient(cx,cy-R*1.7,R*0.4, cx,cy-R*1.4,rx*0.9);
-  fg.addColorStop(0,'rgba(255,245,232,'+(0.10+amb*0.12)+')'); fg.addColorStop(1,'rgba(0,0,0,0)');
+  fg.addColorStop(0,'rgba(255,247,236,'+(0.13+amb*0.14)+')'); fg.addColorStop(1,'rgba(0,0,0,0)');
   ctx.fillStyle=fg; ctx.beginPath(); ctx.ellipse(cx,cy-R*1.5,rx*0.8,ry*0.6,0,0,6.283); ctx.fill();
-  // 3) nazal köprü — glabelladan buruna dikey aydınlık bant + yan duvar gölgeleri
-  var ng=ctx.createLinearGradient(cx-R*0.5,cy,cx+R*0.5,cy);
-  ng.addColorStop(0,'rgba(60,42,30,0)'); ng.addColorStop(0.5,'rgba(255,244,230,'+(0.12+amb*0.12)+')'); ng.addColorStop(1,'rgba(60,42,30,0)');
-  ctx.fillStyle=ng; ctx.beginPath(); ctx.ellipse(cx,cy+R*0.4,R*0.5,R*1.9,0,0,6.283); ctx.fill();
-  // nazal yan gölgeler
-  ctx.strokeStyle='rgba(70,48,34,.22)'; ctx.lineWidth=R*0.10; ctx.lineCap='round';
-  ctx.beginPath(); ctx.moveTo(cx-R*0.34,cy-R*0.5); ctx.quadraticCurveTo(cx-R*0.5,cy+R*0.6,cx-R*0.3,cy+R*1.5); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(cx+R*0.34,cy-R*0.5); ctx.quadraticCurveTo(cx+R*0.5,cy+R*0.6,cx+R*0.3,cy+R*1.5); ctx.stroke();
-  // burun ucu ipucu
-  ctx.fillStyle='rgba(120,84,60,.14)'; ctx.beginPath(); ctx.ellipse(cx,cy+R*1.7,R*0.42,R*0.3,0,0,6.283); ctx.fill();
-  // 4) kaş kemerleri — her göz üstünde yumuşak koyu yay
-  [F.R.x,F.L.x].forEach(function(ex){
-    ctx.globalAlpha=0.42; ctx.strokeStyle=skin.brow; ctx.lineWidth=R*0.30; ctx.lineCap='round';
-    ctx.beginPath(); ctx.moveTo(ex-R*1.15,cy-R*0.98); ctx.quadraticCurveTo(ex,cy-R*1.42,ex+R*1.15,cy-R*0.92); ctx.stroke();
-    ctx.globalAlpha=1;
-    // soket gölgesi
-    ctx.beginPath(); palpebral(ex,cy,R*1.14); ctx.strokeStyle='rgba(60,42,30,.28)'; ctx.lineWidth=R*0.16; ctx.stroke();
+  // 2b) şakak/kenar gölgeleri (hacim modelleme)
+  var tg=ctx.createRadialGradient(cx,cy-R*0.2,rx*0.52, cx,cy-R*0.2,rx*1.02); tg.addColorStop(0,'rgba(0,0,0,0)'); tg.addColorStop(1,'rgba(74,46,30,.42)');
+  ctx.fillStyle=tg; ctx.beginPath(); ctx.ellipse(cx,cy-R*0.25,rx,ry,0,0,6.283); ctx.fill();
+  // 2c) elmacık vurgusu + periorbital/gözyaşı oluğu gölgesi
+  [F.R.x,F.L.x].forEach(function(ex,i){ var sgn=i?1:-1;
+    var cg=ctx.createRadialGradient(ex+sgn*R*0.5,cy+R*1.05,4,ex+sgn*R*0.5,cy+R*1.05,R*1.5); cg.addColorStop(0,'rgba(255,232,214,.16)'); cg.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=cg; ctx.beginPath(); ctx.arc(ex+sgn*R*0.5,cy+R*1.05,R*1.5,0,6.283); ctx.fill();
+    ctx.beginPath(); palpebral(ex,cy,R*1.3); ctx.strokeStyle='rgba(78,48,32,.2)'; ctx.lineWidth=R*0.24; ctx.stroke();
+    ctx.strokeStyle='rgba(92,58,42,.16)'; ctx.lineWidth=R*0.12; ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(ex-R*0.9,cy+R*0.95); ctx.quadraticCurveTo(ex,cy+R*1.22,ex+R*0.6,cy+R*0.92); ctx.stroke();
   });
+  // 3) nazal köprü — dikey aydınlık bant
+  var ng=ctx.createLinearGradient(cx-R*0.5,cy,cx+R*0.5,cy);
+  ng.addColorStop(0,'rgba(60,42,30,0)'); ng.addColorStop(0.5,'rgba(255,247,233,'+(0.15+amb*0.12)+')'); ng.addColorStop(1,'rgba(60,42,30,0)');
+  ctx.fillStyle=ng; ctx.beginPath(); ctx.ellipse(cx,cy+R*0.3,R*0.4,R*1.55,0,0,6.283); ctx.fill();
+  // nazal yan gölgeler
+  ctx.strokeStyle='rgba(72,46,32,.22)'; ctx.lineWidth=R*0.1; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(cx-R*0.28,cy-R*0.4); ctx.quadraticCurveTo(cx-R*0.44,cy+R*0.7,cx-R*0.3,cy+R*1.42); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx+R*0.28,cy-R*0.4); ctx.quadraticCurveTo(cx+R*0.44,cy+R*0.7,cx+R*0.3,cy+R*1.42); ctx.stroke();
+  // burun kanatları + nostril + tip highlight + subnazal gölge (yumuşatılmış)
+  ctx.fillStyle='rgba(122,82,58,.16)'; ctx.beginPath(); ctx.ellipse(cx-R*0.3,cy+R*1.5,R*0.24,R*0.18,0.3,0,6.283); ctx.fill(); ctx.beginPath(); ctx.ellipse(cx+R*0.3,cy+R*1.5,R*0.24,R*0.18,-0.3,0,6.283); ctx.fill();
+  ctx.fillStyle='rgba(30,16,10,.36)'; ctx.beginPath(); ctx.ellipse(cx-R*0.22,cy+R*1.56,R*0.08,R*0.11,0.4,0,6.283); ctx.fill(); ctx.beginPath(); ctx.ellipse(cx+R*0.22,cy+R*1.56,R*0.08,R*0.11,-0.4,0,6.283); ctx.fill();
+  ctx.fillStyle='rgba(255,242,228,.16)'; ctx.beginPath(); ctx.ellipse(cx,cy+R*1.38,R*0.14,R*0.22,0,0,6.283); ctx.fill();
+  ctx.fillStyle='rgba(58,38,26,.13)'; ctx.beginPath(); ctx.ellipse(cx,cy+R*1.72,R*0.28,R*0.07,0,0,6.283); ctx.fill();
+  // 4) KAŞLAR — kıl kıl (orbital çıkıntıya yakın)
+  [F.R.x,F.L.x].forEach(function(ex,i){ drawBrow(ex,cy-R*0.88,R,skin,i?1:-1); });
   ctx.restore();
 }
+function drawBrow(ex,by,R,skin,sgn){
+  ctx.save(); ctx.lineCap='round'; var n=66;
+  // yumuşak zemin gölgesi (kılların altında — dolgunluk)
+  ctx.globalAlpha=0.38; ctx.strokeStyle=skin.brow; ctx.lineWidth=R*0.24; ctx.beginPath(); ctx.moveTo(ex-sgn*R*1.05,by+R*0.1); ctx.quadraticCurveTo(ex,by-R*0.26,ex+sgn*R*1.05,by+R*0.08); ctx.stroke(); ctx.globalAlpha=1;
+  for(var i=0;i<n;i++){ var t=i/(n-1);
+    var bx=ex+sgn*(t-0.5)*R*2.15;
+    var arch=-Math.sin(t*Math.PI)*R*0.3;
+    var byy=by+arch + (t<0.2? R*0.4*(0.2-t):0) + (hsh(i*3.1)-0.5)*R*0.06;
+    var len=R*(0.3-0.15*Math.abs(t-0.4))*(0.75+hsh(i*1.7)*0.5);
+    var ang=-1.2 + t*1.5;                          // medialde yukarı, lateralde yatay/hafif aşağı (kuyruk düşer)
+    ctx.strokeStyle=(i%3===0?skin.browD:skin.brow); ctx.globalAlpha=0.5+hsh(i*5.3)*0.45; ctx.lineWidth=0.9+hsh(i*2.9)*1.0;
+    ctx.beginPath(); ctx.moveTo(bx,byy); ctx.lineTo(bx+sgn*Math.cos(ang)*len*0.7, byy+Math.sin(ang)*len); ctx.stroke();
+  } ctx.globalAlpha=1; ctx.restore();
+}
 function skinTone(amb){
-  var l=0.55+amb*0.4;  // oda ışığına göre aydınlanma
+  var l=0.58+amb*0.38;  // oda ışığına göre aydınlanma
   function px(r,g,b){ return 'rgb('+Math.round(r*l)+','+Math.round(g*l)+','+Math.round(b*l)+')'; }
-  return { mid:px(214,178,146), hi:px(230,198,168), lo:px(176,140,110), brow:px(120,92,66) };
+  return { mid:px(222,183,150), hi:px(240,210,182), lo:px(178,139,108), lo2:px(150,112,84), brow:px(104,74,50), browD:px(70,46,28) };
 }
 
 function drawVessels(cx,cy,R,eye){
@@ -647,11 +684,18 @@ function drawIris(gx,gy,pe,eye,amb,o){
     ctx.strokeStyle='rgba('+ (sh>0?'220,210,190':'40,26,14') +','+(0.10+0.08*Math.abs(Math.sin(i)))+')';
     ctx.beginPath(); ctx.moveTo(gx+Math.cos(a)*r0,gy+Math.sin(a)*r0); ctx.lineTo(gx+Math.cos(a)*r1,gy+Math.sin(a)*r1); ctx.stroke();
   }
-  // collarette
-  ctx.strokeStyle='rgba(30,18,10,.4)'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(gx,gy,irisR*0.42,0,6.283); ctx.stroke();
+  // collarette (daha belirgin, hafif kabarık)
+  ctx.strokeStyle='rgba(30,18,10,.45)'; ctx.lineWidth=2.2; ctx.beginPath(); ctx.arc(gx,gy,irisR*0.42,0,6.283); ctx.stroke();
+  ctx.strokeStyle='rgba(200,170,130,.3)'; ctx.lineWidth=1; ctx.beginPath(); ctx.arc(gx,gy,irisR*0.45,0,6.283); ctx.stroke();
+  // collarette kriptleri (iç bölgede düzensiz koyu lekeler)
+  for(var k=0;k<18;k++){ var ca=k/18*6.283+(eye==='R'?0.3:1.1); var cr=irisR*(0.30+hsh(k*2.2)*0.1); ctx.fillStyle='rgba(20,12,6,'+(0.1+hsh(k*3.3)*0.14)+')'; ctx.beginPath(); ctx.ellipse(gx+Math.cos(ca)*cr,gy+Math.sin(ca)*cr,irisR*0.04,irisR*0.07,ca,0,6.283); ctx.fill(); }
+  // limbal halka (dış koyu bant — derinlik)
+  var lr=ctx.createRadialGradient(gx,gy,irisR*0.78,gx,gy,irisR); lr.addColorStop(0,'rgba(18,10,5,0)'); lr.addColorStop(1,'rgba(18,10,5,.6)');
+  ctx.fillStyle=lr; ctx.beginPath(); ctx.arc(gx,gy,irisR,0,6.283); ctx.fill();
   ctx.restore();
-  // limbus
-  ctx.beginPath(); ctx.arc(gx,gy,irisR,0,6.283); ctx.strokeStyle='rgba(30,20,14,.5)'; ctx.lineWidth=2.5; ctx.stroke();
+  // limbus kenarı (sklera-iris sınırı, mavimsi-gri)
+  ctx.beginPath(); ctx.arc(gx,gy,irisR,0,6.283); ctx.strokeStyle='rgba(40,34,36,.55)'; ctx.lineWidth=2.8; ctx.stroke();
+  ctx.beginPath(); ctx.arc(gx,gy,irisR-1.5,0,6.283); ctx.strokeStyle='rgba(120,130,140,.25)'; ctx.lineWidth=1; ctx.stroke();
 
   // --- pupil (mm → px) ---
   var pr=o.d*MM_R;
@@ -670,8 +714,10 @@ function drawPupil(gx,gy,pr,pe,o){
     ctx.closePath();
   } else { ctx.beginPath(); ctx.arc(gx,gy,pr,0,6.283); }
   var pg=ctx.createRadialGradient(gx,gy,1,gx,gy,pr);
-  pg.addColorStop(0,'#050608'); pg.addColorStop(1,'#0c0f14');
+  pg.addColorStop(0,'#040506'); pg.addColorStop(0.8,'#0a0d12'); pg.addColorStop(1,'#141015');
   ctx.fillStyle=pg; ctx.fill();
+  // pupiller ruff (pupil kenarında ince koyu-kahve halka)
+  ctx.strokeStyle='rgba(90,64,42,.4)'; ctx.lineWidth=1.6; ctx.beginPath(); ctx.arc(gx,gy,pr*1.015,0,6.283); ctx.stroke();
   ctx.restore();
 }
 
@@ -728,8 +774,18 @@ function drawLids(cx,cy,R,eye,pe,o){
   ctx.strokeStyle='rgba(120,88,62,.28)'; ctx.lineWidth=1.4;
   ctx.beginPath(); ctx.moveTo(cx-w*0.8,marginYc-h*0.34); ctx.quadraticCurveTo(cx,marginYc-h*0.16,cx+w*0.8,marginYc-h*0.34); ctx.stroke();
   // kirpik çizgisi (kenar)
-  ctx.strokeStyle='rgba(44,28,18,.72)'; ctx.lineWidth=2.6; ctx.lineCap='round';
+  ctx.strokeStyle='rgba(40,25,16,.8)'; ctx.lineWidth=2.8; ctx.lineCap='round';
   ctx.beginPath(); ctx.moveTo(cx-w*0.92,cy+h*0.02); ctx.quadraticCurveTo(cx,marginYc, cx+w*0.92,cy-h*0.02); ctx.stroke();
+  // üst kirpikler — kıl kıl (kapak kenarı eğrisi boyunca yukarı-dışa)
+  ctx.strokeStyle='rgba(28,16,10,.85)';
+  var P0x=cx-w*0.92,P0y=cy+h*0.02,Cx=cx,Cy=marginYc,P2x=cx+w*0.92,P2y=cy-h*0.02;
+  for(var li=0;li<=20;li++){ var t=0.05+li/20*0.9, mt=1-t;
+    var bxp=mt*mt*P0x+2*mt*t*Cx+t*t*P2x, byp=mt*mt*P0y+2*mt*t*Cy+t*t*P2y;
+    var len=R*(0.14+0.12*Math.sin(Math.PI*t))*(0.8+hsh(li*3.1)*0.4);
+    var dirx=(t-0.5)*1.4, diry=-1.0; var nl=Math.hypot(dirx,diry); dirx/=nl; diry/=nl;
+    ctx.lineWidth=1+hsh(li*2.3)*0.8; ctx.globalAlpha=0.7+hsh(li)*0.3;
+    ctx.beginPath(); ctx.moveTo(bxp,byp); ctx.quadraticCurveTo(bxp+dirx*len*0.6,byp+diry*len*0.7, bxp+dirx*len,byp+diry*len*1.25); ctx.stroke();
+  } ctx.globalAlpha=1;
   ctx.restore();
 
   // ---- ALT KAPAK: badem alt yayı ile kenar eğrisi arası kreşent ----
@@ -744,10 +800,18 @@ function drawLids(cx,cy,R,eye,pe,o){
   ctx.closePath();
   var lg2=ctx.createLinearGradient(cx,lowYc,cx,cy+h); lg2.addColorStop(0,skin.lo); lg2.addColorStop(1,skin.mid);
   ctx.fillStyle=lg2; ctx.fill();
-  // alt kapak kenarı + hafif gözyaşı şeridi
+  // alt kapak kenarı + nemli gözyaşı şeridi
   ctx.strokeStyle='rgba(44,28,18,.4)'; ctx.lineWidth=1.6;
   ctx.beginPath(); ctx.moveTo(cx-w*0.9,cy+h*0.08); ctx.quadraticCurveTo(cx,lowYc,cx+w*0.9,cy+h*0.06); ctx.stroke();
-  ctx.restore();
+  // alt gözyaşı film parıltısı
+  ctx.strokeStyle='rgba(255,255,255,.25)'; ctx.lineWidth=1.4; ctx.beginPath(); ctx.moveTo(cx-w*0.7,cy+h*0.06); ctx.quadraticCurveTo(cx,lowYc-2,cx+w*0.7,cy+h*0.04); ctx.stroke();
+  // alt kirpikler (kısa, seyrek, aşağı)
+  ctx.strokeStyle='rgba(30,18,12,.6)';
+  var L0x=cx-w*0.82,L0y=cy+h*0.08,LCx=cx,LCy=lowYc,L2x=cx+w*0.82,L2y=cy+h*0.06;
+  for(var lj=0;lj<=13;lj++){ var tt=0.1+lj/13*0.8,mtt=1-tt; var bx2=mtt*mtt*L0x+2*mtt*tt*LCx+tt*tt*L2x, by2=mtt*mtt*L0y+2*mtt*tt*LCy+tt*tt*L2y;
+    var len2=R*0.09*(0.7+hsh(lj*4.7)*0.5); var dx2=(tt-0.5)*0.9, dy2=1.0; var n2=Math.hypot(dx2,dy2); dx2/=n2; dy2/=n2;
+    ctx.lineWidth=0.8+hsh(lj*1.9)*0.5; ctx.globalAlpha=0.55; ctx.beginPath(); ctx.moveTo(bx2,by2); ctx.lineTo(bx2+dx2*len2,by2+dy2*len2); ctx.stroke(); }
+  ctx.globalAlpha=1; ctx.restore();
 
   // medial/lateral kantus gölgesi
   ctx.save(); ctx.fillStyle='rgba(120,70,60,.25)';
