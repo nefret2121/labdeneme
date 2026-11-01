@@ -226,119 +226,176 @@ function buildAtlas(cas,eye){
   var cv=document.createElement('canvas'); cv.width=ATLAS; cv.height=ATLAS; var g=cv.getContext('2d');
   var S=ATLAS, rng=mulberry32(cas.id*7919 + (eye==='R'?1:2));
   var m=eye==='R'?1:-1;
-  var disc={x:(0.5-0.18*m)*S, y:0.5*S, r:S*0.052};        // disk
-  var mac ={x:(0.5+0.17*m)*S, y:0.5*S, r:S*0.10};         // makula ~2.5 DD temporal
-  // --- zemin: koroidal/RPE fBm ---
-  var img=g.createImageData(S,S);
-  function fbm(x,y){ var v=0,a=0.5,f=1; for(var o=0;o<4;o++){ v+=a*noise2(x*f,y*f,rng,o); f*=2; a*=0.5; } return v; }
-  // önce düz dolgu, sonra doku (performans için blok)
-  g.fillStyle='#b4461f'; g.fillRect(0,0,S,S);
-  // tigroid/koroid dokusu — seyrek noktalarla (hızlı)
-  for(var i=0;i<42000;i++){ var x=rng()*S,y=rng()*S; var d=Math.hypot(x-S/2,y-S/2)/S;
-    var sh=(rng()-0.5); g.fillStyle='rgba('+(150+sh*60|0)+','+(70+sh*40|0)+','+(40+sh*30|0)+','+(0.05+rng()*0.06)+')';
-    g.beginPath();g.arc(x,y,2+rng()*5,0,6.283);g.fill(); }
-  // periferde koyulaşma
-  var vg=g.createRadialGradient(S/2,S/2,S*0.2,S/2,S/2,S*0.62); vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(60,15,10,.55)'); g.fillStyle=vg;g.fillRect(0,0,S,S);
-  // --- makula (koyu pigmentli avasküler alan + fovea refleksi) ---
-  var mg=g.createRadialGradient(mac.x,mac.y,0,mac.x,mac.y,mac.r);
-  mg.addColorStop(0,'rgba(58,16,11,.92)');mg.addColorStop(0.42,'rgba(92,32,19,.62)');mg.addColorStop(0.8,'rgba(128,50,27,.28)');mg.addColorStop(1,'rgba(0,0,0,0)');
-  g.fillStyle=mg;g.beginPath();g.arc(mac.x,mac.y,mac.r,0,6.283);g.fill();
-  // foveal çöküntü halosu + parlak beyaz fovea ışık refleksi
-  var fvg=g.createRadialGradient(mac.x,mac.y,0,mac.x,mac.y,mac.r*0.3); fvg.addColorStop(0,'rgba(36,10,7,.55)');fvg.addColorStop(1,'rgba(0,0,0,0)'); g.fillStyle=fvg;g.beginPath();g.arc(mac.x,mac.y,mac.r*0.3,0,6.283);g.fill();
-  var fov=g.createRadialGradient(mac.x,mac.y,0,mac.x,mac.y,S*0.0042);
-  fov.addColorStop(0,'rgba(255,246,228,.8)');fov.addColorStop(0.4,'rgba(255,240,214,.3)');fov.addColorStop(1,'rgba(255,240,214,0)');
-  g.fillStyle=fov;g.beginPath();g.arc(mac.x,mac.y,S*0.0042,0,6.283);g.fill();
-  g.fillStyle='rgba(255,252,242,.65)';g.beginPath();g.arc(mac.x,mac.y,S*0.0011,0,6.283);g.fill(); // noktasal foveolar refleks
+  var disc={x:(0.5-0.18*m)*S, y:0.5*S, r:S*0.052};
+  var mac ={x:(0.5+0.17*m)*S, y:0.5*S, r:S*0.10};
+  var hyper=cas.disc.hyperemic;
 
-  // --- damar ağı: santral çukurluktan (cup) çıkan arkadlar + dikotom çatallanma (A:V ≈ 2:3) ---
-  var tdir = mac.x>disc.x?1:-1;   // temporal yön (makulaya doğru)
-  var dr=disc.r, cvo=[disc.x - tdir*dr*0.10, disc.y];   // santral retinal damar çıkışı (cup içi, hafif nazal)
+  // ===== ZEMİN: foto-gerçekçi retina (koroid + RPE + NFL) =====
+  var base=g.createRadialGradient(disc.x,disc.y,S*0.04, S*0.5,S*0.5,S*0.66);
+  base.addColorStop(0,'#c86536'); base.addColorStop(0.35,'#bf5329'); base.addColorStop(0.7,'#a63f1f'); base.addColorStop(1,'#7f2c15');
+  g.fillStyle=base; g.fillRect(0,0,S,S);
+  // koroidal büyük damar gölgeleri (retina altı, çok yumuşak)
+  g.save(); g.globalAlpha=0.5;
+  for(var cc=0;cc<34;cc++){ var a0=rng()*6.283, L=S*(0.18+rng()*0.4), x0=S*0.5+Math.cos(a0)*S*0.1, y0=S*0.5+Math.sin(a0)*S*0.1;
+    var pts=[[x0,y0]], a=a0; for(var k=0;k<7;k++){ a+=(rng()-0.5)*0.7; pts.push([pts[k][0]+Math.cos(a)*L/7,pts[k][1]+Math.sin(a)*L/7]); }
+    g.strokeStyle='rgba(120,34,20,0.16)'; g.lineWidth=S*(0.004+rng()*0.01); g.lineCap='round';
+    g.beginPath(); g.moveTo(pts[0][0],pts[0][1]); for(var pi=1;pi<pts.length;pi++) g.lineTo(pts[pi][0],pts[pi][1]); g.stroke(); }
+  g.restore();
+  // koroidal benekleme (orta ölçek)
+  for(var i=0;i<1400;i++){ var x=rng()*S,y=rng()*S, sh=(rng()-0.5);
+    g.fillStyle='rgba('+(180+sh*70|0)+','+(78+sh*44|0)+','+(44+sh*30|0)+','+(0.05+rng()*0.07)+')';
+    g.beginPath(); g.ellipse(x,y,S*(0.004+rng()*0.016),S*(0.004+rng()*0.012),rng()*3.14,0,6.283); g.fill(); }
+  // RPE ince granülasyon
+  for(var i2=0;i2<26000;i2++){ var x=rng()*S,y=rng()*S, b=rng()-0.5;
+    g.fillStyle='rgba('+(200+b*55|0)+','+(96+b*40|0)+','+(52+b*28|0)+','+(0.04+rng()*0.05)+')';
+    g.beginPath(); g.arc(x,y,S*0.0009*(0.6+rng()),0,6.283); g.fill(); }
+  // NFL radyal çizgileri (diskten dışa, hafif parlak, arkadlar yönünde yoğun)
+  g.save(); g.globalAlpha=0.5;
+  for(var nf=0;nf<260;nf++){ var a=rng()*6.283, r0=disc.r*1.2, r1=disc.r*(3+rng()*9);
+    var wob=(rng()-0.5)*0.12; g.strokeStyle='rgba(234,150,96,'+(0.03+rng()*0.05)+')'; g.lineWidth=S*0.0014;
+    g.beginPath(); g.moveTo(disc.x+Math.cos(a)*r0,disc.y+Math.sin(a)*r0);
+    g.quadraticCurveTo(disc.x+Math.cos(a+wob)*(r0+r1)*0.5,disc.y+Math.sin(a+wob)*(r0+r1)*0.5, disc.x+Math.cos(a+wob*2)*r1,disc.y+Math.sin(a+wob*2)*r1); g.stroke(); }
+  g.restore();
+  // periferde koyulaşma (viyet)
+  var vg=g.createRadialGradient(S/2,S/2,S*0.22,S/2,S/2,S*0.64); vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(74,18,10,.62)'); g.fillStyle=vg; g.fillRect(0,0,S,S);
+
+  // ===== MAKULA (ince pigment + luteal + fovea refleksi) =====
+  var mg=g.createRadialGradient(mac.x,mac.y,0,mac.x,mac.y,mac.r);
+  mg.addColorStop(0,'rgba(104,38,22,.55)'); mg.addColorStop(0.45,'rgba(120,48,26,.34)'); mg.addColorStop(0.8,'rgba(150,62,34,.14)'); mg.addColorStop(1,'rgba(0,0,0,0)');
+  g.fillStyle=mg; g.beginPath(); g.arc(mac.x,mac.y,mac.r,0,6.283); g.fill();
+  // luteal pigment (hafif koyu-kahve çekirdek)
+  var lut=g.createRadialGradient(mac.x,mac.y,0,mac.x,mac.y,mac.r*0.46);
+  lut.addColorStop(0,'rgba(78,28,16,.5)'); lut.addColorStop(1,'rgba(0,0,0,0)'); g.fillStyle=lut; g.beginPath(); g.arc(mac.x,mac.y,mac.r*0.46,0,6.283); g.fill();
+  // foveal refleks halkası + noktasal parıltı
+  g.strokeStyle='rgba(255,226,180,.18)'; g.lineWidth=S*0.0016; g.beginPath(); g.arc(mac.x,mac.y,mac.r*0.3,0,6.283); g.stroke();
+  var fov=g.createRadialGradient(mac.x,mac.y,0,mac.x,mac.y,S*0.004); fov.addColorStop(0,'rgba(255,248,230,.85)'); fov.addColorStop(0.5,'rgba(255,240,214,.28)'); fov.addColorStop(1,'rgba(255,240,214,0)');
+  g.fillStyle=fov; g.beginPath(); g.arc(mac.x,mac.y,S*0.004,0,6.283); g.fill();
+  g.fillStyle='rgba(255,253,246,.7)'; g.beginPath(); g.arc(mac.x,mac.y,S*0.0011,0,6.283); g.fill();
+
+  // ===== DAMAR AĞI (gölge + lümen + ışık refleksi; A:V≈2:3) =====
+  var tdir = mac.x>disc.x?1:-1;
+  var dr=disc.r, cvo=[disc.x - tdir*dr*0.10, disc.y];
   function bez(p0,p1,p2,p3,n){ var o=[]; for(var i=0;i<=n;i++){ var t=i/n,mt=1-t;
     o.push([mt*mt*mt*p0[0]+3*mt*mt*t*p1[0]+3*mt*t*t*p2[0]+t*t*t*p3[0], mt*mt*mt*p0[1]+3*mt*mt*t*p1[1]+3*mt*t*t*p2[1]+t*t*t*p3[1]]); } return o; }
-  function strokeP(pts,w,col,taper){ g.lineCap='round';g.lineJoin='round'; for(var i=1;i<pts.length;i++){ var t=i/pts.length; g.strokeStyle=col; g.lineWidth=Math.max(0.5,w*(taper?(1-t*0.55):1)); g.beginPath();g.moveTo(pts[i-1][0],pts[i-1][1]);g.lineTo(pts[i][0],pts[i][1]);g.stroke(); } }
-  // dikotom çatallanma: bir uçtan iki çocuk dal, her biri tekrar bölünür (+ ince yan dal)
-  function dichot(from,ang,len,w,depth,vein){ if(depth<=0||len<S*0.011) return;
-    var seg=6,p=from,pts=[p],a=ang; for(var i=0;i<seg;i++){ a+=(rng()-0.5)*0.2; p=[p[0]+Math.cos(a)*len/seg,p[1]+Math.sin(a)*len/seg]; pts.push(p); }
-    strokeP(pts,w, vein?'rgba(96,18,30,.92)':'rgba(150,46,36,.9)', true);
-    if(!vein) strokeP(pts,Math.max(0.5,w*0.3),'rgba(236,184,168,.5)',true);                // arter merkezi refleksi
+  function poly(pts,w,col,taper){ g.lineCap='round'; g.lineJoin='round'; g.strokeStyle=col; g.beginPath();
+    for(var i=0;i<pts.length;i++){ if(i===0)g.moveTo(pts[0][0],pts[0][1]); else g.lineTo(pts[i][0],pts[i][1]); }
+    g.lineWidth=w; g.stroke(); }
+  // damarı 3 katmanda çiz: dış gölge, lümen (konik incelme), merkez refleks
+  function vessel(pts,w0,vein){
+    for(var i=1;i<pts.length;i++){ var t=i/pts.length, w=Math.max(0.6,w0*(1-t*0.6));
+      // gölge
+      g.strokeStyle='rgba(58,12,10,0.32)'; g.lineWidth=w*1.5; g.lineCap='round';
+      g.beginPath(); g.moveTo(pts[i-1][0],pts[i-1][1]); g.lineTo(pts[i][0],pts[i][1]); g.stroke();
+      // lümen
+      g.strokeStyle = vein?'rgba(122,22,26,0.96)':'rgba(188,50,38,0.95)'; g.lineWidth=w;
+      g.beginPath(); g.moveTo(pts[i-1][0],pts[i-1][1]); g.lineTo(pts[i][0],pts[i][1]); g.stroke();
+      // merkez ışık refleksi (arterde belirgin)
+      g.strokeStyle = vein?'rgba(190,70,66,0.30)':'rgba(255,186,150,0.6)'; g.lineWidth=Math.max(0.4,w*(vein?0.22:0.30));
+      g.beginPath(); g.moveTo(pts[i-1][0],pts[i-1][1]); g.lineTo(pts[i][0],pts[i][1]); g.stroke();
+    }
+  }
+  function dichot(from,ang,len,w,depth,vein){ if(depth<=0||len<S*0.010) return;
+    var seg=6,p=from,pts=[p],a=ang; for(var i=0;i<seg;i++){ a+=(rng()-0.5)*0.26; p=[p[0]+Math.cos(a)*len/seg,p[1]+Math.sin(a)*len/seg]; pts.push(p); }
+    vessel(pts,w,vein);
     var tip=pts[pts.length-1];
-    dichot(tip,a+0.42+rng()*0.22,len*0.72,w*0.72,depth-1,vein);
-    dichot(tip,a-0.42-rng()*0.22,len*0.72,w*0.72,depth-1,vein);
-    if(depth>=2) dichot(pts[3],a+(rng()<0.5?1:-1)*1.05,len*0.4,Math.max(0.5,w*0.4),depth-2,vein); // ince yan dal
+    dichot(tip,a+0.40+rng()*0.26,len*0.74,w*0.74,depth-1,vein);
+    dichot(tip,a-0.40-rng()*0.26,len*0.74,w*0.72,depth-1,vein);
+    if(depth>=2) dichot(pts[3],a+(rng()<0.5?1:-1)*(0.9+rng()*0.4),len*0.42,Math.max(0.6,w*0.42),depth-2,vein);
+    if(depth>=3 && rng()<0.6) dichot(pts[4],a+(rng()<0.5?1:-1)*1.2,len*0.3,Math.max(0.5,w*0.3),depth-2,vein);
   }
   function arcade(dirx,diry,toMac){
-    var ex=disc.x+dirx*dr*1.15, ey=disc.y+diry*dr*1.1;                                   // disk kenarını aşan nokta
-    var p3= toMac? [mac.x - tdir*mac.r*1.55, mac.y+diry*mac.r*1.45] : [ex+dirx*S*0.055, ey+diry*S*0.05];
-    var vp=bez(cvo,[disc.x+dirx*dr*0.35,disc.y+diry*dr*0.35],[ex,ey],p3,42);              // cup'tan çıkar, kenarı aşar
-    strokeP(vp,S*0.013,'rgba(40,10,10,.26)',true);                                        // gölge
-    strokeP(vp,S*0.0108,'rgba(96,18,30,.95)',true);                                       // VEN (dolgun, koyu bordo)
-    var ap=vp.map(function(p,i){ return [p[0],p[1]-diry*S*0.016*Math.sin(i/vp.length*Math.PI)]; });
-    strokeP(ap,S*0.0072,(cas.lesions&&cas.lesions.copperWire)?'rgba(165,95,45,.95)':'rgba(150,46,36,.92)',true); // ARTER (ince, A:V≈2:3)
-    strokeP(ap,S*0.0018,(cas.lesions&&cas.lesions.copperWire)?'rgba(222,172,92,.85)':'rgba(236,184,168,.6)',true); // merkezi ışık refleksi
+    var ex=disc.x+dirx*dr*1.15, ey=disc.y+diry*dr*1.1;
+    // temporal arkadlar makulayı SARAR (içine girmez)
+    var p3= toMac? [mac.x - tdir*mac.r*1.7, mac.y+diry*mac.r*1.7] : [ex+dirx*S*0.06, ey+diry*S*0.055];
+    var p2= toMac? [disc.x+tdir*S*0.1, disc.y+diry*S*0.085] : [ex,ey];
+    var vp=bez(cvo,[disc.x+dirx*dr*0.4,disc.y+diry*dr*0.4],p2,p3,46);
+    vessel(vp,S*0.0112,true);                                 // VEN
+    var ap=vp.map(function(p,i){ return [p[0],p[1]-diry*S*0.018*Math.sin(i/vp.length*Math.PI)]; });
+    vessel(ap,S*0.0074,false);                                // ARTER
+    if(cas.lesions&&cas.lesions.copperWire){ poly(ap,S*0.0074*0.55,'rgba(205,150,74,.6)',true); }
     var tip=vp[vp.length-1], pen=vp[vp.length-3], ta=Math.atan2(tip[1]-pen[1],tip[0]-pen[0]);
-    dichot(tip,ta,S*0.052,S*0.0062,3,true);                                               // ven dalları (2-3 kademe)
-    dichot([ap[ap.length-1][0],ap[ap.length-1][1]],ta,S*0.046,S*0.0040,2,false);          // arter dalları
+    dichot(tip,ta,S*0.058,S*0.0066,3,true);
+    dichot([ap[ap.length-1][0],ap[ap.length-1][1]],ta,S*0.05,S*0.0044,3,false);
     return {vp:vp,ap:ap};
   }
   var segs=[];
-  segs.push(arcade(tdir*0.5,-0.55,true));   // superotemporal arkad
-  segs.push(arcade(tdir*0.5, 0.55,true));   // inferotemporal arkad
-  segs.push(arcade(-tdir*0.5,-0.6,false));  // superonazal
-  segs.push(arcade(-tdir*0.5, 0.6,false));  // inferonazal
-  // AV çentiklenme: temporal arkadlarda arter-ven kesişiminde venül incelir
+  segs.push(arcade(tdir*0.5,-0.55,true));
+  segs.push(arcade(tdir*0.5, 0.55,true));
+  segs.push(arcade(-tdir*0.5,-0.6,false));
+  segs.push(arcade(-tdir*0.5, 0.6,false));
   if(cas.lesions&&cas.lesions.avNick){ [segs[0],segs[1]].forEach(function(s){ var idx=Math.floor(s.vp.length*0.5),p=s.vp[idx];
-    g.strokeStyle='rgba(70,14,14,.95)';g.lineWidth=S*0.004; g.beginPath();g.moveTo(p[0]-S*0.009,p[1]);g.lineTo(p[0]+S*0.009,p[1]);g.stroke(); }); }
+    g.strokeStyle='rgba(150,62,34,.9)';g.lineWidth=S*0.006; g.beginPath();g.moveTo(p[0]-S*0.01,p[1]);g.lineTo(p[0]+S*0.01,p[1]);g.stroke(); }); }
 
-  // --- OPTİK DİSK (hafif dikey elips, yumuşak kenar, rim dokusu) ---
+  // ===== OPTİK DİSK =====
   g.save();
-  var drx=disc.r*0.88, dry=disc.r*1.05;    // eni dar = dikey elips
-  // yumuşak dış hale (cetvelle çizilmiş gibi keskin değil)
-  var halo=g.createRadialGradient(disc.x,disc.y,disc.r*0.6,disc.x,disc.y,disc.r*1.28);
-  halo.addColorStop(0,'rgba(226,168,120,.5)');halo.addColorStop(1,'rgba(226,168,120,0)'); g.fillStyle=halo;g.beginPath();g.ellipse(disc.x,disc.y,drx*1.25,dry*1.25,0,0,6.283);g.fill();
-  // rim zemin (pembe-turuncu nöroretinal)
-  var dg=g.createRadialGradient(disc.x,disc.y,0,disc.x,disc.y,dry);
-  dg.addColorStop(0,cas.disc.hyperemic?'#eea06a':'#eab483');dg.addColorStop(0.72,cas.disc.hyperemic?'#e5884f':'#de9f68');dg.addColorStop(1,'rgba(205,145,105,.35)');
-  g.fillStyle=dg; g.beginPath();g.ellipse(disc.x,disc.y,drx,dry,0,0,6.283);g.fill();
-  // rim yumuşak nöroretinal doku — radyal çizgi/tekerlek teli YOK, yumuşak noktasal benek
-  for(var rb=0;rb<140;rb++){ var a=rng()*6.283, rr=cas.disc.vCDR+0.04+rng()*(0.94-cas.disc.vCDR);
-    g.fillStyle='rgba('+(228-rng()*38|0)+','+(150-rng()*32|0)+','+(104-rng()*24|0)+','+(0.05+rng()*0.07)+')';
-    g.beginPath();g.arc(disc.x+Math.cos(a)*drx*rr,disc.y+Math.sin(a)*dry*rr,S*0.0016*(0.6+rng()),0,6.283);g.fill(); }
-  // çukurluk (cup) — dikey elips, soluk
-  var cupR=disc.r*cas.disc.vCDR;   // (bayonet lezyonu bu değeri kullanır)
-  if(cas.disc.vCDR>0.12){ var cg=g.createRadialGradient(disc.x,disc.y,0,disc.x,disc.y,disc.r*cas.disc.vCDR); cg.addColorStop(0,'rgba(236,226,202,.9)');cg.addColorStop(0.7,'rgba(224,208,182,.85)');cg.addColorStop(1,'rgba(206,182,148,.35)'); g.fillStyle=cg; g.beginPath();g.ellipse(disc.x,disc.y,drx*cas.disc.vCDR,dry*cas.disc.vCDR,0,0,6.283);g.fill(); }
-  // sınır — yumuşak; papilödem/drusende silik/topaklı
-  if(cas.disc.obscure){ g.strokeStyle='rgba(180,110,70,.32)'; g.lineWidth=S*0.014; g.beginPath();g.ellipse(disc.x,disc.y,drx*1.03,dry*1.03,0,0,6.283);g.stroke();
-    if(cas.disc.patons){ for(var p=1;p<=3;p++){ g.strokeStyle='rgba(150,80,50,'+(0.22-p*0.05)+')';g.lineWidth=S*0.006;g.beginPath();g.ellipse(disc.x,disc.y,drx*(1.1+p*0.14),dry*(1.1+p*0.14),0,0,6.283);g.stroke(); } }
-  } else { g.strokeStyle='rgba(150,95,60,.38)'; g.lineWidth=S*0.0025; g.beginPath();g.ellipse(disc.x,disc.y,drx,dry,0,0,6.283);g.stroke(); }
-  if(cas.disc.drusen){ for(var d=0;d<16;d++){ var aa=rng()*6.283,rr=0.6+rng()*0.45; g.fillStyle='rgba(240,225,150,'+(0.5+rng()*0.4)+')';g.beginPath();g.arc(disc.x+Math.cos(aa)*drx*rr,disc.y+Math.sin(aa)*dry*rr,S*0.006*(0.6+rng()),0,6.283);g.fill(); } }
+  var drx=disc.r*0.88, dry=disc.r*1.05;
+  // peripapiller skleral halka/atrofi
+  var ppa=g.createRadialGradient(disc.x,disc.y,disc.r*0.95,disc.x,disc.y,disc.r*1.32);
+  ppa.addColorStop(0,'rgba(232,192,150,.0)'); ppa.addColorStop(0.5,'rgba(224,182,140,.45)'); ppa.addColorStop(1,'rgba(200,150,110,0)');
+  g.fillStyle=ppa; g.beginPath(); g.ellipse(disc.x,disc.y,drx*1.3,dry*1.3,0,0,6.283); g.fill();
+  // nöroretinal rim (pembe-turuncu, hafif 3B)
+  var dg=g.createRadialGradient(disc.x-drx*0.3,disc.y-dry*0.3,0,disc.x,disc.y,dry*1.05);
+  dg.addColorStop(0,hyper?'#f0a46e':'#eeb588'); dg.addColorStop(0.68,hyper?'#e5884f':'#dca066'); dg.addColorStop(1,hyper?'#c66a3a':'#c88a5c');
+  g.fillStyle=dg; g.beginPath(); g.ellipse(disc.x,disc.y,drx,dry,0,0,6.283); g.fill();
+  // rim radyal NFL dokusu (ince)
+  for(var rb=0;rb<220;rb++){ var a=rng()*6.283, rr=cas.disc.vCDR+0.05+rng()*(0.95-cas.disc.vCDR);
+    g.strokeStyle='rgba('+(236-rng()*44|0)+','+(158-rng()*40|0)+','+(110-rng()*30|0)+','+(0.05+rng()*0.08)+')'; g.lineWidth=S*0.0012;
+    g.beginPath(); g.moveTo(disc.x+Math.cos(a)*drx*(rr*0.8),disc.y+Math.sin(a)*dry*(rr*0.8)); g.lineTo(disc.x+Math.cos(a)*drx*rr,disc.y+Math.sin(a)*dry*rr); g.stroke(); }
+  // çukur (cup)
+  var cupR=disc.r*cas.disc.vCDR;
+  if(cas.disc.vCDR>0.12){ var cg=g.createRadialGradient(disc.x+drx*cas.disc.vCDR*0.2,disc.y,0,disc.x,disc.y,disc.r*cas.disc.vCDR);
+    cg.addColorStop(0,'rgba(244,236,214,.95)'); cg.addColorStop(0.7,'rgba(228,214,188,.9)'); cg.addColorStop(1,'rgba(206,182,148,.4)');
+    g.fillStyle=cg; g.beginPath(); g.ellipse(disc.x,disc.y,drx*cas.disc.vCDR,dry*cas.disc.vCDR,0,0,6.283); g.fill();
+    // lamina cribrosa noktaları
+    if(cas.disc.vCDR>0.5){ for(var lc=0;lc<14;lc++){ g.fillStyle='rgba(150,128,96,'+(0.2+rng()*0.25)+')'; g.beginPath(); g.arc(disc.x+(rng()-0.5)*drx*cas.disc.vCDR*1.2,disc.y+(rng()-0.5)*dry*cas.disc.vCDR*1.2,S*0.0013,0,6.283); g.fill(); } } }
+  // sınır
+  if(cas.disc.obscure){ g.strokeStyle='rgba(188,120,78,.3)'; g.lineWidth=S*0.014; g.beginPath(); g.ellipse(disc.x,disc.y,drx*1.03,dry*1.03,0,0,6.283); g.stroke();
+    if(cas.disc.patons){ for(var p=1;p<=3;p++){ g.strokeStyle='rgba(158,86,54,'+(0.2-p*0.045)+')'; g.lineWidth=S*0.006; g.beginPath(); g.ellipse(disc.x,disc.y,drx*(1.1+p*0.14),dry*(1.1+p*0.14),0,0,6.283); g.stroke(); } }
+  } else { g.strokeStyle='rgba(158,100,64,.42)'; g.lineWidth=S*0.0022; g.beginPath(); g.ellipse(disc.x,disc.y,drx,dry,0,0,6.283); g.stroke(); }
+  if(cas.disc.drusen){ for(var d=0;d<18;d++){ var aa=rng()*6.283,rr=0.55+rng()*0.5; var dx2=disc.x+Math.cos(aa)*drx*rr,dy2=disc.y+Math.sin(aa)*dry*rr;
+    var dgl=g.createRadialGradient(dx2,dy2,0,dx2,dy2,S*0.007*(0.6+rng())); dgl.addColorStop(0,'rgba(246,230,150,.95)'); dgl.addColorStop(1,'rgba(230,205,120,0)');
+    g.fillStyle=dgl; g.beginPath(); g.arc(dx2,dy2,S*0.007*(0.6+rng()),0,6.283); g.fill(); } }
   g.restore();
 
-  // --- LEZYONLAR ---
+  // ===== LEZYONLAR =====
   var L=cas.lesions||{};
-  function rnflDir(x,y){ var dx=x-disc.x,dy=y-disc.y; var ra=Math.atan2(dy,dx); return ra+Math.PI/2; } // arkuat ~ çevresel
-  function flameHeme(x,y,sz){ var ang=rnflDir(x,y); g.save();g.translate(x,y);g.rotate(ang); g.fillStyle='rgba(150,25,25,.85)';
-    for(var f=0;f<6;f++){ g.beginPath();g.ellipse((f-3)*sz*0.12,0,sz*(0.5-Math.abs(f-3)*0.05),sz*0.12,0,0,6.283);g.fill(); } g.restore(); }
-  function cottonWool(x,y,sz){ g.fillStyle='rgba(235,240,230,.8)'; g.save();g.translate(x,y); var ang=rnflDir(x,y);g.rotate(ang);
-    for(var c=0;c<8;c++){ g.beginPath();g.ellipse((Math.random()-0.5)*sz,(Math.random()-0.5)*sz*0.4,sz*0.18,sz*0.09,0,0,6.283);g.fill(); } g.restore(); }
-  function hardEx(x,y,sz,circ){ g.fillStyle='rgba(240,215,110,.9)'; if(circ){ for(var e=0;e<10;e++){ var a=e/10*6.283; g.beginPath();g.arc(x+Math.cos(a)*sz,y+Math.sin(a)*sz,S*0.004,0,6.283);g.fill(); } } else { g.beginPath();g.arc(x,y,S*0.004,0,6.283);g.fill(); } }
+  function rnflDir(x,y){ var dx=x-disc.x,dy=y-disc.y; return Math.atan2(dy,dx)+Math.PI/2; }
+  function flameHeme(x,y,sz){ var ang=rnflDir(x,y); g.save(); g.translate(x,y); g.rotate(ang);
+    for(var f=0;f<9;f++){ var fy=(f-4)*sz*0.1; g.fillStyle='rgba('+(150-f*3|0)+',22,20,'+(0.6+rng()*0.25)+')';
+      g.beginPath(); g.ellipse(0,fy,sz*(0.6-Math.abs(f-4)*0.06)*(0.8+rng()*0.4),sz*0.09,0,0,6.283); g.fill(); }
+    // tüysü uçlar
+    for(var ff=0;ff<10;ff++){ g.strokeStyle='rgba(140,20,18,.5)'; g.lineWidth=sz*0.03; var yy=(rng()-0.5)*sz*0.9;
+      g.beginPath(); g.moveTo(0,yy); g.lineTo((rng()<0.5?-1:1)*sz*0.5,yy+(rng()-0.5)*sz*0.2); g.stroke(); } g.restore(); }
+  function dotBlot(x,y,sz){ var gr=g.createRadialGradient(x,y,0,x,y,sz); gr.addColorStop(0,'rgba(96,12,14,.95)'); gr.addColorStop(0.7,'rgba(120,18,18,.9)'); gr.addColorStop(1,'rgba(130,24,22,0)');
+    g.fillStyle=gr; g.beginPath(); for(var a=0;a<=6.283;a+=0.5){ var rr=sz*(0.8+rng()*0.4); var px=x+Math.cos(a)*rr,py=y+Math.sin(a)*rr; if(a===0)g.moveTo(px,py); else g.lineTo(px,py);} g.closePath(); g.fill(); }
+  function microAn(x,y){ g.fillStyle='rgba(140,14,16,.95)'; g.beginPath(); g.arc(x,y,S*0.0024,0,6.283); g.fill();
+    g.fillStyle='rgba(180,40,36,.4)'; g.beginPath(); g.arc(x,y,S*0.0038,0,6.283); g.fill(); }
+  function cottonWool(x,y,sz){ g.save(); g.translate(x,y); var ang=rnflDir(x,y); g.rotate(ang);
+    for(var c=0;c<16;c++){ g.fillStyle='rgba(238,242,232,'+(0.35+rng()*0.4)+')'; g.beginPath(); g.ellipse((rng()-0.5)*sz*1.2,(rng()-0.5)*sz*0.5,sz*0.14*(0.6+rng()),sz*0.07*(0.6+rng()),rng()*3.14,0,6.283); g.fill(); } g.restore(); }
+  function hardExDot(x,y){ var gr=g.createRadialGradient(x-S*0.001,y-S*0.001,0,x,y,S*0.0045); gr.addColorStop(0,'rgba(252,236,150,.98)'); gr.addColorStop(0.7,'rgba(238,208,96,.95)'); gr.addColorStop(1,'rgba(220,186,80,0)');
+    g.fillStyle=gr; g.beginPath(); g.arc(x,y,S*0.0045,0,6.283); g.fill(); }
   var quadCenter={ST:[0.5+0.22*m,0.33],IT:[0.5+0.22*m,0.67],SN:[0.5-0.22*m,0.33],IN:[0.5-0.22*m,0.67]};
   function qc(q){ return [quadCenter[q][0]*S,quadCenter[q][1]*S]; }
-  if(L.flame){ ['ST','IT','SN'].forEach(function(q){ var c=qc(q); for(var h=0;h<3;h++) flameHeme(c[0]+(rng()-0.5)*S*0.12,c[1]+(rng()-0.5)*S*0.12,S*0.05); }); }
-  if(L.cottonWool){ ['ST','IT'].forEach(function(q){ var c=qc(q); cottonWool(c[0]+(rng()-0.5)*S*0.1,c[1]+(rng()-0.5)*S*0.1,S*0.05); }); }
-  if(L.microaneurysm){ for(var ma=0;ma<40;ma++){ var x=S*0.3+rng()*S*0.4,y=S*0.3+rng()*S*0.4; g.fillStyle='rgba(150,20,20,.9)';g.beginPath();g.arc(x,y,S*0.0028,0,6.283);g.fill(); } }
-  if(L.dotBlot){ for(var db=0;db<22;db++){ var x=S*0.28+rng()*S*0.44,y=S*0.28+rng()*S*0.44; g.fillStyle='rgba(110,15,15,.9)';g.beginPath();g.arc(x,y,S*0.006*(0.6+rng()),0,6.283);g.fill(); } }
-  if(L.circinate){ var c=[mac.x+S*0.08,mac.y+S*0.04]; for(var r2=0;r2<8;r2++){ hardEx(c[0]+Math.cos(r2)*S*0.03,c[1]+Math.sin(r2)*S*0.03,S*0.02,false); } }
-  if(L.macularStar){ for(var s=0;s<16;s++){ var a=s/16*6.283; for(var rr=1;rr<4;rr++){ hardEx(mac.x+Math.cos(a)*mac.r*0.3*rr,mac.y+Math.sin(a)*mac.r*0.3*rr,0,false); } } }
-  if(L.nv){ var c=qc(cas.nvQuadrant||'ST'); g.strokeStyle='rgba(180,30,40,.85)'; // neovasküler yumak
-    for(var nv=0;nv<22;nv++){ var a=rng()*6.283,r=rng()*S*0.035; g.lineWidth=S*0.0016; g.beginPath();g.moveTo(c[0],c[1]);g.lineTo(c[0]+Math.cos(a)*r,c[1]+Math.sin(a)*r);g.stroke(); }
-    g.strokeStyle='rgba(200,40,50,.6)';for(var nv2=0;nv2<16;nv2++){ var a1=rng()*6.283,a2=a1+rng();g.beginPath();g.arc(c[0]+(rng()-0.5)*S*0.04,c[1]+(rng()-0.5)*S*0.04,S*0.01*rng(),a1,a2);g.stroke(); } }
-  if(L.boat){ // tekne biçimli subhyaloid — yerçekimine kilitli düz üst seviye
-    var bx=mac.x, by=mac.y+S*0.02, bw=S*0.14, bh=S*0.09; g.fillStyle='rgba(90,10,12,.95)';
-    g.beginPath(); g.moveTo(bx-bw,by); g.lineTo(bx+bw,by); g.arc(bx,by,bw,0,Math.PI,false); g.closePath(); g.fill();
-    g.fillStyle='rgba(120,20,20,.6)'; g.fillRect(bx-bw,by-S*0.004,bw*2,S*0.006); } // düz üst sıvı seviyesi
-  if(L.discHeme){ for(var dh=0;dh<4;dh++){ var a=rng()*6.283; flameHeme(disc.x+Math.cos(a)*disc.r*1.2,disc.y+Math.sin(a)*disc.r*1.2,S*0.04); } }
-  if(cas.disc.bayonet){ // çukur kenarında damar bayonetleşmesi
-    g.strokeStyle='rgba(95,18,22,.95)';g.lineWidth=S*0.006; g.beginPath();g.moveTo(disc.x,disc.y-cupR);g.lineTo(disc.x+S*0.004,disc.y-disc.r);g.stroke(); }
+  if(L.flame){ ['ST','IT','SN'].forEach(function(q){ var c=qc(q); for(var h=0;h<3;h++) flameHeme(c[0]+(rng()-0.5)*S*0.14,c[1]+(rng()-0.5)*S*0.14,S*0.055); }); }
+  if(L.cottonWool){ ['ST','IT'].forEach(function(q){ var c=qc(q); cottonWool(c[0]+(rng()-0.5)*S*0.1,c[1]+(rng()-0.5)*S*0.1,S*0.055); }); }
+  if(L.microaneurysm){ for(var ma2=0;ma2<44;ma2++){ microAn(S*0.3+rng()*S*0.4,S*0.3+rng()*S*0.4); } }
+  if(L.dotBlot){ for(var db=0;db<24;db++){ dotBlot(S*0.28+rng()*S*0.44,S*0.28+rng()*S*0.44,S*0.006*(0.7+rng())); } }
+  if(L.circinate){ var c=[mac.x+S*0.08,mac.y+S*0.04]; for(var r2=0;r2<9;r2++){ hardExDot(c[0]+Math.cos(r2*0.7)*S*0.032*(0.8+rng()*0.4),c[1]+Math.sin(r2*0.7)*S*0.032*(0.8+rng()*0.4)); } }
+  if(L.macularStar){ for(var s2=0;s2<14;s2++){ var a=s2/14*6.283 + (rng()-0.5)*0.12; var nd=3+Math.floor(rng()*3);
+    for(var rr=0;rr<nd;rr++){ var rad=mac.r*(0.16+rr*0.14*(0.85+rng()*0.3));
+      g.save(); g.translate(mac.x+Math.cos(a)*rad, mac.y+Math.sin(a)*rad); g.rotate(a);
+      var gr=g.createLinearGradient(-S*0.007,0,S*0.007,0); gr.addColorStop(0,'rgba(250,228,120,0)'); gr.addColorStop(0.5,'rgba(244,212,92,.95)'); gr.addColorStop(1,'rgba(250,228,120,0)');
+      g.fillStyle=gr; g.beginPath(); g.ellipse(0,0,S*0.0065*(0.7+rng()*0.5),S*0.0017,0,0,6.283); g.fill(); g.restore(); } } }
+  if(L.nv){ var c=qc(cas.nvQuadrant||'ST');
+    for(var nv=0;nv<40;nv++){ var a=rng()*6.283,r=rng()*S*0.04; g.strokeStyle='rgba(176,28,36,.8)'; g.lineWidth=S*0.0013;
+      var x1=c[0]+(rng()-0.5)*S*0.02,y1=c[1]+(rng()-0.5)*S*0.02; g.beginPath(); g.moveTo(x1,y1);
+      g.quadraticCurveTo(x1+Math.cos(a)*r*0.5+(rng()-0.5)*S*0.01,y1+Math.sin(a)*r*0.5,x1+Math.cos(a)*r,y1+Math.sin(a)*r); g.stroke(); } }
+  if(L.boat){ var bx=mac.x, by=mac.y+S*0.02, bw=S*0.14, bh=S*0.09;
+    var bgr=g.createLinearGradient(bx,by-S*0.004,bx,by+bh); bgr.addColorStop(0,'rgba(130,18,18,.95)'); bgr.addColorStop(1,'rgba(78,8,10,.98)');
+    g.fillStyle=bgr; g.beginPath(); g.moveTo(bx-bw,by); g.lineTo(bx+bw,by); g.arc(bx,by,bw,0,Math.PI,false); g.closePath(); g.fill();
+    g.fillStyle='rgba(150,30,28,.5)'; g.fillRect(bx-bw,by-S*0.004,bw*2,S*0.005); }
+  if(L.discHeme){ for(var dh=0;dh<4;dh++){ var a=rng()*6.283; flameHeme(disc.x+Math.cos(a)*disc.r*1.2,disc.y+Math.sin(a)*disc.r*1.2,S*0.042); } }
+  if(cas.disc.bayonet){ g.strokeStyle='rgba(110,20,24,.95)'; g.lineWidth=S*0.006; g.beginPath(); g.moveTo(disc.x,disc.y-cupR); g.lineTo(disc.x+S*0.004,disc.y-disc.r); g.stroke(); }
 
   return {canvas:cv, disc:disc, mac:mac};
 }
