@@ -380,14 +380,25 @@ void main(){
   vec3 h=normalize(vec3(${HF.hb[0].toFixed(3)}*uMirror+uOto.x, ${HF.hb[1].toFixed(3)}+uOto.y, ${HF.hb[2].toFixed(3)}));
   float spec=pow(max(dot(n,h),0.0),POWER);
   float diff=clamp(n.z,0.0,1.0);
-  // --- taban zar rengi ---
-  vec3 pearl=vec3(0.78,0.76,0.74);
-  vec3 col=pearl;
-  // kollajen lif dokusu (radyal+sirküler)
+  // --- taban zar rengi: inci-gri + hafif sıcaklık + konkav radyal parlaklık ---
+  vec3 pearl=vec3(0.80,0.77,0.745);
+  vec3 col=pearl*(0.95+0.07*smoothstep(1.0,0.2,r));    // merkeze doğru hafif parlak (konkav yüzey)
+  col*=(1.0+0.035*noise(uv*4.0+5.0));                  // ince cilt mozaiği (titremesiz)
+  // yarı saydam derin yapı: inkus uzun kolu — postero-süperior soluk iz
+  vec2 inc=vec2(0.26*uMirror,0.30);
+  float incus=smoothstep(0.14,0.0,abs(dot(uv-inc,normalize(vec2(0.5*uMirror,-0.86)))))*smoothstep(0.52,0.0,length(uv-inc));
+  col=mix(col,vec3(0.85,0.83,0.80),incus*0.20*uVisible);
+  // kollajen lif dokusu (radyal+sirküler) — noise ile organikleştirilmiş
   float ang=atan(uv.y,uv.x);
-  float radialFib=sin(ang*64.0);                 // pars tensa radyal kollajen lifleri
-  float circFib=sin(r*32.0);                     // sirküler lifler
-  col*=(0.90+0.075*radialFib*smoothstep(0.12,0.72,r)+0.03*circFib);
+  float fibN=noise(vec2(ang*5.0,r*8.0));
+  float radialFib=sin(ang*64.0+fibN*2.0);             // pars tensa radyal kollajen lifleri
+  float circFib=sin(r*30.0+fibN*1.5);                 // sirküler lifler
+  col*=(0.93+0.05*radialFib*smoothstep(0.12,0.75,r)*(0.55+0.5*fibN)+0.02*circFib*(0.55+0.5*fibN));
+  // fibröz annulus (periferik yoğun halka) + sirkümferensiyel damarlar
+  float annR=smoothstep(0.80,0.95,r)*smoothstep(1.02,0.95,r);
+  col=mix(col,vec3(0.86,0.80,0.74),annR*0.35);
+  float annVess=annR*(0.5+0.5*sin(ang*40.0+fibN*3.0));
+  col=mix(col,vec3(0.82,0.42,0.36),annVess*0.12*(0.5+uHyper));
   // hiperemi (damarlanma — radyal kızarıklık, malleus boyunca)
   float vasc=uHyper*(0.5+0.5*noise(vec2(ang*3.0,r*6.0)));
   col=mix(col,vec3(0.86,0.30,0.26),clamp(uHyper*0.5+vasc*0.4,0.0,0.75));
@@ -449,7 +460,8 @@ void main(){
   vec3 lit = col*(0.35+0.65*diff);
   // EMERGENT ışık refleksi (boyanmadı — normalin speküleri)
   float reflexMask = (uPerf>0?0.5:1.0)*(1.0-uCerumen*0.6)*(1.0-uBulge*0.5);
-  lit += vec3(1.0,0.98,0.92)*spec*0.55*reflexMask;
+  lit += vec3(1.0,0.985,0.93)*spec*0.6*reflexMask;
+  lit += vec3(1.0,1.0,0.97)*pow(spec,1.8)*0.22*reflexMask;   // parlak çekirdek — daha tanımlı Politzer konisi
   lit = clamp(lit,0.0,1.0);
   // --- serümen örtmesi (girişten) ---
   if(uCerumen>0.01){
