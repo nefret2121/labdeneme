@@ -512,7 +512,7 @@ function faceLayout(){
     var S=dispW/PLATE.w, cyT=VH*PLATE.CY;
     var eyAvg=(PLATE.R.ey+PLATE.L.ey)/2;
     var px=cx-dispW/2, py=cyT-eyAvg*PLATE.h*S;
-    function E(e){ return { x:px+e.ex*dispW, cy:py+e.ey*PLATE.h*S, eyeR:e.hw*dispW/1.42 }; }
+    function E(e){ return { x:px+e.ex*dispW, cy:py+(e.ey+PLATE.eyeDY)*PLATE.h*S, eyeR:e.hw*dispW/1.42 }; }
     var r=E(PLATE.R), l=E(PLATE.L);
     return { cy:cyT, eyeR:(r.eyeR+l.eyeR)/2,
              R:{x:r.x, cy:r.cy, eyeR:r.eyeR}, L:{x:l.x, cy:l.cy, eyeR:l.eyeR},
@@ -707,7 +707,7 @@ FACE_PLATE.src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAyAAAAP1CAYAAACZg4
 var PLATE={ w:800, h:1013,
   R:{ex:0.3031, ey:0.3317, hw:0.0806},
   L:{ex:0.6313, ey:0.3366, hw:0.0700},
-  DISP:0.84, CY:0.455 };
+  eyeDY:-0.012, DISP:0.84, CY:0.455 };
 function plateSkin(amb){ var l=0.70+amb*0.30;
   function px(r,g,b){ return 'rgb('+Math.round(r*l)+','+Math.round(g*l)+','+Math.round(b*l)+')'; }
   return { hi:px(234,216,208), mid:px(214,196,189), lo:px(190,171,163), lo2:px(168,150,143), brow:px(120,92,74), browD:px(84,62,46) }; }
