@@ -56,8 +56,8 @@ body{background:radial-gradient(1200px 800px at 70% -10%,#0a1424 0%,var(--bg-0) 
 .p2tool:hover{border-color:rgba(123,197,237,.5);color:var(--ink)}
 .p2tool.on{border-color:var(--accent);background:rgba(123,197,237,.14);color:#eaf4fb;box-shadow:0 0 0 1px rgba(123,197,237,.35) inset}
 .p2tool .k{font-family:var(--mono);font-size:9.5px;opacity:.7;border:1px solid var(--line);border-radius:4px;padding:0 4px}
-.p2strip{position:absolute;left:10px;right:10px;bottom:0;z-index:7;display:flex;gap:0;font-family:var(--mono);font-size:10px;background:linear-gradient(0deg,rgba(6,10,18,.94),rgba(6,10,18,.72));border-top:1px solid rgba(123,197,237,.22);padding:5px 6px;flex-wrap:wrap;pointer-events:none}
-.p2strip .seg{display:flex;align-items:center;gap:5px;padding:0 10px;border-right:1px solid rgba(123,197,237,.15);line-height:1.5}
+.p2strip{position:absolute;left:10px;right:10px;bottom:0;z-index:7;display:flex;gap:0;font-family:var(--mono);font-size:10px;background:linear-gradient(0deg,rgba(6,10,18,.94),rgba(6,10,18,.72));border-top:1px solid rgba(123,197,237,.22);padding:5px 14px 5px 6px;flex-wrap:wrap;pointer-events:none;box-sizing:border-box}
+.p2strip .seg{display:flex;align-items:center;gap:5px;padding:0 10px;border-right:1px solid rgba(123,197,237,.15);line-height:1.5;flex:0 1 auto;min-width:0}
 .p2strip .seg:last-child{border-right:0}
 .p2strip .lbl{color:#6f8198;text-transform:uppercase;letter-spacing:.04em;font-size:8.5px}
 .p2strip .val{color:#dce7f2}
@@ -491,9 +491,10 @@ function applyTraction(){ var off=tractionVec();
   if(gbMesh){ gbMesh.position.set(off.x*0.6,off.y*0.6,off.z*0.6); }
   // grasperlar keseyi fiziksel kavrar, traksiyonla hareket eder (jaw kavrama noktasında, şaft trokara)
   var XAX=new THREE.Vector3(1,0,0);
-  // Asistan grasper: SOL-alt lateral porttan gelir, FUNDUS'u (GB_SPINE[0]) kavrar, sefalad kaldırır
-  if(grasperA){ grasperA.position.set(GB_SPINE[0][0]+off.x*0.6, GB_SPINE[0][1]+off.y*0.6+1, GB_SPINE[0][2]+off.z*0.6+2.5);
-    grasperA.quaternion.setFromUnitVectors(XAX, new THREE.Vector3(-0.58,-0.48,0.66).normalize()); }
+  // Asistan grasper: SOL-alt lateral (-X) porttan gelir, fundus/gövdeyi kavrar, sefalad kaldırır
+  if(grasperA){ var fg=GB_SPINE[2];  // görünür gövde-fundus noktası
+    grasperA.position.set(fg[0]+off.x*0.6, fg[1]+off.y*0.6+1, fg[2]+off.z*0.6+2.5);
+    grasperA.quaternion.setFromUnitVectors(XAX, new THREE.Vector3(-0.66,-0.46,0.60).normalize()); }  // şaft ekranın sol-alt kenarından girer
   // Sol-el Hartmann grasper: SAĞ-alt subkostal porttan gelir, HARTMANN poşunu (boyun) kavrar
   if(grasperL){ var hp=GB_SPINE[4];
     grasperL.position.set(hp[0]+off.x*0.75-1.5, hp[1]+off.y*0.75-1, hp[2]+off.z*0.75+2.5);
@@ -658,10 +659,16 @@ function captureSnapshot(){ // o anın derin kopyası: kamera pozu + traksiyon v
     tract:{l:ENG.tract.lateral,c:ENG.tract.cephalad}, angle:cdChdAngle(),
     topology:topo, caseIdx:ENG.caseIdx, expo:ENG.expo, nir:ENG.nir, t:ENG.t };
 }
-function captureEvidence(view){ var img=null; try{ img=glcv.toDataURL('image/jpeg',0.55); }catch(e){}
-  ENG.evidence[view]={img:img, expo:ENG.expo, nir:ENG.nir, angle:cdChdAngle(), tract:{l:ENG.tract.lateral,c:ENG.tract.cephalad}, snapshot:captureSnapshot()};
-  renderThumbs(); toast('📸 '+(view==='anterior'?'Ön (anterior)':'Arka (posterior — kese medialize)')+' kanıt karesi — Durum '+ENG.expo+(ENG.nir?' · ICG':''),'ok');
-  if(ENG.evidence.anterior&&ENG.evidence.posterior&&ENG.step<4)setStep(4); }
+// arka görünüm: kese medialize edilmeli (lateral traksiyon) ya da lens posterior açıya alınmalı
+function isPosteriorView(){ var phiDeg=((ENG.scope.phi/DEG)%360+360)%360; var posteriorArc=(phiDeg>=90&&phiDeg<=270);
+  return (Math.abs(ENG.tract.lateral)>=0.3) || posteriorArc; }
+function captureEvidence(view){
+  if(view==='posterior' && !isPosteriorView()){ toast('Arka kanıt için önce keseyi medialize et (lateral traksiyon) veya 30° lensi arka açıya çevir (Lens 90–270°)','warn'); return {ok:false, need:'posterior'}; }
+  try{ renderer.render(scene,cam); }catch(e){}   // kare güncel durumu yansıtsın (ICG açıksa gerçek yeşil)
+  var img=null; try{ img=glcv.toDataURL('image/jpeg',0.6); }catch(e){}
+  ENG.evidence[view]={img:img, expo:ENG.expo, nir:ENG.nir, view:view, angle:cdChdAngle(), tract:{l:ENG.tract.lateral,c:ENG.tract.cephalad}, snapshot:captureSnapshot()};
+  renderThumbs(); toast('📸 '+(view==='anterior'?'Ön (anterior)':'Arka (posterior — kese medialize)')+' kanıt karesi — Durum '+ENG.expo+(ENG.nir?' · ICG yeşil floresan':''),'ok');
+  if(ENG.evidence.anterior&&ENG.evidence.posterior&&ENG.step<4)setStep(4); return {ok:true, nir:ENG.nir}; }
 function renderThumbs(){ var t=$('evThumbs'); t.innerHTML=''; ['anterior','posterior'].forEach(function(v){ var e=ENG.evidence[v];
   if(e&&e.img){ var im=document.createElement('img'); im.src=e.img; t.appendChild(im); } else { var d=document.createElement('div'); d.className='ph'; t.appendChild(d); } }); }
 function showDebrief(){ $('debriefModal').style.display='flex';
@@ -696,15 +703,22 @@ function showDebrief(){ $('debriefModal').style.display='flex';
   b.fillStyle='#d9a441';b.font='9px monospace';b.fillText('çekim açısı '+Math.round(snap?snap.angle:cdChdAngle())+'° · traks ['+trL.toFixed(1)+','+trC.toFixed(1)+']',6,30);
   /* ---- C: Nedensel Cerrahi Karne + 2×2 Matris ---- */
   var cvs=cvsCount(), ang=snap?snap.angle:cdChdAngle(); var C=CASES[ENG.caseIdx];
+  // efektif CVS: çadırlaşma (açı<25°) veya kistik plak açılmamışsa kriterler geçemez
+  var plateOpenNow=($('cvs2').checked && ENG.expo==='C');
+  var c1=$('cvs1').checked && ang>=25;   // üçgen temiz — çadırlaşmada geçmez
+  var c2=$('cvs2').checked && plateOpenNow; // alt 1/3 plaktan ayrı
+  var c3=$('cvs3').checked && ang>=25;   // yalnız 2 yapı — çadırlaşmada doğrulanamaz
+  var effCvs=(c1?1:0)+(c2?1:0)+(c3?1:0);
+  var cvsBlock = (ang<25?'çadırlaşma':(!plateOpenNow?'plak kapalı':null));
   var inj=injuryTopology(); var omega=0; try{ Object.keys(P2.structs).forEach(function(id){ omega=Math.max(omega,P2.structs[id].thermalOmega); }); }catch(e){}
   var rhaInj=inj.some(function(i){return i.type==='vascular';}); var biliaryInj=inj.filter(function(i){return i.type==='biliary';});
-  var outcomeGood=inj.length===0; var processProven=(cvs===3&&ENG.expo==='C'&&$('cvs2').checked)||ENG.bailoutComplete;
+  var outcomeGood=inj.length===0; var processProven=(effCvs===3)||ENG.bailoutComplete;
   var quad = outcomeGood ? (processProven?['Güvenli Cerrahi','#8fe3bf','Sonuç iyi, süreç kanıtlı — doğru güvenlik']:['Kanıtsız Şans','#d9a441','Sonuç iyi ama CVS kanıtlanmadı — şans'])
                          : ((ang<22||C.frozen)&&biliaryInj.length?['Anatomi Tuzağı','#e88b92','Çadırlaşan/donmuş yapı yanlış tanındı → yaralanma']:['Öngörülebilir Yaralanma','#e4607a','Uyarılara rağmen ısrar → yaralanma']);
   function row(lbl,val,col){ return '<div style="display:flex;justify-content:space-between;gap:8px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.06)"><span style="color:#9fb0c2">'+lbl+'</span><span style="color:'+col+';text-align:right">'+val+'</span></div>'; }
   var fl=(P2.totalBloodLossMl+P2.totalBileLossMl);
   var h='<div style="font-size:10.5px;line-height:1.4">';
-  h+=row('Anatomik Tanımlama & CVS', cvs+'/3 · açı '+Math.round(ang)+'°', cvs>=3&&ang>40?'#8fe3bf':'#e88b92');
+  h+=row('Anatomik Tanımlama & CVS', effCvs+'/3'+(cvsBlock?' ('+cvsBlock+')':'')+' · açı '+Math.round(ang)+'°'+(effCvs<cvs?' <span style="color:#e4607a">[iddia '+cvs+'/3 geçersiz]</span>':''), effCvs>=3&&ang>40?'#8fe3bf':'#e88b92');
   h+=row('Cerrahi Karar & Bailout', C.frozen?(ENG.bailoutComplete?'Subtotal tam ('+(ENG.bailoutMission.technique==='fenestrating'?'Fenestre':'Rekonstitüe')+')':(ENG.bailout?'Bailout eksik':'Bailout yok!')):(ENG.bailout?'Gereksiz bailout':'Standart'), C.frozen?(ENG.bailoutComplete?'#8fe3bf':'#e88b92'):(ENG.bailout?'#d9a441':'#8fe3bf'));
   h+=row('Doku/Safra/Vasküler', (biliaryInj.length?biliaryInj.map(function(i){return 'Strasberg '+(i.grade||'');}).join(','):'safra yolu sağlam')+' · RHA '+(rhaInj?'yaralı':'ok')+' · Ω '+omega.toFixed(3), inj.length?'#e88b92':'#8fe3bf');
   h+=row('Sıvı Muhasebesi', 'kan '+P2.totalBloodLossMl.toFixed(1)+' · safra '+P2.totalBileLossMl.toFixed(1)+' ml', fl>3?'#e88b92':fl>0.3?'#d9a441':'#8fe3bf');
@@ -1094,7 +1108,9 @@ window.LAP={
   tickFluids:function(dt){ tickFluids(dt==null?0.5:dt); return this.fluids(); },
   injury:function(){ return injuryTopology(); },
   // --- AŞAMA 3 ---
-  instruments:function(){ return { fundusGrasper:!!(grasperA&&grasperA.parent), hartmannGrasper:!!(grasperL&&grasperL.parent), activeInstrument:!!(activeInstrument&&activeInstrument.parent), activeTip:(activeInstrument&&activeInstrument.userData.tips&&Object.keys(activeInstrument.userData.tips).filter(function(k){return activeInstrument.userData.tips[k].visible;})[0])||null }; },
+  instruments:function(){ var fd=null,hd=null; try{ fd=new THREE.Vector3(1,0,0).applyQuaternion(grasperA.quaternion); hd=new THREE.Vector3(1,0,0).applyQuaternion(grasperL.quaternion); }catch(e){}
+    return { fundusGrasper:!!(grasperA&&grasperA.parent), hartmannGrasper:!!(grasperL&&grasperL.parent), activeInstrument:!!(activeInstrument&&activeInstrument.parent), activeTip:(activeInstrument&&activeInstrument.userData.tips&&Object.keys(activeInstrument.userData.tips).filter(function(k){return activeInstrument.userData.tips[k].visible;})[0])||null,
+      fundusShaftDir:fd?[+fd.x.toFixed(2),+fd.y.toFixed(2),+fd.z.toFixed(2)]:null, hartmannShaftDir:hd?[+hd.x.toFixed(2),+hd.y.toFixed(2),+hd.z.toFixed(2)]:null }; },
   startBailout:function(){ return startBailout(); },
   bailoutUncertainty:function(senior){ return bailoutLogUncertainty(senior); },
   bailoutStone:function(){ return bailoutExtractStone(); },
@@ -1103,7 +1119,7 @@ window.LAP={
   bailoutState:function(){ return JSON.parse(JSON.stringify(ENG.bailoutMission)); },
   bailoutNote:function(){ return bailoutNote(); },
   mirizziFeedback:function(){ return mirizziFeedback(); },
-  capture:function(view){ captureEvidence(view); return true; },
+  capture:function(view){ return captureEvidence(view); },
   snapshot:function(view){ var e=ENG.evidence[view]; return e&&e.snapshot?e.snapshot:null; },
   debrief:function(){ showDebrief(); return true; },
   fluidVisual:function(){ return {smoke:+(ENG._smoke||0).toFixed(2), bloodPool:+(bloodPool?bloodPool.material.opacity:0).toFixed(2), bilePool:+(bilePool?bilePool.material.opacity:0).toFixed(2)}; },

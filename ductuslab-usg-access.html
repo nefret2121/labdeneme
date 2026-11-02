@@ -320,10 +320,11 @@ void main(){
   col=mix(col,0.88,smoothstep(0.9,0.0,abs(dep-0.6))*0.9);            // dermis (parlak ince hat)
   if(dep>0.9 && dep<3.2) col=mix(col,0.15+0.12*sp,0.55);            // cilt altı yağ (hipoekoik)
   if(uProfType<0.5){ // BOYUN: SKM kası çizgili + fasya + karotis kılıfı + tiroid medial
+    float fw=0.26*sin(Lx*0.33+uTime*0.15)+0.14*sin(Lx*0.9+1.3)+0.08*(sp-0.5); // hafif doğal fasya dalgalanması (mm)
     if(dep>3.0 && dep<12.5){ float stri=0.5+0.5*sin(dep*2.6+Lx*0.15+sp*1.6);  // SKM pennat çizgilenme
       col=mix(col,0.40+0.14*sp+0.12*stri,0.75);
-      col=mix(col,0.9,exp(-pow((dep-3.1)*2.2,2.0))*0.7);             // yüzeyel fasya (parlak hat)
-      col=mix(col,0.9,exp(-pow((dep-12.3)*2.0,2.0))*0.6); }          // derin servikal fasya
+      col=mix(col,0.9,exp(-pow((dep-3.1+fw)*2.2,2.0))*0.7);          // yüzeyel fasya (dalgalı parlak hat)
+      col=mix(col,0.9,exp(-pow((dep-12.3+fw*0.8)*2.0,2.0))*0.6); }    // derin servikal fasya
     // karotis kılıfı: İJV ile karotis arası yumuşak ekojenik sınır (sert dikdörtgen değil)
     col=mix(col,0.8,exp(-pow((dep-18.5)*1.5,2.0))*exp(-pow((Lx-3.0)*0.13,2.0))*0.3*(0.7+0.3*sp));
     // tiroid lobu (medial, homojen, yumuşak kenarlı — dikey sütun artefaktı yok)
@@ -630,27 +631,40 @@ function mm2px(xmm,ymm){ var ov=$('overlay'),P=ENG.profile; var u=(xmm-ENG.probe
 /* ======================= 3B YERLEŞİM KILAVUZU ======================= */
 function drawGuide(){ var c=$('guide'),x=c.getContext('2d'),W=240,H=170; x.clearRect(0,0,W,H);
   x.fillStyle='#070d18';x.fillRect(0,0,W,H);
+  var longAxis=(Math.abs(ENG.probe.rot)>Math.PI/4);   // 90° uzun eksen modu
   // yan görünüm: cilt yüzeyi, prob, kesit yelpazesi, dış iğne şaftı
   var skinY=44, cx=W*0.5+ENG.probe.x*1.4;
   // doku bloğu
   var g=x.createLinearGradient(0,skinY,0,H); g.addColorStop(0,'#1a2740');g.addColorStop(1,'#0c1322'); x.fillStyle=g; x.fillRect(0,skinY,W,H-skinY);
   // cilt çizgisi
   x.strokeStyle='#4f6782';x.lineWidth=2;x.beginPath();x.moveTo(0,skinY);x.lineTo(W,skinY);x.stroke();
-  // prob
-  x.fillStyle='#2a3a52';x.fillRect(cx-26,skinY-14,52,14); x.fillStyle='#6fa3c8';x.fillRect(cx-24,skinY-3,48,3);
-  // ultrason kesit yelpazesi (yarı saydam)
+  // prob — uzun eksende footprint 90° döner: kısa eksende geniş (52), uzun eksende dar-uzun profil
+  var pw=longAxis?16:52, pdepthHint=longAxis?'uzun':'kısa';
+  x.fillStyle='#2a3a52';x.fillRect(cx-pw/2,skinY-14,pw,14); x.fillStyle='#6fa3c8';x.fillRect(cx-pw/2+2,skinY-3,pw-4,3);
+  // ultrason kesit yelpazesi/düzlemi — uzun eksende düzlem de 90° döner (dar dik dilim)
   x.save();x.globalAlpha=0.16;x.fillStyle='#6fa3c8';x.beginPath();x.moveTo(cx,skinY);
-  var sp=ENG.profile.sector?36:20; x.lineTo(cx-sp,H);x.lineTo(cx+sp,H);x.closePath();x.fill();x.restore();
+  var sp=longAxis?10:(ENG.profile.sector?36:20); x.lineTo(cx-sp,H);x.lineTo(cx+sp,H);x.closePath();x.fill();x.restore();
   // SPOILER kuralı: öğrenci/sınav → doku altı yapılar gizli
   var reveal=(ENG.level==='resident'&&!ENG.examMode);
   if(reveal){ (ENG.anat.vessels||[]).forEach(function(v){ var vy=skinY+v.c[1]*1.5, vx=cx+v.c[0]*1.4, rr=v.r*1.4*(v._open==null?1:v._open);
-      x.fillStyle=(v.type==='artery')?'rgba(196,86,95,.5)':'rgba(111,163,200,.5)'; x.beginPath();x.ellipse(vx,vy,rr, v.type==='vein'?rr*(0.4+0.6*(v._open==null?1:v._open)):rr,0,0,TAU);x.fill(); }); }
+      x.fillStyle=(v.type==='artery')?'rgba(196,86,95,.5)':'rgba(111,163,200,.5)';
+      if(longAxis){ // uzun eksen: damar boyuna tüp (yatay bant) olarak görünür
+        var half=rr*(v.type==='vein'?(0.4+0.6*(v._open==null?1:v._open)):1); x.fillRect(8,vy-half, W-16, half*2);
+        x.fillStyle=(v.type==='artery')?'rgba(196,86,95,.25)':'rgba(111,163,200,.25)'; x.fillRect(8,vy-half-1,W-16,1); }
+      else { x.beginPath();x.ellipse(vx,vy,rr, v.type==='vein'?rr*(0.4+0.6*(v._open==null?1:v._open)):rr,0,0,TAU);x.fill(); } }); }
+  // footprint pusulası (sağ-üst): prob çubuğu vs damar ekseni — modlar arası 90° döner
+  var fx=W-34, fy=16;
+  x.strokeStyle='#8fb8d8';x.lineWidth=2.4;x.beginPath();  // prob
+  if(longAxis){ x.moveTo(fx-12,fy);x.lineTo(fx+12,fy); } else { x.moveTo(fx,fy-10);x.lineTo(fx,fy+10); } x.stroke();
+  x.strokeStyle='rgba(196,120,120,.85)';x.lineWidth=2;x.setLineDash([3,2]);x.beginPath(); // damar ekseni (hep yatay)
+  x.moveTo(fx-14,fy+13);x.lineTo(fx+14,fy+13);x.stroke();x.setLineDash([]);
+  x.fillStyle='#6c7889';x.font='7.5px monospace';x.fillText(longAxis?'prob ∥ damar':'prob ⟂ damar',fx-26,fy+24);
   // dış iğne şaftı (deri üstü her zaman görünür; deri altı gerçek uç öğrenci modunda gizli)
   if(ENG.needle.active){ var E=needleEntry(), d=needleDir();
     var ex=cx+E[0]*1.4, ey=skinY; x.strokeStyle='#d9a441';x.lineWidth=2.4;x.beginPath();x.moveTo(ex-d[0]*40,ey-d[1]*40);x.lineTo(ex,ey);x.stroke();
     if(reveal){ var T=needleTip(); x.strokeStyle='#f0c060';x.beginPath();x.moveTo(ex,ey);x.lineTo(cx+T[0]*1.4,skinY+T[1]*1.5);x.stroke();
       x.fillStyle='#fff';x.beginPath();x.arc(cx+T[0]*1.4,skinY+T[1]*1.5,2.5,0,TAU);x.fill(); } }
-  $('guideLbl').textContent=reveal?'3B Kılavuz · KEŞFET (şeffaf)':'3B Kılavuz · yüzey (doku altı gizli)';
+  $('guideLbl').textContent=(longAxis?'Uzun Eksen (90°)':'Kısa Eksen')+' · '+(reveal?'KEŞFET':'yüzey');
 }
 
 /* ======================= M-MOD ÇİZİM ======================= */
@@ -1019,6 +1033,8 @@ function reportChain(dx,score,nFlags){ try{ if(!window.__chainS)return; window._
 /* ======================= TEST API (window.USG) ======================= */
 window.USG={
   loadProfile:function(k){ loadProfile(k); return ENG.prof; },
+  setLevel:function(l){ ENG.level=l; ENG.examMode=(l==='exam'); if(l==='exam')ENG.level='student'; return ENG.level; },
+  redrawGuide:function(){ drawGuide(); return {longAxis:(Math.abs(ENG.probe.rot)>Math.PI/4), label:$('guideLbl').textContent}; },
   setProbe:function(o){ Object.assign(ENG.probe,o); if(o.tiltDeg!=null)ENG.probe.tilt=o.tiltDeg*Math.PI/180; if(o.rotDeg!=null)ENG.probe.rot=o.rotDeg*Math.PI/180; return ENG.probe; },
   rotateProbe:function(deg){ ENG.probe.rot=deg*Math.PI/180; return deg; },
   setNeedle:function(o){ Object.assign(ENG.needle,o); ENG.needle.active=true; return ENG.needle; },
