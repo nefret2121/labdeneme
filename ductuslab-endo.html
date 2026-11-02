@@ -310,8 +310,8 @@ function gz(k){return Z0 + (k+0.5)*VSZ}       // z from Z0 upward (cube height 1
 // Use Z0=-11.9 so top = -11.9+12.8= +0.9 ... not enough for crown. Instead make voxel field
 // cover the CLINICALLY carved region: z in [-13.4 .. -0.6]? no. Keep carving/X-ray region to
 // crown+chamber+upper roots: shift so cube covers z in [-9.3 .. +3.5] (chamber+roof+furcation+upper canals).
-const ZBOT=-9.3;                              // cube bottom
-function gzc(k){return ZBOT + (k+0.5)*VSZ}    // true z accessor (covers -9.3..+3.5)
+const ZBOT=-5.4;                              // cube bottom — covers z −5.4..+7.4 (FULL crown cusps + chamber + furcation + upper roots)
+function gzc(k){return ZBOT + (k+0.5)*VSZ}    // true z accessor
 
 const MID={VOID:0,ENAMEL:1,DENTIN:2,CALC:3,FLOOR:4,PERIO:6};
 // density (attenuation μ, relative) per material for Beer–Lambert
@@ -322,26 +322,35 @@ let caseDef=null, curCase='E1';
 let carvedVox=0, perforated=false, canalConnectivityRevision=0, floorExposed=false;
 let roofRemoved=false;
 
-// crown/root solid envelope (coarse analytic, matches Blender shell proportions)
+// occlusal top-surface height field (ported from the Blender cusp sculpt) — gives the
+// voxel crown real cusps + fossa + grooves + oblique ridge so the carved surface shows anatomy.
+const _CUSPS=[[2.5,2.3,2.05,0.74],[2.65,-2.5,1.7,0.72],[-2.5,2.55,2.25,0.80],[-2.95,-2.5,1.5,0.70]];
+const _GROOVES=[[0.2,0.15,3.7,0.0,1.0,0.28],[0.2,0.15,-2.7,-2.5,0.95,0.28],[0.2,0.15,0.1,3.5,0.85,0.26],[0.2,0.15,-3.4,0.1,0.8,0.26]];
+function _segDist(px,py,x0,y0,x1,y1){const dx=x1-x0,dy=y1-y0,L2=dx*dx+dy*dy;let t=L2?Math.max(0,Math.min(1,((px-x0)*dx+(py-y0)*dy)/L2)):0;return Math.hypot(px-(x0+t*dx),py-(y0+t*dy));}
+function occlusalZ(x,y){
+  let h=0; for(const c of _CUSPS) h+=c[2]*Math.exp(-((x-c[0])**2+(y-c[1])**2)/(2*c[3]*c[3]));
+  const fossa=1.15*Math.exp(-((x-0.2)**2+(y-0.15)**2)/(2*0.55*0.55));
+  let gr=0; for(const g of _GROOVES){const d=_segDist(x,y,g[0],g[1],g[2],g[3]);gr+=g[4]*Math.exp(-(d*d)/(2*g[5]*g[5]));}
+  const dob=_segDist(x,y,-2.2,2.2,2.3,-2.1); const obl=0.8*Math.exp(-(dob*dob)/(2*0.55*0.55));
+  return Math.max(4.15, 5.05+h-fossa-gr+obl);
+}
+// crown/root solid envelope (matches Blender shell proportions, now with cusped top surface)
 function toothSolid(x,y,z){
-  // crown z in [0,7.2]: squared-round envelope radius ~ (4.8 x, 4.4 y) tapering to occlusal
-  if(z>=-0.2 && z<=7.3){
+  if(z>=-0.2 && z<=7.5){
     const t=clamp(z/7.3,0,1);
     const rx=4.9-1.4*t, ry=4.5-1.3*t;
     const e=Math.pow(Math.abs(x)/rx,2.3)+Math.pow(Math.abs(y)/ry,2.3);
-    return e<=1.0;
+    if(e>1.0) return false;
+    return z <= occlusalZ(x,y);            // top follows the cusp/fossa/groove height field
   }
-  // roots z<0: three tapered tubes
   if(z<-0.2){
     const tt=clamp((-z)/11.5,0,1);
     const rr=1.5-1.15*tt;
-    const roots=[[2.7,2.1,1.1],[2.9,-2.3,1.0],[-3.2,0.1,-1.4]]; // apex x,y + curve dir
+    const roots=[[2.7,2.1,1.1],[2.9,-2.3,1.0],[-3.2,0.1,-1.4]];
     for(const r of roots){
-      const cx=r[0]*(tt)+0.0, cy=r[1]*(tt);
       const px=r[0]*tt + r[2]*Math.sin(tt*Math.PI), py=r[1]*tt;
       if(Math.hypot(x-px,y-py)<rr) return true;
     }
-    // trunk near cervix
     if(z>-1.6){ const e=Math.pow(Math.abs(x)/3.0,2.2)+Math.pow(Math.abs(y)/2.8,2.2); if(e<=1.0) return true; }
   }
   return false;
@@ -453,13 +462,47 @@ function relShift(cid,a,b,thetaDeg){
 /* ---------------- Beer–Lambert periapical X-ray (ray-march the voxel field) ---------------- */
 const XW=252, XH=300;
 let xrayTheta=0;
+// value-noise for trabecular bone (deterministic)
+function vnoise(a,b){ let s=Math.sin(a*12.9898+b*78.233)*43758.5453; return s-Math.floor(s); }
+function trabecular(y,z){ // smooth-ish value noise
+  const sc=1.7; const fx=y*sc, fz=z*sc; const ix=Math.floor(fx),iz=Math.floor(fz),tx=fx-ix,tz=fz-iz;
+  const a=vnoise(ix,iz),b=vnoise(ix+1,iz),c=vnoise(ix,iz+1),dd=vnoise(ix+1,iz+1);
+  const u=tx*tx*(3-2*tx),w=tz*tz*(3-2*tz);
+  return (a*(1-u)+b*u)*(1-w)+(c*(1-u)+dd*u)*w;
+}
+// projected root center (y) and radius at depth z, with natural curvature (A1: not straight cones)
+function rootProj(z){ // returns array of {y,r,lam} for MB/DB/P roots
+  if(z>=0.4) return [];
+  const tt=clamp((-z)/11.5,0,1); const rr=Math.max(0.12,1.5-1.15*tt);
+  // y center with slight apical curvature
+  const mb={y:1.3+ (2.1-1.3)*tt, r:rr};
+  const db={y:-1.1+(-2.3+1.1)*tt, r:rr*0.95};
+  const p ={y:0.1, r:rr*1.1};
+  return [mb,db,p];
+}
+function boneTerm(yBase,z){
+  if(z>1.9) return 0;                       // above alveolar crest -> soft tissue/air
+  let bt=0.46 + 0.26*trabecular(yBase,z);   // trabecular sponge
+  // lamina dura (dense, bright) + PDL (lucent, dark) around each root
+  for(const rt of rootProj(z)){
+    const dr=Math.abs(yBase-rt.y);
+    if(dr>rt.r && dr<rt.r+0.22) bt-=0.55;    // PDL space (radiolucent thin line)
+    else if(dr>=rt.r+0.22 && dr<rt.r+0.5) bt+=0.9;  // lamina dura (radiopaque)
+  }
+  return Math.max(0,bt);
+}
+function analyticRootMu(x,y,z){ // lower roots below the voxel field (z < ZBOT)
+  const tt=clamp((-z)/11.5,0,1); if(tt>=1)return 0; const rr=Math.max(0.1,1.5-1.15*tt);
+  const roots=[[2.7,2.1,1.1],[2.9,-2.3,1.0],[-3.2,0.1,-1.4]];
+  for(const r of roots){ const px=r[0]*tt+r[2]*Math.sin(tt*Math.PI), py=r[1]*tt;
+    const dd=Math.hypot(x-px,y-py); if(dd<rr){ return dd<rr*0.28?0.25:1.0; } } // canal lumen lucent core
+  return 0;
+}
 function renderXray(thetaDeg, targetCanvas){
   const cv=targetCanvas||$('xrayCanvas'); const ctx=cv.getContext('2d');
   const W=cv.width, H=cv.height, img=ctx.createImageData(W,H), d=img.data;
   const th=thetaDeg*Math.PI/180, tt=Math.tan(th);
-  // sensor plane: map pixel (u along mesiodistal Y, v along vertical Z). Integrate μ along buccal->lingual (x).
-  // tube horizontal shift => sample x contributes a Y-parallax: yEff = y + (x)*tt  (SLOB sign handled via K baked)
-  const yMin=-6.2,yMax=6.2, zMin=-9.0,zMax=3.3;
+  const yMin=-6.2,yMax=6.2, zMin=-9.5,zMax=7.3;     // full crown (cusps) down to apices
   let seed=1234567;
   const rnd=()=>{ seed=(seed*1103515245+12345)&0x7fffffff; return seed/0x7fffffff; };
   for(let v=0;v<H;v++){
@@ -467,33 +510,32 @@ function renderXray(thetaDeg, targetCanvas){
     for(let u=0;u<W;u++){
       const yBase = yMin + (u/(W-1))*(yMax-yMin);
       let mu=0;
-      // march across buccolingual thickness
       for(let x=-6.0;x<=6.0;x+=0.2){
         const y = yBase - SLOB_K*x*tt*0.5;          // parallax: palatal(x<0) same dir as tube
-        const id=sampleMat(x,y,z);
-        mu += MU[id]!==undefined?MU[id]:0.02;
+        mu += (z>ZBOT) ? (MU[sampleMat(x,y,z)]??0.02) : analyticRootMu(x,y,z);
       }
-      mu*=0.2; // ds
-      // clamp metal band near cervix (z~1..2, outer) radiopaque — add from analytic clamp ring
-      if(z>0.4 && z<2.2){ const ring=Math.abs(Math.hypot(yBase,0)); if(Math.abs(yBase)>3.4 && Math.abs(yBase)<4.9) mu+=2.6; }
-      let I=Math.exp(-mu*0.52);                       // I0=1
-      I=Math.pow(I,0.9);
-      // PSF-ish: slight brighten, quantum noise fixed seed
-      let val=clamp(I*255 + (rnd()-0.5)*11, 0,255);
-      const o=(v*W+u)*4; d[o]=val*0.86; d[o+1]=val*0.93; d[o+2]=val; d[o+3]=255;
+      mu*=0.2;                                       // ds (tooth path)
+      mu += boneTerm(yBase,z);                       // alveolar bone backdrop
+      // clamp metal jaws near cervix — strongly radiopaque
+      if(z>0.4 && z<2.3 && Math.abs(yBase)>3.3 && Math.abs(yBase)<4.9) mu+=3.2;
+      // RADIOGRAPHIC BRIGHTNESS: radiopaque(high μ)=WHITE, air/pulp=BLACK
+      let R=1.0-Math.exp(-mu*0.52);
+      R=Math.pow(R,0.86);                            // film/sensor S-contrast
+      R=clamp(R*1.06-0.03,0,1);
+      let val=clamp(R*255 + (rnd()-0.5)*9, 0,255);
+      const o=(v*W+u)*4; d[o]=val*0.9; d[o+1]=val*0.95; d[o+2]=val; d[o+3]=255; // faint warm tint
     }
   }
-  // simple horizontal PSF blur
   ctx.putImageData(img,0,0);
-  ctx.save();ctx.globalAlpha=0.35;ctx.filter='blur(0.6px)';ctx.drawImage(cv,0,0);ctx.restore();ctx.filter='none';
-  // overlay files if inserted
+  // anti-alias the voxel stair-steps: two soft PSF passes
+  ctx.save();ctx.globalAlpha=0.55;ctx.filter='blur(1.0px)';ctx.drawImage(cv,0,0);ctx.globalAlpha=0.3;ctx.filter='blur(1.8px)';ctx.drawImage(cv,0,0);ctx.restore();ctx.filter='none';
   drawFilesOnXray(ctx,W,H,thetaDeg);
   return cv;
 }
 let filesInserted={}; // canalName->true (#10 K-file radiopaque)
 function drawFilesOnXray(ctx,W,H,thetaDeg){
   const th=thetaDeg*Math.PI/180, tt=Math.tan(th);
-  const yMin=-6.2,yMax=6.2,zMin=-9.0,zMax=3.3;
+  const yMin=-6.2,yMax=6.2,zMin=-9.5,zMax=7.3;
   const Y2u=y=>((y-yMin)/(yMax-yMin))*(W-1);
   const Z2v=z=>((zMax-z)/(zMax-zMin))*(H-1);
   ctx.lineWidth=1.6;ctx.strokeStyle='rgba(240,248,255,.95)';
@@ -533,14 +575,14 @@ function renderEvidence(){
 let renderer,scene,cam,toothGroup,hiddenGroup,ghostGroup,lightXenon,raycaster;
 let mag=10, panDeg=0, tiltDeg=0, ghostOn=false;
 const MAGS=[4,10,16,25];
-const matColors={1:0xeaf2f6,2:0xe0c489,3:0xefe0b4,4:0x5a4636,6:0xcf8f8f,7:0xb9c4cf,8:0x2a3340,9:0xd9c9a0};
+const matColors={1:0xeaf2f6,2:0xe0c489,3:0xefe0b4,4:0x5a4636,6:0xcf8f8f,7:0xc8d2db,8:0x1d7a5a,9:0xd9c9a0}; // id8 emerald rubber dam; id7 brighter steel clamp
 function buildMat(id){
   if(id===1) return new THREE.MeshPhysicalMaterial({color:0xf0ead9,roughness:0.28,metalness:0,transmission:0.08,thickness:0.6,ior:1.63,clearcoat:0.55,clearcoatRoughness:0.22,sheen:0.4,sheenColor:0xe9cf93,attenuationColor:0xe9cf93,attenuationDistance:3.5});
   if(id===2) return new THREE.MeshStandardMaterial({color:matColors[2],roughness:0.42,metalness:0.02});
   if(id===3) return new THREE.MeshStandardMaterial({color:matColors[3],roughness:0.5,metalness:0});
   if(id===4) return new THREE.MeshStandardMaterial({color:matColors[4],roughness:0.72,metalness:0.02});
   if(id===7) return new THREE.MeshStandardMaterial({color:matColors[7],roughness:0.3,metalness:0.85});
-  if(id===8) return new THREE.MeshStandardMaterial({color:matColors[8],roughness:0.85,metalness:0,side:THREE.DoubleSide});
+  if(id===8) return new THREE.MeshStandardMaterial({color:matColors[8],roughness:0.7,metalness:0,emissive:0x07331f,emissiveIntensity:0.5,side:THREE.DoubleSide});
   if(id===9) return new THREE.MeshStandardMaterial({color:matColors[9],roughness:0.45,metalness:0.02});
   return new THREE.MeshStandardMaterial({color:0xcccccc,roughness:0.6});
 }
@@ -652,38 +694,54 @@ let floorAnnounced2=0;
    Once drilling begins we hide the intact Blender crown and render exposed voxel faces of the
    (solid − carved − pulpspace) field, so the access opening + dark chamber floor are visible. */
 let carvedMesh=null, carveStarted=false;
+// welded + Taubin-smoothed iso-surface of the carved voxel field — NO Minecraft cubes.
 function cuberilleCrown(){
-  const S=2;                               // 0.2mm faces
+  const S=2;
   const kz0=Math.max(0,Math.floor((-0.9-ZBOT)/VSZ)), kz1=Math.min(N-S,Math.ceil((7.4-ZBOT)/VSZ));
-  const pos=[],col=[];
   const solid=(i,j,k)=>{ if(i<0||j<0||k<0||i>=N||j>=N||k>=N)return false; return FIELD[vidx(i,j,k)]>0; };
-  const matAt=(i,j,k)=>FIELD[vidx(i,j,k)];
-  const colorFor=(z,m)=>{ if(m===MID.FLOOR||z<0.45)return[0.26,0.185,0.135]; if(m===MID.ENAMEL||z>4.9)return[0.82,0.75,0.63]; if(m===MID.CALC)return[0.86,0.80,0.6]; if(m===MID.PERIO)return[0.74,0.42,0.4]; return[0.78,0.66,0.46]; };
-  const faces=[  // dir, 4 corner offsets (in voxel units *S),
-   [[ S,0,0],[[1,0,0],[1,1,0],[1,1,1],[1,0,1]]],
-   [[-S,0,0],[[0,0,0],[0,0,1],[0,1,1],[0,1,0]]],
-   [[0, S,0],[[0,1,0],[0,1,1],[1,1,1],[1,1,0]]],
-   [[0,-S,0],[[0,0,0],[1,0,0],[1,0,1],[0,0,1]]],
-   [[0,0, S],[[0,0,1],[1,0,1],[1,1,1],[0,1,1]]],
-   [[0,0,-S],[[0,0,0],[0,1,0],[1,1,0],[1,0,0]]],
+  const faces=[
+   [[ S,0,0],[[1,0,0],[1,1,0],[1,1,1],[1,0,1]]],[[-S,0,0],[[0,0,0],[0,0,1],[0,1,1],[0,1,0]]],
+   [[0, S,0],[[0,1,0],[0,1,1],[1,1,1],[1,1,0]]],[[0,-S,0],[[0,0,0],[1,0,0],[1,0,1],[0,0,1]]],
+   [[0,0, S],[[0,0,1],[1,0,1],[1,1,1],[0,1,1]]],[[0,0,-S],[[0,0,0],[0,1,0],[1,1,0],[1,0,0]]],
   ];
+  // weld vertices by quantized key
+  const vmap=new Map(), V=[], idx=[];
+  const key=(x,y,z)=>Math.round(x*50)+','+Math.round(y*50)+','+Math.round(z*50);
+  function vid(x,y,z){ const k=key(x,y,z); let id=vmap.get(k); if(id===undefined){id=V.length/3;V.push(x,y,z);vmap.set(k,id);} return id; }
   for(let k=kz0;k<=kz1;k+=S)for(let j=S;j<N-S;j+=S)for(let i=S;i<N-S;i+=S){
     if(!solid(i,j,k))continue;
-    const m=matAt(i,j,k); const z=gzc(k);
     for(const [d,cs] of faces){
-      if(solid(i+d[0],j+d[1],k+d[2]))continue;         // interior face -> skip
-      const P=cs.map(c=>[gx(i+c[0]*S), gy(j+c[1]*S), gzc(k+c[2]*S)]);
-      const cc=colorFor(z,m);
-      // two triangles
-      [[0,1,2],[0,2,3]].forEach(tr=>tr.forEach(ix=>{ pos.push(P[ix][0],P[ix][1],P[ix][2]); col.push(cc[0],cc[1],cc[2]); }));
+      if(solid(i+d[0],j+d[1],k+d[2]))continue;
+      const id4=cs.map(c=>vid(gx(i+c[0]*S), gy(j+c[1]*S), gzc(k+c[2]*S)));
+      idx.push(id4[0],id4[1],id4[2], id4[0],id4[2],id4[3]);
     }
   }
+  const nv=V.length/3;
+  // adjacency from edges
+  const adj=Array.from({length:nv},()=>new Set());
+  for(let t=0;t<idx.length;t+=3){ const a=idx[t],b=idx[t+1],c=idx[t+2]; adj[a].add(b);adj[a].add(c);adj[b].add(a);adj[b].add(c);adj[c].add(a);adj[c].add(b); }
+  // Taubin smoothing (λ=0.5, μ=-0.53) ×4 — removes stair-steps without shrinkage
+  const P=Float32Array.from(V);
+  function laplacian(f){ const out=new Float32Array(P.length);
+    for(let v=0;v<nv;v++){ let sx=0,sy=0,sz=0,n=0; adj[v].forEach(w=>{sx+=P[w*3]-P[v*3];sy+=P[w*3+1]-P[v*3+1];sz+=P[w*3+2]-P[v*3+2];n++;});
+      if(n){ out[v*3]=P[v*3]+f*sx/n; out[v*3+1]=P[v*3+1]+f*sy/n; out[v*3+2]=P[v*3+2]+f*sz/n; }
+      else { out[v*3]=P[v*3];out[v*3+1]=P[v*3+1];out[v*3+2]=P[v*3+2]; } }
+    P.set(out);
+  }
+  for(let it=0;it<4;it++){ laplacian(0.5); laplacian(-0.53); }
+  // color by final z: dark pulp floor -> yellow dentin wall (DEJ) -> white enamel rim
+  const col=new Float32Array(P.length);
+  for(let v=0;v<nv;v++){ const z=P[v*3+2]; let c;
+    if(z<0.55) c=[0.24,0.17,0.125];                 // Krasner-Rankow dark chamber floor
+    else if(z>4.6) c=[0.93,0.88,0.77];              // enamel rim (bright)
+    else { const t=clamp((z-0.55)/4.0,0,1); c=[0.80+0.1*t,0.67+0.14*t,0.46+0.22*t]; } // dentin wall, lighter toward DEJ
+    col[v*3]=c[0];col[v*3+1]=c[1];col[v*3+2]=c[2]; }
   const g=new THREE.BufferGeometry();
-  g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+  g.setAttribute('position',new THREE.Float32BufferAttribute(P,3));
   g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));
-  g.computeVertexNormals();
+  g.setIndex(idx); g.computeVertexNormals();
   if(carvedMesh){ carvedMesh.geometry.dispose(); carvedMesh.geometry=g; }
-  else{ carvedMesh=new THREE.Mesh(g,new THREE.MeshStandardMaterial({vertexColors:true,roughness:0.62,metalness:0.02})); carvedMesh.castShadow=true; carvedMesh.receiveShadow=true; toothGroup.add(carvedMesh); }
+  else{ carvedMesh=new THREE.Mesh(g,new THREE.MeshStandardMaterial({vertexColors:true,roughness:0.5,metalness:0.02})); carvedMesh.castShadow=true; carvedMesh.receiveShadow=true; toothGroup.add(carvedMesh); }
 }
 let cavityPts;
 function refreshVoxelMeshes(){
@@ -810,7 +868,8 @@ function renderXrayAng(){ const el=$('xrayAng'); el.innerHTML='';
     el.appendChild(b);}); }
 function updateSlobHint(){
   const h=$('slobHint');
-  if(curMode==='exam'){ h.innerHTML='SLOB: palatinal obje tüple <b>aynı</b> yöne, bukkal <b>ters</b> yöne kayar. MB2 lokalizasyonunu açılı filmle doğrula.'; return; }
+  if(curMode==='exam'){ // DUS/exam: NO numeric spoiler, NO SLOB-direction giveaway — student interprets the two films
+    h.innerHTML='0° ortogonal ve ±20° açılı filmleri <b>kendin karşılaştır</b>; kanal gölgelerinin göreli kaymasını yorumlayıp MB2 lokalizasyonuna karar ver.'; return; }
   if(caseDef.mb2==='absent'){ h.innerHTML='Bu varyantta açılı filmde ek palatinal kanal gölgesi <b>ayrışmıyor</b> → MB2 yok lehine.'; return; }
   const s=relShift(curCase,'MB2','MB1',xrayTheta);
   h.innerHTML=`SLOB · ${xrayTheta>0?'+':''}${xrayTheta}°: MB2 (palatinal) göreli kayma <b>${s>0?'+':''}${s.toFixed(2)} mm</b> ${Math.abs(s)<0.2?'(0°: MB1 ile çakışık)':(s>0?'→ mezial (tüple aynı = palatinal ✓)':'→ distal')}`;
