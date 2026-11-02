@@ -1128,6 +1128,21 @@ window.LAP={
   _eng:ENG
 };
 window.__eng=ENG;
+// audit-all.mjs Kapı 6 klinik öz-test kancası (yan etkisiz invariant kontrolü)
+window.__selfTest=function(){ var checks=[]; function c(n,ok){ checks.push({n:n,ok:!!ok}); }
+  try{
+    var d0=opticDir(0), d180=opticDir(180*DEG); var dot=d0.x*d180.x+d0.y*d180.y+d0.z*d180.z; var ang=Math.acos(Math.max(-1,Math.min(1,dot)))/DEG;
+    c('optic 60° çift koni', Math.abs(ang-60)<2.5);
+    loadCase(1); LAP.setTraction(-0.8,0.8); c('V1 çadırlaşma açısı <22°', cdChdAngle()<22);
+    LAP.setTraction(0.8,-0.8); c('V1 doğru traksiyon açı >50°', cdChdAngle()>50);
+    loadCase(1); LAP.clip('cbd','patient'); LAP.cut('cbd'); c('CBD kesi → Strasberg E', injuryTopology().some(function(i){return i.grade==='E';}));
+    loadCase(4); LAP.startBailout(); LAP.bailoutUncertainty(true); LAP.bailoutStone(); LAP.bailoutTechnique('fenestrating'); var inc=LAP.bailoutFinish(false); c('Fenestre drensiz tamamlanamaz', inc.ok===false);
+    LAP.bailoutFinish(true); LAP.declare({}); c('Tam subtotal → skor ≥75', LAP.score()>=75);
+    loadCase(0); c('3 trokar aleti mevcut', (function(){var i=LAP.instruments(); return i.fundusGrasper&&i.hartmannGrasper&&i.activeInstrument;})());
+  }catch(e){ return {hook:true, pass:false, error:String(e).slice(0,140), checks:checks}; }
+  var pass=checks.every(function(x){return x.ok;});
+  return {hook:true, module:'LapChole', pass:pass, total:checks.length, failed:checks.filter(function(x){return !x.ok;}).map(function(x){return x.n;}), checks:checks};
+};
 /* ======================= INIT ======================= */
 function init(){ initGL(); buildStepper&&buildStepper(); buildControls&&buildControls(); loadCase(0); bindUI&&bindUI(); buildP2Bar&&buildP2Bar(); requestAnimationFrame(loop); }
 let _frame=0;

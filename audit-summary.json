@@ -1,0 +1,563 @@
+{
+  "generatedAt": "2026-11-02T11:57:14.590Z",
+  "threeLocal": true,
+  "pages": 17,
+  "viewports": [
+    {
+      "w": 1920,
+      "h": 1080
+    },
+    {
+      "w": 1366,
+      "h": 768
+    },
+    {
+      "w": 1180,
+      "h": 820
+    }
+  ],
+  "gates": {
+    "gate1_boot_console": {
+      "pass": true,
+      "fails": []
+    },
+    "gate2_zero_external_asset": {
+      "pass": true,
+      "fails": []
+    },
+    "gate3_link_integrity": {
+      "pass": true,
+      "checked": 35,
+      "skipped": 1,
+      "broken": []
+    },
+    "gate4_responsive": {
+      "pass": true,
+      "fails": []
+    },
+    "gate5_truth_leak_lifecycle": {
+      "pass": true,
+      "fails": []
+    },
+    "gate6_clinical_selftests": {
+      "hooks": 2,
+      "pass": true,
+      "detail": [
+        {
+          "page": "index.html",
+          "pass": null,
+          "selfTest": {
+            "hook": false
+          }
+        },
+        {
+          "page": "ductuslab-suite.html",
+          "pass": null,
+          "selfTest": {
+            "hook": false
+          }
+        },
+        {
+          "page": "ductuslab-case-chain.html",
+          "pass": null,
+          "selfTest": {
+            "hook": false
+          }
+        },
+        {
+          "page": "ductuslab-airway.html",
+          "pass": null,
+          "selfTest": {
+            "hook": false
+          }
+        },
+        {
+          "page": "ductuslab-cathlab.html",
+          "pass": null,
+          "selfTest": {
+            "hook": false
+          }
+        },
+        {
+          "page": "ductuslab-lapchole.html",
+          "pass": true,
+          "selfTest": {
+            "hook": true,
+            "module": "LapChole",
+            "pass": true,
+            "total": 7,
+            "failed": [],
+            "checks": [
+              {
+                "n": "optic 60° çift koni",
+                "ok": true
+              },
+              {
+                "n": "V1 çadırlaşma açısı <22°",
+                "ok": true
+              },
+              {
+                "n": "V1 doğru traksiyon açı >50°",
+                "ok": true
+              },
+              {
+                "n": "CBD kesi → Strasberg E",
+                "ok": true
+              },
+              {
+                "n": "Fenestre drensiz tamamlanamaz",
+                "ok": true
+              },
+              {
+                "n": "Tam subtotal → skor ≥75",
+                "ok": true
+              },
+              {
+                "n": "3 trokar aleti mevcut",
+                "ok": true
+              }
+            ]
+          }
+        },
+        {
+          "page": "ductuslab-neurosurgery.html",
+          "pass": null,
+          "selfTest": {
+            "hook": false
+          }
+        },
+        {
+          "page": "ductuslab-usg-access.html",
+          "pass": true,
+          "selfTest": {
+            "hook": true,
+            "module": "USG-Access",
+            "pass": true,
+            "total": 5,
+            "failed": [],
+            "checks": [
+              {
+                "n": "ven bası ile kollabe, arter açık",
+                "ok": true
+              },
+              {
+                "n": "Doppler 90° açı tuzağı (hız≈0 < 30°)",
+                "ok": true
+              },
+              {
+                "n": "uzun eksen modu algılanıyor",
+                "ok": true
+              },
+              {
+                "n": "kısa eksen modu",
+                "ok": true
+              },
+              {
+                "n": "şaft-uç illüzyon kurulumu",
+                "ok": true
+              }
+            ]
+          }
+        },
+        {
+          "page": "acil/index.html",
+          "pass": null,
+          "selfTest": {
+            "hook": false
+          }
+        },
+        {
+          "page": "ekg/index.html",
+          "pass": null,
+          "selfTest": {
+            "hook": false
+          }
+        },
+        {
+          "page": "eko/index.html",
+          "pass": null,
+          "selfTest": {
+            "hook": false
+          }
+        },
+        {
+          "page": "fnd/index.html",
+          "pass": null,
+          "selfTest": {
+            "hook": false
+          }
+        },
+        {
+          "page": "ks/index.html",
+          "pass": null,
+          "selfTest": {
+            "hook": false
+          }
+        },
+        {
+          "page": "nro/index.html",
+          "pass": null,
+          "selfTest": {
+            "hook": false
+          }
+        },
+        {
+          "page": "oto/index.html",
+          "pass": null,
+          "selfTest": {
+            "hook": false
+          }
+        },
+        {
+          "page": "sft/index.html",
+          "pass": null,
+          "selfTest": {
+            "hook": false
+          }
+        },
+        {
+          "page": "ventilator/index.html",
+          "pass": null,
+          "selfTest": {
+            "hook": false
+          }
+        }
+      ]
+    }
+  },
+  "perPage": {
+    "index.html": {
+      "page": "index.html",
+      "pageerrors": [],
+      "consoleErrors": [],
+      "externalAssets": [],
+      "disallowedReq": [],
+      "overflow": [],
+      "truthLeak": [],
+      "selfTest": {
+        "hook": false
+      },
+      "lifecycle": {
+        "supported": false,
+        "advanced": null
+      }
+    },
+    "ductuslab-suite.html": {
+      "page": "ductuslab-suite.html",
+      "pageerrors": [],
+      "consoleErrors": [],
+      "externalAssets": [],
+      "disallowedReq": [],
+      "overflow": [],
+      "truthLeak": [],
+      "selfTest": {
+        "hook": false
+      },
+      "lifecycle": {
+        "supported": false,
+        "advanced": null
+      }
+    },
+    "ductuslab-case-chain.html": {
+      "page": "ductuslab-case-chain.html",
+      "pageerrors": [],
+      "consoleErrors": [],
+      "externalAssets": [],
+      "disallowedReq": [],
+      "overflow": [],
+      "truthLeak": [],
+      "selfTest": {
+        "hook": false
+      },
+      "lifecycle": {
+        "supported": false,
+        "advanced": null
+      }
+    },
+    "ductuslab-airway.html": {
+      "page": "ductuslab-airway.html",
+      "pageerrors": [],
+      "consoleErrors": [],
+      "externalAssets": [],
+      "disallowedReq": [],
+      "overflow": [],
+      "truthLeak": [],
+      "selfTest": {
+        "hook": false
+      },
+      "lifecycle": {
+        "supported": true,
+        "advanced": true
+      }
+    },
+    "ductuslab-cathlab.html": {
+      "page": "ductuslab-cathlab.html",
+      "pageerrors": [],
+      "consoleErrors": [],
+      "externalAssets": [],
+      "disallowedReq": [],
+      "overflow": [],
+      "truthLeak": [],
+      "selfTest": {
+        "hook": false
+      },
+      "lifecycle": {
+        "supported": false,
+        "advanced": null
+      }
+    },
+    "ductuslab-lapchole.html": {
+      "page": "ductuslab-lapchole.html",
+      "pageerrors": [],
+      "consoleErrors": [],
+      "externalAssets": [],
+      "disallowedReq": [],
+      "overflow": [],
+      "truthLeak": [],
+      "selfTest": {
+        "hook": true,
+        "module": "LapChole",
+        "pass": true,
+        "total": 7,
+        "failed": [],
+        "checks": [
+          {
+            "n": "optic 60° çift koni",
+            "ok": true
+          },
+          {
+            "n": "V1 çadırlaşma açısı <22°",
+            "ok": true
+          },
+          {
+            "n": "V1 doğru traksiyon açı >50°",
+            "ok": true
+          },
+          {
+            "n": "CBD kesi → Strasberg E",
+            "ok": true
+          },
+          {
+            "n": "Fenestre drensiz tamamlanamaz",
+            "ok": true
+          },
+          {
+            "n": "Tam subtotal → skor ≥75",
+            "ok": true
+          },
+          {
+            "n": "3 trokar aleti mevcut",
+            "ok": true
+          }
+        ]
+      },
+      "lifecycle": {
+        "supported": true,
+        "advanced": true
+      }
+    },
+    "ductuslab-neurosurgery.html": {
+      "page": "ductuslab-neurosurgery.html",
+      "pageerrors": [],
+      "consoleErrors": [],
+      "externalAssets": [],
+      "disallowedReq": [],
+      "overflow": [],
+      "truthLeak": [],
+      "selfTest": {
+        "hook": false
+      },
+      "lifecycle": {
+        "supported": false,
+        "advanced": null
+      }
+    },
+    "ductuslab-usg-access.html": {
+      "page": "ductuslab-usg-access.html",
+      "pageerrors": [],
+      "consoleErrors": [],
+      "externalAssets": [],
+      "disallowedReq": [],
+      "overflow": [],
+      "truthLeak": [],
+      "selfTest": {
+        "hook": true,
+        "module": "USG-Access",
+        "pass": true,
+        "total": 5,
+        "failed": [],
+        "checks": [
+          {
+            "n": "ven bası ile kollabe, arter açık",
+            "ok": true
+          },
+          {
+            "n": "Doppler 90° açı tuzağı (hız≈0 < 30°)",
+            "ok": true
+          },
+          {
+            "n": "uzun eksen modu algılanıyor",
+            "ok": true
+          },
+          {
+            "n": "kısa eksen modu",
+            "ok": true
+          },
+          {
+            "n": "şaft-uç illüzyon kurulumu",
+            "ok": true
+          }
+        ]
+      },
+      "lifecycle": {
+        "supported": false,
+        "advanced": null
+      }
+    },
+    "acil/index.html": {
+      "page": "acil/index.html",
+      "pageerrors": [],
+      "consoleErrors": [],
+      "externalAssets": [],
+      "disallowedReq": [],
+      "overflow": [],
+      "truthLeak": [],
+      "selfTest": {
+        "hook": false
+      },
+      "lifecycle": {
+        "supported": false,
+        "advanced": null
+      }
+    },
+    "ekg/index.html": {
+      "page": "ekg/index.html",
+      "pageerrors": [],
+      "consoleErrors": [],
+      "externalAssets": [],
+      "disallowedReq": [],
+      "overflow": [],
+      "truthLeak": [],
+      "selfTest": {
+        "hook": false
+      },
+      "lifecycle": {
+        "supported": false,
+        "advanced": null
+      }
+    },
+    "eko/index.html": {
+      "page": "eko/index.html",
+      "pageerrors": [],
+      "consoleErrors": [],
+      "externalAssets": [],
+      "disallowedReq": [],
+      "overflow": [],
+      "truthLeak": [],
+      "selfTest": {
+        "hook": false
+      },
+      "lifecycle": {
+        "supported": false,
+        "advanced": null
+      }
+    },
+    "fnd/index.html": {
+      "page": "fnd/index.html",
+      "pageerrors": [],
+      "consoleErrors": [],
+      "externalAssets": [],
+      "disallowedReq": [],
+      "overflow": [],
+      "truthLeak": [],
+      "selfTest": {
+        "hook": false
+      },
+      "lifecycle": {
+        "supported": false,
+        "advanced": null
+      }
+    },
+    "ks/index.html": {
+      "page": "ks/index.html",
+      "pageerrors": [],
+      "consoleErrors": [],
+      "externalAssets": [],
+      "disallowedReq": [],
+      "overflow": [],
+      "truthLeak": [],
+      "selfTest": {
+        "hook": false
+      },
+      "lifecycle": {
+        "supported": false,
+        "advanced": null
+      }
+    },
+    "nro/index.html": {
+      "page": "nro/index.html",
+      "pageerrors": [],
+      "consoleErrors": [],
+      "externalAssets": [],
+      "disallowedReq": [],
+      "overflow": [],
+      "truthLeak": [],
+      "selfTest": {
+        "hook": false
+      },
+      "lifecycle": {
+        "supported": false,
+        "advanced": null
+      }
+    },
+    "oto/index.html": {
+      "page": "oto/index.html",
+      "pageerrors": [],
+      "consoleErrors": [],
+      "externalAssets": [],
+      "disallowedReq": [],
+      "overflow": [],
+      "truthLeak": [],
+      "selfTest": {
+        "hook": false
+      },
+      "lifecycle": {
+        "supported": false,
+        "advanced": null
+      }
+    },
+    "sft/index.html": {
+      "page": "sft/index.html",
+      "pageerrors": [],
+      "consoleErrors": [],
+      "externalAssets": [],
+      "disallowedReq": [],
+      "overflow": [],
+      "truthLeak": [],
+      "selfTest": {
+        "hook": false
+      },
+      "lifecycle": {
+        "supported": false,
+        "advanced": null
+      }
+    },
+    "ventilator/index.html": {
+      "page": "ventilator/index.html",
+      "pageerrors": [],
+      "consoleErrors": [],
+      "externalAssets": [],
+      "disallowedReq": [],
+      "overflow": [],
+      "truthLeak": [],
+      "selfTest": {
+        "hook": false
+      },
+      "lifecycle": {
+        "supported": false,
+        "advanced": null
+      }
+    }
+  },
+  "overallPass": true
+}

@@ -1068,6 +1068,21 @@ window.USG={
   step:function(){ return ENG.step; }, profileKey:function(){ return ENG.prof; },
   _eng:ENG
 };
+// audit-all.mjs Kapı 6 klinik öz-test kancası
+window.__selfTest=function(){ var checks=[]; function c(n,ok){ checks.push({n:n,ok:!!ok}); }
+  try{
+    USG.loadProfile('ijv'); USG.setShock(false); USG.setPress(45);
+    var vn=USG.vesselState('Juguler'), ar=USG.vesselState('Karotis');
+    c('ven bası ile kollabe, arter açık', vn && ar && vn.openFrac < ar.openFrac);
+    var d90=USG.dopplerVelocity('Karotis',90), d30=USG.dopplerVelocity('Karotis',30);
+    c('Doppler 90° açı tuzağı (hız≈0 < 30°)', Math.abs(d90) < Math.abs(d30));
+    USG.setProbe({rotDeg:90}); c('uzun eksen modu algılanıyor', USG.redrawGuide().longAxis===true);
+    USG.setProbe({rotDeg:0}); c('kısa eksen modu', USG.redrawGuide().longAxis===false);
+    c('şaft-uç illüzyon kurulumu', !!USG.setupIllusion());
+  }catch(e){ return {hook:true, pass:false, error:String(e).slice(0,140), checks:checks}; }
+  var pass=checks.every(function(x){return x.ok;});
+  return {hook:true, module:'USG-Access', pass:pass, total:checks.length, failed:checks.filter(function(x){return !x.ok;}).map(function(x){return x.n;}), checks:checks};
+};
 
 /* ======================= INIT ======================= */
 function init(){ initGL(); buildStepper(); buildControls(); buildDxSelect(); loadProfile('ijv'); bindUI(); requestAnimationFrame(loop); }
