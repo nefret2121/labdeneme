@@ -17,7 +17,10 @@
   // ---- FPS / sekme-gizlenmesi bağımsız monoton duvar saati ----
   function nowMs() { return Date.now(); }
 
-  var AREAS = ['coronary', 'rhythm', 'hemodynamic', 'respiratory', 'neuro'];
+  // v1.1 alanları + v1.2 girişimsel/revizyon alanları (geriye %100 uyumlu)
+  var AREAS = ['coronary', 'rhythm', 'hemodynamic', 'respiratory', 'neuro',
+               'airway', 'vascularAccess', 'pleural', 'pericardial', 'biliary', 'device'];
+  var PLACEMENT_AREAS = ['airway', 'vascularAccess', 'device'];  // placementRevision++ → önceki yerleşim kanıtı TARİHSEL
   var SCHEMA_VERSION = 1;
 
   function deepClone(o) { return JSON.parse(JSON.stringify(o)); }
@@ -44,7 +47,22 @@
     'head_tilt':           ['cn4_vertical', 'bielschowsky'],
     'cover_uncover':       ['tropia', 'phoria', 'diplopia_direction'],
     'confrontation':       ['visual_field', 'hemianopia', 'quadrantanopia'],
-    'lift_eyelid':         ['ptosis_underlying_pupil', 'eye_position_under_lid']
+    'lift_eyelid':         ['ptosis_underlying_pupil', 'eye_position_under_lid'],
+    // --- v1.2 girişimsel modaliteler (USG-Access / Airway / LapChole) ---
+    // Lokal boyun B-Mod tel görüntüsü: lümen-içi teli LOKAL doğrular, kateter UCU pozisyonunu TEK BAŞINA doğrulamaz
+    'neck_bmode':          ['local_wire_in_vein', 'vessel_patency_local', 'needle_tip_local'],
+    'post_access_us':      ['local_wire_in_vein', 'vessel_patency_local'],
+    // Kateter ucu/santral konum ancak floroskopi/röntgen ile doğrulanır
+    'fluoroscopy':         ['central_catheter_tip_position', 'wire_course', 'device_position'],
+    'chest_xray':          ['central_catheter_tip_position', 'line_position', 'pneumothorax', 'ett_depth'],
+    'mmode_pleura':        ['pneumothorax', 'lung_sliding'],
+    // Airway: ETT yerleşimi
+    'capnography':         ['ett_in_trachea', 'ventilation_adequacy'],
+    'direct_laryngoscopy': ['cords_visualized', 'ett_through_cords'],
+    // LapChole: ICG kolanjiyografi TEK BAŞINA CVS/kistik plağı doğrulamaz; kritik görüş diseksiyon ister
+    'icg_cholangiography': ['cystic_duct_patency', 'biliary_tree_continuity', 'biliary_leak'],
+    'lap_dissection':      ['cystic_plate_exposed', 'hepatocystic_cleared'],
+    'critical_view':       ['cvs_complete', 'cystic_plate_exposed', 'two_structures_only', 'hepatocystic_cleared']
   };
 
   function canAnswerClaim(modality, claim) {
@@ -70,7 +88,8 @@
       simRate: seed.simRate || 1,
       demographics: Object.assign({ name: 'Anonim Hasta', age: 58, sex: 'E' }, seed.demographics || {}),
       vitals: Object.assign({ hr: 78, sbp: 124, dbp: 76, map: 92, spo2: 97, rr: 16 }, seed.vitals || {}),
-      revisions: { coronary: 0, rhythm: 0, hemodynamic: 0, respiratory: 0, neuro: 0 },
+      revisions: { coronary: 0, rhythm: 0, hemodynamic: 0, respiratory: 0, neuro: 0,
+        airway: 0, vascularAccess: 0, pleural: 0, pericardial: 0, biliary: 0, device: 0 },
       // gözlenebilir patoloji/çizim parametreleri (yayınlanır)
       pathology: Object.assign({}, seed.pathology || {}),
       projection: Object.assign({}, seed.projection || {}),
@@ -141,7 +160,29 @@
     SetVitals: function (st, p) { Object.assign(st.vitals, p || {}); bump(st, ['hemodynamic']); },
     MarkIntervention: function (st, p) { bump(st, (p && p.areas) || ['coronary']); st.echoContext.clipEra = 'current'; st.echoContext.lastInterventionSimMs = simNow(st); },
     // --- KS zinciri: nörolojik müdahale işareti (ör. anevrizma klipajı sonrası) ---
-    MarkNeuroIntervention: function (st, p) { bump(st, ['neuro']); if (p && p.pathology) Object.assign(st.pathology, p.pathology); }
+    MarkNeuroIntervention: function (st, p) { bump(st, ['neuro']); if (p && p.pathology) Object.assign(st.pathology, p.pathology); },
+    // =========== v1.2 girişimsel komutlar (truth GİZLİ, projection yayınlanır) ===========
+    // Havayolu yerleşimi: gizli gerçek truth.airway.truePlacement; gözlenebilir iddia projection.airway
+    SetAirwayPlacement: function (st, p) { p = p || {};
+      st.truth.airway = Object.assign({}, st.truth.airway, { truePlacement: p.truePlacement });   // GİZLİ
+      st.projection.airway = Object.assign({}, st.projection.airway, { claimedPlacement: p.claimed || null, verifiedBy: p.verifiedBy || null });
+      bump(st, ['airway']); },
+    // Vasküler erişim: gizli trueLumen (ven/arter); gözlenebilir claimedLumen
+    SetVascularAccess: function (st, p) { p = p || {};
+      st.truth.vascularAccess = Object.assign({}, st.truth.vascularAccess, { trueLumen: p.trueLumen, site: p.site });   // GİZLİ
+      st.projection.vascularAccess = Object.assign({}, st.projection.vascularAccess, { claimedLumen: p.claimed || null, site: p.site || null });
+      bump(st, ['vascularAccess']); },
+    // Biliyer yaralanma: gizli injuredStructures (Strasberg); gözlenebilir yalnız kanıt-destekli bulgu
+    MarkBiliaryInjury: function (st, p) { p = p || {};
+      var prev = (st.truth.biliary && st.truth.biliary.injuredStructures) || [];
+      st.truth.biliary = Object.assign({}, st.truth.biliary, { injuredStructures: prev.concat(p.structures || []), grade: p.grade || (st.truth.biliary && st.truth.biliary.grade) });   // GİZLİ
+      bump(st, ['biliary']); },
+    MarkPleural: function (st, p) { if (p && p.pathology) Object.assign(st.pathology, p.pathology); bump(st, ['pleural', 'respiratory']); },
+    MarkPericardial: function (st, p) { if (p && p.pathology) Object.assign(st.pathology, p.pathology); if (p && p.drainMl != null) st.projection.pericardialDrainMl = p.drainMl; bump(st, ['pericardial', 'hemodynamic']); },
+    // Cihaz/tel/ETT yeniden konumlandırma → placementRevision++ : önceki yerleşim kanıtı TARİHSEL olur
+    RepositionDevice: function (st, p) { p = p || {}; var areas = p.areas || ['device', 'vascularAccess']; bump(st, areas);
+      st.projection.lastReposition = { areas: areas, atSimMs: simNow(st) }; },
+    SetProjection: function (st, p) { Object.assign(st.projection, p || {}); if (p && p.bump) bump(st, p.bump); }
   };
 
   function bump(st, areas) { (areas || []).forEach(function (a) { if (st.revisions[a] != null) st.revisions[a]++; }); }
@@ -169,7 +210,11 @@
       this.state = existing.state;
       this._evidence = existing.evidence || [];
       if (!this.state.truth) this.state.truth = (opts.seed && opts.seed.truth) ? deepClone(opts.seed.truth) : {};
+      if (!this.state.projection) this.state.projection = {};
       if (!this.state.clock) this.state.clock = { epochMs: nowMs(), accMs: simNow(this.state), running: true, rate: this.state.simRate || 1 };
+      // v1.2 geçişi: v1.1 durumunda eksik revizyon alanlarını doldur
+      if (!this.state.revisions) this.state.revisions = {};
+      for (var _ai = 0; _ai < AREAS.length; _ai++) { if (this.state.revisions[AREAS[_ai]] == null) this.state.revisions[AREAS[_ai]] = 0; }
     } else {
       this.state = defaultState(Object.assign({}, opts.seed, { patientId: opts.patientId }));
       this._persist();
@@ -396,9 +441,10 @@
   }
 
   var DuctusCore = {
-    VERSION: '1.1',
+    VERSION: '1.2',
     SCHEMA_VERSION: SCHEMA_VERSION,
     AREAS: AREAS,
+    PLACEMENT_AREAS: PLACEMENT_AREAS,
     MODALITY_CLAIMS: MODALITY_CLAIMS,
     nowMs: nowMs,
     open: function (opts) { return new Session(opts); },

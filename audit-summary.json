@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-02T11:57:14.590Z",
+  "generatedAt": "2026-11-02T12:09:04.517Z",
   "threeLocal": true,
   "pages": 17,
   "viewports": [
@@ -27,7 +27,7 @@
     },
     "gate3_link_integrity": {
       "pass": true,
-      "checked": 35,
+      "checked": 38,
       "skipped": 1,
       "broken": []
     },

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>DuctusLab · Entegre Vaka Zinciri v2.0</title>
+<title>DuctusLab · Entegre Vaka Zinciri v3.0</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap"/>
 <style>
@@ -123,7 +123,7 @@ body{background:radial-gradient(1200px 800px at 70% -10%,#0a1424,var(--bg0) 60%)
 <script src="ductus-core.js"></script>
 <script>
 /* ===================================================================================
- *  DuctusLab · Case Chain v2.0 — 6 entegre hasta zinciri, 12 modül, ductus-core v1.1
+ *  DuctusLab · Case Chain v3.0 — 7 entegre hasta zinciri (girişimsel dallar + TG18), 15 modül, ductus-core v1.2
  *  Canlı vital barı · zaman damgalı kanıt çizelgesi (GÜNCEL/TARİHSEL) · gömülü iframe
  *  çekmece + gerçek ?chain preset senkronu · meta-spoiler'sız klinik handoff.
  * =================================================================================== */
@@ -131,12 +131,15 @@ var $=function(id){return document.getElementById(id);};
 
 var HREF={ ACİL:'acil/index.html', EKG:'ekg/index.html', EKO:'eko/index.html', VNT:'ventilator/index.html',
   KS:'ks/index.html', OTO:'oto/index.html', SFT:'sft/index.html', FND:'fnd/index.html', NRO:'nro/index.html',
-  CathLab:'ductuslab-cathlab.html', 'NŞR':'ductuslab-neurosurgery.html', OSK:null, POCUS:'eko/index.html' };
+  CathLab:'ductuslab-cathlab.html', 'NŞR':'ductuslab-neurosurgery.html', OSK:null, POCUS:'eko/index.html',
+  HVY:'ductuslab-airway.html', 'USG-Access':'ductuslab-usg-access.html', LapChole:'ductuslab-lapchole.html' };
 var MODNAME={ ACİL:'Acil Konsol', EKG:'12-Derivasyon EKG', EKO:'Eko / POCUS', VNT:'Ventilatör', KS:'Kraniyal Sinir',
-  OTO:'Otoskopi', SFT:'Spirometri', FND:'Fundoskopi', NRO:'Nörolojik Muayene', CathLab:'Kateter Lab', 'NŞR':'Nöroşirürji', OSK:'Oskültasyon', POCUS:'POCUS' };
+  OTO:'Otoskopi', SFT:'Spirometri', FND:'Fundoskopi', NRO:'Nörolojik Muayene', CathLab:'Kateter Lab', 'NŞR':'Nöroşirürji', OSK:'Oskültasyon', POCUS:'POCUS',
+  HVY:'Hava Yolu (RSI)', 'USG-Access':'USG Girişim (POCUS)', LapChole:'Laparoskopik Kolesistektomi' };
 var EXAMVERB={ ACİL:'🩸 Değerlendirme Sonucunu Gör', EKG:'⚡ 12-Der EKG Çek & Bulguyu Gör', EKO:'🫀 POCUS Bulgusunu İncele', VNT:'🌬 Ventilatör Yanıtını Gör',
   KS:'👁 Kraniyal Sinir Bulgusunu Gör', OTO:'👂 Otoskopi Bulgusunu Gör', SFT:'🫁 Spirometri Sonucunu Gör', FND:'🔎 Fundoskopi Bulgusunu İncele',
-  NRO:'🚶 Nörolojik Muayene Bulgusunu Gör', CathLab:'🩺 Anjiyo/PCI Sonucunu Gör', 'NŞR':'🧠 Operasyon Sonucunu Gör', OSK:'🎧 Oskültasyon Bulgusunu Gör', POCUS:'🫀 POCUS Bulgusunu İncele' };
+  NRO:'🚶 Nörolojik Muayene Bulgusunu Gör', CathLab:'🩺 Anjiyo/PCI Sonucunu Gör', 'NŞR':'🧠 Operasyon Sonucunu Gör', OSK:'🎧 Oskültasyon Bulgusunu Gör', POCUS:'🫀 POCUS Bulgusunu İncele',
+  HVY:'🌬 Entübasyon Sonucunu Gör', 'USG-Access':'🪡 Girişim Sonucunu Gör', LapChole:'🔪 Cerrahi Sonucunu Gör' };
 
 function s(mod,dom,title,prompt,ev,decisions,opts){ return Object.assign({mod:mod,dom:dom,title:title,prompt:prompt,ev:ev||null,decisions:decisions||[]},opts||{}); }
 function d(id,label,kind,lock,critical,vfx){ return {id:id,label:label,kind:kind||'neutral',lock:lock||null,critical:!!critical,vfx:vfx||null}; }
@@ -162,7 +165,12 @@ var CHAINS={
         [ d('pci','RCA primer PCI + stent','safe',null,false,{sbp:14,dbp:8,hr:8,spo2:2}) ], {phaseBreak:'coronary', phaseLabel:'Reperfüzyon sonrası — stent öncesi kanıtlar TARİHSEL'}),
      s('EKO','hemodynamic','Eko / POCUS','Reperfüzyon sonrası sağ ventrikül fonksiyonu, efüzyon ve mekanik komplikasyon.',
         {sum:'POCUS: RV dilate/hipokinetik; mekanik komplikasyon/perikardiyal efüzyon açısından yatak başı izlem',claims:['rv_function','effusion']},
-        [ d('pocus','POCUS kaydet','safe'), d('timing','Reperfüzyonu geciktirmeden, stabilizasyon sonrası eko','safe') ]) ],
+        [ d('pocus','POCUS kaydet','safe'), d('timing','Reperfüzyonu geciktirmeden, stabilizasyon sonrası eko','safe') ]),
+     s('USG-Access','pericardial','Varyant B — Perikardiyosentez (Post-PCI Tamponad)','Post-PCI yeni hipotansiyon + POCUS tamponad: USG-kılavuzlu perikardiyosentez ile kontrollü drenaj ve hemodinamik düzelme.',
+        {sum:'POCUS: perikardiyal efüzyon + diyastolik sağ kalp kollapsı (tamponad fizyolojisi); USG-kılavuzlu subksifoid perikardiyosentez ile hemodinamik düzelme',claims:['tamponade_physiology','pericardiocentesis']},
+        [ d('centesis','USG-kılavuzlu perikardiyosentez + drenaj','safe',null,false,{sbp:18,dbp:10,hr:-10}),
+          d('blind','Kör (USG’siz) iğne ile perikardiyosentez','trap','Kör perikardiyosentez miyokard/koroner yaralanma riski taşır; USG kılavuzluğu standarttır.',true,{sbp:-16,hr:12}) ],
+        {vonly:'B', phaseBreak:'pericardial', phaseLabel:'Varyant B — tamponad: perikardiyosentez sonrası önceki hemodinami TARİHSEL'}) ],
    handoff:{ status:[
        'Primer PCI sonrası TIMI 3 sağlandı; hemodinami IV sıvı ile stabilize, iskemik ağrı geriledi — koroner yoğun bakımda izlem',
        'Primer PCI sonrası TIMI 3 sağlandı ancak yeni hipotansiyon ve sınırda nabız basıncı; mekanik komplikasyon/perikardiyal efüzyon açısından yatak başı POCUS izleminde',
@@ -198,7 +206,12 @@ var CHAINS={
      s('NŞR','neuro','Nöroşirürji — Definitif Tedavi','Nimodipin + KB kontrolü sonrası definitif tedavi.',
         {sum:'IC-PC anevrizma mikrocerrahi klipaj; post-op kraniyal sinir izlemi',claims:['aneurysm_secured']},
         [ d('clip','Anevrizma klipajı','safe',null,false,{sbp:-10}), d('nimodipine','Nimodipin + KB kontrolü','safe',null,false,{sbp:-12,dbp:-8}) ],
-        {phaseBreak:'neuro', phaseLabel:'Definitif tedavi sonrası — operasyon öncesi nörolojik kanıtlar TARİHSEL'}) ],
+        {phaseBreak:'neuro', phaseLabel:'Definitif tedavi sonrası — operasyon öncesi nörolojik kanıtlar TARİHSEL'}),
+     s('HVY','airway','Varyant B — Nöro-koruyucu RSI Entübasyon','Nörolojik kötüleşme (GKS düşüşü): hipertansif sıçramayı önleyen nöro-koruyucu hızlı ardışık entübasyon.',
+        {sum:'GKS düşüşü + havayolu koruması gerekli; nöro-koruyucu RSI ile laringoskopi kaynaklı hipertansif/KİBAS sıçraması önlenir',claims:['ett_through_cords','neuroprotective_rsi']},
+        [ d('neuro_rsi','Nöro-koruyucu RSI (hemodinamik stabil indüksiyon)','safe',null,false,{spo2:3}),
+          d('awake_struggle','Sedasyonsuz zorlu laringoskopi','trap','Yetersiz indüksiyonda laringoskopi sempatik sıçrama → KİB artışı / yeniden kanama. Nöro-koruyucu RSI şart.',true,{sbp:30,gcs:-2}) ],
+        {vonly:'B'}) ],
    handoff:{ status:[
        'Anevrizma mikrocerrahi klipaj ile güvenli; nimodipin altında, gecikmiş vazospazm açısından nörolojik izlemde',
        'Anevrizma henüz güvenli değil; KB kontrolü ve yeniden kanama önlemi altında definitif tedavi bekliyor',
@@ -234,7 +247,12 @@ var CHAINS={
         {sum:'NIV başlandı; uzun ekspiryum zamanı, düşük frekans — oto-PEEP takibi',claims:['vent_settings']},
         [ d('long_te','Uzun ekspiryum zamanı / düşük frekans','safe',null,false,{paco2:-8,spo2:3,gcs:1}),
           d('short_te','Kısa ekspiryum / yüksek frekans ayarla','trap','Ekspiryum zamanı yetersizse hava hapsi → oto-PEEP → venöz dönüş düşer; hipotansiyon/barotravma.',true,{sbp:-30,dbp:-18,hr:16}) ],
-        {phase:2}) ],
+        {phase:2}),
+     s('USG-Access','pleural','Varyant B — Subklavyen CVC Sonrası Tek Taraflı Kayma Kaybı','NIV başarısızlığı → entübasyon → subklavyen CVC sonrası tek taraflı solunum sesi kaybı: M-Mod ile pnömotoraks ↔ sağ ana bronş ayrımı.',
+        {sum:'Subklavyen CVC sonrası sol solunum sesi azaldı; M-Mod: barkod (akciğer kayması yok → pnömotoraks) ya da kumsal + ETT geri çekilince simetri (sağ ana bronş entübasyonu)',claims:['pneumothorax','lung_sliding']},
+        [ d('mmode','M-Mod ile kayma değerlendir (barkod vs kumsal) + ETT derinliği','safe'),
+          d('assume_tube','Ayrım yapmadan doğrudan göğüs tüpü tak','trap','Ayrım yapılmadan tüp: sağ ana bronş entübasyonuysa gereksiz invazif girişim. Önce M-Mod / ETT derinliği.',true) ],
+        {phase:2, vonly:'B'}) ],
    handoff:{ status:[
        'Kontrollü O2 + bronkodilatör + NIV ile pH yükseliyor, PaCO2 geriliyor — solunum YBÜ’de izlem',
        'NIV’e rağmen asidoz derinleşti; invazif ventilasyona geçildi, obstrüktif ayarla oto-PEEP takibinde',
@@ -298,7 +316,12 @@ var CHAINS={
      s('VNT','hemodynamic','Ventilatör / Hemodinami','Sağ ventrikülü koru; reperfüzyon kararı.',
         {sum:'Gerekirse düşük PEEP, ölçülü sıvı, vazopresör; masif PE’de reperfüzyon (tromboliz) değerlendirmesi',claims:['rv_protective']},
         [ d('careful','Düşük PEEP + ölçülü sıvı + vazopresör, sağ ventrikülü koru','safe',null,false,{sbp:10,spo2:4}),
-          d('fluid_peep','Agresif litrelerce IV sıvı / yüksek PEEP (≥12)','trap','Obstrüktif sağ kalp şokunda aşırı sıvı sağ ventrikülü daha da gerer; yüksek PEEP venöz dönüşü keser → hemodinamik kollaps.',true,{sbp:-26,dbp:-16,hr:14,spo2:-4}) ]) ],
+          d('fluid_peep','Agresif litrelerce IV sıvı / yüksek PEEP (≥12)','trap','Obstrüktif sağ kalp şokunda aşırı sıvı sağ ventrikülü daha da gerer; yüksek PEEP venöz dönüşü keser → hemodinamik kollaps.',true,{sbp:-26,dbp:-16,hr:14,spo2:-4}) ]),
+     s('USG-Access','vascularAccess','Varyant B — İJV Santral Erişim (Tromboliz Adayı)','Masif PE + tromboliz adayı: bası yapılamayan subklavyenden kaçınıp USG-kılavuzlu İJV CVC; pozitif basınç kollaps uyarısı.',
+        {sum:'Tromboliz planlanıyor → bası yapılamayan subklavyen/femoral yerine USG-kılavuzlu İJV CVC (gerekirse bası ile kanama kontrolü); pozitif basınç ventilasyon sağ kalp ön-yükünü düşürür uyarısı',claims:['vascular_access_ijv','local_wire_in_vein']},
+        [ d('ijv','USG-kılavuzlu İJV CVC (kısa + uzun eksen doğrula)','safe'),
+          d('subclavian','Bası yapılamayan subklavyen ponksiyon','trap','Tromboliz adayında bası yapılamayan subklavyen ponksiyon kanama felaketi riski; İJV tercih et.',true) ],
+        {vonly:'B'}) ],
    handoff:{ status:[
        'Reperfüzyon/antikoagülasyon sonrası sağ ventrikül yükü geriliyor, hemodinami vazopresörle düzeliyor',
        'Obstrüktif şok sürüyor; vazopresör + reperfüzyon stratejisi altında yakın izlem',
@@ -339,7 +362,49 @@ var CHAINS={
           'Eşlik eden sinüs trombozu/menenjit yayılımı araştırılıyor'],
      alarm:['Bilinç düzeyinde düşme + bradikardi/hipertansiyon (Cushing — herniasyon)',
             'Yeni/büyüyen pupil asimetrisi',
-            'Yeni nöbet veya hızlı ilerleyen fokal defisit'] } }
+            'Yeni nöbet veya hızlı ilerleyen fokal defisit'] } },
+
+ 7:{ id:7, nick:'Sağ Üst Kadran Ağrısı, Ateş & Sarılık', path:'ACİL → USG/EKO → USG-Access → LapChole → Handoff',
+   complaint:'67Y kadın, 2 gündür sağ üst kadran ağrısı, ateş (38.8°C), bulantı; sklerada hafif sarılık.',
+   dxTitle:'TG18 Akut Kolesistit — Varyant A: Evre II lokal şiddetli / Varyant B: Evre III septik şok',
+   dxWords:['Mirizzi','subtotal','kolesistostomi','septik şok'], truthDom:'biliary',
+   vitals:{hr:98,sbp:118,dbp:72,spo2:96,rr:18,gcs:15,temp:38.8},
+   stations:[
+     s('ACİL','biliary','TG18 Evreleme & Erken Antibiyotik','Sağ üst kadran ağrısı + ateş + Murphy (+). TG18 ciddiyet evrelemesi ve erken IV antibiyotik.',
+        {sum:'Murphy (+), lökositoz, CRP↑, hafif kolestaz; TG18 evrelemesi — Varyant A lokal şiddetli inflamasyon, Varyant B organ disfonksiyonu/septik şok',claims:['tg18_staging']},
+        [ d('abx','Erken IV geniş spektrum antibiyotik + sıvı','safe'),
+          d('staging','TG18 ciddiyet evrelemesi (qSOFA / laktat)','safe'),
+          d('npo','NPO + analjezi + antiemetik','safe') ]),
+     s('EKO','biliary','USG / POCUS Safra Kesesi','Kese duvarı, taş, perikolesistik sıvı; sonografik Murphy.',
+        {sum:'Kalın duvarlı (>4 mm) distandü safra kesesi, impakte boyun taşı, perikolesistik sıvı; sonografik Murphy (+)',claims:['cholecystitis_us']},
+        [ d('us','POCUS kaydet (duvar / taş / sıvı)','safe') ]),
+     // ---- VARYANT A: TG18 Evre II → erken LapChole → subtotal bailout ----
+     s('LapChole','biliary','Varyant A — Erken Laparoskopik Kolesistektomi (Donmuş Calot)','TG18 Evre II: erken laparoskopik kolesistektomi; Calot donmuşsa koledoğu ZORLAMA.',
+        {sum:'İntraop donmuş/fibrotik hepatosistik üçgen (Mirizzi şüphesi); güvenli CVS açılamıyor',claims:['frozen_calot']},
+        [ d('subtotal','⚠ Subtotal Kolesistektomi (Bailout) ile güvenli çıkış','safe'),
+          d('force','Pedikülü zorlayıp total kolesistektomiyi tamamla','trap','Donmuş Calot üçgeninde ısrarlı diseksiyon ana safra yolu / sağ hepatik arter yaralanması (Strasberg E / vasküler) riski taşır. Doğru karar: Subtotal / Bailout.',true) ],
+        {vonly:'A', phaseBreak:'biliary', phaseLabel:'Varyant A — donmuş Calot: subtotal bailout ile güvenli çıkış'}),
+     // ---- VARYANT B: TG18 Evre III → İJV CVC → KRİTİK CERRAHİ TUZAK ----
+     s('USG-Access','vascularAccess','Varyant B — İJV Santral Erişim + Vazopresör','TG18 Evre III septik şok: resüsitasyon yetersizse USG-kılavuzlu İJV santral kateter + vazopresör.',
+        {sum:'Hipotansif, laktat↑, qSOFA ≥2 — septik şok; USG-kılavuzlu İJV CVC ile vazopresör başlanması',claims:['septic_shock_access']},
+        [ d('ijv','USG-kılavuzlu İJV CVC (kısa + uzun eksen doğrula)','safe'),
+          d('pressor','Norepinefrin başla','safe') ],
+        {vonly:'B'}),
+     s('ACİL','biliary','Varyant B — KRİTİK CERRAHİ KARAR','Hemodinamik olarak unstabil Evre III septik şok hastasında definitif cerrahi zamanlaması.',
+        {sum:'Unstabil Evre III: uzun laparoskopik total kolesistektomi yüksek riskli — acil safra drenajı + stabilizasyon önceliği',claims:['source_control_decision']},
+        [ d('drainage','Acil safra drenajı (Perkütan Kolesistostomi / ERCP) + YBÜ stabilizasyonu','safe'),
+          d('straight_lap','Doğrudan uzun laparoskopik total kolesistektomiye al','trap','Unstabil Evre III septik şok hastasını doğrudan uzun laparoskopik cerrahiye almak mortaliteyi artırır. "Bazen ameliyat etmemek en doğru cerrahi karardır" — önce kaynak kontrolü (kolesistostomi / ERCP) + stabilizasyon.',true,{sbp:-28,dbp:-16,hr:18,spo2:-4}) ],
+        {vonly:'B', phaseBreak:'biliary', phaseLabel:'Varyant B — unstabil septik şok: kaynak kontrolü + stabilizasyon önce'}) ],
+   handoff:{ status:[
+       'Varyant A: Subtotal kolesistektomi ile ANA SAFRA YOLU korunarak güvenli çıkış; dren konuldu, genel cerrahi izleminde',
+       'Varyant B: Perkütan kolesistostomi + geniş spektrum antibiyotik ile kaynak kontrolü; hemodinami vazopresörle toparlıyor, interval kolesistektomi planlanıyor',
+       'Septik şok derinleşiyor; organ desteği ve acil kaynak kontrolü için yoğun bakımda'],
+     unc:['İnterval (gecikmeli) kolesistektomi zamanlaması hastanın toparlanmasına bağlı',
+          'Mirizzi / koledokolitiazis için ek ERCP ihtiyacı netleşmedi',
+          'Subtotal sonrası erken safra sızıntısı / fistül riski izlemde'],
+     alarm:['Artan sarılık + kolanjit (Charcot / Reynolds) — acil biliyer dekompresyon',
+            'Dirençli hipotansiyon + laktat yükselmesi (kaynak kontrolü yetersiz)',
+            'Dren / kolesistostomi sonrası bilier peritonit bulguları'] } }
 };
 
 /* =============================== DURUM / MOTOR =============================== */
@@ -357,7 +422,10 @@ function boot(chainId,variant,level){ CC.chainId=chainId; CC.chain=CHAINS[chainI
   renderVitalsBar(); renderRail(); renderStation(0); renderEvRail();
   toast('Zincir #'+chainId+' başladı — canlı vitaller üstte, toplanan kanıt sağda. Tanı öncesi spoiler yok.','good');
 }
-function allStationsDone(){ return CC.chain.stations.every(function(_,i){ return CC.done[i]; }); }
+// v3.0 — varyant kapılı istasyon görünürlüğü (vonly yoksa her varyantta görünür)
+function stVisible(st){ return !st.vonly || st.vonly===CC.variant; }
+function visibleIdx(){ return CC.chain.stations.map(function(st,i){return stVisible(st)?i:-1;}).filter(function(i){return i>=0;}); }
+function allStationsDone(){ return visibleIdx().every(function(i){ return CC.done[i]; }); }
 function isStaleEv(ev){ try{ return CC.S.isStale(ev); }catch(e){ return {stale:false,staleAreas:[]}; } }
 
 /* -------- CANLI VİTAL BARI -------- */
@@ -383,7 +451,8 @@ function renderVitalsBar(){ var v=CC.vitals; if(!v){return;} var bar=$('vitalsBa
 
 /* -------- İSTASYON ZİNCİRİ (SOL) -------- */
 function renderRail(){ var r=$('rail'), h='<h4>İstasyon Zinciri</h4>'; var lastPhase=null;
-  CC.chain.stations.forEach(function(st,i){ if(st.phase&&st.phase!==lastPhase){ h+='<div class="phasebar">Faz '+st.phase+'</div>'; lastPhase=st.phase; }
+  CC.chain.stations.forEach(function(st,i){ if(!stVisible(st))return;   // varyant dışı istasyon gizli
+    if(st.phase&&st.phase!==lastPhase){ h+='<div class="phasebar">Faz '+st.phase+'</div>'; lastPhase=st.phase; }
     var cls='station'+(i===CC.idx?' cur':'')+(CC.done[i]?' done':'');
     h+='<div class="'+cls+'" data-i="'+i+'"><div class="ic">'+st.mod+'</div><div><div class="nm">'+st.title+'</div><div class="st">'+(CC.done[i]?'tamamlandı':MODNAME[st.mod]||st.mod)+'</div></div></div>'; });
   h+='<div class="phasebar">Kapanış</div><div class="station'+(CC.idx==='handoff'?' cur':'')+'" data-i="handoff"><div class="ic">📋</div><div><div class="nm">Hasta Devri</div><div class="st">4 yapılandırılmış soru + jüri</div></div></div>';
@@ -440,8 +509,10 @@ window.nextStation=function(i){ var st=CC.chain.stations[i];
   if(st.phaseBreak){ var dom=st.phaseBreak, cur=CC.S.getRevisions()[dom]; var patch={}; patch[dom]=cur+1; CC.S.update({revisions:patch}); renderEvRail();
     toast('⏲ '+(st.phaseLabel||('Revizyon: '+dom)),'warn'); }
   CC.done[i]=true; renderRail();
-  var nxt=i+1; if(nxt<CC.chain.stations.length) renderStation(nxt);
-  else if(allStationsDone()) renderHandoff(); else { var fu=CC.chain.stations.findIndex(function(_,k){return !CC.done[k];}); renderStation(fu<0?i:fu); } };
+  var vis=visibleIdx();                                  // yalnız geçerli varyantın istasyonları
+  var nxt=vis.filter(function(k){return k>i;})[0];
+  if(nxt!=null) renderStation(nxt);
+  else if(allStationsDone()) renderHandoff(); else { var fu=vis.filter(function(k){return !CC.done[k];})[0]; renderStation(fu==null?i:fu); } };
 
 /* -------- SAĞ KANIT ZAMAN ÇİZELGESİ -------- */
 function fmtMs(ms){ var sec=Math.floor(ms/1000); return String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0'); }
@@ -476,8 +547,8 @@ window.submitHandoff=function(){ if(CC.handoff.status==null||CC.handoff.evidence
 /* -------- JÜRİ -------- */
 function buildJury(){ var ch=CC.chain, flags=CC.flags; var clampN=function(x){return Math.max(0,Math.min(100,Math.round(x)));};
   var trapHit=flags.filter(function(f){return f.kind==='trap';}), critHit=trapHit.filter(function(f){return f.critical;}), safeHit=flags.filter(function(f){return f.kind==='safe';});
-  var evs=CC.S.getEvidence();
-  var c1=55+Math.min(evs.length,CC.chain.stations.length)*11; if(CC.handoff.evidenceStale)c1-=40; c1=clampN(c1);
+  var evs=CC.S.getEvidence(); var nStations=visibleIdx().length;
+  var c1=55+Math.min(evs.length,nStations)*11; if(CC.handoff.evidenceStale)c1-=40; c1=clampN(c1);
   var c2=100; critHit.forEach(function(){c2-=45;}); trapHit.filter(function(f){return !f.critical;}).forEach(function(){c2-=15;}); c2=clampN(c2);
   var c3=40+safeHit.length*12; if(critHit.length)c3-=20; c3=clampN(c3);
   var c4=52; ['status','evidence','unc','alarm'].forEach(function(k){ if(CC.handoff[k]!=null)c4+=11; }); if(CC.handoff.evidenceStale)c4-=25; c4=clampN(c4);
@@ -487,7 +558,7 @@ function buildJury(){ var ch=CC.chain, flags=CC.flags; var clampN=function(x){re
   $('jurySheet').innerHTML='<h2>Zincir #'+ch.id+' Jürisi</h2>'+
     '<div class="sub">'+ch.nick+' — '+(CC.level==='resident'?'Asistan/Girişimsel':'TUS/Öğrenci')+' · Varyant '+CC.variant+'. Gerçek tanı: <b>'+ch.dxTitle+'</b></div>'+
     '<div class="jcat" style="border-color:rgba(111,163,200,.3)"><div class="r"><span>Genel Zincir Skoru</span><span class="mono" style="font-size:20px;color:'+col(overall)+'">'+overall+'</span></div></div>'+
-    cat('Kanıt Bütünlüğü (güncellik/modalite)',c1,['Kaydedilen kanıt: '+evs.length+'/'+ch.stations.length, CC.handoff.evidenceStale?'⚠ Devir TARİHSEL kanıta dayandırıldı':'Devir güncel kanıta dayandı'])+
+    cat('Kanıt Bütünlüğü (güncellik/modalite)',c1,['Kaydedilen kanıt: '+evs.length+'/'+nStations, CC.handoff.evidenceStale?'⚠ Devir TARİHSEL kanıta dayandırıldı':'Devir güncel kanıta dayandı'])+
     cat('Tuzak & Güvenlik',c2,[ critHit.length?('⚠ '+critHit.length+' kritik kontrendikasyon'):'Kritik kontrendikasyondan kaçınıldı', 'Toplam tuzak: '+trapHit.length ])+
     cat('Klinik Karar & Sıralama',c3,['Uygun karar: '+safeHit.length])+
     cat('Hasta Devri (Handoff)',c4,['4 soru: '+['status','evidence','unc','alarm'].filter(function(k){return CC.handoff[k]!=null;}).length+'/4 yanıtlandı'])+
@@ -532,6 +603,8 @@ CHAINS[6].stations[2].caseN=3;  // FND: Papilödem
 window.CC2={
   chains:function(){ return Object.keys(CHAINS).map(Number); },
   boot:function(id,variant,level){ boot(id,variant||'A',level||'student'); return true; },
+  visibleStations:function(id,variant){ boot(id,variant||'A','student'); return visibleIdx().map(function(i){return CHAINS[id].stations[i].mod;}); },
+  chainMeta:function(id){ var c=CHAINS[id]; return {nick:c.nick, path:c.path, dxTitle:c.dxTitle, truthDom:c.truthDom, stationCount:c.stations.length}; },
   spoilerCheck:function(id){ var c=CHAINS[id]; var vis=[c.complaint,c.nick].concat(c.stations.map(function(st){return st.title;})).join(' ').toLowerCase();
     var leak=c.dxWords.filter(function(w){ return vis.indexOf(w.toLowerCase())>=0; }); return {clean:leak.length===0, leaked:leak}; },
   fireCriticalTrap:function(id){ boot(id,'A','student'); var c=CHAINS[id]; var found=null;
