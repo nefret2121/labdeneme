@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-02T14:08:35.724Z",
+  "generatedAt": "2026-11-02T14:29:46.008Z",
   "threeLocal": true,
   "pages": 18,
   "viewports": [
@@ -234,6 +234,16 @@
           }
         }
       ]
+    },
+    "gate7_portal_accessibility": {
+      "pass": true,
+      "detail": {
+        "cards": 16,
+        "lapBadgeClean": true,
+        "frmPresent": true,
+        "scrollOk": true,
+        "modalFits": true
+      }
     }
   },
   "perPage": {

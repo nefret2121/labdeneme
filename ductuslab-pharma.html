@@ -83,9 +83,10 @@ select.fld{width:auto}
 .recept-ctrls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .slider{display:flex;flex-direction:column;gap:2px}.slider input{width:120px}
 .slider .sl-lbl{font-size:9px;color:var(--ink-3);display:flex;justify-content:space-between}
-.toast-box{position:fixed;bottom:76px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:6px;z-index:50;align-items:center}
-.toast{background:#0e1626;border:1px solid var(--line-2);border-radius:9px;padding:7px 13px;font-size:11px;color:var(--ink);box-shadow:0 8px 24px rgba(0,0,0,.4)}
-.toast.good{border-color:rgba(143,227,191,.5)}.toast.warn{border-color:rgba(217,164,65,.5)}.toast.err{border-color:rgba(228,96,122,.5)}
+.toast-box{position:absolute;top:34px;right:14px;z-index:40;max-width:min(380px,48%);pointer-events:none}
+.toast{background:rgba(14,22,38,.96);border:1px solid var(--line-2);border-radius:9px;padding:6px 12px;font-size:10.5px;line-height:1.35;color:var(--ink);box-shadow:0 8px 24px rgba(0,0,0,.45);opacity:0;transform:translateY(-4px);transition:opacity .2s,transform .2s}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.good{border-color:rgba(143,227,191,.55)}.toast.warn{border-color:rgba(217,164,65,.55)}.toast.err{border-color:rgba(228,96,122,.55)}
 .hidden{display:none!important}
 @media(max-width:1200px){ .col-pt{flex-basis:210px} .col-jury{flex-basis:250px} }
 </style>
@@ -95,7 +96,7 @@ select.fld{width:auto}
   <div class="brand"><span class="dot"></span>DuctusLab<span class="product">Klinik Farmakoloji · TDM & Reseptör</span></div>
   <div class="benchtabs" id="benchtabs">
     <button class="benchtab on" data-bench="1">① Klinik PK & TDM</button>
-    <button class="benchtab locked" data-bench="2">② Toksikoloji & Nomogram <span class="mini">Aşama 2</span></button>
+    <button class="benchtab" data-bench="2">② Toksikoloji & Nomogram</button>
     <button class="benchtab" data-bench="3">③ Reseptör & PD</button>
   </div>
   <div class="spacer"></div>
@@ -103,7 +104,7 @@ select.fld{width:auto}
   <button class="btn sm" id="homeBtn">⌂ Portal</button>
 </header>
 <div class="stepper" id="stepper"></div>
-<div class="main" id="main">
+<div class="main" id="main" style="position:relative">
   <!-- SOL: hasta kartı -->
   <div class="col-pt">
     <div class="card" style="flex:0 0 auto"><h4 id="caseTag">Vaka</h4><div class="stem" id="caseStem"></div></div>
@@ -112,7 +113,7 @@ select.fld{width:auto}
   </div>
   <!-- ORTA: grafikler -->
   <div class="col-chart">
-    <div class="chartwrap" id="chartWrap1"><div class="chart-lbl" id="chartLbl1">Plazma Konsantrasyon–Zaman</div><div class="chart-badge" id="chartBadge1"></div><canvas id="chart1"></canvas><div class="blindtag hidden" id="blindTag">🔒 TUS / Sınav Modu — sürekli eğri gizli<br><span style="font-size:9.5px">Yalnız 🩸 TDM kan aldığın saatler işaretlenir</span></div></div>
+    <div class="chartwrap" id="chartWrap1"><div class="chart-lbl" id="chartLbl1">Plazma Konsantrasyon–Zaman</div><div class="chart-badge" id="chartBadge1"></div><canvas id="chart1"></canvas><div class="blindtag hidden" id="blindTag">🔒 TUS / Sınav Modu — sürekli eğri gizli<br><span style="font-size:9.5px">Yalnız 🩸 TDM kan aldığın saatler işaretlenir</span></div><div class="toast-box" id="toastBox"></div></div>
     <div class="chartwrap hidden" id="chartWrap2" style="flex:0 0 42%"><div class="chart-lbl" id="chartLbl2">Kuantal Doz–Yanıt (ED50 / TD50)</div><canvas id="chart2"></canvas></div>
     <div class="legend" id="legend"></div>
   </div>
@@ -124,7 +125,6 @@ select.fld{width:auto}
 </div>
 <!-- ALT: kontrol şeridi -->
 <div class="ctrlstrip" id="ctrlStrip"></div>
-<div class="toast-box" id="toastBox"></div>
 
 <script>
 /* ===================== PK/PD RK4 MOTORU (inline) ===================== */
@@ -179,6 +179,7 @@ return{buildParams:buildParams,PKSim:PKSim,cockcroftGault:cockcroftGault,ibwKg:i
 })();
 window.PharmaEngine=PharmaEngine;
 </script>
+<script src="pharma-tox.js"></script>
 <script src="pharma-ui.js"></script>
 </body>
 </html>

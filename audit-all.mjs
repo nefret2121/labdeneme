@@ -112,6 +112,24 @@ async function run(){
     process.stdout.write(`  ${g1&&g4&&g5?'OK ':'!! '}${page}  err:${rec.pageerrors.length} con:${rec.consoleErrors.length} ext:${rec.externalAssets.length} ovf:${rec.overflow.length} truth:${rec.truthLeak.length} self:${rec.selfTest&&rec.selfTest.hook===false?'—':(rec.selfTest&&rec.selfTest.pass?'PASS':'FAIL')}\n`);
   }
 
+  // Gate 7: Portal kart erişilebilirliği (index.html modal) — 16 kart, LAP rozeti temiz, FRM'e dek kaydırılabilir
+  var portalCheck={pass:false};
+  try{ var pctx=await browser.newContext({viewport:{width:1366,height:768}}); var ppg=await pctx.newPage();
+    await ppg.route('**/*',route=>{ var u=route.request().url(); if(/fonts\.googleapis\.com|cdnjs|jsdelivr|gstatic|unpkg/.test(u))return route.fulfill({status:200,body:'',contentType:'text/javascript'}); return route.continue(); });
+    await ppg.goto(`${base}/index.html`,{waitUntil:'load',timeout:30000}); await ppg.waitForTimeout(1200);
+    var pc=await ppg.evaluate(()=>{ var m=document.getElementById('portalModal'); if(m)m.classList.remove('hidden');
+      var cards=document.querySelectorAll('#pgrid .pcard'); var sc=document.querySelector('.portal-scroll');
+      var lap=[].slice.call(cards).filter(function(c){return (c.dataset.s||'').indexOf('lap')===0;})[0];
+      var frm=[].slice.call(cards).filter(function(c){return (c.dataset.s||'').indexOf('frm')===0;})[0];
+      var box=document.querySelector('.modal-box'); var br=box?box.getBoundingClientRect():null;
+      var scrollOk = sc ? (getComputedStyle(sc).overflowY==='auto'||getComputedStyle(sc).overflowY==='scroll') : false;
+      var lapBadge = lap? lap.querySelector('.pbadge').textContent.trim() : '';
+      return { cards:cards.length, lapBadgeClean:(lapBadge==='Aktif'), frmPresent:!!frm, scrollOk:scrollOk,
+        modalFits:(br? (br.bottom<=window.innerHeight+2):false) }; });
+    portalCheck={ pass:(pc.cards===16 && pc.lapBadgeClean && pc.frmPresent && pc.scrollOk && pc.modalFits), detail:pc };
+    await pctx.close();
+  }catch(e){ portalCheck={pass:false,error:String(e).slice(0,100)}; }
+
   // Gate 3: link integrity (portallar + vaka zinciri) — link kaynağın dizinine göre çözülür
   const linkSources=['index.html','ductuslab-suite.html','ductuslab-case-chain.html'];
   const broken=[]; const checked=new Set(); let skipped=0;
@@ -130,9 +148,10 @@ async function run(){
     gate3_link_integrity: {pass:broken.length===0, checked:checked.size, skipped, broken},
     gate4_responsive: pageGate(gate4),
     gate5_truth_leak_lifecycle: pageGate(gate5),
-    gate6_clinical_selftests: { hooks:gate6.filter(x=>x.pass!==null).length, pass:gate6.filter(x=>x.pass!==null).every(x=>x.pass===true), detail:gate6 }
+    gate6_clinical_selftests: { hooks:gate6.filter(x=>x.pass!==null).length, pass:gate6.filter(x=>x.pass!==null).every(x=>x.pass===true), detail:gate6 },
+    gate7_portal_accessibility: portalCheck
   };
-  const allPass=['gate1_boot_console','gate2_zero_external_asset','gate3_link_integrity','gate4_responsive','gate5_truth_leak_lifecycle'].every(g=>summary.gates[g].pass) && summary.gates.gate6_clinical_selftests.pass;
+  const allPass=['gate1_boot_console','gate2_zero_external_asset','gate3_link_integrity','gate4_responsive','gate5_truth_leak_lifecycle','gate7_portal_accessibility'].every(g=>summary.gates[g].pass) && summary.gates.gate6_clinical_selftests.pass;
   summary.overallPass=allPass;
   writeFileSync(join(ROOT,'audit-summary.json'),JSON.stringify(summary,null,2));
   console.log('\n=== KAPI ÖZETİ ===');
