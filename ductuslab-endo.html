@@ -133,7 +133,7 @@ input[type=range]{flex:1;accent-color:var(--accent)}
 .debrief .dh{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg-1);z-index:2}
 .debrief .dh h3{margin:0;font-size:16px}
 .debrief .dh .x{margin-left:auto;cursor:pointer;color:var(--ink-mut);font-size:22px;background:0;border:0}
-.d3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;padding:16px}
+.d3{display:grid;grid-template-columns:0.85fr 1.3fr 1fr;gap:12px;padding:16px}
 .dview{background:#0a121d;border:1px solid var(--line2);border-radius:11px;padding:11px;min-height:260px}
 .dview h5{margin:0 0 8px;font-size:12px;color:var(--accent);letter-spacing:.4px;text-transform:uppercase}
 .dview canvas{width:100%;border-radius:8px;background:#05090f;display:block}
@@ -156,6 +156,22 @@ input[type=range]{flex:1;accent-color:var(--accent)}
   color:var(--ink);padding:9px 16px;border-radius:999px;font-size:12.5px;font-weight:700;box-shadow:var(--sh);z-index:60;opacity:0;transition:opacity .25s;pointer-events:none}
 .toast.on{opacity:1}
 .toast.warn{border-color:#4a3a14;color:var(--warn)} .toast.bad{border-color:#4a2024;color:var(--bad)} .toast.good{border-color:#1f4a34;color:var(--good)}
+/* Aşama 2: EAL + irrigation */
+.eal-display{background:#060b12;border:1px solid var(--line2);border-radius:9px;padding:7px 8px;margin:6px 0}
+#ealCanvas{width:100%;display:block;border-radius:5px;background:#04080d}
+.eal-read{display:flex;justify-content:space-between;align-items:baseline;margin-top:4px}
+.eal-read .big{font-size:20px;font-weight:800}
+.eal-read .lab{font-size:12px;font-weight:800;letter-spacing:.5px}
+.p2btns{display:flex;gap:6px;margin:5px 0}
+.p2b{flex:1;background:#0c1726;border:1px solid var(--line2);color:var(--ink-dim);border-radius:8px;padding:6px 0;font-size:11px;font-weight:800;cursor:pointer}
+.p2b:hover{border-color:var(--accent)} .p2b.accent{background:var(--accent);color:#04121c;border-color:var(--accent)}
+.p2b.full{width:100%;margin-top:6px}
+.p2b.danger{background:var(--bad);color:#2a0a0c;border-color:var(--bad)}
+.wlrow{display:flex;justify-content:space-between;font-size:10.5px;color:var(--ink-dim);padding:2px 0;border-bottom:1px dashed var(--line)}
+.wlrow b{color:var(--ink)}
+.flowbar{display:flex;height:14px;border-radius:5px;overflow:hidden;margin:5px 0;border:1px solid var(--line2)}
+.flowbar span{display:block}
+.safelock{background:#2a0e12;border:1px solid #5a2026;color:var(--bad);border-radius:8px;padding:6px 8px;font-size:10.5px;font-weight:700;margin-top:5px}
 </style>
 </head>
 <body>
@@ -187,7 +203,29 @@ input[type=range]{flex:1;accent-color:var(--accent)}
       <div class="panel">
         <h4>Oda Durumu</h4>
         <div class="mini" id="chamberStat"></div>
-        <div class="lockrow" id="phase2lock"><b>Aşama 2</b> · Oran-Temelli EAL Apeks Bulucu & NaOCl İrrigasyon Akış Ağı yuvaları hazır (kilitli).</div>
+      </div>
+      <div class="panel" id="phase2panel">
+        <h4>Aşama 2 · Oran-Temelli EAL (Root-ZX)</h4>
+        <div class="declrow"><label>Kanal</label><select id="ealCanal"></select></div>
+        <div class="ctrlrow"><label>Eğe ucu</label><input type="range" id="fileDepth" min="0" max="23" step="0.1" value="0"><span id="fileDepthVal" style="min-width:42px;text-align:right">0.0 mm</span></div>
+        <div class="eal-display">
+          <canvas id="ealCanvas" width="236" height="46"></canvas>
+          <div class="eal-read"><span class="big" id="ealR">—</span><span class="lab" id="ealLab">Eğeyi ilerlet</span></div>
+        </div>
+        <div class="p2btns">
+          <button class="p2b" id="dryBtn">💨 Odayı Kurut</button>
+          <button class="p2b accent" id="recWLBtn">Çalışma Boyu Kaydet</button>
+        </div>
+        <div id="wlTable" class="mini"></div>
+      </div>
+      <div class="panel" id="irrigPanel">
+        <h4>NaOCl İrrigasyon Akış Ağı</h4>
+        <div class="declrow"><label>İğne tipi</label><select id="needleType"><option value="sidevent">Yandan delikli 30G</option><option value="open">Açık uçlu</option></select></div>
+        <div class="ctrlrow"><label>İğne ucu</label><input type="range" id="needleDepth" min="0" max="23" step="0.1" value="0"><span id="needleDepthVal" style="min-width:42px;text-align:right">0.0 mm</span></div>
+        <div class="declrow"><label>Akış basıncı</label><select id="flowPress"><option value="low">Düşük kontrollü</option><option value="high">Yüksek basınç</option></select></div>
+        <button class="p2b accent full" id="naoclBtn">💧 NaOCl İrrigasyonu Uygula</button>
+        <div class="flowbar" id="flowBar" style="display:none"></div>
+        <div id="flowStat" class="mini"></div>
       </div>
     </div>
     <!-- CENTER: microscope -->
@@ -315,7 +353,7 @@ function gzc(k){return ZBOT + (k+0.5)*VSZ}    // true z accessor
 
 const MID={VOID:0,ENAMEL:1,DENTIN:2,CALC:3,FLOOR:4,PERIO:6};
 // density (attenuation μ, relative) per material for Beer–Lambert
-const MU={0:0.02,1:1.08,2:0.8,3:0.92,4:0.85,6:0.72,7:1.9 /*clamp metal*/,9:0.8}; // lowered so pulp chamber + access cavity read as radiolucent (no white brick)
+const MU={0:0.02,1:2.35,2:0.72,3:0.86,4:0.78,6:0.66,7:1.95 /*clamp metal*/,9:0.72}; // enamel≫dentin (clinical ~1.7×); low dentin so pulp chamber/cavity read radiolucent
 
 let FIELD=null;   // Uint8Array matid, N³
 let caseDef=null, curCase='E1';
@@ -518,10 +556,10 @@ function renderXray(thetaDeg, targetCanvas){
       mu += boneTerm(yBase,z);                       // alveolar bone backdrop
       // clamp metal jaws near cervix — thin radiopaque wing profile (not a brick)
       if(z>0.7 && z<1.9 && Math.abs(yBase)>3.7 && Math.abs(yBase)<4.35) mu+=1.5;
-      // RADIOGRAPHIC BRIGHTNESS: radiopaque(high μ)=WHITE, air/pulp=BLACK
-      let R=1.0-Math.exp(-mu*0.52);
-      R=Math.pow(R,0.9);                             // film/sensor S-contrast
-      R=clamp(R*1.08-0.03,0,1);
+      // RADIOGRAPHIC BRIGHTNESS: radiopaque(high μ)=WHITE, air/pulp=BLACK (no saturation → pulp chamber reads)
+      let R=1.0-Math.exp(-mu*0.34);
+      R=Math.pow(R,0.92);                            // mild film/sensor S-contrast
+      R=clamp(R*1.04-0.02,0,1);
       let val=clamp(R*255 + (rnd()-0.5)*9, 0,255);
       const o=(v*W+u)*4; d[o]=val*0.9; d[o+1]=val*0.95; d[o+2]=val; d[o+3]=255; // faint warm tint
     }
@@ -919,6 +957,10 @@ function renderHud(){
 function loadCase(cid){
   curCase=cid; caseDef=JSON.parse(JSON.stringify(CASES[cid])); // deep copy (mb2.hidden mutates)
   troughedMB2=false; troughAmt=0; floorAnnounced=false; filesInserted={};
+  // reset Phase-2 state
+  chamberFlooded=false; extrudedMl=0; naoclAccident=false; safetyLock=false; ealFileDepth=0;
+  for(const k in WL)delete WL[k]; for(const k in filePositionRevision)delete filePositionRevision[k];
+  if($('fileDepth')){$('fileDepth').value=0;$('fileDepthVal').textContent='0.0 mm';$('flowStat').innerHTML='';$('flowBar').style.display='none';$('needleDepth').value=0;$('needleDepthVal').textContent='0.0 mm';}
   EVID.length=0; renderEvidence();
   buildField(caseDef);
   if(scene){
@@ -931,6 +973,7 @@ function loadCase(cid){
   }
   curStep=0; renderCasePick(); renderStepper(); renderHud(); updateChamberStat();
   renderXray(xrayTheta); renderEvidence(); updateSlobHint(); drawSection(); $('juryOut').innerHTML='';
+  if($('ealCanal'))populateEalCanal();
   // defaults for declaration to match case truth hint only in explore
   $('dCanal').value = caseDef.mb2==='absent'?'3':'4';
   $('dMB2').value = caseDef.mb2; $('dSlob').value = caseDef.mb2==='absent'?'none':'palatal'; $('dSafe').checked=false;
@@ -938,53 +981,75 @@ function loadCase(cid){
 }
 function resetCase(){ loadCase(curCase); toast('Vaka sıfırlandı',''); }
 
-/* ---------------- JURY ---------------- */
+/* ---------------- JURY (4-category DUS rubric) ---------------- */
 function grade(){
   const decl={canal:+$('dCanal').value, mb2:$('dMB2').value, slob:$('dSlob').value, safe:$('dSafe').checked};
-  const cd=CASES[curCase]; const flags=[]; let score=0;
-  // canal count
-  const trueCount=Object.keys(cd.canals).length;
-  const canalOK = decl.canal===trueCount;
-  flags.push({k:canalOK?'ok':'bad',t:`Kanal sayısı: beyan ${decl.canal}, gerçek ${trueCount} — ${canalOK?'doğru':'hatalı'}`});
-  if(canalOK)score+=25;
-  // MB2 / vertucci
-  const mb2OK = decl.mb2===cd.mb2;
-  flags.push({k:mb2OK?'ok':'bad',t:`MB2: beyan "${declMB2txt(decl.mb2)}", gerçek "${declMB2txt(cd.mb2)}" (Vertucci ${cd.vertucci}) — ${mb2OK?'doğru':'hatalı'}`});
-  if(mb2OK)score+=25;
-  // SLOB localization (skip if absent)
+  const cd=CASES[curCase]; const names=Object.keys(cd.canals);
+  // === Safety (40%): perforation & NaOCl ===
+  let safety=1.0; const sf=[];
   if(cd.mb2==='absent'){
-    const slobOK = decl.slob==='none';
-    flags.push({k:slobOK?'ok':'warn',t:`SLOB: MB2 yok — ${slobOK?'lokalizasyon gereksiz (doğru)':'gereksiz palatinal/bukkal beyanı'}`});
-    if(slobOK)score+=20; else score+=8;
+    if(perforated){safety=0;sf.push(['bad',`MB2 yok varyantında furkasyon delindi (rev ${canalConnectivityRevision}) — iatrojenik perforasyon`]);}
+    else if(decl.safe)sf.push(['ok','MB2 yok — güvenli sınırda durdun (tam güvenlik)']);
+    else {safety-=0.3;sf.push(['warn','Güvenli duruş beyan edilmedi']);}
   } else {
-    const slobOK = decl.slob==='palatal';
-    const hasAngled = EVID.some(e=>Math.abs(e.theta)>=15);
-    flags.push({k:slobOK&&hasAngled?'ok':(slobOK?'warn':'bad'),
-      t:`SLOB: beyan "${decl.slob}", MB2 palatinal — ${slobOK?(hasAngled?'açılı filmle doğrulandı ✓':'doğru ama açılı PA kanıtı yok'):'hatalı'}`});
-    if(slobOK&&hasAngled)score+=20; else if(slobOK)score+=12;
+    if(perforated){safety-=0.6;sf.push(['bad',`Perforasyon (rev ${canalConnectivityRevision}) — eski "perf yok" filmleri geçersiz`]);}
+    else sf.push(['ok','Perforasyonsuz, duvar bütünlüğü korundu']);
   }
-  // safety / perforation
-  let safeOK;
-  if(cd.mb2==='absent'){
-    // E4 trap: safe-stop + no perforation = full; perforating to "find" MB2 = violation
-    safeOK = decl.safe && !perforated;
-    flags.push({k:safeOK?'ok':'bad',t:perforated?`GÜVENLİK İHLALİ: MB2 yok varyantında furkasyon delindi (rev ${canalConnectivityRevision})`:(decl.safe?'Güvenli sınırda durdun — TAM güvenlik puanı ✓':'Güvenli duruş beyan edilmedi')});
-    score+=safeOK?30:(perforated?0:12);
-  } else {
-    safeOK = !perforated;
-    flags.push({k:safeOK?'ok':'bad',t:perforated?`Perforasyon var (rev ${canalConnectivityRevision}) — eski "perf yok" filmleri geçersiz`:'Perforasyonsuz, duvar bütünlüğü korundu ✓'});
-    score+=safeOK?30:5;
-    if(decl.safe)score+=0;
-  }
-  return {score:Math.round(score),flags,decl,cd,trueCount,perforated,canalConnectivityRevision,
-          removedMM3:+(carvedVox*VSZ**3).toFixed(1), furcThk:cd.furcThkMm};
+  if(naoclAccident){safety-=0.6;sf.push(['bad',`NaOCl ekstrüzyon kazası (≈${extrudedMl} ml) — kritik güvenlik ihlali`]);}
+  else if(extrudedMl===0)sf.push(['ok','NaOCl: apikal ekstrüzyon yok (güvenli yıkama)']);
+  safety=clamp(safety,0,1);
+  // === Evidence & Interpretation (30%): SLOB, MB2, EAL ===
+  let ev=0,evMax=0; const ef=[];
+  evMax+=0.4; if(decl.mb2===cd.mb2){ev+=0.4;ef.push(['ok',`MB2/Vertucci doğru (${cd.vertucci})`]);}else ef.push(['bad',`MB2 hatalı: "${declMB2txt(decl.mb2)}" ≠ "${declMB2txt(cd.mb2)}"`]);
+  evMax+=0.3;
+  if(cd.mb2==='absent'){ if(decl.slob==='none'){ev+=0.3;ef.push(['ok','SLOB: MB2 yok, lokalizasyon gereksiz']);}else{ev+=0.1;ef.push(['warn','Gereksiz SLOB beyanı']);} }
+  else{ const ang=EVID.some(e=>Math.abs(e.theta)>=15);
+    if(decl.slob==='palatal'&&ang){ev+=0.3;ef.push(['ok','SLOB açılı filmle palatinal doğrulandı']);}
+    else if(decl.slob==='palatal'){ev+=0.15;ef.push(['warn','Palatinal doğru ama açılı PA kanıtı yok']);}
+    else ef.push(['bad','SLOB lokalizasyonu hatalı']); }
+  evMax+=0.3; const goodWL=names.filter(n=>WL[n]&&!WL[n].leak&&WL[n].zone==='green'&&!WL[n].historical).length;
+  const leakWL=names.filter(n=>WL[n]&&WL[n].leak);
+  if(leakWL.length){ef.push(['bad',`${leakWL.length} kanalda kaçak koşulunda WL (sahte apeks kabulü)`]);}
+  if(goodWL>=names.length){ev+=0.3;ef.push(['ok','Tüm kanallarda apikal daralımda WL doğrulandı (EAL)']);}
+  else if(goodWL>0){ev+=0.3*goodWL/names.length;ef.push(['warn',`${goodWL}/${names.length} kanalda doğru WL`]);}
+  else ef.push(['warn','EAL ile doğrulanmış WL kaydı yok']);
+  ev=ev/evMax;
+  // === Technical (20%): access & working length ===
+  let tech=0; const tf=[];
+  if(decl.canal===names.length){tech+=0.45;tf.push(['ok',`Kanal sayısı doğru (${names.length})`]);}else tf.push(['bad',`Kanal sayısı ${decl.canal} ≠ ${names.length}`]);
+  if(floorExposed){tech+=0.25;tf.push(['ok','Giriş kavitesi: tavan kaldırıldı, taban açık']);}else tf.push(['warn','Oda tabanı açılmadı']);
+  if(cd.foramenOffsetMm){ const an=canalAnatomy(curCase,'MB1'),w=WL.MB1;
+    if(w&&!w.historical&&Math.abs(w.wl-an.constrictionDepth)<0.9){tech+=0.3;tf.push(['ok','E5: WL majör foramene göre — radyografik apeks tuzağına düşmedin']);}
+    else tf.push(['warn','E5: MB1 çalışma boyu 1.8 mm geride (majör foramen/daralım) olmalı']);
+  } else tech+=0.3;
+  tech=clamp(tech,0,1);
+  // === Process & Resource (10%) ===
+  let proc=0; const pf=[]; const hist=Object.values(WL).filter(w=>w.historical).length;
+  if(EVID.some(e=>Math.abs(e.theta)>=15)){proc+=0.4;pf.push(['ok','Açılı SLOB filmi alındı']);}else pf.push(['warn','Açılı film yok']);
+  if(cd.calcified&&cd.mb2!=='absent'){ if(troughedMB2){proc+=0.3;pf.push(['ok','Ultrasonik troughing ile MB2 açıldı']);}else pf.push(['warn','Kalsifiye MB2 troughing yapılmadı']);}else proc+=0.3;
+  if(!perforated){proc+=0.3;pf.push(['ok','Doku ekonomisi/furkasyon korundu']);}else pf.push(['warn','Furkasyon perforasyonu — doku kaybı']);
+  if(hist>0){proc-=0.1;pf.push(['warn',`${hist} TARİHSEL EAL kaydı (eğe hareket etti)`]);}
+  proc=clamp(proc,0,1);
+  const cats=[
+    {name:'Güvenlik · Perforasyon & NaOCl',w:40,s:safety,flags:sf},
+    {name:'Kanıt & Yorum · SLOB, MB2 & EAL',w:30,s:ev,flags:ef},
+    {name:'Teknik · Giriş & Çalışma Boyu',w:20,s:tech,flags:tf},
+    {name:'Süreç & Kaynak',w:10,s:proc,flags:pf},
+  ];
+  const score=Math.round(cats.reduce((a,c)=>a+c.w*c.s,0));
+  return {score,cats,decl,cd,trueCount:names.length,perforated,canalConnectivityRevision,naoclAccident,extrudedMl,
+          removedMM3:+(carvedVox*VSZ**3).toFixed(1),furcThk:cd.furcThkMm,WLsnap:JSON.parse(JSON.stringify(WL))};
 }
 function declMB2txt(v){return v==='separate'?'ayrı (IV)':v==='merge'?'birleşir (II)':'yok';}
 function renderJury(){
   const g=grade(); const out=$('juryOut');
   const col=g.score>=85?'var(--good)':g.score>=60?'var(--warn)':'var(--bad)';
   let html=`<div class="jcard"><div class="jscore" style="color:${col}">${g.score}<small>/100</small></div>`;
-  g.flags.forEach(f=>{html+=`<div class="jflag ${f.k}"><span class="b">${f.k==='ok'?'✓':f.k==='warn'?'!':'✕'}</span><span>${f.t}</span></div>`;});
+  g.cats.forEach(c=>{
+    const cs=Math.round(c.w*c.s), ccol=c.s>=0.85?'var(--good)':c.s>=0.5?'var(--warn)':'var(--bad)';
+    html+=`<div style="margin-top:7px;font-size:11px;font-weight:800;display:flex;justify-content:space-between"><span>${c.name}</span><span style="color:${ccol}">${cs}/${c.w}</span></div>`;
+    c.flags.forEach(f=>{html+=`<div class="jflag ${f[0]}"><span class="b">${f[0]==='ok'?'✓':f[0]==='warn'?'!':'✕'}</span><span>${f[1]}</span></div>`;});
+  });
   html+='</div>'; out.innerHTML=html;
   openDebrief(g);
   return g;
@@ -1002,9 +1067,13 @@ function openDebrief(g){
   EVID.slice(-2).forEach((e,i)=>{ actx.drawImage(e.canvas,fx,10+i*((a.height-20)/2),a.width*0.36,(a.height-30)/2);
     actx.fillStyle='#9db3ca';actx.font='11px sans-serif';actx.fillText((e.theta>0?'+':'')+e.theta+'°',fx+4,24+i*((a.height-20)/2)); });
   $('dvAmeta').innerHTML=`<div class="dmetric"><span>Çekilen film</span><b>${EVID.length}</b></div><div class="dmetric"><span>Açılı (|θ|≥15°)</span><b>${EVID.filter(e=>Math.abs(e.theta)>=15).length}</b></div>`;
-  // View B: 3D transparent tooth + removed volume + furc thickness
+  // View B: big translucent Vertucci tooth + canals + file tips + E5 offset + perf/NaOCl
   drawDebriefB($('dvB'),g);
-  $('dvBmeta').innerHTML=`<div class="dmetric"><span>Kaldırılan dentin</span><b>${g.removedMM3} mm³</b></div><div class="dmetric"><span>Kalan furkasyon tabanı</span><b style="color:${g.furcThk<1.8?'var(--bad)':'var(--good)'}">${g.furcThk.toFixed(1)} mm</b></div><div class="dmetric"><span>Perforasyon revizyonu</span><b>${g.canalConnectivityRevision}</b></div>`;
+  const wlrows=Object.keys(g.WLsnap).map(n=>`${n}:${g.WLsnap[n].wl.toFixed(1)}${g.WLsnap[n].historical?'(T)':''}`).join('  ')||'—';
+  $('dvBmeta').innerHTML=`<div class="dmetric"><span>Kaldırılan dentin</span><b>${g.removedMM3} mm³</b></div>`+
+    `<div class="dmetric"><span>Kalan furkasyon</span><b style="color:${g.furcThk<1.8?'var(--bad)':'var(--good)'}">${g.furcThk.toFixed(1)} mm</b></div>`+
+    `<div class="dmetric"><span>Çalışma boyları (mm)</span><b style="font-size:10px">${wlrows}</b></div>`+
+    `<div class="dmetric"><span>NaOCl ekstrüzyon</span><b style="color:${g.naoclAccident?'var(--bad)':'var(--good)'}">${g.naoclAccident?('KAZA ≈'+g.extrudedMl+' ml'):'0 ml (güvenli)'}</b></div>`;
   // View C: causal report
   $('dvC').innerHTML=causalReport(g);
 }
@@ -1023,11 +1092,25 @@ function drawDebriefB(cv,g){
   // removed cavity
   ctx.fillStyle='rgba(10,6,4,.6)';
   for(let k=0;k<N;k+=3){const z=gzc(k);const j=Math.round((1.1+HALF)/VSZ);for(let i=0;i<N;i+=3){const x=gx(i);if(FIELD[vidx(i,j,k)]===MID.VOID&&z>-0.5&&z<3.2&&Math.abs(x)<3.4)ctx.fillRect(X(x)-1,Z(z)-1,2.5,2.5);}}
+  // file tips at recorded WL + E5 major-foramen lateral offset marker
+  for(const nm in g.cd.canals){ const c=g.cd.canals[nm]; const w=g.WLsnap[nm]; if(!w)continue;
+    const zTip=c.oz - w.wl;                         // file tip depth
+    let cx=c.x; if(c.mergeTo&&zTip<c.mergeZ){const m=g.cd.canals[c.mergeTo];const f=clamp((c.mergeZ-zTip)/(c.mergeZ-c.az),0,1);cx=c.x+(m.x-c.x)*f;}
+    ctx.strokeStyle=w.historical?'#f0b542':'#eef4fa';ctx.lineWidth=2.4;ctx.beginPath();ctx.moveTo(X(c.x),Z(c.oz));ctx.lineTo(X(cx),Z(zTip));ctx.stroke();
+    ctx.fillStyle='#eef4fa';ctx.beginPath();ctx.arc(X(cx),Z(zTip),2.6,0,7);ctx.fill();
+  }
+  const an=g.cd.foramenOffsetMm?canalAnatomy(curCase,'MB1'):null;
+  if(an){ const c=g.cd.canals.MB1; const zMaj=c.oz-an.majorForamenDepth;
+    ctx.fillStyle='#56d6a0';ctx.beginPath();ctx.arc(X(c.x+0.9),Z(zMaj),4,0,7);ctx.fill();
+    ctx.font='9px sans-serif';ctx.fillText('majör foramen (−1.8mm lateral)',X(c.x+1.3),Z(zMaj)+3); }
   // furcation thickness marker
   ctx.strokeStyle=g.furcThk<1.8?'#e8707a':'#63d08a';ctx.lineWidth=1.5;ctx.setLineDash([3,2]);
   ctx.beginPath();ctx.moveTo(X(-1.3),Z(-0.4));ctx.lineTo(X(1.3),Z(-0.4));ctx.stroke();ctx.setLineDash([]);
   ctx.fillStyle=ctx.strokeStyle;ctx.font='11px sans-serif';ctx.fillText(g.furcThk.toFixed(1)+' mm furkasyon',X(-2),Z(-0.4)+14);
-  if(g.perforated){ctx.fillStyle='#e8707a';ctx.beginPath();ctx.arc(X(0),Z(-0.8),5,0,7);ctx.fill();ctx.fillText('PERF',X(0)+7,Z(-0.8));}
+  if(g.perforated){ctx.fillStyle='#e8707a';ctx.beginPath();ctx.arc(X(0),Z(-0.8),5,0,7);ctx.fill();ctx.fillStyle='#e8707a';ctx.fillText('PERF',X(0)+7,Z(-0.8));}
+  if(g.naoclAccident){ const c=g.cd.canals.P||g.cd.canals.MB1; const za=c.az;
+    ctx.fillStyle='rgba(232,80,90,.5)';ctx.beginPath();ctx.arc(X(c.x),Z(za-0.3),9,0,7);ctx.fill();
+    ctx.fillStyle='#e8505a';ctx.font='10px sans-serif';ctx.fillText('NaOCl taşma',X(c.x)+9,Z(za)); }
 }
 function causalReport(g){
   const cd=g.cd; let h='';
@@ -1045,14 +1128,172 @@ function causalReport(g){
     h+= g.decl.slob==='palatal'? `<div class="pos">Palatinal lokalizasyon beyanın doğru.</div>`:`<div class="neg">Lokalizasyon beyanı hatalı; açılı PA ile palatinal ayrışmayı okumalıydın.</div>`;
     if(cd.mb2==='merge')h+=`<div class="neu">Tip II: MB2 apikal 1/3'te MB1 ile tek foramende birleşir — açılı filmde iki kanalın apikalde kaynaştığı görülür.</div>`;
   }
+  // EAL / working length
+  h+=`<div class="kh">Çalışma boyu & EAL</div>`;
+  if(cd.foramenOffsetMm){
+    h+=`<div>E5: majör foramen anatomik uçtan <b>1.8 mm koronal-lateralde</b>. "Radyografik apeks = çalışma boyu" <span class="neg">tuzaktır</span>; EAL apikal daralımı (0.5 yeşil) majör foramenin ~0.5 mm gerisinde verir.</div>`;
+  }
+  const leakW=Object.keys(g.WLsnap).filter(n=>g.WLsnap[n].leak);
+  if(leakW.length) h+=`<div class="neg">${leakW.join(', ')} kanalında kaçak (koronal sıvı köprüsü/perforasyon) altında EAL "sahte erken apeks" verdi; odayı kurutmadan/kaçağı çözmeden WL kabul edilmemeli.</div>`;
+  else if(Object.keys(g.WLsnap).length) h+=`<div class="pos">EAL oran ekranında apikal daralımda (0.5 yeşil) durup WL kaydedildi; eğeli PA ile doğrulandı.</div>`;
+  // NaOCl
+  h+=`<div class="kh">NaOCl irrigasyon güvenliği</div>`;
+  if(g.naoclAccident) h+=`<div class="neg">Akut NaOCl ekstrüzyon kazası (≈${g.extrudedMl} ml): sıkıştırılmış/açık-uçlu yüksek basınç veya açık perforasyon → apikal/perforasyon akışı. Ani ağrı, fasiyal ekimoz/ödem; kritik güvenlik ihlali.</div>`;
+  else h+=`<div class="pos">Yandan delikli 30G, WL−2..3 mm serbest derinlik ve düşük basınçla koronal geri akış sağlandı — apikal ekstrüzyon yok.</div>`;
   h+=`<div class="kh">Doku ekonomisi</div>`;
   h+=`<div>${g.removedMM3} mm³ dentin kaldırıldı. Kalan furkasyon tabanı <b class="${g.furcThk<1.8?'neg':'pos'}">${g.furcThk.toFixed(1)} mm</b>${g.furcThk<1.8?' — ince taban, aşırı rond frez baskısı furkasyon perforasyonu riski taşır.':' — güvenli kalınlık.'}</div>`;
   if(g.perforated)h+=`<div class="neg">Perforasyon sonrası önceki "perforasyon yok" filmlerinin geçerliliği düştü (bkz. kanıt çekmecesi ⚠).</div>`;
-  h+=`<div class="kh">Skor</div><div>${g.score}/100 — ${g.score>=85?'<span class="pos">uzman düzeyi</span>':g.score>=60?'<span class="neu">geliştirilmeli</span>':'<span class="neg">kritik hatalar var</span>'}.</div>`;
+  h+=`<div class="kh">Skor (4 kategori)</div>`;
+  g.cats.forEach(c=>{h+=`<div>${c.name}: <b>${Math.round(c.w*c.s)}/${c.w}</b></div>`;});
+  h+=`<div style="margin-top:4px">Toplam <b>${g.score}/100</b> — ${g.score>=85?'<span class="pos">uzman düzeyi</span>':g.score>=60?'<span class="neu">geliştirilmeli</span>':'<span class="neg">kritik hatalar var</span>'}.</div>`;
   return h;
 }
 
+/* ========================================================================
+   AŞAMA 2 — Oran-temelli EAL (Root-ZX) + NaOCl irrigasyon akış ağı
+   ======================================================================== */
+let chamberFlooded=false, extrudedMl=0, naoclAccident=false, safetyLock=false;
+const WL={};                 // per-canal recorded working length {name:{wl,when}}
+const filePositionRevision={}; // per-canal
+let ealFileDepth=0, ealCanalSel=null, audioCtx=null;
+
+function canalAnatomy(cid,name){
+  const cd=CASES[cid]; const c=cd.canals[name]; if(!c)return null;
+  const L=c.oz - c.az;                                   // orifice→anatomic tip (radiographic apex)
+  // major foramen: normally ~0.3mm short of anatomic tip; E5 MB1 is 1.8mm short & lateral
+  const offset=(cd.foramenOffsetMm&&name==='MB1')?cd.foramenOffsetMm:0.3;
+  const majorForamenDepth=L-offset;
+  const constrictionDepth=majorForamenDepth-0.6;         // apical constriction = WL target (green)
+  return {L, radiographicApexDepth:L, majorForamenDepth, constrictionDepth, lateral:(cd.foramenOffsetMm&&name==='MB1')};
+}
+function ealRead(name,depth){
+  const an=canalAnatomy(curCase,name); if(!an)return null;
+  // LEAK OVERRIDES
+  if(perforated) return {r:0.0,label:'APEX',zone:'leak',note:'perforasyon → PDL kaçağı (kurutma düzeltmez)',an};
+  if(chamberFlooded && depth>8) return {r:0.0,label:'APEX',zone:'leak',note:'koronal sıvı köprüsü — sahte erken apeks',an};
+  // TRUE reading vs major foramen
+  if(depth > an.majorForamenDepth+0.08) return {r:0.0,label:'OVER',zone:'over',note:'majör foramen aşıldı',an};
+  const toF=an.majorForamenDepth-depth;
+  let r; if(toF>=3) r=2.0; else if(toF>=0.6) r=0.5+(toF-0.6)/(3-0.6)*1.5; else r=toF/0.6*0.5;
+  const zone = toF<=0.12?'apex':(toF<=0.75?'green':'approach');
+  const label = zone==='apex'?'APEX':zone==='green'?'0.5 ✓ WL':r.toFixed(2);
+  return {r:+r.toFixed(2),label,zone,toF:+toF.toFixed(2),an};
+}
+function beep(zone){
+  try{ if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+    o.type='sine'; o.frequency.value = zone==='apex'||zone==='leak'?1320:zone==='green'?880:zone==='over'?300:560;
+    g.gain.value=0.0001; o.connect(g); g.connect(audioCtx.destination); const t=audioCtx.currentTime;
+    g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.08,t+0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+(zone==='apex'||zone==='leak'?0.35:0.12));
+    o.start(t); o.stop(t+0.4);
+  }catch(e){}
+}
+function drawEAL(rd){
+  const cv=$('ealCanvas'),ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H); ctx.fillStyle='#04080d';ctx.fillRect(0,0,W,H);
+  // scale bar: left=far(2.0) → right=OVER. zones.
+  const barY=8,barH=16,x0=6,x1=W-6,bw=x1-x0;
+  // gradient zones: far(blue)→approach(cyan)→green(WL)→apex(orange)→over(red)
+  const stops=[[0,'#2a4a6a'],[0.45,'#2f7fb0'],[0.68,'#2f9e6a'],[0.80,'#56d6a0'],[0.9,'#e0a53a'],[1,'#e8505a']];
+  const grad=ctx.createLinearGradient(x0,0,x1,0); stops.forEach(s=>grad.addColorStop(s[0],s[1]));
+  ctx.fillStyle=grad; ctx.fillRect(x0,barY,bw,barH);
+  // ticks
+  ctx.fillStyle='rgba(230,240,250,.85)';ctx.font='7px sans-serif';
+  [['2.0',0.0],['1.0',0.45],['0.5',0.74],['APEX',0.86],['OVER',0.97]].forEach(([t,p])=>{ctx.fillRect(x0+bw*p,barY-2,1,barH+4);ctx.fillText(t,x0+bw*p-5,barY+barH+8);});
+  // indicator from reading: map r/zone → position
+  let p=0;
+  if(rd){ if(rd.zone==='over'||rd.label==='OVER')p=0.97; else if(rd.zone==='apex'||rd.zone==='leak')p=0.86;
+    else { // r 2.0→0.0 maps 0.0→0.86; green at 0.5
+      p = rd.r>=0.5 ? (2.0-rd.r)/(2.0-0.5)*0.74 : 0.74+(0.5-rd.r)/0.5*0.12; }
+  }
+  const ix=x0+bw*clamp(p,0,1);
+  ctx.fillStyle='#fff';ctx.beginPath();ctx.moveTo(ix,barY-3);ctx.lineTo(ix-4,barY-9);ctx.lineTo(ix+4,barY-9);ctx.closePath();ctx.fill();
+  ctx.fillRect(ix-0.5,barY-3,1,barH+6);
+}
+function renderEAL(){
+  const name=$('ealCanal').value; ealCanalSel=name;
+  const depth=ealFileDepth;
+  const rd=name?ealRead(name,depth):null;
+  drawEAL(rd);
+  const col = !rd?'var(--ink-mut)': rd.zone==='green'?'var(--good)':(rd.zone==='apex'||rd.zone==='leak'||rd.zone==='over')?'var(--bad)':'var(--accent)';
+  $('ealR').style.color=col; $('ealLab').style.color=col;
+  $('ealR').textContent = rd? (rd.label==='APEX'||rd.label==='OVER'?rd.label:rd.r.toFixed(2)) : '—';
+  $('ealLab').textContent = rd? (rd.note? rd.note : (rd.zone==='green'?'apikal daralım · WL hedefi':rd.zone==='apex'?'MAJÖR FORAMEN':rd.zone==='over'?'AŞIM / OVER':rd.zone==='approach'?'yaklaşıyor':'uzak')) : 'Eğeyi ilerlet';
+  // file shadow on xray (insert file at this depth)
+  if(name){ filesInserted[name]=true; }
+  renderWLTable();
+}
+function renderWLTable(){
+  const el=$('wlTable'); let h='';
+  for(const nm in caseDef.canals){ const w=WL[nm];
+    h+=`<div class="wlrow"><span>${nm}</span><span>${w?('<b>WL '+w.wl.toFixed(1)+' mm</b>'+(w.historical?' <span style="color:var(--warn)">TARİHSEL</span>':'')):'—'}</span></div>`; }
+  el.innerHTML=h;
+}
+function setFileDepth(d){
+  ealFileDepth=clamp(d,0,23); $('fileDepth').value=ealFileDepth; $('fileDepthVal').textContent=ealFileDepth.toFixed(1)+' mm';
+  const name=$('ealCanal').value;
+  // if WL recorded for this canal and file moved away, mark historical + bump revision
+  if(name&&WL[name]&&Math.abs(WL[name].wl-ealFileDepth)>0.3){ if(!WL[name].historical){WL[name].historical=true; filePositionRevision[name]=(filePositionRevision[name]||0)+1; EVID.forEach(e=>{if(e.ealOf===name)e.validityDropped=true;});} }
+  const rd=name?ealRead(name,ealFileDepth):null; if(rd) beep(rd.zone);
+  renderEAL(); renderXray(xrayTheta); setStep(4);
+}
+function recordWL(){
+  const name=$('ealCanal').value; if(!name){toast('Önce kanal seç','');return;}
+  const rd=ealRead(name,ealFileDepth);
+  WL[name]={wl:ealFileDepth, when:Date.now(), historical:false, zone:rd.zone, leak:rd.zone==='leak'};
+  if(rd.zone==='leak'){ toast('⚠ Kaçak koşulunda WL kaydedildi — önce odayı kurut / perforasyonu çöz','warn'); }
+  else if(rd.zone==='green'){ toast('✓ WL '+ealFileDepth.toFixed(1)+' mm (apikal daralım) kaydedildi','good'); }
+  else if(rd.zone==='over'){ toast('⚠ WL majör foramen ötesinde — fazla uzun','bad'); }
+  else toast('WL '+ealFileDepth.toFixed(1)+' mm kaydedildi ('+rd.label+')','');
+  renderWLTable();
+}
+function dryChamber(){
+  chamberFlooded=false; toast('💨 Pulpa odası kurutuldu — koronal sıvı köprüsü kesildi','good');
+  renderEAL(); updateChamberStat();
+}
+function naoclFlow(){
+  const nt=$('needleType').value, nd=+$('needleDepth').value, pr=$('flowPress').value;
+  const name=$('ealCanal').value||Object.keys(caseDef.canals)[0];
+  const an=canalAnatomy(curCase,name); const wl=WL[name]?WL[name].wl:an.constrictionDepth;
+  chamberFlooded=true;                                   // irrigation always floods the chamber
+  let Qap=0,Qperf=0; const wedged = nd > wl-2+0.001;
+  if(perforated) Qperf = pr==='high'?0.8:0.45;           // open perforation + NaOCl → periradicular extrusion
+  if(nt==='open' && nd>=an.constrictionDepth-0.3 && pr==='high') Qap+=0.6; // open-ended past constriction + high
+  if(wedged && nt==='open' && pr==='high') Qap+=0.4;     // wedged open-ended high pressure
+  const Qreturn = wedged? 0.05 : Math.max(0.1, 1-Qap-Qperf);
+  const extruded = +(Qap+Qperf).toFixed(2); extrudedMl=+(extrudedMl+extruded).toFixed(2);
+  // flow bar
+  const fb=$('flowBar'); fb.style.display='flex';
+  const seg=(c,v)=>v>0?`<span style="background:${c};width:${Math.round(v*100)}%"></span>`:'';
+  fb.innerHTML=seg('#2f9e6a',Qreturn)+seg('#e0a53a',Qap)+seg('#e8505a',Qperf);
+  if(extruded>0.05){
+    naoclAccident=true; safetyLock=true;
+    const why = perforated?'açık perforasyon hattından periradiküler':(wedged?'sıkıştırılmış (wedging) açık uçlu iğne + yüksek basınç':'apikal daralım aşılıp yüksek basınç');
+    $('flowStat').innerHTML=`<div class="safelock">⛔ AKUT NaOCl EKSTRÜZYON KAZASI (${why}) · Ekstrüde ≈ ${extruded.toFixed(2)} ml<br>Ani şiddetli ağrı, fasiyal ekimoz/ödem riski — Jüri: KRİTİK GÜVENLİK İHLALİ. Güvenlik kilidi aktif.</div>`;
+    toast('⛔ NaOCl ekstrüzyon kazası! Kritik güvenlik ihlali','bad');
+  } else {
+    $('flowStat').innerHTML=`<div class="mini" style="color:var(--good)">✓ Güvenli yıkama — koronal geri akış (Q_return) gözlendi, apikal ekstrüzyon yok (extrudedMl=0).<br>Yandan delikli 30G · WL−${(wl-nd).toFixed(1)} mm serbest · düşük basınç.</div>`;
+    toast('✓ Güvenli NaOCl yıkaması','good');
+  }
+  updateChamberStat(); setStep(4);
+}
+function populateEalCanal(){
+  const sel=$('ealCanal'); const prev=sel.value; sel.innerHTML='';
+  for(const nm in caseDef.canals){ const c=caseDef.canals[nm];
+    if(c.hidden && !troughedMB2 && curMode==='exam') continue;
+    const o=document.createElement('option'); o.value=nm; o.textContent=nm; sel.appendChild(o); }
+  if(prev&&[...sel.options].some(o=>o.value===prev))sel.value=prev;
+  renderEAL();
+}
+
 /* ---------------- events ---------------- */
+$('ealCanal').addEventListener('change',()=>{ealFileDepth=0;$('fileDepth').value=0;$('fileDepthVal').textContent='0.0 mm';renderEAL();});
+$('fileDepth').addEventListener('input',e=>setFileDepth(+e.target.value));
+$('needleDepth').addEventListener('input',e=>$('needleDepthVal').textContent=(+e.target.value).toFixed(1)+' mm');
+$('dryBtn').addEventListener('click',dryChamber);
+$('recWLBtn').addEventListener('click',recordWL);
+$('naoclBtn').addEventListener('click',naoclFlow);
 $('modeSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
   curMode=b.dataset.mode; [...$('modeSeg').children].forEach(x=>x.classList.toggle('on',x===b));
   $('modeSeg').classList.toggle('exam',curMode==='exam');
@@ -1103,6 +1344,18 @@ window.ENDO={
   cases:()=>CASE_ORDER, caseDef:()=>JSON.parse(JSON.stringify(CASES[curCase])),
   showScenery:(on)=>{['dam','clamp','n15','n17'].forEach(k=>{if(meshRefs[k])meshRefs[k].visible=on;});},
   setView:(o)=>{o=o||{}; if(o.mag!==undefined){mag=o.mag;renderMag&&renderMag();} if(o.pan!==undefined){panDeg=o.pan;$('panR').value=o.pan;} if(o.tilt!==undefined){tiltDeg=o.tilt;$('tiltR').value=o.tilt;} if(o.distK!==undefined)VIEWDIST.k=o.distK; if(o.look!==undefined)VIEWDIST.look=o.look;},
+  // --- Phase 2: EAL + NaOCl ---
+  anatomy:(canal)=>canalAnatomy(curCase,canal),
+  ealRead:(canal,depth)=>ealRead(canal,depth),
+  setFile:(canal,depth)=>{if($('ealCanal').querySelector(`option[value="${canal}"]`))$('ealCanal').value=canal; ealFileDepth=clamp(depth,0,23); setFileDepth(depth); return ealRead(canal,ealFileDepth);},
+  recordWL:(canal,depth)=>{if(canal){$('ealCanal').value=canal; if(depth!==undefined){ealFileDepth=depth;$('fileDepth').value=depth;}} recordWL(); return JSON.parse(JSON.stringify(WL));},
+  WL:()=>JSON.parse(JSON.stringify(WL)),
+  flood:()=>{chamberFlooded=true; if($('ealCanal').value)renderEAL();},
+  dryChamber:()=>{dryChamber();},
+  isFlooded:()=>chamberFlooded,
+  irrigate:(o)=>{o=o||{}; if(o.canal)$('ealCanal').value=o.canal; if(o.needleType)$('needleType').value=o.needleType; if(o.needleDepth!==undefined)$('needleDepth').value=o.needleDepth; if(o.pressure)$('flowPress').value=o.pressure; naoclFlow(); return {extruded:extrudedMl, accident:naoclAccident, lock:safetyLock};},
+  extrudedMl:()=>extrudedMl, naoclAccident:()=>naoclAccident, safetyLock:()=>safetyLock,
+  xraySample:(ux,uv)=>{const cv=$('xrayCanvas');const d=cv.getContext('2d').getImageData(0,0,cv.width,cv.height).data;const px=Math.round(ux*(cv.width-1)),py=Math.round(uv*(cv.height-1));const o=(py*cv.width+px)*4;return (d[o]+d[o+1]+d[o+2])/3;},
 };
 window.__selfTest=function(){
   const R=[]; const ok=(n,c)=>R.push({n,pass:!!c});
@@ -1123,12 +1376,52 @@ window.__selfTest=function(){
     const sp=relShift('E2','MB2','MB1',20), sn=relShift('E2','MB2','MB1',-20), s0=relShift('E2','MB2','MB1',0);
     ok('slob-+20-mesial', sp>1.0); ok('slob--20-opposite', sn< -1.0 && Math.sign(sn)!==Math.sign(sp)); ok('slob-0-superimpose', Math.abs(s0)<0.05);
     const sd=relShift('E2','depthA','depthB',20); ok('slob-samedepth-zero', Math.abs(sd)<0.05);
-    // 6 E4 safe stop full score
+    // 6 E4 safe stop → full SAFETY category
     loadCase('E4'); const g=window.ENDO.declare({canalCount:3,mb2:'absent',slob:'none',safe:true});
-    ok('e4-safe-full', g.score>=90 && !perforated);
-    // 7 E4 perforation penalized
+    ok('e4-safe-full', g.cats[0].s===1 && !perforated);
+    // 7 E4 perforation penalized (safety drops)
     loadCase('E4'); window.ENDO.drillFurcation(); const g2=window.ENDO.declare({canalCount:3,mb2:'absent',slob:'none',safe:true});
-    ok('e4-perf-penalized', g2.score < g.score && perforated===true);
+    ok('e4-perf-penalized', g2.cats[0].s < g.cats[0].s && perforated===true);
+
+    // === Phase-2 acceptance tests ===
+    // test_xray_pulp_chamber_visible: pulp chamber radiolucent, no white brick, enamel(crown)>dentin(root)
+    loadCase('E1'); renderXray(0);
+    const sAir=window.ENDO.xraySample(0.05,0.03);
+    const sEnamel=Math.max(window.ENDO.xraySample(0.5,0.2),window.ENDO.xraySample(0.68,0.12),window.ENDO.xraySample(0.33,0.12));
+    const sDentinCrown=window.ENDO.xraySample(0.73,0.33);  // crown dentin lateral to chamber (same z)
+    const sRootDentin=window.ENDO.xraySample(0.5,0.78);    // dentin-only root
+    const sCham=window.ENDO.xraySample(0.5,0.33);          // crown centre over pulp chamber
+    ok('xray-pulp-chamber-visible',
+       sEnamel<252 && sEnamel>150 &&            // bright but NOT a saturated white brick
+       sEnamel>sRootDentin+4 &&                 // enamel-bearing crown brighter than dentin-only root (mine>dentin)
+       sDentinCrown>sCham+8 &&                  // pulp chamber reads radiolucent vs surrounding crown dentin
+       sCham>sAir+8);                           // ...but still brighter than air
+
+    // test_eal_leak_vs_perf_and_e5
+    loadCase('E1'); let rNorm=window.ENDO.ealRead('MB1',5);          // normal moisture, mid canal
+    ok('eal-no-early-apex-normal', rNorm.zone!=='apex' && rNorm.zone!=='leak');
+    window.ENDO.flood(); let rFlood=window.ENDO.ealRead('MB1',9);     // coronal fluid bridge
+    ok('eal-coronal-bridge-false-apex', rFlood.zone==='leak' && rFlood.r===0.0);
+    window.ENDO.dryChamber(); let rDry=window.ENDO.ealRead('MB1',9);  // drying fixes it
+    ok('eal-dry-fixes-bridge', rDry.zone!=='leak' && rDry.zone!=='apex');
+    loadCase('E1'); window.ENDO.drillFurcation();                     // real perforation
+    window.ENDO.dryChamber(); let rPerf=window.ENDO.ealRead('MB1',9);
+    ok('eal-perf-persists-after-dry', rPerf.zone==='leak');
+    // E5: radiographic apex OVER; 1.8mm back gives 0.5 green
+    loadCase('E5'); const an5=window.ENDO.anatomy('MB1');
+    let rApex=window.ENDO.ealRead('MB1',an5.radiographicApexDepth);   // = radiographic apex
+    let rConstr=window.ENDO.ealRead('MB1',an5.constrictionDepth);     // apical constriction
+    ok('eal-e5-radiographic-apex-over', rApex.label==='OVER');
+    ok('eal-e5-constriction-green', rConstr.zone==='green' && Math.abs(rConstr.r-0.5)<0.25);
+
+    // test_naocl_wedging_accident
+    loadCase('E1'); window.ENDO.drillRoof(); const anP=window.ENDO.anatomy('P');
+    window.ENDO.recordWL('P', anP.constrictionDepth);
+    const safe=window.ENDO.irrigate({canal:'P',needleType:'sidevent',needleDepth:anP.constrictionDepth-2.5,pressure:'low'});
+    ok('naocl-safe-no-extrusion', safe.extruded===0 && !safe.accident);
+    const acc=window.ENDO.irrigate({canal:'P',needleType:'open',needleDepth:anP.constrictionDepth+0.2,pressure:'high'});
+    ok('naocl-wedging-accident', acc.extruded>0 && acc.accident===true && acc.lock===true);
+
     loadCase('E1');
   }catch(e){ R.push({n:'exception',pass:false,err:String(e)}); }
   const pass=R.every(r=>r.pass);

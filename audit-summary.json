@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-02T23:28:20.857Z",
+  "generatedAt": "2026-11-02T23:46:12.766Z",
   "threeLocal": true,
   "pages": 19,
   "viewports": [
@@ -223,9 +223,45 @@
               {
                 "n": "e4-perf-penalized",
                 "pass": true
+              },
+              {
+                "n": "xray-pulp-chamber-visible",
+                "pass": true
+              },
+              {
+                "n": "eal-no-early-apex-normal",
+                "pass": true
+              },
+              {
+                "n": "eal-coronal-bridge-false-apex",
+                "pass": true
+              },
+              {
+                "n": "eal-dry-fixes-bridge",
+                "pass": true
+              },
+              {
+                "n": "eal-perf-persists-after-dry",
+                "pass": true
+              },
+              {
+                "n": "eal-e5-radiographic-apex-over",
+                "pass": true
+              },
+              {
+                "n": "eal-e5-constriction-green",
+                "pass": true
+              },
+              {
+                "n": "naocl-safe-no-extrusion",
+                "pass": true
+              },
+              {
+                "n": "naocl-wedging-accident",
+                "pass": true
               }
             ],
-            "count": 12,
+            "count": 21,
             "failed": []
           }
         },
@@ -572,9 +608,45 @@
           {
             "n": "e4-perf-penalized",
             "pass": true
+          },
+          {
+            "n": "xray-pulp-chamber-visible",
+            "pass": true
+          },
+          {
+            "n": "eal-no-early-apex-normal",
+            "pass": true
+          },
+          {
+            "n": "eal-coronal-bridge-false-apex",
+            "pass": true
+          },
+          {
+            "n": "eal-dry-fixes-bridge",
+            "pass": true
+          },
+          {
+            "n": "eal-perf-persists-after-dry",
+            "pass": true
+          },
+          {
+            "n": "eal-e5-radiographic-apex-over",
+            "pass": true
+          },
+          {
+            "n": "eal-e5-constriction-green",
+            "pass": true
+          },
+          {
+            "n": "naocl-safe-no-extrusion",
+            "pass": true
+          },
+          {
+            "n": "naocl-wedging-accident",
+            "pass": true
           }
         ],
-        "count": 12,
+        "count": 21,
         "failed": []
       },
       "lifecycle": {
