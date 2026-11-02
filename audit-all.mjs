@@ -14,7 +14,7 @@ const ROOT = dirname(fileURLToPath(import.meta.url));
 const PAGES = [
   'index.html', 'ductuslab-suite.html', 'ductuslab-case-chain.html',
   'ductuslab-airway.html', 'ductuslab-cathlab.html', 'ductuslab-lapchole.html',
-  'ductuslab-neurosurgery.html', 'ductuslab-usg-access.html',
+  'ductuslab-neurosurgery.html', 'ductuslab-usg-access.html', 'ductuslab-pharma.html',
   'acil/index.html', 'ekg/index.html', 'eko/index.html', 'fnd/index.html',
   'ks/index.html', 'nro/index.html', 'oto/index.html', 'sft/index.html', 'ventilator/index.html'
 ];

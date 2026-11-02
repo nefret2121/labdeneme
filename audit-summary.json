@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-11-02T12:09:04.517Z",
+  "generatedAt": "2026-11-02T14:08:35.724Z",
   "threeLocal": true,
-  "pages": 17,
+  "pages": 18,
   "viewports": [
     {
       "w": 1920,
@@ -27,7 +27,7 @@
     },
     "gate3_link_integrity": {
       "pass": true,
-      "checked": 38,
+      "checked": 40,
       "skipped": 1,
       "broken": []
     },
@@ -40,7 +40,7 @@
       "fails": []
     },
     "gate6_clinical_selftests": {
-      "hooks": 2,
+      "hooks": 3,
       "pass": true,
       "detail": [
         {
@@ -157,6 +157,17 @@
                 "ok": true
               }
             ]
+          }
+        },
+        {
+          "page": "ductuslab-pharma.html",
+          "pass": true,
+          "selfTest": {
+            "hook": true,
+            "module": "Pharma",
+            "pass": true,
+            "total": 5,
+            "failed": []
           }
         },
         {
@@ -408,6 +419,26 @@
             "ok": true
           }
         ]
+      },
+      "lifecycle": {
+        "supported": false,
+        "advanced": null
+      }
+    },
+    "ductuslab-pharma.html": {
+      "page": "ductuslab-pharma.html",
+      "pageerrors": [],
+      "consoleErrors": [],
+      "externalAssets": [],
+      "disallowedReq": [],
+      "overflow": [],
+      "truthLeak": [],
+      "selfTest": {
+        "hook": true,
+        "module": "Pharma",
+        "pass": true,
+        "total": 5,
+        "failed": []
       },
       "lifecycle": {
         "supported": false,
