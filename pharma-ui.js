@@ -108,12 +108,20 @@ function toast(m,k){ var box=$('toastBox'); if(!box)return; box.innerHTML='';
 
 /* ========================= VAKA YÜKLE ========================= */
 function loadCase(id){ ST.caseId=id; var C=CASES[id]; ST.bench=C.bench; ST.evaluated=false; ST.step=0;
-  $('caseTag').textContent=C.code+' · Vaka '+id; $('caseStem').textContent=C.stem;
+  $('caseTag').textContent=C.code+' · Vaka '+id; renderStem();
   if(C.bench===1){ ST.regimen=Object.assign({},C.regimen); ST.sim=new E.PKSim({patient:C.patient,drug:C.drug}); applyRegimenSetup(); }
   else if(C.bench===2){ ST.tox=makeTox(C.tox); ST.toxT=0; }
   else { ST.recept={spare:(C.receptor.spare!=null?C.receptor.spare:0.75),block:(C.receptor.block!=null?C.receptor.block:0.0),partialOn:(C.receptor.mode==='competition'),agonistDose:50}; }
   syncBenchTabs(); resetJury(); renderAll();
 }
+// TUS/Sınav modunda vaka açıklamasından öğretici ipuçlarını (KRİTİK/TUZAK/hedef) gizle
+function examStem(C){ if(ST.mode==='explore'||ST.evaluated) return C.stem;
+  var sentences=C.stem.split(/(?<=[.!?])\s+/);
+  var spoiler=/KR[İIi]T[İIi]K|TUZAK|tuzak|tuzağı|hedef|Hedef|TAM PUAN|güvenli dur|AZALTILMA|aslında normal|nomogram|≥\s?4|<\s?4\.?\s?saat|Vertucci|kalevileş|paradoks/;
+  var kept=sentences.filter(function(s){ return !spoiler.test(s); });
+  return (kept.join(' ').trim()) || sentences[0];
+}
+function renderStem(){ var C=CASES[ST.caseId]; $('caseStem').textContent=examStem(C); }
 function resetJury(){ var j=$('juryOut'); if(!j)return;
   j.innerHTML = (ST.bench===1) ? 'Kararlarını uygula, zamanı ilerlet, gerektiğinde 🩸 TDM al → <b>Beyanı Değerlendir</b>.'
     : (ST.bench===2) ? 'Zehir tablosunu oku, antidot/düzeltme kararlarını uygula → <b>Beyanı Değerlendir</b>.'
@@ -127,7 +135,7 @@ function applyRegimenSetup(){ var C=CASES[ST.caseId],r=ST.regimen; ST.sim.reset(
 /* ========================= RENDER ========================= */
 function syncBenchTabs(){ [].forEach.call($('benchtabs').children,function(b){ b.classList.toggle('on',+b.dataset.bench===ST.bench); }); }
 function renderStepper(){ var steps=ST.bench===1?STEPS1:ST.bench===2?STEPS2:STEPS3; var h=''; steps.forEach(function(n,i){ h+='<div class="step'+(i===ST.step?' active':(i<ST.step?' done':''))+'"><span class="dot">'+(i<ST.step?'✓':(i+1))+'</span>'+n+'</div>'; }); $('stepper').innerHTML=h; }
-function renderAll(){ renderStepper(); renderPatient(); renderControls(); renderLegend();
+function renderAll(){ renderStepper(); renderStem(); renderPatient(); renderControls(); renderLegend();
   $('chartWrap2').classList.toggle('hidden',ST.bench!==3);
   $('blindTag').classList.toggle('hidden', !(ST.bench===1 && ST.mode==='exam' && !ST.evaluated));
   var C=CASES[ST.caseId];

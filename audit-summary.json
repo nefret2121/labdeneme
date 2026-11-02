@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-11-02T14:29:46.008Z",
+  "generatedAt": "2026-11-02T22:26:59.334Z",
   "threeLocal": true,
-  "pages": 18,
+  "pages": 19,
   "viewports": [
     {
       "w": 1920,
@@ -27,7 +27,7 @@
     },
     "gate3_link_integrity": {
       "pass": true,
-      "checked": 40,
+      "checked": 42,
       "skipped": 1,
       "broken": []
     },
@@ -40,7 +40,7 @@
       "fails": []
     },
     "gate6_clinical_selftests": {
-      "hooks": 3,
+      "hooks": 4,
       "pass": true,
       "detail": [
         {
@@ -171,6 +171,65 @@
           }
         },
         {
+          "page": "ductuslab-endo.html",
+          "pass": true,
+          "selfTest": {
+            "pass": true,
+            "tests": [
+              {
+                "n": "blender-meshes",
+                "pass": true
+              },
+              {
+                "n": "voxel-field",
+                "pass": true
+              },
+              {
+                "n": "roof-closed-intact",
+                "pass": true
+              },
+              {
+                "n": "floor-exposed-after-roof",
+                "pass": true
+              },
+              {
+                "n": "perforation",
+                "pass": true
+              },
+              {
+                "n": "old-film-immutable",
+                "pass": true
+              },
+              {
+                "n": "slob-+20-mesial",
+                "pass": true
+              },
+              {
+                "n": "slob--20-opposite",
+                "pass": true
+              },
+              {
+                "n": "slob-0-superimpose",
+                "pass": true
+              },
+              {
+                "n": "slob-samedepth-zero",
+                "pass": true
+              },
+              {
+                "n": "e4-safe-full",
+                "pass": true
+              },
+              {
+                "n": "e4-perf-penalized",
+                "pass": true
+              }
+            ],
+            "count": 12,
+            "failed": []
+          }
+        },
+        {
           "page": "acil/index.html",
           "pass": null,
           "selfTest": {
@@ -238,7 +297,7 @@
     "gate7_portal_accessibility": {
       "pass": true,
       "detail": {
-        "cards": 16,
+        "cards": 17,
         "lapBadgeClean": true,
         "frmPresent": true,
         "scrollOk": true,
@@ -448,6 +507,74 @@
         "module": "Pharma",
         "pass": true,
         "total": 5,
+        "failed": []
+      },
+      "lifecycle": {
+        "supported": false,
+        "advanced": null
+      }
+    },
+    "ductuslab-endo.html": {
+      "page": "ductuslab-endo.html",
+      "pageerrors": [],
+      "consoleErrors": [],
+      "externalAssets": [],
+      "disallowedReq": [],
+      "overflow": [],
+      "truthLeak": [],
+      "selfTest": {
+        "pass": true,
+        "tests": [
+          {
+            "n": "blender-meshes",
+            "pass": true
+          },
+          {
+            "n": "voxel-field",
+            "pass": true
+          },
+          {
+            "n": "roof-closed-intact",
+            "pass": true
+          },
+          {
+            "n": "floor-exposed-after-roof",
+            "pass": true
+          },
+          {
+            "n": "perforation",
+            "pass": true
+          },
+          {
+            "n": "old-film-immutable",
+            "pass": true
+          },
+          {
+            "n": "slob-+20-mesial",
+            "pass": true
+          },
+          {
+            "n": "slob--20-opposite",
+            "pass": true
+          },
+          {
+            "n": "slob-0-superimpose",
+            "pass": true
+          },
+          {
+            "n": "slob-samedepth-zero",
+            "pass": true
+          },
+          {
+            "n": "e4-safe-full",
+            "pass": true
+          },
+          {
+            "n": "e4-perf-penalized",
+            "pass": true
+          }
+        ],
+        "count": 12,
         "failed": []
       },
       "lifecycle": {
