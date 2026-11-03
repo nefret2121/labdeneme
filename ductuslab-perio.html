@@ -63,10 +63,11 @@ input[type=range]{flex:1;accent-color:var(--accent)}
 /* center scene */
 .col.center{background:radial-gradient(900px 600px at 50% 36%,#1a130b,#0b0805);position:relative}
 .scenewrap{position:relative;flex:1;min-height:0;display:flex;flex-direction:column;padding:10px;gap:8px}
-#clinicCanvas{width:100%;flex:1;min-height:0;border-radius:14px;display:block;background:#0e0a06;box-shadow:inset 0 0 0 1px var(--line2)}
-.loupe{position:absolute;right:20px;top:18px;width:210px;background:rgba(10,8,5,.92);border:1px solid var(--line2);border-radius:12px;padding:8px;z-index:4}
+.clinicbox{position:relative;flex:1;min-height:0}
+#clinicCanvas{width:100%;height:100%;border-radius:14px;display:block;background:#1a0f0b;box-shadow:inset 0 0 0 1px var(--line2)}
+.loupe{flex:0 0 auto;background:rgba(10,8,5,.95);border:1px solid var(--line2);border-radius:12px;padding:8px}
 .loupe .lt{font-size:9.5px;letter-spacing:.5px;color:var(--accent);font-weight:800;text-transform:uppercase;margin-bottom:5px;display:flex;justify-content:space-between}
-#loupeCanvas{width:194px;height:238px;display:block;border-radius:7px;background:#07120f}
+#loupeCanvas{width:100%;height:158px;display:block;border-radius:7px;background:#160d0a}
 .hud{position:absolute;left:18px;top:16px;display:flex;flex-direction:column;gap:6px;z-index:4}
 .hud .chip{background:rgba(16,12,7,.85);border:1px solid var(--line2);border-radius:999px;padding:3px 10px;font-size:11px;font-weight:700;color:var(--ink-dim)}
 .hud .chip b{color:var(--accent)} .hud .chip.bad{color:var(--bad);border-color:#4a2024} .hud .chip.good{color:var(--good)}
@@ -144,14 +145,15 @@ table.chart td.bop{color:var(--bad)}
     </div>
     <div class="col center">
       <div class="scenewrap">
-        <canvas id="clinicCanvas"></canvas>
-        <div class="hud" id="hud"></div>
-        <div class="loupe">
-          <div class="lt"><span>Büyüteçli Oluk Kesiti</span><span id="loupeView"></span></div>
-          <canvas id="loupeCanvas" width="388" height="476"></canvas>
+        <div class="clinicbox"><canvas id="clinicCanvas"></canvas>
+          <div class="hud" id="hud"></div>
+          <div class="readout" id="readout"></div>
+          <div class="scene-hint" id="sceneHint">Sahaya tıkla → sondla (kuvvet/açı etkili)</div>
         </div>
-        <div class="readout" id="readout"></div>
-        <div class="scene-hint" id="sceneHint">Sahaya tıkla → sondla (kuvvet/açı etkili)</div>
+        <div class="loupe">
+          <div class="lt"><span>Büyüteçli Sagital Oluk Kesiti</span><span id="loupeView"></span></div>
+          <canvas id="loupeCanvas" width="760" height="248"></canvas>
+        </div>
       </div>
     </div>
     <div class="col right scroll">
@@ -305,78 +307,104 @@ function probeSite(t,siteKey){
 
 /* ============ clinical scene (Canvas2D) ============ */
 let CC,cctx,CW,CH,toothRects=[];
+// morphology by FDI: real silhouettes + root/furcation anatomy
+function toothMorph(fdi){
+  const type=fdi%10, upper=fdi<30;
+  let kind,rootCount,crownW,cusps;
+  if(type<=2){kind='incisor';rootCount=1;crownW=0.46;cusps=1;}
+  else if(type===3){kind='canine';rootCount=1;crownW=0.5;cusps=1;}
+  else if(type<=5){kind='premolar';rootCount=(upper&&type===4)?2:1;crownW=0.6;cusps=2;}
+  else{kind='molar';rootCount=upper?3:2;crownW=0.92;cusps=upper?4:5;}
+  return {type,upper,kind,rootCount,crownW,cusps,furcation:kind==='molar'};
+}
 function initClinic(){ CC=$('clinicCanvas'); cctx=CC.getContext('2d'); resizeClinic();
   CC.addEventListener('pointerdown',onClinicClick);
-  new ResizeObserver(()=>{try{resizeClinic();drawClinic();}catch(e){}}).observe($('.scenewrap')||document.querySelector('.scenewrap'));
+  new ResizeObserver(()=>{try{resizeClinic();drawClinic();}catch(e){}}).observe(document.querySelector('.clinicbox'));
 }
-function resizeClinic(){ const r=CC.getBoundingClientRect(); CC.width=Math.max(500,r.width); CH=CC.height=Math.max(360,r.height); CW=CC.width; }
-function mmToY(baseY,s){ return baseY + s*7.0; }       // 7 px per mm in clinic
+function resizeClinic(){ const r=CC.getBoundingClientRect(); CC.width=CW=Math.max(500,Math.round(r.width)); CC.height=CH=Math.max(340,Math.round(r.height)); }
+const PPM=7;                                           // px per mm in clinic
 function drawClinic(){
   const ctx=cctx,W=CW,H=CH; ctx.clearRect(0,0,W,H);
-  // background mucosa gradient
-  const bg=ctx.createLinearGradient(0,0,0,H); bg.addColorStop(0,'#1a0f0b');bg.addColorStop(0.5,'#2a1512');bg.addColorStop(1,'#1a0d0a'); ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
-  const teeth=caseDef.teeth; const n=teeth.length;
-  const gap=18, tw=Math.min(150,(W-40-gap*(n-1))/n); const totalW=tw*n+gap*(n-1); let x0=(W-totalW)/2;
-  const cejY=H*0.42;                                    // CEJ baseline (s=0)
+  ctx.fillStyle='#160b08';ctx.fillRect(0,0,W,H);
+  const teeth=caseDef.teeth,n=teeth.length;
+  const gap=12, laneW=Math.min(190,(W-28-gap*(n-1))/n); const totalW=laneW*n+gap*(n-1); let x0=(W-totalW)/2;
   toothRects=[];
-  teeth.forEach((t,ti)=>{
-    const cx=x0+ti*(tw+gap)+tw/2;
-    drawTooth(ctx,t,ti,cx,tw,cejY);
-    toothRects.push({ti,cx,tw,cejY,x:cx-tw/2,w:tw});
-  });
-  // MGJ line
-  ctx.strokeStyle='rgba(180,90,80,.35)';ctx.setLineDash([4,4]);ctx.lineWidth=1;
-  ctx.beginPath();ctx.moveTo(10,cejY+58);ctx.lineTo(W-10,cejY+58);ctx.stroke();ctx.setLineDash([]);
-  ctx.fillStyle='rgba(200,150,120,.5)';ctx.font='9px sans-serif';ctx.fillText('MGJ (mukogingival birleşim)',14,cejY+71);
+  teeth.forEach((t,ti)=>{ const cx=x0+ti*(laneW+gap)+laneW/2; drawTooth(ctx,t,ti,cx,laneW); toothRects.push({ti,cx,tw:laneW,x:cx-laneW/2,w:laneW}); });
 }
-function drawTooth(ctx,t,ti,cx,tw,cejY){
-  const st=t.sites[buccal?'B':'L'];                    // representative facial/lingual site for GM
-  const gmY=mmToY(cejY,st.gm);                          // gingival margin vertical pos
-  const crownTop=cejY-120, rootBot=cejY+135;
-  // --- exposed root (yellow cementum) below CEJ ---
-  ctx.fillStyle='#d8c49a';
-  ctx.beginPath();ctx.moveTo(cx-tw*0.34,cejY);ctx.quadraticCurveTo(cx-tw*0.22,rootBot-20,cx,rootBot);
-  ctx.quadraticCurveTo(cx+tw*0.22,rootBot-20,cx+tw*0.34,cejY);ctx.closePath();ctx.fill();
-  // --- crown (enamel) ---
-  const cg=ctx.createLinearGradient(cx-tw*0.4,0,cx+tw*0.4,0); cg.addColorStop(0,'#e8ddc4');cg.addColorStop(0.5,'#f6efdd');cg.addColorStop(1,'#e2d6bc');
-  ctx.fillStyle=cg;
-  ctx.beginPath();ctx.moveTo(cx-tw*0.42,cejY);ctx.lineTo(cx-tw*0.40,crownTop+26);
-  ctx.quadraticCurveTo(cx-tw*0.3,crownTop,cx,crownTop);ctx.quadraticCurveTo(cx+tw*0.3,crownTop,cx+tw*0.40,crownTop+26);
-  ctx.lineTo(cx+tw*0.42,cejY);ctx.closePath();ctx.fill();
-  // CEJ line — visible if root exposed / recession and not uncertain
-  const cejUnknown = st.cejUnknown;
-  if(!cejUnknown && (st.gm>=0.5 || curMode==='explore')){
-    ctx.strokeStyle='rgba(150,100,50,.7)';ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(cx-tw*0.36,cejY);ctx.lineTo(cx+tw*0.36,cejY);ctx.stroke();
-  }
-  // --- gingiva (free + attached) drawn OVER root/crown from gmY down ---
-  const inflamed = st.bop; const gcol = inflamed?'#e55c54':'#d98b7e';
-  const gg=ctx.createLinearGradient(0,gmY,0,cejY+60); gg.addColorStop(0,inflamed?'#ef7069':'#e29a8d');gg.addColorStop(1,inflamed?'#c23d3a':'#c97668');
+function drawTooth(ctx,t,ti,cx,laneW){
+  const H=CH; const m=toothMorph(t.fdi); const upper=m.upper;
+  const apS = upper? -1 : 1;                            // apical screen direction
+  const coS = -apS;                                     // coronal screen direction
+  const cejY = upper? H*0.40 : H*0.60;                  // s=0 reference
+  const Y=s=>cejY + apS*s*PPM;
+  const st=t.sites[buccal?'B':'L'];
+  const gm=st.gm, gmY=Y(gm);
+  const cw=laneW*m.crownW*0.5;                          // crown half-width
+  // lane separators (jaw window)
+  ctx.strokeStyle='rgba(58,46,29,.5)';ctx.lineWidth=1;ctx.strokeRect(cx-laneW/2+1,6,laneW-2,H-12);
+  // --- alveolar mucosa (apical zone) filling to lane edge: attached gingiva → MGJ → mucosa ---
+  const inflamed=st.bop;
+  const edgeY = upper? 8 : H-8;
+  // attached gingiva band (coral/pink) from a bit coronal of GM to MGJ
+  const mgjY = Y(gm<0? 5 : (5+Math.max(0,gm)));         // MGJ ~5-? mm apical of GM
+  // mucosa (darker red) from MGJ to edge
+  let mg=ctx.createLinearGradient(0,mgjY,0,edgeY); mg.addColorStop(0,'#9c4a46');mg.addColorStop(1,'#6e2f2e');
+  ctx.fillStyle=mg; ctx.fillRect(cx-laneW/2+2,Math.min(mgjY,edgeY),laneW-4,Math.abs(edgeY-mgjY));
+  // wavy MGJ line
+  ctx.strokeStyle='rgba(210,140,120,.55)';ctx.lineWidth=1.4;ctx.setLineDash([]);ctx.beginPath();
+  for(let xx=cx-laneW/2+2;xx<=cx+laneW/2-2;xx+=6){ const yy=mgjY+Math.sin(xx*0.12)*2.2; if(xx===cx-laneW/2+2)ctx.moveTo(xx,yy);else ctx.lineTo(xx,yy);} ctx.stroke();
+  // attached gingiva (stippled coral) from GM free margin to MGJ
+  const gg=ctx.createLinearGradient(0,gmY,0,mgjY); gg.addColorStop(0,inflamed?'#ef7069':'#e3a194');gg.addColorStop(1,inflamed?'#cf4b45':'#cf8577');
   ctx.fillStyle=gg;
-  ctx.beginPath();ctx.moveTo(cx-tw*0.5,gmY+4);
-  ctx.quadraticCurveTo(cx,gmY-6,cx+tw*0.5,gmY+4);                 // scalloped free margin
-  ctx.lineTo(cx+tw*0.5,cejY+62);ctx.lineTo(cx-tw*0.5,cejY+62);ctx.closePath();ctx.fill();
-  // stippling (orange-peel) on healthy attached gingiva
-  if(!inflamed){ ctx.fillStyle='rgba(150,80,70,.25)';
-    for(let i=0;i<40;i++){const px=cx-tw*0.45+Math.random()*tw*0.9, py=gmY+14+Math.random()*40; ctx.beginPath();ctx.arc(px,py,0.7,0,7);ctx.fill();} }
-  else { // shiny edematous highlight
-    ctx.strokeStyle='rgba(255,180,170,.5)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(cx-tw*0.4,gmY+3);ctx.quadraticCurveTo(cx,gmY-5,cx+tw*0.4,gmY+3);ctx.stroke(); }
-  // interdental papilla (between teeth)
-  // subgingival calculus hint (dark ledge at interproximal)
-  if(t.sites.MB.calc>0||t.sites.DB.calc>0){ ctx.fillStyle='rgba(90,70,30,.6)';ctx.fillRect(cx-tw*0.5,gmY+6,4,8);ctx.fillRect(cx+tw*0.5-4,gmY+6,4,8); }
-  // BOP drop on measured site
-  const key=t.fdi+'_'+curSite;
-  if(ti===curTooth && lastProbe && lastProbe.bop){ ctx.fillStyle='#d01828';ctx.beginPath();ctx.arc(cx,gmY+2,4,0,7);ctx.fill(); }
-  // tooth label + FDI
-  ctx.fillStyle='#f3ead6';ctx.font='bold 12px sans-serif';ctx.textAlign='center';ctx.fillText(t.label,cx,crownTop-6);
-  if(t.mol){ctx.fillStyle='var(--accent)';ctx.fillStyle='#e0a94a';ctx.font='8px sans-serif';ctx.fillText('molar',cx,crownTop-18);}
+  ctx.beginPath();ctx.moveTo(cx-laneW/2+2,gmY+coS*0);                // start at GM level left
+  // scalloped free gingival margin (papilla peaks at interproximal)
+  const steps=10; for(let i=0;i<=steps;i++){ const xx=cx-laneW/2+2+(laneW-4)*i/steps; const peak=(i===0||i===steps)?coS*6:0; ctx.lineTo(xx,gmY+peak - coS*Math.max(0,Math.sin(i/steps*Math.PI))*3); }
+  ctx.lineTo(cx+laneW/2-2,mgjY);ctx.lineTo(cx-laneW/2+2,mgjY);ctx.closePath();ctx.fill();
+  if(!inflamed){ ctx.fillStyle='rgba(150,80,70,.22)'; for(let i=0;i<34;i++){const px=cx-laneW/2+6+Math.random()*(laneW-12),py=Math.min(gmY,mgjY)+Math.random()*Math.abs(mgjY-gmY); ctx.beginPath();ctx.arc(px,py,0.7,0,7);ctx.fill();} }
+  else { ctx.strokeStyle='rgba(255,185,175,.5)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(cx-cw,gmY+coS*2);ctx.quadraticCurveTo(cx,gmY-coS*3,cx+cw,gmY+coS*2);ctx.stroke(); }
+  // --- exposed cementum (only when REC>0): band between CEJ and GM, apical-yellow root ---
+  if(gm>0.4 && !st.cejUnknown){ ctx.fillStyle='#d8c49a'; ctx.fillRect(cx-cw*0.85,Math.min(Y(0),gmY),cw*1.7,Math.abs(gmY-Y(0)));
+    ctx.strokeStyle='#b07c3a';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(cx-cw*0.9,Y(0));ctx.lineTo(cx+cw*0.9,Y(0));ctx.stroke(); }
+  // --- CROWN (coronal to CEJ), silhouette by morphology ---
+  drawCrown(ctx,cx,cw,Y(0),coS,m);
+  // CEJ marker line (explore, or where recession exposes it)
+  if(!st.cejUnknown && (gm>0.4||curMode==='explore')){ ctx.strokeStyle='rgba(176,124,58,.8)';ctx.lineWidth=1.1;ctx.beginPath();ctx.moveTo(cx-cw,Y(0));ctx.lineTo(cx+cw,Y(0));ctx.stroke(); }
+  else if(st.cejUnknown){ ctx.fillStyle='#f0b542';ctx.font='8px sans-serif';ctx.textAlign='center';ctx.fillText('CEJ ?',cx,Y(0));ctx.textAlign='left'; }
+  // subgingival calculus hint
+  if(st.calc>0){ ctx.fillStyle='rgba(120,95,40,.7)';ctx.fillRect(cx-cw,gmY+coS*2,5,6);ctx.fillRect(cx+cw-5,gmY+coS*2,5,6); }
+  // BOP drop
+  if(ti===curTooth && lastProbe && lastProbe.bop){ ctx.fillStyle='#d01828';ctx.beginPath();ctx.arc(cx,gmY,4,0,7);ctx.fill(); }
+  // label + arch + morphology tag
+  const labelY = upper? H-16 : 20;
+  ctx.fillStyle='#f3ead6';ctx.font='bold 13px sans-serif';ctx.textAlign='center';ctx.fillText(t.label,cx,labelY);
+  ctx.fillStyle='#8a7c62';ctx.font='8px sans-serif';ctx.fillText((upper?'üst ↑kök':'alt ↓kök')+' · '+m.kind,cx,labelY+(upper?12:12));
   ctx.textAlign='left';
-  // active tooth highlight
-  if(ti===curTooth){ ctx.strokeStyle='rgba(224,169,74,.8)';ctx.lineWidth=2;ctx.strokeRect(cx-tw*0.5-3,crownTop-24,tw+6,rootBot-crownTop+30); }
-  // 6 site dots near gingival margin (facial row)
-  const sitesRow = buccal?['MB','B','DB']:['ML','L','DL'];
-  sitesRow.forEach((sk,si)=>{ const sx=cx+(si-1)*tw*0.33; const act=(ti===curTooth&&sk===curSite);
-    ctx.fillStyle=act?'#e0a94a':'rgba(243,237,224,.5)';ctx.beginPath();ctx.arc(sx,gmY-2,act?4:2.5,0,7);ctx.fill();
-    if(act){ctx.fillStyle='#e0a94a';ctx.font='8px sans-serif';ctx.textAlign='center';ctx.fillText(sk,sx,gmY-9);ctx.textAlign='left';} });
+  // active highlight
+  if(ti===curTooth){ ctx.strokeStyle='rgba(224,169,74,.85)';ctx.lineWidth=2;ctx.strokeRect(cx-laneW/2+1,6,laneW-2,H-12); }
+  // 3 facial site dots at GM
+  const sitesRow=buccal?['MB','B','DB']:['ML','L','DL'];
+  sitesRow.forEach((sk,si)=>{ const sx=cx+(si-1)*cw*0.7; const act=(ti===curTooth&&sk===curSite);
+    ctx.fillStyle=act?'#e0a94a':'rgba(243,237,224,.5)';ctx.beginPath();ctx.arc(sx,gmY,act?4:2.5,0,7);ctx.fill();
+    if(act){ctx.fillStyle='#e0a94a';ctx.font='8px sans-serif';ctx.textAlign='center';ctx.fillText(sk,sx,gmY-coS*9);ctx.textAlign='left';} });
+}
+function drawCrown(ctx,cx,cw,cejY,coS,m){
+  const H=CH; const crownH=(m.kind==='molar'?62:m.kind==='premolar'?56:66); const tipY=cejY+coS*crownH;
+  const cg=ctx.createLinearGradient(cx-cw,0,cx+cw,0); cg.addColorStop(0,'#e4d8bd');cg.addColorStop(0.5,'#f6efdd');cg.addColorStop(1,'#ddd0b4');
+  ctx.fillStyle=cg; ctx.strokeStyle='rgba(180,160,120,.4)';ctx.lineWidth=1;
+  ctx.beginPath();
+  ctx.moveTo(cx-cw,cejY);
+  ctx.lineTo(cx-cw*0.98,cejY+coS*crownH*0.45);
+  if(m.kind==='incisor'||m.kind==='canine'){ // shovel / pointed
+    ctx.quadraticCurveTo(cx-cw*0.7,tipY,cx,tipY+coS*(m.kind==='canine'?4:0));
+    ctx.quadraticCurveTo(cx+cw*0.7,tipY,cx+cw*0.98,cejY+coS*crownH*0.45);
+  } else { // cusped (premolar 2, molar 4-5) — scalloped occlusal
+    const nc=m.cusps; for(let i=0;i<nc;i++){ const fx=cx-cw+ (2*cw)*(i+0.5)/nc; const fy=tipY + coS*((i%2)?-5:3);
+      ctx.quadraticCurveTo(fx-cw*0.1,tipY+coS*8,fx,fy); ctx.quadraticCurveTo(fx+cw*0.1,tipY+coS*8,fx+ (cw/nc), tipY); }
+    ctx.lineTo(cx+cw*0.98,cejY+coS*crownH*0.45);
+  }
+  ctx.lineTo(cx+cw,cejY); ctx.closePath(); ctx.fill(); ctx.stroke();
+  // developmental grooves on cusped crowns
+  if(m.cusps>1){ ctx.strokeStyle='rgba(150,120,80,.4)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(cx,cejY+coS*crownH*0.5);ctx.lineTo(cx,tipY-coS*6);ctx.stroke(); }
 }
 function onClinicClick(e){
   const r=CC.getBoundingClientRect(); const x=(e.clientX-r.left)*(CW/r.width), y=(e.clientY-r.top)*(CH/r.height);
@@ -384,7 +412,8 @@ function onClinicClick(e){
   let best=-1,bd=1e9; toothRects.forEach(tr=>{const d=Math.abs(x-tr.cx);if(d<tr.tw*0.7&&d<bd){bd=d;best=tr.ti;}});
   if(best<0)return; curTooth=best;
   // pick nearest facial site by x within tooth
-  const tr=toothRects[best]; const rel=(x-tr.cx)/(tr.tw*0.33);
+  const tr=toothRects[best]; const m=toothMorph(caseDef.teeth[best].fdi); const sp=tr.tw*m.crownW*0.5*0.7;
+  const rel=(x-tr.cx)/Math.max(10,sp);
   const sitesRow=buccal?['MB','B','DB']:['ML','L','DL']; const idx=clamp(Math.round(rel)+1,0,2); curSite=sitesRow[idx];
   renderSiteUI(); doProbe();
 }
@@ -393,15 +422,14 @@ function doProbe(){
   if(curTool==='nabers'){ probeNabers(t); return; }
   if(curTool==='air'){ toast('Hava spreyi: CEJ ve dişeti kenarı kurutuldu — kesitte sınır belirginleşti',''); drawLoupe(); return; }
   lastProbe=probeSite(t,curSite);
-  // prefill entry (student still confirms/edits)
-  $('ePPD').value=lastProbe.ppdObs;
-  $('eREC').value = lastProbe.cejUnknown? '' : lastProbe.recTrue;
-  $('eCEJunk').checked=lastProbe.cejUnknown;
-  $('eBOP').checked=lastProbe.bop;
-  updateCAL();
+  const exam=(curMode==='exam');
+  // explore: prefill entry; EXAM: student reads the mm bands himself (no auto answer)
+  if(!exam){ $('ePPD').value=lastProbe.ppdObs; $('eREC').value = lastProbe.cejUnknown? '' : lastProbe.recTrue; $('eCEJunk').checked=lastProbe.cejUnknown; $('eBOP').checked=lastProbe.bop; updateCAL(); }
   const rd=$('readout');
-  rd.innerHTML=`<div class="big">PPD ${lastProbe.ppdObs} mm</div><small>${t.label} · ${SITE_LABEL[curSite]} · ${(+$('forceR').value).toFixed(2)} N`+
-    (lastProbe.traumatic?' · <span style="color:var(--bad)">travmatik</span>':lastProbe.incomplete?' · <span style="color:var(--warn)">eksik</span>':' · <span style="color:var(--good)">doğru teknik</span>')+`</small>`;
+  const tech=lastProbe.traumatic?' · <span style="color:var(--bad)">travmatik</span>':lastProbe.incomplete?' · <span style="color:var(--warn)">eksik</span>':' · <span style="color:var(--good)">doğru teknik</span>';
+  rd.innerHTML = exam
+    ? `<div class="big">Sondu oku</div><small>${t.label} · ${SITE_LABEL[curSite]} · ${(+$('forceR').value).toFixed(2)} N${tech}<br>Kesitte mm bandını oku & gir</small>`
+    : `<div class="big">PPD ${lastProbe.ppdObs} mm</div><small>${t.label} · ${SITE_LABEL[curSite]} · ${(+$('forceR').value).toFixed(2)} N${tech}</small>`;
   if(lastProbe.traumatic)toast('⚠ Aşırı kuvvet: '+lastProbe.reason,'bad');
   else if(lastProbe.incomplete)toast('Eksik ölçüm: '+lastProbe.reason,'warn');
   drawClinic(); drawLoupe(); setStep(1); renderHud();
@@ -419,66 +447,90 @@ function probeNabers(t){
   drawLoupe(); setStep(3); renderHud();
 }
 
-/* ---- magnified loupe: sulcus cross-section + probe mm bands ---- */
+/* ---- anatomical SAGITTAL sulcus cross-section + angled UNC-15 probe ----
+   Landscape: vertical axis = apico-coronal (mm), tooth body on the left half,
+   gingiva/sulcus/bone to the right of the tooth surface. Exam hides pocket base. */
 function drawLoupe(){
   const cv=$('loupeCanvas'),ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
-  ctx.clearRect(0,0,W,H); ctx.fillStyle='#0b0805';ctx.fillRect(0,0,W,H);
-  $('loupeView').textContent=(buccal?'Bukkal':'Lingual')+' · '+(curMode==='exam'?'Sınav':'Keşfet');
+  ctx.clearRect(0,0,W,H); const bg=ctx.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#1a0f0b');bg.addColorStop(1,'#0e0806');ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+  $('loupeView').textContent=(buccal?'Bukkal':'Lingual')+' · '+(curMode==='exam'?'Sınav (gizli taban)':'Keşfet');
   const t=caseDef.teeth[curTooth]; const st=t.sites[curSite];
-  const cejY=H*0.38, PPM=14;                             // px per mm in loupe
-  const Y=s=>cejY+s*PPM;
-  const toothX=W*0.42;
-  // tooth surface (enamel above CEJ, root below)
-  ctx.fillStyle='#efe6cf';ctx.fillRect(0,0,toothX,Y(st.gm<0?st.gm:0));
-  ctx.fillStyle='#e8ddc4';ctx.fillRect(0,Y(0)-1,toothX,3);  // thin band
-  ctx.fillStyle='#d8c49a';ctx.fillRect(0,Y(0),toothX,H-Y(0)); // root cementum
-  // CEJ marker
-  if(!st.cejUnknown){ ctx.strokeStyle='#b07c3a';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(0,Y(0));ctx.lineTo(toothX+6,Y(0));ctx.stroke();
-    ctx.fillStyle='#b07c3a';ctx.font='9px sans-serif';ctx.fillText('CEJ',toothX+8,Y(0)+3); }
-  else { ctx.fillStyle='var(--warn)';ctx.fillStyle='#f0b542';ctx.font='9px sans-serif';ctx.fillText('CEJ ?',toothX+8,Y(0)+3); }
-  // gingiva wedge (free gingiva from GM to base = pocket, then attached)
-  const gmY=Y(st.gm); const inflamed=st.bop;
-  ctx.fillStyle=inflamed?'#d84b45':'#cf8577';
-  ctx.beginPath();ctx.moveTo(toothX,gmY);ctx.lineTo(W,gmY-6);ctx.lineTo(W,H);ctx.lineTo(toothX,H);ctx.closePath();ctx.fill();
-  // GM line
-  ctx.strokeStyle='#f3d0c6';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(toothX,gmY);ctx.lineTo(W,gmY-6);ctx.stroke();
-  ctx.fillStyle='#f3d0c6';ctx.font='9px sans-serif';ctx.fillText('GM',W-22,gmY-8);
-  // hidden pocket base + attachment — only in explore (exam hides it)
-  const showHidden = curMode==='explore';
-  if(showHidden){
-    const baseY=Y(st.base);
-    // pocket space (between tooth and gingiva from GM to base)
-    ctx.fillStyle='rgba(20,10,8,.55)';ctx.fillRect(toothX,gmY,W*0.18,baseY-gmY);
-    ctx.strokeStyle='#56d6a0';ctx.setLineDash([3,2]);ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(toothX,baseY);ctx.lineTo(W,baseY);ctx.stroke();ctx.setLineDash([]);
-    ctx.fillStyle='#56d6a0';ctx.font='9px sans-serif';ctx.fillText('ataşman / cep tabanı',toothX+4,baseY+11);
-    // calculus ledge
-    if(st.calc>0){ ctx.fillStyle='#8a6a28';ctx.fillRect(toothX,Y(st.gm+st.calc)-2,10,4); }
+  const PPM=18, cejY=H*0.30, Y=s=>cejY+s*PPM;            // apical downward
+  const surfX=W*0.34;                                    // tooth surface vertical line
+  const exam=(curMode==='exam');
+  // --- tooth body (left of surfX): enamel crown (curved profile) + root dentin + pulp ---
+  ctx.fillStyle='#e9dcc0';                               // dentin body
+  ctx.beginPath();ctx.moveTo(0,0);
+  // curved enamel profile bulging then CEJ notch at s=0
+  ctx.lineTo(surfX-8,0); ctx.quadraticCurveTo(surfX+6,Y(-3),surfX-2,Y(-0.3));
+  ctx.lineTo(surfX-5,Y(0));                               // CEJ notch
+  ctx.quadraticCurveTo(surfX-2,Y(6),surfX-9,H);           // root tapering
+  ctx.lineTo(0,H);ctx.closePath();ctx.fill();
+  // enamel cap (whiter) over the crown portion
+  ctx.fillStyle='#f6efdd';ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(surfX-8,0);ctx.quadraticCurveTo(surfX+6,Y(-3),surfX-2,Y(-0.3));ctx.lineTo(surfX-5,Y(0));ctx.lineTo(0,Y(0));ctx.closePath();ctx.fill();
+  // pulp canal
+  ctx.strokeStyle='rgba(120,40,30,.5)';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(surfX*0.42,Y(-4));ctx.lineTo(surfX*0.42,H);ctx.stroke();
+  // CEJ notch marker
+  if(!st.cejUnknown){ ctx.fillStyle='#b07c3a';ctx.beginPath();ctx.arc(surfX-5,Y(0),3,0,7);ctx.fill();ctx.font='10px sans-serif';ctx.fillText('CEJ',surfX+2,Y(0)-6);}
+  else { ctx.fillStyle='#f0b542';ctx.font='10px sans-serif';ctx.fillText('CEJ ? (restorasyon)',surfX+2,Y(0)-6); }
+  // exposed cementum if recession
+  if(st.gm>0.4 && !st.cejUnknown){ ctx.fillStyle='#d8c49a';ctx.fillRect(surfX-9,Y(0),9,st.gm*PPM); }
+  // --- gingiva / sulcus / attachment (right of surfX) ---
+  const gmY=Y(st.gm), baseY=Y(st.base); const inflamed=st.bop;
+  // free + attached gingiva body to the right
+  const gg=ctx.createLinearGradient(surfX,0,W,0);gg.addColorStop(0,inflamed?'#d6514b':'#d08878');gg.addColorStop(1,inflamed?'#a83a37':'#b4675c');
+  ctx.fillStyle=gg;
+  ctx.beginPath();ctx.moveTo(surfX,gmY);                 // gingival margin at tooth
+  ctx.quadraticCurveTo(surfX+26,gmY-10,surfX+70,gmY-2);  // free gingiva crest curving away
+  ctx.lineTo(W,gmY+8);ctx.lineTo(W,H);ctx.lineTo(surfX,H);ctx.closePath();ctx.fill();
+  // sulcus (triangular space tooth↔free gingiva from GM to base)
+  if(!exam){ ctx.fillStyle='rgba(18,8,6,.7)';ctx.beginPath();ctx.moveTo(surfX,gmY);ctx.lineTo(surfX+16,gmY+2);ctx.lineTo(surfX,baseY);ctx.closePath();ctx.fill(); }
+  // GM line + label
+  ctx.strokeStyle='#f3d0c6';ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(surfX,gmY);ctx.quadraticCurveTo(surfX+26,gmY-10,surfX+70,gmY-2);ctx.stroke();
+  ctx.fillStyle='#f3d0c6';ctx.font='10px sans-serif';ctx.fillText('GM',surfX+74,gmY-2);
+  if(!exam){
+    // junctional epithelium (lighter band just apical to sulcus base)
+    ctx.fillStyle='rgba(240,200,185,.5)';ctx.fillRect(surfX,baseY-3,20,8);ctx.fillStyle='#f3d0c6';ctx.font='9px sans-serif';ctx.fillText('birleşim epiteli',surfX+22,baseY+2);
+    // connective-tissue fibers (diagonal lines from cementum to bone)
+    ctx.strokeStyle='rgba(210,150,120,.45)';ctx.lineWidth=1;
+    for(let yy=baseY+6;yy<H-10;yy+=7){ ctx.beginPath();ctx.moveTo(surfX,yy);ctx.lineTo(surfX+34,yy+10);ctx.stroke(); }
+    // attachment / pocket-base line
+    ctx.strokeStyle='#56d6a0';ctx.setLineDash([4,2]);ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(surfX-12,baseY);ctx.lineTo(W,baseY);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle='#56d6a0';ctx.font='10px sans-serif';ctx.fillText('ataşman / cep tabanı (CAL '+st.base+')',surfX+40,baseY-4);
+    // alveolar crest / bone
+    const crestY=baseY+10; ctx.fillStyle='rgba(190,170,120,.4)';for(let bx=surfX-10;bx<W;bx+=4)for(let by=crestY;by<H;by+=4)if(Math.random()>0.5)ctx.fillRect(bx,by,2,2);
+    ctx.strokeStyle='#e8dcc0';ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(surfX-12,crestY);ctx.lineTo(W,crestY);ctx.stroke();
+    ctx.fillStyle='#c3b79c';ctx.font='9px sans-serif';ctx.fillText('alveol kreti',W-70,crestY+11);
+    if(st.calc>0){ ctx.fillStyle='#8a6a28';ctx.fillRect(surfX-3,Y(st.gm+st.calc)-2,8,5); }
   } else {
-    ctx.fillStyle='rgba(243,213,198,.3)';ctx.font='9px sans-serif';ctx.fillText('(cep tabanı gizli — sondla & oku)',toothX+4,gmY+16);
+    ctx.fillStyle='rgba(243,213,198,.35)';ctx.font='10px sans-serif';ctx.fillText('cep tabanı/ataşman gizli — sondla & milimetreyi oku',surfX+20,H*0.5);
   }
-  // PROBE (UNC-15 style) inserted from GM down to reach
+  // --- angled UNC-15 probe entering the sulcus ---
   if(lastProbe && !lastProbe.nabers){
-    const reach = lastProbe.ppdObs;                      // observed depth from GM
-    const tipY = gmY + reach*PPM;
-    const px = toothX+8;
-    ctx.strokeStyle='#cfd8e0';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(px,Y(-8));ctx.lineTo(px,tipY);ctx.stroke();
-    ctx.fillStyle='#9fb0bf';ctx.beginPath();ctx.moveTo(px-3,tipY-5);ctx.lineTo(px+3,tipY-5);ctx.lineTo(px,tipY);ctx.closePath();ctx.fill();
-    // mm markings (UNC-15: 1mm lines; black bands at 4-5,9-10,14-15)
-    for(let mm=0;mm<=15;mm++){ const yy=Y(-8)+mm*PPM; const band=(mm>=4&&mm<=5)||(mm>=9&&mm<=10)||(mm>=14&&mm<=15);
-      ctx.strokeStyle=band?'#101418':'#5a6672';ctx.lineWidth=band?3:1;ctx.beginPath();ctx.moveTo(px-3,yy);ctx.lineTo(px+3,yy);ctx.stroke(); }
-    // read band at GM level
-    ctx.strokeStyle='#e0a94a';ctx.lineWidth=1;ctx.setLineDash([2,2]);ctx.beginPath();ctx.moveTo(px+6,gmY);ctx.lineTo(W,gmY);ctx.stroke();ctx.setLineDash([]);
-    ctx.fillStyle='#e0a94a';ctx.font='bold 11px sans-serif';ctx.fillText(reach+' mm',px+10,gmY-2);
+    const reach=lastProbe.ppdObs; const tipY=gmY+reach*PPM;
+    const ang=0.16;                                      // slight apico-lingual angulation
+    const topX=surfX+8+(-8)*Math.sin(ang), topY=Y(-9);
+    const tipX=surfX+6;
+    ctx.save();ctx.translate(tipX,tipY);ctx.rotate(ang);
+    const len=(reach+9)*PPM;
+    ctx.strokeStyle='#c9d4de';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(0,len);ctx.stroke();
+    ctx.fillStyle='#9fb0bf';ctx.beginPath();ctx.moveTo(-3,len-6);ctx.lineTo(3,len-6);ctx.lineTo(0,len);ctx.closePath();ctx.fill();
+    for(let mm=0;mm<=15;mm++){ const yy=mm*PPM; const band=(mm>=4&&mm<=5)||(mm>=9&&mm<=10)||(mm>=14&&mm<=15);
+      ctx.strokeStyle=band?'#0c1116':'#596472';ctx.lineWidth=band?4:1.3;ctx.beginPath();ctx.moveTo(-3,yy);ctx.lineTo(3,yy);ctx.stroke(); }
+    ctx.restore();
+    // reading at GM
+    ctx.strokeStyle='#e0a94a';ctx.setLineDash([2,2]);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(surfX+10,gmY);ctx.lineTo(W-30,gmY);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle='#e0a94a';ctx.font='bold 13px sans-serif';ctx.fillText('PPD '+reach+' mm',W-130,gmY-4);
+    if(lastProbe.traumatic){ctx.fillStyle='#e8707a';ctx.font='9px sans-serif';ctx.fillText('aşırı kuvvet: epitel delindi',W-150,gmY+12);}
   }
-  // Nabers curved probe
   if(lastProbe && lastProbe.nabers){
-    ctx.strokeStyle='#cfd8e0';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(toothX+4,Y(2));ctx.quadraticCurveTo(toothX+40,Y(3.5),W*0.7,Y(3));ctx.stroke();
-    ctx.fillStyle='#e0a94a';ctx.font='bold 12px sans-serif';ctx.fillText('Furkasyon Sınıf '+lastProbe.furc,toothX+6,Y(6));
-    ctx.fillStyle='#c3b79c';ctx.font='9px sans-serif';ctx.fillText('3·6·9·12 mm bantlı kavisli uç',toothX+6,Y(7.2));
+    ctx.strokeStyle='#c9d4de';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(surfX+6,Y(1.5));ctx.quadraticCurveTo(surfX+54,Y(3),W*0.72,Y(2.4));ctx.stroke();
+    ctx.fillStyle='#e0a94a';ctx.font='bold 13px sans-serif';ctx.fillText('Nabers Furkasyon Sınıf '+lastProbe.furc,surfX+30,Y(7));
   }
-  // mm scale on right edge
+  // mm scale
   ctx.fillStyle='rgba(195,183,156,.5)';ctx.font='8px sans-serif';
-  for(let mm=-6;mm<=12;mm+=2){ ctx.fillText((mm>0?'+':'')+mm,W-16,Y(mm)+3); }
+  for(let mm=-6;mm<=14;mm+=2){ ctx.fillText((mm>0?'+':'')+mm,4,Y(mm)+3); }
+  ctx.fillStyle='#8a7c62';ctx.font='9px sans-serif';ctx.fillText(t.label+' · '+SITE_LABEL[curSite],W-90,16);
 }
 
 /* ============ chart / entry ============ */
@@ -521,30 +573,45 @@ function renderChart(){
 /* ============ bitewing %RBL radiograph ============ */
 function drawBitewing(){
   const cv=$('bitewing'),ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
-  ctx.fillStyle='#0b1410';ctx.fillRect(0,0,W,H);
+  // real grayscale bitewing: trabecular bone bg → crestal cortex → grey dentin → white enamel → dark pulp/canals
+  const exam=(curMode==='exam');
+  ctx.fillStyle='#14110a';ctx.fillRect(0,0,W,H);
+  // trabecular bone background
+  let seed=98765; const rnd=()=>{seed=(seed*1103515245+12345)&0x7fffffff;return seed/0x7fffffff;};
+  for(let x=0;x<W;x+=3)for(let y=0;y<H;y+=3){ const v=0.28+0.22*rnd(); ctx.fillStyle=`rgba(${Math.round(190*v)},${Math.round(172*v)},${Math.round(120*v)},0.9)`;ctx.fillRect(x,y,3,3); }
   const teeth=caseDef.teeth, n=teeth.length, tw=W/n;
   teeth.forEach((t,i)=>{
-    const cx=i*tw+tw/2, crownTop=14, cejY=H*0.42, apexY=H-12;
-    // tooth (radiopaque)
-    ctx.fillStyle='#d8ccae';ctx.beginPath();ctx.moveTo(cx-tw*0.3,crownTop);ctx.lineTo(cx+tw*0.3,crownTop);ctx.lineTo(cx+tw*0.14,apexY);ctx.lineTo(cx-tw*0.14,apexY);ctx.closePath();ctx.fill();
-    // pulp
-    ctx.strokeStyle='rgba(30,20,10,.6)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(cx,cejY-10);ctx.lineTo(cx,apexY-8);ctx.stroke();
-    // bone crest based on %RBL — rootLen from CEJ to apex
-    const rootLen=apexY-cejY; const boneLoss=(t.rbl/100)*rootLen; const boneY=cejY+boneLoss;
-    // trabecular bone up to boneY
-    ctx.fillStyle='rgba(190,170,120,.5)';
-    for(let bx=cx-tw*0.48;bx<cx+tw*0.48;bx+=3){ for(let by=boneY;by<H;by+=3){ if(Math.random()>0.5)ctx.fillRect(bx,by,2,2); } }
-    ctx.strokeStyle='#e8dcc0';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(cx-tw*0.48,boneY);ctx.lineTo(cx+tw*0.48,boneY);ctx.stroke();
-    // CEJ reference dots
-    ctx.fillStyle='#e0a94a';ctx.fillRect(cx-tw*0.3,cejY-1,3,2);ctx.fillRect(cx+tw*0.3-3,cejY-1,3,2);
-    // J-shaped radiolucency for endo-perio lesion
-    if(t.jlesion){ ctx.fillStyle='rgba(10,20,16,.85)';ctx.beginPath();ctx.ellipse(cx,apexY-14,tw*0.22,22,0,0,7);ctx.fill();
-      ctx.fillStyle='#e8707a';ctx.font='8px sans-serif';ctx.fillText('J-lezyon',cx-14,apexY-30); }
-    ctx.fillStyle='#c3b79c';ctx.font='9px sans-serif';ctx.textAlign='center';ctx.fillText(t.label,cx,H-2);
-    ctx.fillStyle=t.rbl>=33?'#e8707a':t.rbl>=15?'#f0b542':'#63d08a';ctx.fillText('%'+t.rbl,cx,crownTop-2);ctx.textAlign='left';
+    const cx=i*tw+tw/2, crownTop=12, cejY=H*0.40, apexY=H-10, m=toothMorph(t.fdi);
+    const rootLen=apexY-cejY; const boneY=cejY+(t.rbl/100)*rootLen;
+    // crestal cortex (bright line) at bone level, dips interproximally
+    ctx.strokeStyle='#efe4c6';ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(cx-tw*0.5,boneY+ (i>0?0:0));ctx.lineTo(cx+tw*0.5,boneY);ctx.stroke();
+    // root(s): molars get 2/3 roots with furcation radiolucency
+    ctx.fillStyle='#cdbf9e';
+    if(m.kind==='molar'){ const rc=m.rootCount; const spread=tw*0.26;
+      for(let r=0;r<rc;r++){ const rx=cx+(r-(rc-1)/2)*spread; ctx.beginPath();ctx.moveTo(rx-tw*0.1,cejY+6);ctx.quadraticCurveTo(rx,apexY,rx,apexY);ctx.quadraticCurveTo(rx,apexY,rx+tw*0.1,cejY+6);ctx.closePath();ctx.fill(); }
+      // furcation radiolucency (dark V between roots under the trunk)
+      ctx.fillStyle='rgba(16,12,6,.8)';ctx.beginPath();ctx.moveTo(cx-spread*0.5,cejY+12);ctx.lineTo(cx+spread*0.5,cejY+12);ctx.lineTo(cx,cejY+30);ctx.closePath();ctx.fill();
+      ctx.fillStyle='#cdbf9e';ctx.fillRect(cx-tw*0.32,cejY+2,tw*0.64,10); // root trunk
+    } else {
+      ctx.beginPath();ctx.moveTo(cx-tw*0.16,cejY);ctx.quadraticCurveTo(cx,apexY,cx,apexY);ctx.quadraticCurveTo(cx,apexY,cx+tw*0.16,cejY);ctx.closePath();ctx.fill();
+    }
+    // crown: grey dentin + bright white enamel cap
+    ctx.fillStyle='#d6c8a6';ctx.fillRect(cx-tw*0.3,crownTop+6,tw*0.6,cejY-crownTop-6);
+    ctx.fillStyle='#f4ecd6';ctx.beginPath();ctx.moveTo(cx-tw*0.32,crownTop+10);ctx.quadraticCurveTo(cx,crownTop-2,cx+tw*0.32,crownTop+10);ctx.lineTo(cx+tw*0.3,crownTop+16);ctx.lineTo(cx-tw*0.3,crownTop+16);ctx.closePath();ctx.fill();
+    // dark pulp chamber + canal
+    ctx.fillStyle='rgba(18,12,6,.75)';ctx.fillRect(cx-2.5,cejY-14,5,10);
+    ctx.strokeStyle='rgba(18,12,6,.7)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(cx,cejY-4);ctx.lineTo(cx,apexY-6);ctx.stroke();
+    // J-lesion
+    if(t.jlesion){ ctx.fillStyle='rgba(10,8,4,.88)';ctx.beginPath();ctx.ellipse(cx,apexY-12,tw*0.2,20,0,0,7);ctx.fill();
+      if(!exam){ctx.fillStyle='#e8707a';ctx.font='8px sans-serif';ctx.textAlign='center';ctx.fillText('J-lezyon',cx,apexY-30);ctx.textAlign='left';} }
+    // labels + %RBL — hidden in exam (student reads bone level himself)
+    ctx.fillStyle='#c3b79c';ctx.font='9px sans-serif';ctx.textAlign='center';ctx.fillText(t.label,cx,H-1);
+    if(!exam){ ctx.fillStyle=t.rbl>=33?'#e8707a':t.rbl>=15?'#f0b542':'#63d08a';ctx.fillText('%'+t.rbl,cx,crownTop+2); }
+    ctx.textAlign='left';
   });
   const maxRbl=Math.max(...teeth.map(t=>t.rbl));
-  $('rblInfo').innerHTML=`Maks RBL <b style="color:${maxRbl>=33?'var(--bad)':maxRbl>=15?'var(--warn)':'var(--good)'}">%${maxRbl}</b> · Kemik tepesi CEJ'den ölçülür. ${maxRbl>=33?'(≥%33 → şiddet Evre III-IV)':maxRbl>=15?'(%15-33 → Evre II)':'(<%15 → Evre I / sağlık)'}`;
+  $('rblInfo').innerHTML = exam ? 'Sınav: kemik tepesini CEJ’den kendin değerlendir (%RBL etiketleri gizli).'
+    : `Maks RBL <b style="color:${maxRbl>=33?'var(--bad)':maxRbl>=15?'var(--warn)':'var(--good)'}">%${maxRbl}</b> · Kemik tepesi CEJ'den ölçülür. ${maxRbl>=33?'(≥%33 → şiddet Evre III-IV)':maxRbl>=15?'(%15-33 → Evre II)':'(<%15 → Evre I / sağlık)'}`;
 }
 
 /* ============ 2017 AAP/EFP ENGINE (truth) ============ */
@@ -726,14 +793,15 @@ function loadCase(cid){
   $('dDx').value='health';$('dStage').value='none';$('dExtent').value='none';$('dGrade').value='none';$('juryOut').innerHTML='';
   renderCasePick();renderStepper();renderToothPick();renderSiteRing();renderPatient();renderHud();renderChart();
   drawClinic();drawLoupe();drawBitewing();$('readout').innerHTML=`<small>Bir sahaya tıkla veya seç → sondla</small>`;
-  toast('Vaka '+cid+' yüklendi: '+CASES[cid].name,'');
+  // EXAM: don't reveal the diagnosis name on load (student decides it)
+  toast(curMode==='exam' ? ('Vaka '+cid+' yüklendi (sınav modu)') : ('Vaka '+cid+' yüklendi: '+CASES[cid].name),'');
 }
 function resetCase(){loadCase(curCase);toast('Vaka sıfırlandı','');}
 
 /* ============ events ============ */
 $('modeSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;curMode=b.dataset.mode;
   [...$('modeSeg').children].forEach(x=>x.classList.toggle('on',x===b));$('modeSeg').classList.toggle('exam',curMode==='exam');
-  drawClinic();drawLoupe();renderHud();toast(curMode==='exam'?'SINAV: kesitte gizli cep tabanı/ataşman görünmez':'Keşfet modu','');});
+  drawClinic();drawLoupe();drawBitewing();renderHud();toast(curMode==='exam'?'SINAV: kesitte gizli cep tabanı/ataşman görünmez':'Keşfet modu','');});
 $('flipBtn').addEventListener('click',()=>{buccal=!buccal;curSite=buccal?'B':'L';renderSiteRing();drawClinic();drawLoupe();renderHud();});
 $('forceR').addEventListener('input',e=>$('forceVal').textContent=(+e.target.value).toFixed(2)+' N');
 $('angleR').addEventListener('input',e=>$('angleVal').textContent=e.target.value+'°');
@@ -749,7 +817,7 @@ renderTools();renderStepper();renderCasePick();initClinic();loadCase('P1');
 
 /* ============ PUBLIC API + SELFTEST ============ */
 window.PERIO={
-  loadCase, setMode:(m)=>{curMode=m;[...$('modeSeg').children].forEach(x=>x.classList.toggle('on',x.dataset.mode===m));$('modeSeg').classList.toggle('exam',m==='exam');drawClinic();drawLoupe();},
+  loadCase, setMode:(m)=>{curMode=m;[...$('modeSeg').children].forEach(x=>x.classList.toggle('on',x.dataset.mode===m));$('modeSeg').classList.toggle('exam',m==='exam');drawClinic();drawLoupe();drawBitewing();},
   cases:()=>CASE_ORDER, caseDef:()=>JSON.parse(JSON.stringify(CASES[curCase])),
   // signed CAL
   calcCAL:(ppd,rec,cejUnknown)=>{ if(cejUnknown||rec===null||rec===undefined||rec==='')return 'UNKNOWN'; return ppd+rec; },
@@ -757,9 +825,14 @@ window.PERIO={
   setForce:(f)=>{$('forceR').value=f;$('forceVal').textContent=(+f).toFixed(2)+' N';},
   setAngle:(a)=>{$('angleR').value=a;$('angleVal').textContent=a+'°';},
   probe:(fdi,siteKey)=>{ const ti=caseDef.teeth.findIndex(t=>t.fdi===fdi); if(ti<0)return null; curTooth=ti;curSite=siteKey; return probeSite(caseDef.teeth[ti],siteKey); },
+  doProbeAt:(fdi,siteKey)=>{ const ti=caseDef.teeth.findIndex(t=>t.fdi===fdi); if(ti<0)return null; curTooth=ti;curSite=siteKey; renderSiteUI(); doProbe(); return lastProbe; },
   chart:()=>JSON.parse(JSON.stringify(chart)),
   saveToChart:(fdi,site,obj)=>{chart[fdi]=chart[fdi]||{};chart[fdi][site]=obj;renderChart();},
   analyze:()=>analyze(),
+  toothMorph:(fdi)=>toothMorph(fdi),
+  setTooth:(fdi)=>{const ti=caseDef.teeth.findIndex(t=>t.fdi===fdi);if(ti>=0){curTooth=ti;renderSiteUI();drawClinic();drawLoupe();}},
+  rblInfoText:()=>$('rblInfo').textContent, readoutText:()=>$('readout').textContent, ePPDval:()=>$('ePPD').value,
+  loupeOverlapsClinic:()=>{const a=$('clinicCanvas').getBoundingClientRect(),b=$('loupeCanvas').getBoundingClientRect(); return !(b.top>=a.bottom-2||b.bottom<=a.top+2||b.left>=a.right-2||b.right<=a.left+2);},
   declare:(d)=>{ if(d.dx)$('dDx').value=d.dx; if(d.stage!==undefined)$('dStage').value=d.stage; if(d.extent)$('dExtent').value=d.extent; if(d.grade!==undefined)$('dGrade').value=d.grade; return grade(); },
   grade:()=>grade(),
   truth:()=>JSON.parse(JSON.stringify(caseDef.truth)),
@@ -799,6 +872,22 @@ window.__selfTest=function(){
     ok('p6-nonperio-exclusion', a6.nonperio===true && gP6.cats[0].s===0);
     const gP6correct=window.PERIO.declare({dx:'nonperio',stage:'none',extent:'none',grade:'none'});
     ok('p6-correct-nonperio', gP6correct.cats[0].s===1);
+    // test_perio_anatomical_roots_and_no_exam_spoiler
+    const mMol=window.PERIO.toothMorph(16), mMolLow=window.PERIO.toothMorph(46), mInc=window.PERIO.toothMorph(21);
+    ok('molar-multiroot-furcation', mMol.rootCount>=2 && mMol.furcation===true && mMolLow.rootCount>=2 && mInc.rootCount===1);
+    ok('arch-orientation', window.PERIO.toothMorph(16).upper===true && window.PERIO.toothMorph(46).upper===false);
+    ok('loupe-not-overlapping-teeth', window.PERIO.loupeOverlapsClinic()===false);
+    // exam spoilers: dx/%RBL/PPD hidden
+    loadCase('P1'); window.PERIO.setMode('exam'); window.PERIO.setForce(0.25); window.PERIO.setAngle(10);
+    window.PERIO.doProbeAt(16,'B'); // exam must NOT auto-answer PPD
+    const examNoAutoPPD = (window.PERIO.ePPDval()===''||window.PERIO.ePPDval()==null);
+    const examNoRBL = /gizli/.test(window.PERIO.rblInfoText()) && !/%\d/.test(window.PERIO.rblInfoText());
+    const examReadNoNum = !/PPD\s*\d/.test(window.PERIO.readoutText());
+    ok('exam-spoilers-hidden', examNoAutoPPD && examNoRBL && examReadNoNum);
+    // explore DOES auto-fill (contrast)
+    window.PERIO.setMode('explore'); window.PERIO.doProbeAt(16,'B');
+    ok('explore-autofills', window.PERIO.ePPDval()!=='');
+    window.PERIO.setMode('explore');
     loadCase('P1');
   }catch(e){R.push({n:'exception',pass:false,err:String(e)});}
   const pass=R.every(r=>r.pass);

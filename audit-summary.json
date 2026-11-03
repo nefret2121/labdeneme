@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-03T00:15:14.683Z",
+  "generatedAt": "2026-11-03T00:28:56.394Z",
   "threeLocal": true,
   "pages": 20,
   "viewports": [
@@ -274,7 +274,7 @@
           "pass": true,
           "selfTest": {
             "pass": true,
-            "count": 12,
+            "count": 17,
             "tests": [
               {
                 "n": "cal-rec-pos",
@@ -322,6 +322,26 @@
               },
               {
                 "n": "p6-correct-nonperio",
+                "pass": true
+              },
+              {
+                "n": "molar-multiroot-furcation",
+                "pass": true
+              },
+              {
+                "n": "arch-orientation",
+                "pass": true
+              },
+              {
+                "n": "loupe-not-overlapping-teeth",
+                "pass": true
+              },
+              {
+                "n": "exam-spoilers-hidden",
+                "pass": true
+              },
+              {
+                "n": "explore-autofills",
                 "pass": true
               }
             ],
@@ -731,7 +751,7 @@
       "truthLeak": [],
       "selfTest": {
         "pass": true,
-        "count": 12,
+        "count": 17,
         "tests": [
           {
             "n": "cal-rec-pos",
@@ -779,6 +799,26 @@
           },
           {
             "n": "p6-correct-nonperio",
+            "pass": true
+          },
+          {
+            "n": "molar-multiroot-furcation",
+            "pass": true
+          },
+          {
+            "n": "arch-orientation",
+            "pass": true
+          },
+          {
+            "n": "loupe-not-overlapping-teeth",
+            "pass": true
+          },
+          {
+            "n": "exam-spoilers-hidden",
+            "pass": true
+          },
+          {
+            "n": "explore-autofills",
             "pass": true
           }
         ],
