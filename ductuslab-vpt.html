@@ -1,0 +1,737 @@
+<!doctype html><html lang="tr"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DuctusLab VPT & Travma — Selektif Ekskavasyon, Vital Pulpa Tedavisi & IADT Dental Travma</title>
+<style>
+:root{
+  --bg-0:#07080a; --bg-1:#0e1112; --bg-2:#151a1d; --line:#1f282c; --line2:#2c3a42;
+  --ink:#eef2f4; --ink-dim:#b1bec5; --ink-mut:#78898f;
+  --accent:#e8a35a; --accent2:#56d6a0; --warn:#f0b542; --bad:#e8707a; --good:#63d08a; --cool:#4fb8e0;
+  --r:12px; --sh:0 6px 22px rgba(0,0,0,.5);
+  --font:'Segoe UI',system-ui,-apple-system,Roboto,Arial,sans-serif;
+}
+*{box-sizing:border-box} html,body{height:100%}
+html{overflow:hidden}
+body{margin:0;background:radial-gradient(1100px 650px at 80% -10%,#1b1410 0%,transparent 55%),radial-gradient(900px 600px at 5% 110%,#101418 0%,transparent 60%),var(--bg-0);color:var(--ink);font-family:var(--font);font-size:14px;overflow:hidden}
+.app{display:grid;grid-template-rows:auto auto 1fr;height:100dvh;max-height:100dvh}
+.topbar{display:flex;align-items:center;gap:12px;padding:8px 14px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#140f0b,#0d0a08);flex-wrap:wrap}
+.brand{font-weight:800;letter-spacing:.4px;font-size:15px;white-space:nowrap}
+.brand .en{color:var(--accent)} .brand .tag{color:var(--ink-mut);font-weight:600;font-size:11px;margin-left:6px}
+.topbar .sp{flex:1}
+.seg{display:flex;border:1px solid var(--line2);border-radius:999px;overflow:hidden;background:#0c0a08}
+.seg button{background:transparent;border:0;color:var(--ink-dim);padding:6px 13px;font-size:12px;cursor:pointer;font-weight:700}
+.seg button.on{background:var(--accent);color:#2a1604} .seg.exam button.on{background:var(--warn);color:#241a02}
+.casepick{display:flex;gap:5px;flex-wrap:wrap}
+.casebtn{background:#13100d;border:1px solid var(--line2);color:var(--ink-dim);border-radius:8px;padding:5px 9px;font-size:12px;font-weight:700;cursor:pointer;min-width:34px}
+.casebtn.on{border-color:var(--accent);color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.casebtn .d{display:block;font-size:8.5px;color:var(--ink-mut);font-weight:600;margin-top:1px}
+.stepper{display:flex;padding:7px 14px;border-bottom:1px solid var(--line);background:#0b0908;overflow-x:auto}
+.step{display:flex;align-items:center;gap:7px;padding:4px 14px 4px 10px;position:relative;white-space:nowrap;cursor:default}
+.step:not(:last-child):after{content:'';position:absolute;right:-1px;top:50%;width:1px;height:20px;background:var(--line2);transform:translateY(-50%)}
+.step .n{width:22px;height:22px;border-radius:50%;background:#1d1812;border:1px solid var(--line2);display:grid;place-items:center;font-size:11px;font-weight:800;color:var(--ink-mut)}
+.step.on .n{background:var(--accent);color:#2a1604;border-color:var(--accent)} .step.done .n{background:var(--accent2);color:#042016;border-color:var(--accent2)}
+.step .t{font-size:11.5px;color:var(--ink-mut);font-weight:700} .step.on .t{color:var(--ink)}
+.main{display:grid;grid-template-columns:250px 1fr 330px;min-height:0;overflow:hidden}
+.col{min-height:0;overflow:hidden;display:flex;flex-direction:column}
+.col.left{border-right:1px solid var(--line);background:#0b0908} .col.right{border-left:1px solid var(--line);background:#0b0908}
+.panel{padding:10px 12px;border-bottom:1px solid var(--line)}
+.panel h4{margin:0 0 7px;font-size:11px;letter-spacing:.7px;text-transform:uppercase;color:var(--accent);font-weight:800}
+.scroll{overflow:auto;min-height:0}
+.optbtn{display:block;width:100%;text-align:left;background:#14110e;border:1px solid var(--line2);color:var(--ink-dim);border-radius:9px;padding:7px 9px;margin-bottom:6px;cursor:pointer;font-size:11.5px}
+.optbtn:hover{border-color:var(--accent)} .optbtn.on{border-color:var(--accent);background:#211810;color:var(--ink);box-shadow:0 0 0 1px var(--accent) inset}
+.optbtn.done{border-color:#1f4a34} .optbtn b{color:var(--ink);font-weight:800} .optbtn small{color:var(--ink-mut);display:block;margin-top:2px}
+.zrow{display:flex;gap:5px;margin:4px 0 2px} .zrow button{flex:1;background:#14110e;border:1px solid var(--line2);color:var(--ink-dim);border-radius:8px;padding:6px 2px;font-size:10.5px;font-weight:700;cursor:pointer}
+.zrow button:hover{border-color:var(--accent);color:var(--ink)}
+.ctrlrow{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:11.5px;color:var(--ink-dim)}
+.ctrlrow label{min-width:78px;color:var(--ink-mut);font-weight:700}
+.ctrlrow select{flex:1;min-width:0;background:#14110e;border:1px solid var(--line2);color:var(--ink);border-radius:7px;padding:5px 6px;font-size:11.5px}
+input[type=range]{flex:1;accent-color:var(--accent);min-width:0}
+.mini{font-size:10.5px;color:var(--ink-mut);line-height:1.45}
+.out{font-size:11px;color:var(--ink-dim);line-height:1.5;min-height:30px}
+.out b{color:var(--ink)} .out .ok{color:var(--good)} .out .bad{color:var(--bad)} .out .warn{color:var(--warn)}
+.col.center{background:radial-gradient(900px 600px at 50% 30%,#17120e,#08090a);position:relative}
+.scenewrap{flex:1;min-height:0;display:grid;grid-template-columns:1.7fr 1fr;grid-auto-rows:min-content;gap:8px;padding:10px;overflow:auto;align-content:start}
+.cvbox{position:relative;background:#06080a;border:1px solid var(--line2);border-radius:12px;overflow:hidden}
+.cvbox canvas{width:100%;display:block;background:#06080a;touch-action:none}
+.cvbox .tag{position:absolute;left:10px;top:7px;font-size:9.5px;font-weight:800;color:var(--accent);letter-spacing:.5px;pointer-events:none}
+.stack{display:flex;flex-direction:column;gap:8px}
+.chk{display:flex;gap:7px;align-items:flex-start;font-size:11px;color:var(--ink-dim);margin:5px 0} .chk input{accent-color:var(--accent);width:15px;height:15px;margin-top:1px}
+.verdict{width:100%;background:var(--accent2);color:#042016;border:0;border-radius:8px;padding:9px 0;font-size:13px;font-weight:800;cursor:pointer;margin-top:4px}
+.verdict.sec{background:#1d1812;color:var(--accent);border:1px solid var(--line2)} .verdict.reset{background:#16130f;color:var(--ink-dim)}
+.verdict.sm{padding:7px 0;font-size:11.5px}
+.gauge{height:9px;border-radius:6px;background:#1a1612;border:1px solid var(--line2);overflow:hidden;margin:3px 0 5px} .gauge i{display:block;height:100%;width:0;background:var(--good);transition:width .2s}
+.jcard{background:#14110e;border:1px solid var(--line2);border-radius:9px;padding:8px 10px;margin-top:8px}
+.jscore{font-size:26px;font-weight:800} .jscore small{font-size:12px;color:var(--ink-mut);font-weight:700}
+.jflag{display:flex;gap:7px;align-items:flex-start;font-size:11px;margin:5px 0;line-height:1.35} .jflag .b{width:15px;flex-shrink:0;text-align:center;font-weight:800}
+.jflag.ok .b{color:var(--good)} .jflag.bad .b{color:var(--bad)} .jflag.warn .b{color:var(--warn)}
+.ovl{position:fixed;inset:0;background:rgba(3,4,5,.86);display:none;place-items:center;z-index:50;padding:18px} .ovl.on{display:grid}
+.debrief{width:min(1180px,97vw);max-height:94dvh;overflow:auto;background:var(--bg-1);border:1px solid var(--line2);border-radius:16px;box-shadow:var(--sh)}
+.debrief .dh{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg-1);z-index:2}
+.debrief .dh h3{margin:0;font-size:16px} .debrief .dh .x{margin-left:auto;cursor:pointer;color:var(--ink-mut);font-size:22px;background:0;border:0}
+.d3{display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:12px;padding:16px}
+.dview{background:#100d0b;border:1px solid var(--line2);border-radius:11px;padding:11px;min-height:260px}
+.dview h5{margin:0 0 8px;font-size:12px;color:var(--accent);letter-spacing:.4px;text-transform:uppercase} .dview canvas{width:100%;border-radius:8px;background:#06080a;display:block}
+.karne{font-size:12px;line-height:1.5;color:var(--ink-dim)} .karne .kh{color:var(--ink);font-weight:800;margin:8px 0 3px;font-size:12.5px}
+.karne .pos{color:var(--good)} .karne .neg{color:var(--bad)} .karne .neu{color:var(--warn)}
+.dmetric{display:flex;justify-content:space-between;font-size:11.5px;color:var(--ink-dim);padding:3px 0;border-bottom:1px dashed var(--line)} .dmetric b{color:var(--ink)}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#14110e;border:1px solid var(--line2);color:var(--ink);padding:9px 16px;border-radius:999px;font-size:12.5px;font-weight:700;box-shadow:var(--sh);z-index:60;opacity:0;transition:opacity .25s;pointer-events:none;max-width:92vw;text-align:center}
+.toast.on{opacity:1} .toast.warn{border-color:#4a3a14;color:var(--warn)} .toast.bad{border-color:#4a2024;color:var(--bad)} .toast.good{border-color:#1f4a34;color:var(--good)}
+body[data-bench="1"] .pane2{display:none!important} body[data-bench="2"] .pane1{display:none!important}
+.grp[hidden]{display:none!important}
+@media (max-width:1150px){ .main{grid-template-columns:220px 1fr 300px} }
+@media (max-width:950px){ .main{grid-template-columns:1fr;grid-template-rows:auto 1fr auto;overflow:auto} html,body{overflow:auto} .app{height:auto} .col.left,.col.right{border:0;border-top:1px solid var(--line)} .d3{grid-template-columns:1fr} .scenewrap{grid-template-columns:1fr} }
+</style></head><body data-bench="1">
+<div class="app">
+  <div class="topbar">
+    <div class="brand">Ductus<span class="en">Lab VPT</span><span class="tag">Selektif Ekskavasyon · Vital Pulpa Tedavisi · IADT Travma</span></div>
+    <div class="seg" id="benchSeg"><button data-bench="1" class="on">Tezgâh 1 · Derin Çürük & VPT</button><button data-bench="2">Tezgâh 2 · IADT Travma</button></div>
+    <div class="sp"></div>
+    <div class="casepick" id="casePick"></div>
+    <div class="seg" id="modeSeg"><button data-mode="explore" class="on">Keşfet</button><button data-mode="exam">DUS / Sınav</button></div>
+  </div>
+  <div class="stepper" id="stepper"></div>
+  <div class="main">
+    <!-- ================= LEFT ================= -->
+    <div class="col left scroll">
+      <div class="pane1">
+        <div class="panel">
+          <h4>1 · Pulpa Duyarlılık & Tanı Testleri</h4>
+          <button class="optbtn" id="tCold"><b>Soğuk testi</b><small>−50 °C sprey</small></button>
+          <button class="optbtn" id="tEpt"><b>EPT</b><small>Elektrikli pulpa testi</small></button>
+          <button class="optbtn" id="tPerc"><b>Perküsyon</b><small>Dikey / yatay</small></button>
+          <button class="optbtn" id="tRx"><b>Periapikal röntgen</b><small>Çürük ↔ pulpa ilişkisi</small></button>
+          <div class="out" id="dxOut"></div>
+        </div>
+        <div class="panel">
+          <h4>2 · Rubber Dam İzolasyonu</h4>
+          <button class="optbtn" id="damBtn"><b>Rubber dam uygula</b><small>Aseptik kapı</small></button>
+        </div>
+        <div class="panel">
+          <h4>3-4 · Sond & Ekskavasyon</h4>
+          <button class="optbtn on" data-tool="sond"><b>Keskin sond</b><small>Gerçek mekanik sertliği bildirir</small></button>
+          <button class="optbtn" data-tool="hand"><b>El ekskavatörü</b><small>Kontrollü, yumuşak dokuda etkili</small></button>
+          <button class="optbtn" data-tool="bur"><b>Düşük devir çelik rond frez</b><small>Sert dentini de keser</small></button>
+          <div class="mini" style="margin:4px 0 2px">Bölge seç / aleti uygula (veya kesitte dokun):</div>
+          <div class="zrow"><button data-zone="dejL">DEJ sol</button><button data-zone="floor">Pulpal taban</button><button data-zone="dejR">DEJ sağ</button></div>
+          <div class="out" id="toolOut"></div>
+        </div>
+      </div>
+      <div class="pane2">
+        <div class="panel">
+          <h4>1 · Hasta & Diş</h4>
+          <div class="out" id="tInfo"></div>
+        </div>
+        <div class="panel">
+          <h4>PDL Hücre Canlılığı</h4>
+          <div class="gauge"><i id="pdlBar"></i></div>
+          <div class="out" id="pdlOut"></div>
+        </div>
+        <div class="panel">
+          <h4>2 · Tanı Araçları</h4>
+          <button class="optbtn" id="tRxT"><b>Periapikal röntgen</b><small>Kök gelişimi, apeks, kırık hattı</small></button>
+          <button class="optbtn" id="tEptT"><b>EPT / soğuk testi</b><small>Pulpa duyarlılığı</small></button>
+          <div class="out" id="tDxOut"></div>
+        </div>
+      </div>
+    </div>
+    <!-- ================= CENTER ================= -->
+    <div class="col center">
+      <div class="scenewrap pane1">
+        <div class="cvbox"><div class="tag">MOLAR KRON-PULPA KESİTİ</div><canvas id="crossCanvas" width="560" height="430"></canvas></div>
+        <div class="stack">
+          <div class="cvbox"><div class="tag">OKLÜZAL KAVİTE</div><canvas id="occlCanvas" width="280" height="230"></canvas></div>
+          <div class="cvbox"><div class="tag">PERİAPİKAL RÖNTGEN</div><canvas id="rxCanvas" width="280" height="230"></canvas></div>
+        </div>
+      </div>
+      <div class="scenewrap pane2">
+        <div class="cvbox"><div class="tag">ALVEOL · DİŞ · PDL</div><canvas id="tCanvas" width="560" height="430"></canvas></div>
+        <div class="stack">
+          <div class="cvbox"><div class="tag">PERİAPİKAL RÖNTGEN</div><canvas id="trxCanvas" width="280" height="230"></canvas></div>
+          <div class="panel" style="border:1px solid var(--line2);border-radius:12px;background:#0d0b09"><h4>Paket Kuralları</h4><div class="out" id="packOut"></div></div>
+        </div>
+      </div>
+    </div>
+    <!-- ================= RIGHT ================= -->
+    <div class="col right scroll">
+      <div class="pane1">
+        <div class="panel">
+          <h4>Doku & Kalan Dentin Kalınlığı</h4>
+          <div class="gauge"><i id="rdtBar"></i></div>
+          <div class="out" id="tissueOut"></div>
+        </div>
+        <div class="panel">
+          <h4>5 · Pulpa Ekspozu & Biyomateryal</h4>
+          <div class="out" id="bleedOut" style="margin-bottom:5px"></div>
+          <button class="verdict sec sm" id="naocBtn" style="margin-top:0">%2.5 NaOCl pamuk pelet hemostazı</button>
+          <div class="ctrlrow"><label>Pulpa tedavisi</label><select id="pulpTher"><option value="none">Müdahale yok</option><option value="directCap">Direkt pulpa kuafajı</option><option value="partial">Parsiyel pulpotomi</option><option value="full">Tam koronal pulpotomi</option><option value="rct">Kök kanal tedavisi (RCT)</option></select></div>
+          <div class="ctrlrow"><label>Biyomateryal</label><select id="pulpMat"><option value="none">Materyal yok</option><option value="cs">Hidrolik kalsiyum silikat (MTA / Biodentine)</option><option value="caoh">Kalsiyum hidroksit</option></select></div>
+          <label class="chk"><input type="checkbox" id="sealChk"><span>Kalıcı adeziv kompozit ile koronal seal</span></label>
+          <div class="grp" id="variantGrp" hidden><div class="ctrlrow"><label>Pulpa yanıtı</label><select id="bleedVar"><option value="controlled">Parlak kırmızı, kontrol edilebilir kanama</option><option value="uncontrolled">Koyu / hiperemik kanama</option></select></div></div>
+        </div>
+      </div>
+      <div class="pane2">
+        <div class="panel">
+          <h4>3 · Acil Müdahale</h4>
+          <div class="grp" data-for="avul">
+            <div class="ctrlrow"><label>Replantasyon</label><select id="t_replant"><option value="">— seç —</option><option value="yes">Replante et</option><option value="no">Replante etme</option></select></div>
+            <div class="ctrlrow"><label>Kök yüzeyi</label><select id="t_rinse"><option value="">— seç —</option><option value="saline">Serum fizyolojik ile nazik yıkama</option><option value="scrape">Kök yüzeyini kazıyarak temizleme</option></select></div>
+          </div>
+          <div class="grp" data-for="frac">
+            <div class="ctrlrow"><label>Pulpa yönetimi</label><select id="t_pulp"><option value="none">— seç —</option><option value="cvekCS">Parsiyel (Cvek) pulpotomi + kalsiyum silikat</option><option value="caoh">Parsiyel pulpotomi + kalsiyum hidroksit</option><option value="rct">Devitalizasyon + kök kanal tedavisi</option></select></div>
+            <div class="ctrlrow"><label>Kron onarımı</label><select id="t_reatt"><option value="none">— seç —</option><option value="fragment">Kırık parça reataşmanı</option><option value="composite">Kompozit ile restorasyon / seal</option></select></div>
+          </div>
+        </div>
+        <div class="panel">
+          <h4>4 · Splint</h4>
+          <div class="ctrlrow"><label>Splint tipi</label><select id="t_splint"><option value="none">Splint yok</option><option value="flexible">Esnek (pasif) splint</option><option value="rigid">Rijit splint</option></select></div>
+          <div class="ctrlrow"><label>Süre</label><input type="range" id="t_weeks" min="1" max="8" step="1" value="2"><span id="t_weeksV" style="min-width:52px;text-align:right">2 hf</span></div>
+        </div>
+        <div class="panel">
+          <h4>5 · Takip & İlaç</h4>
+          <div class="ctrlrow"><label>Endodontik plan</label><select id="t_rct"><option value="none">Şimdilik başlama</option><option value="emergency">Bugün acil kök kanal tedavisi</option><option value="d7_10">7–10. günde kök kanal tedavisi başlat</option><option value="late">Splint çıkarıldıktan sonra kök kanal tedavisi</option><option value="revascFollow">Revaskülarizasyon izlemi (klinik + radyografik)</option></select></div>
+          <div class="ctrlrow"><label>Sistemik antibiyotik</label><select id="t_abx"><option value="none">Verilmedi</option><option value="amox">Amoksisilin</option><option value="doxy">Doksisiklin</option></select></div>
+          <label class="chk"><input type="checkbox" id="t_follow"><span>Takip randevuları planla</span></label>
+          <label class="chk"><input type="checkbox" id="t_parent"><span>Ebeveyn / hasta bilgilendirme (hijyen, diyet, uyarı bulguları)</span></label>
+        </div>
+      </div>
+      <div class="panel">
+        <h4>Jüri</h4>
+        <button class="verdict" id="juryBtn">Jüriyi Çağır → 3-Görünümlü Debrief</button>
+        <button class="verdict reset" id="resetBtn">Vakayı Sıfırla</button>
+        <div id="juryOut"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="ovl" id="ovl"><div class="debrief">
+  <div class="dh"><h3 id="dbTitle">Debrief</h3><span class="mini" id="dbSub" style="color:var(--ink-mut)"></span><button class="x" id="dbX">×</button></div>
+  <div class="d3">
+    <div class="dview"><h5 id="dvAh">① Senin Çalışman</h5><canvas id="dvA" width="640" height="470"></canvas><div id="dvAmeta"></div></div>
+    <div class="dview"><h5 id="dvBh">② Şeffaf Gerçek</h5><canvas id="dvB" width="640" height="470"></canvas><div id="dvBmeta"></div></div>
+    <div class="dview"><h5>③ 4 Kategorili Jüri Karnesi</h5><div class="karne" id="dvC"></div></div>
+  </div>
+</div></div>
+<div class="toast" id="toast"></div>
+<script>
+"use strict";
+/* ============================================================
+   DuctusLab VPT & Travma
+   Tezgâh 1: katmanlı dentin fiziği (hardness / color / pulpDistanceMm AYRI) → selektif ekskavasyon, ekspoz, VPT
+   Tezgâh 2: IADT 2020 — dentition paketleri (primary | permanent) KESİN ayrı; PDL canlılık modeli
+   ============================================================ */
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+function toast(m,k){const t=$('toast');t.textContent=m;t.className='toast on'+(k?' '+k:'');clearTimeout(t._t);t._t=setTimeout(()=>t.className='toast',2400);}
+
+/* ---------- Tezgâh 1 veri ---------- */
+const HNAME={SOFT_INFECTED:'Yumuşak peynirsi — sond batar',LEATHERY_AFFECTED:'Derimsi dirençli',HARD_SCLEROTIC:'Sert — cri dentaire',SOUND_DEJ:'Sert — cri dentaire'};
+const HCODE={SOFT_INFECTED:'SOFT_INFECTED',LEATHERY_AFFECTED:'LEATHERY_AFFECTED',HARD_SCLEROTIC:'HARD_SCLEROTIC',SOUND_DEJ:'SOUND_DEJ'};
+const isHard=h=>h==='HARD_SCLEROTIC'||h==='SOUND_DEJ';
+const ZONES=['dejL','dejR','floor'];
+const ZNAME={dejL:'DEJ sol',dejR:'DEJ sağ',floor:'Pulpal taban'};
+const EXPO_RDT=0.2;               // kalan dentin ≤ 0.2 mm → pulpa ekspozu
+const L=(h,color,t)=>({h,color,t});
+const VC={
+ V1:{name:'Derin çürük + reverzibl pulpitis',tooth:36,age:24,pulpDist:2.8,cariousExposure:false,bleed:'controlled',
+   zones:{dejL:[L('SOFT_INFECTED','#6b4a26',1.0),L('SOUND_DEJ','#e8d9ae',1.0)],dejR:[L('SOFT_INFECTED','#6b4a26',1.0),L('SOUND_DEJ','#e8d9ae',1.0)],
+          floor:[L('SOFT_INFECTED','#6b4a26',1.6),L('LEATHERY_AFFECTED','#9a7440',1.1),L('HARD_SCLEROTIC','#efe3c2',0.1)]},
+   dx:{cold:'2–3 sn içinde kaybolan geçici ağrı',ept:'38 — yanıt var',perc:'Negatif'},rx:{band:true,bandMm:1.1,txt:'Derin çürük: pulpa ile çürük arasında radyoopak dentin bandı seçiliyor.'},
+   teach:'Periferi tam sert dokuya kadar temizle; pulpal tabanda derimsi dentini BIRAK. "Beyaz sert taban" aramak gereksiz iyatrojenik ekspoz üretir.'},
+ V2:{name:'Koyu kahverengi ama taş gibi sert (sklerotik) taban',tooth:46,age:31,pulpDist:2.9,cariousExposure:false,bleed:'controlled',
+   zones:{dejL:[L('SOFT_INFECTED','#4a2f18',0.8),L('SOUND_DEJ','#e8d9ae',1.0)],dejR:[L('SOFT_INFECTED','#4a2f18',0.8),L('SOUND_DEJ','#e8d9ae',1.0)],
+          floor:[L('SOFT_INFECTED','#4a2f18',0.5),L('HARD_SCLEROTIC','#4a2f18',2.0),L('HARD_SCLEROTIC','#efe3c2',0.4)]},
+   dx:{cold:'2–3 sn içinde kaybolan geçici ağrı',ept:'35 — yanıt var',perc:'Negatif'},rx:{band:true,bandMm:2.4,txt:'Belirgin radyoopak (sklerotik) dentin bandı — durmuş lezyon.'},
+   teach:'Koyu renk = çürük DEĞİL. Sondla sert olan arrested/sklerotik tabanı oymak sağlıklı pulpayı açar; yalnız yumuşak yüzeyi al.'},
+ V3:{name:'Çok derin çürük · çürük ekspozu',tooth:36,age:19,pulpDist:2.7,cariousExposure:true,bleed:'controlled',
+   zones:{dejL:[L('SOFT_INFECTED','#6b4a26',1.0),L('SOUND_DEJ','#e8d9ae',1.0)],dejR:[L('SOFT_INFECTED','#6b4a26',1.0),L('SOUND_DEJ','#e8d9ae',1.0)],
+          floor:[L('SOFT_INFECTED','#6b4a26',2.6),L('LEATHERY_AFFECTED','#9a7440',0.1)]},
+   dx:{cold:'≈10 sn süren yoğun ağrı',ept:'28 — erken yanıt',perc:'Hafif pozitif'},rx:{band:false,bandMm:0,txt:'Çok derin çürük: pulpa ile çürük arasında belirgin dentin bandı yok.'},
+   teach:'Çürük ekspozu kaçınılmaz. Kanama parlak kırmızı ve 3 dk içinde kontrol altına alınıyorsa otomatik RCT yerine parsiyel pulpotomi + hidrolik kalsiyum silikat ile canlılığı koru.'},
+ V4:{name:'Sızdıran periferik sınır tuzağı',tooth:46,age:27,pulpDist:3.0,cariousExposure:false,bleed:'controlled',
+   zones:{dejL:[L('SOFT_INFECTED','#dcc58e',1.4),L('SOUND_DEJ','#efe3c2',1.0)],dejR:[L('SOFT_INFECTED','#dcc58e',1.4),L('SOUND_DEJ','#efe3c2',1.0)],
+          floor:[L('SOFT_INFECTED','#7a5a2e',1.0),L('LEATHERY_AFFECTED','#9a7440',1.2),L('HARD_SCLEROTIC','#e8d9ae',0.8)]},
+   dx:{cold:'2–3 sn içinde kaybolan geçici ağrı',ept:'40 — yanıt var',perc:'Negatif'},rx:{band:true,bandMm:1.4,txt:'Derin çürük; pulpaya yakın radyoopak band seçiliyor.'},
+   teach:'Pulpal tabanı korumak yetmez: DEJ halkasında renk açık görünse bile yumuşaksa koronal mikrosızıntı ve ikincil başarısızlık gelir. Rengi değil sertliği oku.'}
+};
+const V_ORDER=['V1','V2','V3','V4'];
+
+/* ---------- Tezgâh 2 veri ---------- */
+const MEDIA={none:{n:'Kuru (saklama ortamı yok)',r:0},milk:{n:'Soğuk süt',r:0.004},hbss:{n:'HBSS',r:0.003},saline:{n:'Serum fizyolojik',r:0.012},saliva:{n:'Tükürük',r:0.012},water:{n:'Musluk suyu',r:0.03}};
+function pdlViability(dryMin,med,medMin){ return clamp(1-dryMin/60-MEDIA[med].r*medMin,0,1); }
+const TC={
+ T1:{name:'Avülse süt kesici',fdi:51,age:3.5,dentition:'primary',event:'avulsion',apex:'closed',dry:40,med:'none',medMin:0,
+   teach:'Avülse süt dişi replante edilmez: alttaki daimî diş germi zarar görür. Yara bakımı, intrüzyonu dışlama, ebeveyn bilgilendirme ve germ takibi yapılır.'},
+ T2:{name:'Avülse matür daimî kesici',fdi:11,age:15,dentition:'permanent',event:'avulsion',apex:'closed',dry:0,med:'milk',medMin:25,
+   teach:'Kök yüzeyini kazıma; serumla yıka, nazik replante et, 2 hafta esnek splint. Kapalı apeksli dişte KKT 7–10. günde, splint çıkmadan başlar. Rijit/uzun splint ankiloz ve replasman rezorpsiyonu getirir.'},
+ T3:{name:'Avülse immatür açık apeksli daimî kesici',fdi:21,age:8,dentition:'permanent',event:'avulsion',apex:'open',dry:5,med:'saline',medMin:10,
+   teach:'Hemen KKT yapma: replante + 2 hafta esnek splint + spontan revaskülarizasyon izlemi. 8 yaşta tetrasiklin grubu yerine amoksisilin. Erken EPT negatifliği tek başına nekroz kanıtı değildir.'},
+ T4:{name:'Genç daimî dişte komplike kron kırığı',fdi:11,age:10,dentition:'permanent',event:'fracture',apex:'open',dry:0,med:'none',medMin:0,
+   teach:'Pulpayı devitalize etme: Cvek (parsiyel) pulpotomi + kalsiyum silikat + kırık parça reataşmanı veya kompozit seal ile canlılığı koru.'}
+};
+const T_ORDER=['T1','T2','T3','T4'];
+const PACK={
+ primary:{label:'SÜT DİŞİ paketi',replant:false,splint:false,rctSchedule:false,note:'Replantasyon, splint ve 7–10. gün KKT kuralları UYGULANMAZ; daimî germ korunur.'},
+ permanent:{label:'DAİMÎ DİŞ paketi',replant:true,splint:true,rctSchedule:true,note:'Replantasyon, esnek splint ve apeks durumuna göre endodontik plan uygulanır.'}
+};
+
+/* ============ GLOBAL STATE ============ */
+let bench=1, curMode='explore', cid1='V1', cid2='T1', stepIdx=0;
+let S1=null, S2=null;
+const STEPS1=['Tanı & Testler','Rubber Dam','Sond & Ekskavasyon','Pulpa Yönetimi','Seal & Jüri'];
+const STEPS2=['Anamnez & PDL','Periapikal Röntgen','Acil Müdahale','Splint','Takip & İlaç'];
+
+/* ============ TEZGÂH 1 ENGINE ============ */
+function newS1(id){ const c=JSON.parse(JSON.stringify(VC[id]));
+  return {cid:id,c,removed:{dejL:0,dejR:0,floor:0},tool:'sond',dam:false,damBeforeExc:true,anyExc:false,
+    tests:{cold:false,ept:false,perc:false,rx:false},probed:{},exposed:false,exposedKind:null,naocl:false,pulp:'none',mat:'none',seal:false,bleed:c.bleed,probes:0,log:[]}; }
+function layersOf(z){ return S1.c.zones[z]; }
+function layerAt(z,mm){ let acc=0; const ls=layersOf(z); for(const l of ls){ acc+=l.t; if(mm<acc-1e-6) return l; } return ls[ls.length-1]; }
+function surfLayer(z){ return layerAt(z,S1.removed[z]); }
+function zoneTotal(z){ return layersOf(z).reduce((a,l)=>a+l.t,0); }
+function softThk(z){ const ls=layersOf(z); let a=0; for(const l of ls){ if(l.h==='SOFT_INFECTED') a+=l.t; else break; } return a; }
+function rdt(){ return +(S1.c.pulpDist-S1.removed.floor).toFixed(2); }
+function stepFor(tool,z){ if(tool==='bur') return 0.4; return isHard(surfLayer(z).h)?0.08:0.25; }
+function applyRemoval(z,mm){
+  if(S1.exposed&&z==='floor') return;
+  if(!S1.anyExc){ S1.anyExc=true; S1.damBeforeExc=S1.dam; }
+  const cap = z==='floor'? S1.c.pulpDist : zoneTotal(z)-0.05;
+  S1.removed[z]=+Math.min(cap,S1.removed[z]+mm).toFixed(3);
+  if(z==='floor' && rdt()<=EXPO_RDT+1e-9 && !S1.exposed){ S1.exposed=true; S1.exposedKind=S1.c.cariousExposure?'carious':'iatrogenic'; S1.removed.floor=S1.c.pulpDist;
+    S1.log.push('Pulpa ekspozu ('+(S1.exposedKind==='carious'?'çürük':'iyatrojenik')+')'); }
+}
+function probeZone(z){ const l=surfLayer(z); S1.probes++; S1.probed[z]={at:S1.removed[z],h:l.h}; return HNAME[l.h]; }
+function useTool(z){
+  if(S1.tool==='sond'){ const t=probeZone(z); S1.log.push('Sond '+ZNAME[z]+': '+t); return t; }
+  applyRemoval(z,stepFor(S1.tool,z)); S1.log.push((S1.tool==='bur'?'Frez':'Ekskavatör')+' → '+ZNAME[z]+' '+S1.removed[z].toFixed(2)+' mm'); return null; }
+function runTest(n){ S1.tests[n]=true; S1.log.push('Test: '+n); return n==='rx'?S1.c.rx.txt:S1.c.dx[n]; }
+function applyNaOCl(){ S1.naocl=true; S1.log.push('NaOCl hemostaz'); return S1.bleed==='controlled'; }
+
+function grade1(){
+  const c=S1.c, F=[[],[],[],[]], codes=[];
+  const fl=(i,k,m,code)=>{F[i].push([k,m]); if(code)codes.push(code);};
+  // A — Tanı
+  const t=S1.tests; let a=(t.cold?0.4:0)+(t.rx?0.35:0)+((t.ept||t.perc)?0.25:0);
+  if(a>=0.99) fl(0,'ok','Soğuk testi + periapikal röntgen + EPT/perküsyon yorumlandı'); else fl(0,a>0.4?'warn':'bad','Tanı testleri eksik'+(t.cold?'':' · soğuk testi')+(t.rx?'':' · periapikal röntgen')+((t.ept||t.perc)?'':' · EPT/perküsyon'));
+  // B — Ekskavasyon
+  let b=0;
+  let periphOK=true;
+  for(const z of ['dejL','dejR']){ const hard=isHard(surfLayer(z).h); if(hard) b+=0.25; else { periphOK=false; fl(1,'bad','PERIPHERAL_SEAL_FAILURE — '+ZNAME[z]+' halkasında yumuşak çürük kaldı (koronal mikrosızıntı)','PERIPHERAL_SEAL_FAILURE'); } }
+  if(periphOK) fl(1,'ok','Periferik DEJ halkası tam sert dokuya kadar temizlendi (peripheral seal)');
+  const fh=surfLayer('floor').h;
+  if(c.cariousExposure){
+    if(S1.exposed){ b+=0.5; fl(1,'ok','Çürük ekspozuna kontrollü ulaşıldı'); }
+    else { b+=0.2; fl(1,'warn','INFECTED_FLOOR_LEFT — enfekte yumuşak taban pulpaya bitişik bırakıldı','INFECTED_FLOOR_LEFT'); }
+  } else if(S1.exposed){ fl(1,'bad','UNNECESSARY_EXPOSURE — pulpal tabanda sert dentin aranırken iyatrojenik ekspoz','UNNECESSARY_EXPOSURE'); }
+  else if(fh==='SOFT_INFECTED'){ b+=0.25; fl(1,'warn','INFECTED_FLOOR_LEFT — pulpal tabanda yumuşak enfekte dentin kaldı','INFECTED_FLOOR_LEFT'); }
+  else if(S1.removed.floor>softThk('floor')+0.3){ b+=0.3; fl(1,'warn','OVER_EXCAVATION — sert/derimsi tabanın gereksiz oyulması (RDT '+rdt().toFixed(1)+' mm)','OVER_EXCAVATION'); }
+  else { b+=0.5; fl(1,'ok','Selektif ekskavasyon: yumuşak tabaka alındı, '+(fh==='LEATHERY_AFFECTED'?'derimsi':'sert reaksiyoner')+' taban korundu'); }
+  // C — Pulpa yönetimi
+  let m=0;
+  const th=S1.pulp, mt=S1.mat;
+  if(!S1.exposed){
+    if(th==='none'){ m=c.cariousExposure?0.5:1; if(!c.cariousExposure) fl(2,'ok','Ekspoz yok — pulpa tedavisi gerekmedi'); }
+    else { m=0.4; fl(2,'warn','UNNEEDED_PULP_THERAPY — ekspoz yokken pulpa tedavisi uygulandı','UNNEEDED_PULP_THERAPY'); }
+  } else {
+    if(S1.bleed==='uncontrolled'){
+      if(th==='rct'){ m=1; fl(2,'ok','Durmayan hiperemik kanama: irreverzibl pulpa → RCT'); }
+      else if(th==='full'){ m=0.6; fl(2,'warn','Durmayan kanamada tam pulpotomi — sınırlı öngörü'); }
+      else { m=th==='none'?0:0.1; fl(2,'bad','VPT_FAILURE_UNCONTROLLED_BLEED — kontrol edilemeyen kanamada VPT zorlandı','VPT_FAILURE_UNCONTROLLED_BLEED'); }
+    } else {
+      if(th==='partial'){ m=mt==='cs'?1:mt==='caoh'?0.7:0.4; }
+      else if(th==='directCap'){ m=mt==='cs'?0.75:mt==='caoh'?0.55:0.3; }
+      else if(th==='full'){ m=mt==='cs'?0.7:0.4; }
+      else if(th==='rct'){ m=0.3; fl(2,'warn','VPT_OVERTREATMENT — canlı pulpa varken gereksiz RCT','VPT_OVERTREATMENT'); }
+      else { m=0; fl(2,'bad','Ekspoz var ama pulpa tedavisi uygulanmadı'); }
+      if(m>=0.99) fl(2,'ok','Parsiyel pulpotomi + hidrolik kalsiyum silikat — canlılık korundu');
+      else if(th!=='rct'&&th!=='none') fl(2,'warn','Pulpa tedavisi/biyomateryal seçimi optimal değil');
+      if(S1.exposedKind==='iatrogenic') m*=0.7;
+    }
+    if(!S1.naocl && th!=='none' && th!=='rct'){ m=Math.max(0,m-0.25); fl(2,'warn','NO_HEMOSTASIS — kuafaj öncesi NaOCl hemostazı yapılmadı','NO_HEMOSTASIS'); }
+  }
+  // D — Aseptik zincir & seal
+  let d=0;
+  if(S1.dam&&S1.damBeforeExc){ d+=0.5; fl(3,'ok','Rubber dam ekskavasyondan önce uygulandı'); } else { fl(3,'bad','NO_RUBBER_DAM — izolasyon yok/geç (VPT başarısı için aseptik kapı)','NO_RUBBER_DAM'); }
+  if(S1.seal){ if(periphOK){ d+=0.5; fl(3,'ok','Adeziv kompozit koronal seal hermetik'); } else { d+=0.1; fl(3,'bad','Seal var ama periferik yumuşak çürük nedeniyle sızdırır','PERIPHERAL_SEAL_FAILURE'); } }
+  else fl(3,'bad','Koronal seal yok — mikrosızıntı');
+  const cats=[{name:'Tanı & Pulpa Testleri',w:20,s:clamp(a,0,1),flags:F[0]},{name:'Selektif Ekskavasyon & Peripheral Seal',w:35,s:clamp(b,0,1),flags:F[1]},{name:'Pulpa Yönetimi & Biyomateryal',w:30,s:clamp(m,0,1),flags:F[2]},{name:'Aseptik Zincir & Koronal Seal',w:15,s:clamp(d,0,1),flags:F[3]}];
+  const score=Math.round(cats.reduce((x,k)=>x+k.w*k.s,0));
+  return {score,cats,codes:[...new Set(codes)],teach:c.teach,title:cid1+' · '+c.name};
+}
+
+/* ============ TEZGÂH 2 ENGINE ============ */
+function newS2(id){ const c=JSON.parse(JSON.stringify(TC[id]));
+  return {cid:id,c,tx:{replant:null,rinse:null,splintType:'none',splintWeeks:2,rct:'none',abx:'none',pulp:'none',reatt:'none',follow:false,parent:false},rxDone:false,eptDone:false,locks:[]}; }
+function s2Viability(){ const c=S2.c; return c.event==='avulsion'? pdlViability(c.dry,c.med,c.medMin):1; }
+function setReplant(v){ S2.tx.replant=v; if(v==='yes'&&S2.c.dentition==='primary'&&!S2.locks.includes('PRIMARY_REPLANT')) S2.locks.push('PRIMARY_REPLANT'); }
+function grade2(){
+  const c=S2.c, tx=S2.tx, F=[[],[],[],[]], codes=[]; const fl=(i,k,m,code)=>{F[i].push([k,m]); if(code)codes.push(code);};
+  const ab=(c.dentition==='permanent'), prim=!ab;
+  let A=0,B=0,C=0,D=0;
+  const sp=tx.splintType, wk=tx.splintWeeks;
+  if(c.event==='avulsion'){
+    // ---- A: replantasyon kararı (paket kuralı) ----
+    if(prim){
+      if(tx.replant==='yes'||S2.locks.includes('PRIMARY_REPLANT')){ A=0; fl(0,'bad','PRIMARY_REPLANT_FORBIDDEN — avülse süt dişi replante edildi: daimî germ zarar görür (güvenlik kilidi)','PRIMARY_REPLANT_FORBIDDEN'); }
+      else if(tx.replant==='no'){ A=1; fl(0,'ok','Süt dişi replante edilmedi (daimî germ korundu)'); }
+      else { A=0.3; fl(0,'warn','Replantasyon kararı verilmedi'); }
+      B=S2.rxDone?1:0.5; fl(1,S2.rxDone?'ok':'warn',S2.rxDone?'Röntgen ile intrüzyon/kök kalıntısı dışlandı':'Intrüzyon/kök kalıntısı radyografik dışlanmadı');
+      if(sp==='none') C=1; else { C=0; fl(2,'bad','RULE_PACK_MIXING — süt dişi paketinde daimî diş splint kuralı uygulandı','RULE_PACK_MIXING'); }
+      if(sp==='none') fl(2,'ok','Süt dişinde splint uygulanmadı');
+      let r=1; if(tx.rct!=='none'){ r=0; fl(3,'bad','RULE_PACK_MIXING — süt dişi için daimî diş KKT takvimi uygulandı','RULE_PACK_MIXING'); }
+      let x=tx.abx==='doxy'?0:1; if(tx.abx==='doxy') fl(3,'bad','TETRACYCLINE_STAINING_UNDER12 — 3.5 yaşta doksisiklin','TETRACYCLINE_STAINING_UNDER12');
+      let p=tx.parent?1:0.4; fl(3,tx.parent?'ok':'warn',tx.parent?'Ebeveyn bilgilendirme ve germ takibi yapıldı':'Ebeveyn bilgilendirme/germ takibi eksik');
+      D=0.45*r+0.15*x+0.4*p;
+    } else {
+      if(tx.replant==='yes'){ A=1; fl(0,'ok','Daimî diş replante edildi'); } else { A=0; fl(0,'bad','REPLANT_OMITTED — avülse daimî diş replante edilmedi','REPLANT_OMITTED'); }
+      if(tx.rinse==='saline'){ B=1; fl(1,'ok','Kök yüzeyi kazınmadan serumla nazikçe yıkandı (PDL korundu)'); }
+      else if(tx.rinse==='scrape'){ B=0.2; fl(1,'bad','ROOT_SURFACE_SCRAPING_PDL_DAMAGE — kök yüzeyi kazındı, PDL hücreleri zarar gördü','ROOT_SURFACE_SCRAPING_PDL_DAMAGE'); }
+      else { B=0.5; fl(1,'warn','Kök yüzeyi yönetimi seçilmedi'); }
+      if(sp==='flexible'&&wk<=3){ C=1; fl(2,'ok','Esnek (pasif) splint ≈ '+wk+' hafta'); }
+      else if(sp==='flexible'){ C=0.5; fl(2,'bad','SPLINT_TOO_LONG_ANKYLOSIS_RISK — esnek splint '+wk+' hafta uzatıldı','SPLINT_TOO_LONG_ANKYLOSIS_RISK'); }
+      else if(sp==='rigid'){ C=0.2; fl(2,'bad','ANKYLOSIS_REPLACEMENT_RESORPTION_RISK — rijit splint ('+wk+' hf): ankiloz / replasman rezorpsiyonu','ANKYLOSIS_REPLACEMENT_RESORPTION_RISK'); }
+      else { C=0; fl(2,'bad','Splint uygulanmadı'); }
+      let r=0,x=0;
+      if(c.apex==='closed'){
+        if(tx.rct==='d7_10'){ r=1; fl(3,'ok','KKT 7–10. günde, splint çıkmadan başlatıldı'); }
+        else if(tx.rct==='late'){ r=0.4; fl(3,'bad','EIRR_RISK — KKT gecikti: eksternal inflamatuvar kök rezorpsiyonu','EIRR_RISK'); }
+        else if(tx.rct==='emergency'){ r=0.5; fl(3,'warn','PREMATURE_RCT — replantasyon günü acil KKT önerilmez','PREMATURE_RCT'); }
+        else { r=0.2; fl(3,'bad','RCT_OMITTED — kapalı apeksli replante dişte KKT planlanmadı','RCT_OMITTED'); }
+        x=(tx.abx==='amox'||tx.abx==='doxy')?1:0.5; if(tx.abx==='none') fl(3,'warn','Sistemik antibiyotik verilmedi');
+      } else {
+        if(tx.rct==='revascFollow'){ r=1; fl(3,'ok','Açık apeks: spontan revaskülarizasyon izlemi planlandı'); }
+        else if(tx.rct==='emergency'){ r=0.2; fl(3,'bad','UNNEEDED_EMERGENCY_RCT — açık apeksli immatür dişte gereksiz acil KKT','UNNEEDED_EMERGENCY_RCT'); if(S2.eptDone) codes.push('EPT_FALSE_NEGATIVE_TRAP'); }
+        else if(tx.rct==='d7_10'||tx.rct==='late'){ r=0.35; fl(3,'warn','RCT_ON_OPEN_APEX — açık apekste rutin KKT takvimi revaskülarizasyon şansını keser','RCT_ON_OPEN_APEX'); }
+        else { r=0.5; fl(3,'warn','Revaskülarizasyon izlemi planlanmadı'); }
+        if(tx.abx==='amox'){ x=1; fl(3,'ok','8 yaşta amoksisilin tercih edildi'); }
+        else if(tx.abx==='doxy'){ x=0; fl(3,'bad','TETRACYCLINE_STAINING_UNDER12 — 12 yaş altı doksisiklin: diş renklenmesi','TETRACYCLINE_STAINING_UNDER12'); }
+        else { x=0.6; fl(3,'warn','Sistemik antibiyotik verilmedi'); }
+      }
+      D=0.75*r+0.25*x;
+    }
+  } else { // fracture
+    if(tx.pulp==='cvekCS'){ A=1; fl(0,'ok','Cvek (parsiyel) pulpotomi + kalsiyum silikat: canlılık korundu'); }
+    else if(tx.pulp==='caoh'){ A=0.65; fl(0,'warn','Parsiyel pulpotomi + Ca(OH)₂ — kalsiyum silikat tercih edilir'); }
+    else if(tx.pulp==='rct'){ A=0.2; fl(0,'bad','OVERTREATMENT_DEVITALIZATION — genç daimî dişte gereksiz devitalizasyon','OVERTREATMENT_DEVITALIZATION'); }
+    else { A=0; fl(0,'bad','Açık pulpa tedavisiz bırakıldı'); }
+    if(tx.reatt==='fragment'||tx.reatt==='composite'){ B=1; fl(1,'ok','Kron onarımı/koronal seal yapıldı'); } else { B=0.3; fl(1,'bad','NO_CORONAL_SEAL — kırık yüzey kapatılmadı','NO_CORONAL_SEAL'); }
+    if(sp==='none'){ C=1; fl(2,'ok','Splint gerekmedi'); } else { C=0.6; fl(2,'warn','Gereksiz splint'); }
+    D=tx.follow?1:0.5; fl(3,tx.follow?'ok':'warn',tx.follow?'Canlılık takibi planlandı':'Pulpa canlılık takibi planlanmadı');
+  }
+  const cats=[{name:'Kural Paketi & Güvenlik',w:35,s:clamp(A,0,1),flags:F[0]},{name:'Replantasyon Tekniği & PDL',w:25,s:clamp(B,0,1),flags:F[1]},{name:'Splint',w:20,s:clamp(C,0,1),flags:F[2]},{name:'Endodontik Takip & İlaç',w:20,s:clamp(D,0,1),flags:F[3]}];
+  let score=Math.round(cats.reduce((x,k)=>x+k.w*k.s,0));
+  if(S2.locks.length){ score=Math.min(score,35); codes.push('SAFETY_LOCK'); }
+  return {score,cats,codes:[...new Set(codes)],teach:c.teach,title:cid2+' · '+c.name};
+}
+
+/* ============ DRAWING — Tezgâh 1 ============ */
+const GEO={S:30,y0:130,xL:200,xR:360};
+let HIT={};
+function rr(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+function drawCross(cv,truth){
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height,{S,y0,xL,xR}=GEO,c=S1.c,rm=S1.removed;
+  ctx.clearRect(0,0,W,H); ctx.fillStyle='#06080a';ctx.fillRect(0,0,W,H);
+  const pulpTop=y0+c.pulpDist*S;
+  // roots + crown dentin
+  ctx.fillStyle='#d6c49a';
+  ctx.beginPath();ctx.moveTo(130,300);ctx.lineTo(255,300);ctx.lineTo(222,425);ctx.lineTo(165,425);ctx.closePath();ctx.fill();
+  ctx.beginPath();ctx.moveTo(305,300);ctx.lineTo(430,300);ctx.lineTo(395,425);ctx.lineTo(338,425);ctx.closePath();ctx.fill();
+  rr(ctx,110,40,340,270,28);ctx.fill();
+  // enamel cap
+  ctx.save();ctx.beginPath();ctx.rect(0,0,W,262);ctx.clip();rr(ctx,110,40,340,270,28);ctx.lineWidth=16;ctx.strokeStyle='#f3efe4';ctx.stroke();ctx.restore();
+  // pulp chamber + canals
+  ctx.fillStyle='#b8566c';ctx.beginPath();ctx.ellipse(280,pulpTop+10,72,18,0,Math.PI,0);ctx.lineTo(352,pulpTop+90);ctx.lineTo(208,pulpTop+90);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='#b8566c';ctx.lineWidth=7;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(232,pulpTop+88);ctx.lineTo(196,418);ctx.moveTo(328,pulpTop+88);ctx.lineTo(366,418);ctx.stroke();
+  // wall layers (DEJ)
+  const wallY0=72, wallY1=y0+8;
+  const drawWall=(z,side)=>{ const ls=layersOf(z); let acc=0; const r=rm[z];
+    for(const l of ls){ const a=acc,b=acc+l.t; acc=b; const s=Math.max(a,r); if(s>=b-1e-9) continue;
+      const x1=side<0? xL-s*S : xL+ (xR-xL) + s*S, x2=side<0? xL-b*S : xR+b*S;
+      ctx.fillStyle=l.color; ctx.fillRect(Math.min(x1,x2),wallY0,Math.abs(x2-x1),wallY1-wallY0);
+      if(truth||curMode==='explore'||(S1.probed[z]&&Math.abs(S1.probed[z].at-r)<1e-6&&l===surfLayer(z))){
+        ctx.fillStyle='rgba(0,0,0,.55)';ctx.font='8px sans-serif';ctx.save();ctx.translate(Math.min(x1,x2)+Math.abs(x2-x1)/2+3,wallY1-6);ctx.rotate(-Math.PI/2);ctx.fillText(l.h==='SOUND_DEJ'?'DEJ-SERT':l.h.split('_')[0],0,0);ctx.restore(); }
+    } };
+  drawWall('dejL',-1);drawWall('dejR',1);
+  // floor layers
+  const drawFloor=()=>{ const ls=layersOf('floor'); let acc=0; const r=rm.floor;
+    for(const l of ls){ const a=acc,b=acc+l.t; acc=b; const s=Math.max(a,r); if(s>=b-1e-9) continue;
+      ctx.fillStyle=l.color; ctx.fillRect(xL,y0+s*S,xR-xL,(b-s)*S);
+      ctx.strokeStyle='rgba(0,0,0,.25)';ctx.lineWidth=1;ctx.strokeRect(xL+.5,y0+s*S+.5,xR-xL-1,(b-s)*S-1);
+      if(truth||curMode==='explore'||(S1.probed.floor&&Math.abs(S1.probed.floor.at-r)<1e-6&&l===surfLayer('floor'))){
+        ctx.fillStyle='rgba(0,0,0,.7)';ctx.font='bold 9px sans-serif';ctx.fillText(l.h+' · '+l.t.toFixed(1)+' mm',xL+6,y0+s*S+Math.min(13,(b-s)*S-2)); } } };
+  drawFloor();
+  // air in cavity
+  const gAir=ctx.createLinearGradient(0,44,0,y0+rm.floor*S+1); gAir.addColorStop(0,'#0b0c0e'); gAir.addColorStop(1,'#2a201a');
+  ctx.fillStyle=gAir;
+  ctx.fillRect(xL-rm.dejL*S,44,(xR-xL)+(rm.dejL+rm.dejR)*S,y0+rm.floor*S-44);
+  ctx.strokeStyle='rgba(243,239,228,.35)';ctx.lineWidth=2;ctx.strokeRect(xL-rm.dejL*S+1,44,(xR-xL)+(rm.dejL+rm.dejR)*S-2,y0+rm.floor*S-44);
+  // redraw wall remnants above air for sides (air rect covers x range of removed) — walls already drawn only beyond removal
+  // exposure + bleeding
+  const fy=y0+rm.floor*S;
+  if(S1.exposed){ const hem=S1.naocl&&S1.bleed==='controlled';
+    ctx.fillStyle=hem?'#d9a3a8':(S1.bleed==='controlled'?'#ff2d3f':'#6e0d1c');
+    ctx.beginPath();ctx.ellipse(280,fy,38,14,0,Math.PI,0);ctx.fill();
+    if(!hem){ ctx.strokeStyle=S1.bleed==='controlled'?'#ff2d3f':'#7a1022';ctx.lineWidth=S1.bleed==='controlled'?3:6;
+      ctx.beginPath();ctx.moveTo(270,fy-4);ctx.quadraticCurveTo(262,fy-30,274,fy-50);ctx.moveTo(292,fy-4);ctx.quadraticCurveTo(300,fy-34,288,fy-52);ctx.stroke(); } }
+  // biomaterial + composite seal
+  if(S1.mat!=='none'&&S1.pulp!=='none'&&S1.pulp!=='rct'){ ctx.fillStyle=S1.mat==='cs'?'#aab0b6':'#e9ecef';ctx.fillRect(xL,fy-26,xR-xL,26); ctx.fillStyle='#202428';ctx.font='bold 9px sans-serif';ctx.fillText(S1.mat==='cs'?'Ca-silikat (MTA/Biodentine)':'Ca(OH)₂',xL+8,fy-9); }
+  if(S1.seal){ const ty=S1.mat!=='none'&&S1.pulp!=='none'?fy-26:fy; ctx.fillStyle='#e7dcc2';ctx.fillRect(xL-rm.dejL*S,48,(xR-xL)+(rm.dejL+rm.dejR)*S,ty-48);ctx.strokeStyle='#b8a574';ctx.strokeRect(xL-rm.dejL*S+.5,48.5,(xR-xL)+(rm.dejL+rm.dejR)*S-1,ty-49);
+    ctx.fillStyle='#4a3f22';ctx.font='bold 10px sans-serif';ctx.fillText('Adeziv kompozit — koronal seal',xL+12,(48+ty)/2+3); }
+  // rubber dam
+  if(S1.dam){ ctx.fillStyle='#2d5f8e';ctx.fillRect(0,30,W,9);ctx.fillStyle='#bcd4ec';ctx.font='bold 8px sans-serif';ctx.fillText('RUBBER DAM',W-70,37); }
+  // transparent truth overlays
+  if(truth){ ctx.setLineDash([5,3]);ctx.lineWidth=1.5;ctx.strokeStyle='#4fb8e0';ctx.beginPath();ctx.moveTo(xL-6,y0+rm.floor*S);ctx.lineTo(xR+6,y0+rm.floor*S);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle='#4fb8e0';ctx.font='10px sans-serif';ctx.fillText('ulaşılan seviye',xR+8,y0+rm.floor*S+3);
+    ctx.fillStyle='#e8a35a';ctx.fillText('pulpa üstü',xR+8,pulpTop+3);
+    ctx.fillStyle='#eef2f4';ctx.font='bold 11px sans-serif';ctx.fillText('pulpDistanceMm = '+c.pulpDist.toFixed(1)+' · RDT = '+Math.max(0,rdt()).toFixed(2)+' mm',12,H-10); }
+  // zone hit rects
+  HIT={dejL:[100,60,xL,y0+10],dejR:[xR,60,460,y0+10],floor:[xL,40,xR,Math.max(pulpTop,y0+40)]};
+}
+function drawOccl(cv){
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height; ctx.fillStyle='#06080a';ctx.fillRect(0,0,W,H);
+  const cx=W/2,cy=H/2+4,R=96;
+  ctx.fillStyle='#f3efe4';ctx.beginPath();ctx.arc(cx,cy,R,0,7);ctx.fill();
+  const cL=surfLayer('dejL').color,cR=surfLayer('dejR').color;
+  ctx.fillStyle=cL;ctx.beginPath();ctx.arc(cx,cy,R-14,Math.PI/2,Math.PI*1.5);ctx.arc(cx,cy,R-34,Math.PI*1.5,Math.PI/2,true);ctx.closePath();ctx.fill();
+  ctx.fillStyle=cR;ctx.beginPath();ctx.arc(cx,cy,R-14,-Math.PI/2,Math.PI/2);ctx.arc(cx,cy,R-34,Math.PI/2,-Math.PI/2,true);ctx.closePath();ctx.fill();
+  let fc=surfLayer('floor').color; if(S1.exposed) fc=(S1.naocl&&S1.bleed==='controlled')?'#d9a3a8':(S1.bleed==='controlled'?'#ff2d3f':'#6e0d1c'); if(S1.seal) fc='#e7dcc2';
+  ctx.fillStyle=fc;ctx.beginPath();ctx.arc(cx,cy,R-36,0,7);ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,.18)';ctx.lineWidth=1;ctx.beginPath();ctx.arc(cx,cy,R-34,0,7);ctx.stroke();
+  ctx.fillStyle='#b1bec5';ctx.font='9px sans-serif';ctx.fillText('DEJ halkası',cx-R+14,cy+R+10>H?H-4:cy-R+10);ctx.fillText('pulpal taban',cx-24,cy+3);
+  ctx.fillStyle='#78898f';ctx.fillText('renk ≠ sertlik — sondla doğrula',8,H-6);
+}
+function drawRx(cv){
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height; ctx.fillStyle='#0a0c0d';ctx.fillRect(0,0,W,H);
+  if(!S1.tests.rx){ ctx.fillStyle='#78898f';ctx.font='11px sans-serif';ctx.fillText('Röntgen çekilmedi',W/2-45,H/2); return; }
+  const c=S1.c; ctx.fillStyle='#6d7479';rr(ctx,70,20,140,100,20);ctx.fill();
+  ctx.beginPath();ctx.moveTo(80,110);ctx.lineTo(120,H-10);ctx.lineTo(150,H-10);ctx.lineTo(125,110);ctx.closePath();ctx.moveTo(165,110);ctx.lineTo(190,H-10);ctx.lineTo(215,H-10);ctx.lineTo(200,110);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#2a2f33';ctx.beginPath();ctx.ellipse(140,78,40,18,0,0,7);ctx.fill();   // pulpa odası
+  ctx.fillStyle='#17191b';ctx.beginPath();ctx.moveTo(112,20);ctx.lineTo(168,20);ctx.lineTo(150,52+(c.rx.band?0:18));ctx.lineTo(130,52+(c.rx.band?0:18));ctx.closePath();ctx.fill(); // çürük radyolüsensi
+  if(c.rx.band){ ctx.strokeStyle='#cfd6da';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(116,56);ctx.quadraticCurveTo(140,66,164,56);ctx.stroke(); }
+  if(curMode==='explore'){ ctx.fillStyle='#b1bec5';ctx.font='9.5px sans-serif';ctx.fillText(c.rx.band?'Deep: radyoopak band '+c.rx.bandMm.toFixed(1)+' mm':'Extremely deep: band yok',8,H-6); }
+}
+
+/* ============ DRAWING — Tezgâh 2 ============ */
+function drawTooth2(cv,mode){ // mode: live | truth
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height,c=S2.c,tx=S2.tx; ctx.fillStyle='#06080a';ctx.fillRect(0,0,W,H);
+  const prim=c.dentition==='primary', open=c.apex==='open', frac=c.event==='fracture';
+  const via=s2Viability(); const vcol=via>0.6?'#63d08a':via>0.25?'#f0b542':'#e8707a';
+  // gingiva + alveolar bone
+  ctx.fillStyle='#8c3a47';ctx.fillRect(0,170,W,H-170);
+  ctx.fillStyle='#d9cdb4';ctx.fillRect(0,215,W,H-215);
+  ctx.fillStyle='#06080a'; // socket
+  const replanted=tx.replant==='yes'&&c.event==='avulsion';
+  const sockX=240,sockW=80;
+  if(c.event==='avulsion'){ ctx.fillStyle='#3a0f16';ctx.beginPath();ctx.moveTo(sockX,170);ctx.lineTo(sockX+sockW,170);ctx.lineTo(sockX+sockW-14,345);ctx.lineTo(sockX+14,345);ctx.closePath();ctx.fill(); }
+  // permanent germ under primary tooth
+  if(prim){ ctx.fillStyle='#efe6cf';rr(ctx,236,352,88,42,16);ctx.fill();ctx.fillStyle='#b8566c';ctx.beginPath();ctx.ellipse(280,373,14,10,0,0,7);ctx.fill();ctx.fillStyle='#b1bec5';ctx.font='9.5px sans-serif';ctx.fillText('daimî diş germi',216,408); }
+  // tooth geometry
+  const baseY = (c.event==='avulsion'&&!replanted)? 52 : 98;      // avulse diş soket dışında
+  const crownH=70, rootLen=prim?105:(open?150:140); const tx0=280;
+  const root=()=>{ ctx.beginPath(); if(open){ ctx.moveTo(tx0-30,baseY+crownH);ctx.lineTo(tx0-44,baseY+crownH+rootLen);ctx.lineTo(tx0+44,baseY+crownH+rootLen);ctx.lineTo(tx0+30,baseY+crownH);} else { ctx.moveTo(tx0-30,baseY+crownH);ctx.lineTo(tx0-8,baseY+crownH+rootLen);ctx.lineTo(tx0+8,baseY+crownH+rootLen);ctx.lineTo(tx0+30,baseY+crownH);} ctx.closePath(); };
+  // PDL halo
+  if(c.event==='avulsion'){ ctx.save(); root();ctx.lineWidth=7;ctx.strokeStyle=vcol;ctx.globalAlpha=.55;ctx.stroke();ctx.restore(); }
+  ctx.fillStyle='#d9c99f';root();ctx.fill();
+  ctx.fillStyle='#f3efe4';rr(ctx,tx0-38,baseY,76,crownH,14);ctx.fill();
+  // pulpa
+  ctx.fillStyle='#b8566c';ctx.beginPath();ctx.moveTo(tx0-12,baseY+20);ctx.lineTo(tx0+12,baseY+20);ctx.lineTo(open?tx0+22:tx0+3,baseY+crownH+rootLen-4);ctx.lineTo(open?tx0-22:tx0-3,baseY+crownH+rootLen-4);ctx.closePath();ctx.fill();
+  if(frac){ // kırık hattı + açık pulpa
+    ctx.fillStyle='#06080a';ctx.beginPath();ctx.moveTo(tx0-38,baseY);ctx.lineTo(tx0+38,baseY);ctx.lineTo(tx0+38,baseY+16);ctx.lineTo(tx0,baseY+30);ctx.lineTo(tx0-38,baseY+14);ctx.closePath();ctx.fill();
+    ctx.fillStyle=tx.pulp==='cvekCS'||tx.pulp==='caoh'?(tx.pulp==='cvekCS'?'#aab0b6':'#e9ecef'):(tx.pulp==='rct'?'#4a2f18':'#ff2d3f');ctx.beginPath();ctx.ellipse(tx0,baseY+26,13,8,0,0,7);ctx.fill();
+    if(tx.reatt!=='none'){ ctx.fillStyle=tx.reatt==='fragment'?'#f3efe4':'#e7dcc2';ctx.beginPath();ctx.moveTo(tx0-38,baseY);ctx.lineTo(tx0+38,baseY);ctx.lineTo(tx0+38,baseY+16);ctx.lineTo(tx0,baseY+30);ctx.lineTo(tx0-38,baseY+14);ctx.closePath();ctx.fill(); } }
+  // komşu dişler + splint
+  for(const dx of [-88,88]){ ctx.fillStyle='#f3efe4';rr(ctx,tx0+dx-34,98,68,crownH,12);ctx.fill();ctx.fillStyle='#d9c99f';ctx.beginPath();ctx.moveTo(tx0+dx-24,98+crownH);ctx.lineTo(tx0+dx-6,98+crownH+110);ctx.lineTo(tx0+dx+6,98+crownH+110);ctx.lineTo(tx0+dx+24,98+crownH);ctx.closePath();ctx.fill(); }
+  if(tx.splintType!=='none'&&(replanted||frac)){ ctx.strokeStyle=tx.splintType==='flexible'?'#4fb8e0':'#e8707a';ctx.lineWidth=tx.splintType==='flexible'?2.5:7;ctx.beginPath();ctx.moveTo(tx0-122,134);ctx.lineTo(tx0+122,134);ctx.stroke();
+    ctx.fillStyle=ctx.strokeStyle;ctx.font='bold 10px sans-serif';ctx.fillText((tx.splintType==='flexible'?'Esnek splint':'Rijit splint')+' · '+tx.splintWeeks+' hf',tx0-60,124); }
+  // etiketler
+  ctx.fillStyle='#eef2f4';ctx.font='bold 12px sans-serif';ctx.fillText('FDI '+c.fdi+' · '+(prim?'süt dişi':'daimî diş')+' · '+(open?'açık (immatür) apeks':'kapalı (matür) apeks'),12,22);
+  if(c.event==='avulsion'){ ctx.font='11px sans-serif';ctx.fillStyle=vcol;ctx.fillText('PDL canlılık '+Math.round(via*100)+'% · kuru '+c.dry+' dk · '+MEDIA[c.med].n+(c.medMin?' '+c.medMin+' dk':''),12,H-12);
+    if(!replanted){ ctx.fillStyle='#b1bec5';ctx.fillText('diş soket dışında',tx0-50,44); } }
+  if(mode==='truth'){ ctx.fillStyle='#4fb8e0';ctx.font='10px sans-serif';
+    const g=gradeNow(); const cd=g.codes.filter(x=>/ANKYLOSIS|EIRR|RESORPTION|STAIN|PDL|SAFETY|FORBIDDEN|PREMATURE|UNNEEDED/.test(x)); ctx.fillText(cd.length?'Risk: '+cd.join(' · '):'Belirgin risk işareti yok',12,H-30); }
+}
+function drawRx2(cv){
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height,c=S2.c; ctx.fillStyle='#0a0c0d';ctx.fillRect(0,0,W,H);
+  if(!S2.rxDone){ ctx.fillStyle='#78898f';ctx.font='11px sans-serif';ctx.fillText('Röntgen çekilmedi',W/2-45,H/2);return; }
+  const prim=c.dentition==='primary',open=c.apex==='open'; ctx.fillStyle='#6d7479';rr(ctx,100,18,80,60,14);ctx.fill();
+  ctx.beginPath(); if(open){ctx.moveTo(110,72);ctx.lineTo(96,170);ctx.lineTo(184,170);ctx.lineTo(170,72);} else {ctx.moveTo(110,72);ctx.lineTo(134,170);ctx.lineTo(146,170);ctx.lineTo(170,72);} ctx.closePath();ctx.fill();
+  ctx.fillStyle='#262b2f';ctx.beginPath();ctx.moveTo(130,40);ctx.lineTo(150,40);ctx.lineTo(open?158:143,166);ctx.lineTo(open?122:137,166);ctx.closePath();ctx.fill();
+  if(open){ ctx.strokeStyle='#cfd6da';ctx.lineWidth=1.5;ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(96,174);ctx.lineTo(184,174);ctx.stroke();ctx.setLineDash([]); }
+  if(prim){ ctx.fillStyle='#8a9197';rr(ctx,108,182,64,34,12);ctx.fill();ctx.fillStyle='#14171a';ctx.beginPath();ctx.ellipse(140,196,10,7,0,0,7);ctx.fill(); }
+  if(c.event==='fracture'){ ctx.strokeStyle='#0a0c0d';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(100,38);ctx.lineTo(140,50);ctx.lineTo(180,36);ctx.stroke(); }
+  if(curMode==='explore'){ ctx.fillStyle='#b1bec5';ctx.font='9.5px sans-serif';ctx.fillText((open?'Açık immatür apeks (divergan duvarlar)':'Kapalı matür apeks')+(prim?' · altta daimî germ':''),8,H-6); }
+}
+function gradeNow(){ return bench===1?grade1():grade2(); }
+
+/* ============ UI ============ */
+function setStep(i){ stepIdx=Math.max(0,Math.min(4,i)); renderStepper(); }
+function renderStepper(){ const el=$('stepper'),S=bench===1?STEPS1:STEPS2; el.innerHTML='';
+  S.forEach((t,i)=>{ const d=document.createElement('div'); d.className='step'+(i===stepIdx?' on':'')+(i<stepIdx?' done':''); d.innerHTML=`<div class="n">${i<stepIdx?'✓':i+1}</div><div class="t">${t}</div>`; el.appendChild(d); }); }
+function renderCasePick(){ const el=$('casePick'); el.innerHTML=''; const ord=bench===1?V_ORDER:T_ORDER, def=bench===1?VC:TC, cur=bench===1?cid1:cid2;
+  ord.forEach(id=>{ const b=document.createElement('button'); b.className='casebtn'+(id===cur?' on':''); b.innerHTML=`${id}<span class="d">${def[id].name.split(' ').slice(0,2).join(' ').slice(0,12)}</span>`; b.onclick=()=>loadCase(id); el.appendChild(b); }); }
+function refresh1(){
+  drawCross($('crossCanvas'),false); drawOccl($('occlCanvas')); drawRx($('rxCanvas'));
+  const c=S1.c, z=S1.removed, rd=Math.max(0,rdt());
+  $('rdtBar').style.width=clamp(rd/c.pulpDist*100,0,100)+'%'; $('rdtBar').style.background=rd>1.0?'var(--good)':rd>EXPO_RDT?'var(--warn)':'var(--bad)';
+  let h=`<div>Kalan dentin kalınlığı (pulpal taban): <b>${rd.toFixed(2)} mm</b> · pulpa mesafesi ${c.pulpDist.toFixed(1)} mm</div>`;
+  for(const k of ZONES){ const sl=surfLayer(k), pr=S1.probed[k]&&Math.abs(S1.probed[k].at-z[k])<1e-6; h+=`<div>${ZNAME[k]}: kaldırılan <b>${z[k].toFixed(2)} mm</b> · yüzey rengi <span style="color:${sl.color};filter:brightness(1.6)">■</span> ${(curMode==='explore'||pr)?'· sertlik: <b>'+HNAME[sl.h]+'</b>':'· sertlik: sondla ölç'}</div>`; }
+  $('tissueOut').innerHTML=h;
+  $('bleedOut').innerHTML = S1.exposed? (S1.exposedKind==='carious'?'<b class="warn">Çürük ekspozu.</b> ':'<b class="bad">İyatrojenik ekspoz.</b> ')+ (S1.naocl? (S1.bleed==='controlled'?'<span class="ok">Kanama 3 dk NaOCl ile kontrol altında.</span>':'<span class="bad">10 dk sonra kanama durmuyor (koyu/hiperemik).</span>'):'Büyütme altında kanama: '+(S1.bleed==='controlled'?'<b style="color:#ff5a6a">parlak kırmızı</b>':'<b style="color:#a3182b">koyu / hiperemik</b>')+' — NaOCl pelet uygula.') : 'Ekspoz yok.';
+  $('variantGrp').hidden = !(S1.cid==='V3');
+  document.querySelectorAll('[data-tool]').forEach(b=>b.classList.toggle('on',b.dataset.tool===S1.tool));
+  $('damBtn').classList.toggle('on',S1.dam); $('damBtn').innerHTML=S1.dam?'<b>Rubber dam yerinde ✓</b><small>İzolasyon sağlandı</small>':'<b>Rubber dam uygula</b><small>Aseptik kapı</small>';
+  for(const [id,k] of [['tCold','cold'],['tEpt','ept'],['tPerc','perc'],['tRx','rx']]) $(id).classList.toggle('done',S1.tests[k]);
+  $('pulpTher').value=S1.pulp; $('pulpMat').value=S1.mat; $('sealChk').checked=S1.seal; $('bleedVar').value=S1.bleed;
+}
+function refresh2(){
+  const c=S2.c,tx=S2.c&&S2.tx; drawTooth2($('tCanvas'),'live'); drawRx2($('trxCanvas'));
+  const via=s2Viability(); $('pdlBar').style.width=Math.round(via*100)+'%'; $('pdlBar').style.background=via>0.6?'var(--good)':via>0.25?'var(--warn)':'var(--bad)';
+  $('pdlOut').innerHTML = c.event==='avulsion' ? `Kuru süre <b>${c.dry} dk</b> · ortam: <b>${MEDIA[c.med].n}</b>${c.medMin?' ('+c.medMin+' dk)':''}<br>Canlılık: <b>${Math.round(via*100)}%</b>${curMode==='explore'?(via>0.6?' — PDL büyük oranda canlı':via>0.25?' — kısmen canlı':' — PDL canlı değil'):''}` : 'Avülsiyon yok — pulpa ekspozu yönetimi.';
+  $('tInfo').innerHTML=`<b>FDI ${c.fdi}</b> · ${c.dentition==='primary'?'süt dişi':'daimî diş'} · ${c.age} yaş<br>${c.event==='avulsion'?'Avülsiyon':'Komplike kron kırığı (pulpa ekspozu)'}<br>Apeks: <b>${c.apex==='open'?'açık / immatür':'kapalı / matür'}</b><br>${c.dentition==='primary'?'Alt kesitte daimî germ var.':''}`;
+  $('packOut').innerHTML=`<b>${PACK[c.dentition].label}</b><br>${PACK[c.dentition].note}`+(S2.locks.length?'<br><b class="bad">GÜVENLİK KİLİDİ: süt dişi replante edilmez.</b>':'');
+  document.querySelectorAll('.pane2 .grp[data-for]').forEach(g=>g.hidden = (g.dataset.for!==(c.event==='avulsion'?'avul':'frac')));
+  $('t_replant').value=tx.replant||''; $('t_rinse').value=tx.rinse||''; $('t_splint').value=tx.splintType; $('t_weeks').value=tx.splintWeeks; $('t_weeksV').textContent=tx.splintWeeks+' hf';
+  $('t_rct').value=tx.rct; $('t_abx').value=tx.abx; $('t_pulp').value=tx.pulp; $('t_reatt').value=tx.reatt; $('t_follow').checked=tx.follow; $('t_parent').checked=tx.parent;
+  $('tRxT').classList.toggle('done',S2.rxDone); $('tEptT').classList.toggle('done',S2.eptDone);
+}
+function refresh(){ if(bench===1) refresh1(); else refresh2(); }
+function loadCase(id){
+  if(bench===1){ cid1=id; S1=newS1(id); $('juryOut').innerHTML=''; $('dxOut').innerHTML=''; $('toolOut').innerHTML=''; setStep(0); }
+  else { cid2=id; S2=newS2(id); $('juryOut').innerHTML=''; $('tDxOut').innerHTML=''; setStep(0); }
+  renderCasePick(); refresh(); toast('Vaka '+id+' yüklendi'+(curMode==='explore'?': '+(bench===1?VC[id]:TC[id]).name:' (sınav)'));
+}
+function setBench(n){ bench=n; document.body.dataset.bench=String(n); [...$('benchSeg').children].forEach(b=>b.classList.toggle('on',+b.dataset.bench===n)); $('juryOut').innerHTML=''; renderCasePick(); renderStepper(); if(n===1&&!S1)S1=newS1(cid1); if(n===2&&!S2)S2=newS2(cid2); refresh(); }
+function setMode(m){ curMode=m; [...$('modeSeg').children].forEach(b=>b.classList.toggle('on',b.dataset.mode===m)); $('modeSeg').classList.toggle('exam',m==='exam'); refresh(); }
+
+/* ---------- Debrief ---------- */
+function openDebrief(g){
+  $('ovl').classList.add('on'); $('dbTitle').textContent='Debrief — '+g.title; $('dbSub').textContent='Skor '+g.score+'/100';
+  const a=$('dvA'),b=$('dvB'),A=a.getContext('2d'),B=b.getContext('2d');
+  if(bench===1){
+    $('dvAh').textContent='① Senin Kesitin (son durum)'; $('dvBh').textContent='② Şeffaf Dentin Katmanları · Gerçek Sertlik';
+    const tmp=document.createElement('canvas'); tmp.width=560; tmp.height=430; drawCross(tmp,false); A.fillStyle='#06080a';A.fillRect(0,0,a.width,a.height); A.drawImage(tmp,40,20,560,430);
+    const t2=document.createElement('canvas'); t2.width=560; t2.height=430; drawCross(t2,true); B.fillStyle='#06080a';B.fillRect(0,0,b.width,b.height); B.drawImage(t2,40,20,560,430);
+    const z=S1.removed;
+    $('dvAmeta').innerHTML=`<div class="dmetric"><span>Rubber dam</span><b>${S1.dam?(S1.damBeforeExc?'önce':'geç'):'yok'}</b></div><div class="dmetric"><span>Kaldırılan (sol/taban/sağ)</span><b>${z.dejL.toFixed(1)} / ${z.floor.toFixed(1)} / ${z.dejR.toFixed(1)} mm</b></div><div class="dmetric"><span>Sond sayısı</span><b>${S1.probes}</b></div>`;
+    $('dvBmeta').innerHTML=ZONES.map(k=>`<div class="dmetric"><span>${ZNAME[k]} yüzeyi</span><b>${surfLayer(k).h}</b></div>`).join('')+`<div class="dmetric"><span>RDT</span><b>${Math.max(0,rdt()).toFixed(2)} mm</b></div>`;
+  } else {
+    $('dvAh').textContent='① Senin Müdahale Planın'; $('dvBh').textContent='② Şeffaf Diş · PDL Canlılığı & Risk';
+    const t1=document.createElement('canvas'); t1.width=560; t1.height=430; drawTooth2(t1,'live'); A.fillStyle='#06080a';A.fillRect(0,0,a.width,a.height); A.drawImage(t1,40,20,560,430);
+    const t2=document.createElement('canvas'); t2.width=560; t2.height=430; drawTooth2(t2,'truth'); B.fillStyle='#06080a';B.fillRect(0,0,b.width,b.height); B.drawImage(t2,40,20,560,430);
+    const tx=S2.tx;
+    $('dvAmeta').innerHTML=`<div class="dmetric"><span>Replantasyon</span><b>${tx.replant||'—'}</b></div><div class="dmetric"><span>Splint</span><b>${tx.splintType} · ${tx.splintWeeks} hf</b></div><div class="dmetric"><span>Endodontik plan</span><b>${tx.rct}</b></div><div class="dmetric"><span>Antibiyotik</span><b>${tx.abx}</b></div>`;
+    $('dvBmeta').innerHTML=`<div class="dmetric"><span>Paket</span><b>${S2.c.dentition}</b></div><div class="dmetric"><span>PDL canlılığı</span><b>${Math.round(s2Viability()*100)}%</b></div><div class="dmetric"><span>Apeks</span><b>${S2.c.apex}</b></div>`;
+  }
+  $('dvC').innerHTML=karne(g);
+}
+function karne(g){ let h=`<div class="kh">Karar zinciri</div><div>${g.teach}</div>`;
+  if(g.codes.length) h+=`<div class="kh">Yakalanan hata kodları</div><div class="neg">${g.codes.join(' · ')}</div>`;
+  h+=`<div class="kh">Skor (4 kategori)</div>`; g.cats.forEach(c=>h+=`<div>${c.name}: <b>${Math.round(c.w*c.s)}/${c.w}</b></div>`);
+  h+=`<div style="margin-top:4px">Toplam <b>${g.score}/100</b> — ${g.score>=85?'<span class="pos">uzman düzeyi</span>':g.score>=60?'<span class="neu">geliştirilmeli</span>':'<span class="neg">kritik hatalar</span>'}.</div>`; return h; }
+function renderJury(){ const g=gradeNow(); const col=g.score>=85?'var(--good)':g.score>=60?'var(--warn)':'var(--bad)';
+  let h=`<div class="jcard"><div class="jscore" style="color:${col}">${g.score}<small>/100</small></div>`;
+  g.cats.forEach(c=>{ const cs=Math.round(c.w*c.s),cc=c.s>=0.85?'var(--good)':c.s>=0.5?'var(--warn)':'var(--bad)';
+    h+=`<div style="margin-top:7px;font-size:11px;font-weight:800;display:flex;justify-content:space-between"><span>${c.name}</span><span style="color:${cc}">${cs}/${c.w}</span></div>`;
+    c.flags.forEach(f=>h+=`<div class="jflag ${f[0]}"><span class="b">${f[0]==='ok'?'✓':f[0]==='warn'?'!':'✕'}</span><span>${f[1]}</span></div>`); });
+  h+='</div>'; $('juryOut').innerHTML=h; setStep(4); openDebrief(g); return g; }
+
+/* ---------- Events ---------- */
+$('benchSeg').addEventListener('click',e=>{const b=e.target.closest('button'); if(b) setBench(+b.dataset.bench);});
+$('modeSeg').addEventListener('click',e=>{const b=e.target.closest('button'); if(b) setMode(b.dataset.mode);});
+$('juryBtn').addEventListener('click',renderJury);
+$('resetBtn').addEventListener('click',()=>loadCase(bench===1?cid1:cid2));
+$('dbX').addEventListener('click',()=>$('ovl').classList.remove('on'));
+$('ovl').addEventListener('click',e=>{if(e.target===$('ovl'))$('ovl').classList.remove('on');});
+// tezgâh 1
+for(const [id,k] of [['tCold','cold'],['tEpt','ept'],['tPerc','perc'],['tRx','rx']]) $(id).addEventListener('click',()=>{ const r=runTest(k); $('dxOut').innerHTML=`<b>${{cold:'Soğuk',ept:'EPT',perc:'Perküsyon',rx:'Periapikal'}[k]}:</b> ${r}`; setStep(0); refresh(); });
+$('damBtn').addEventListener('click',()=>{ S1.dam=!S1.dam; S1.log.push(S1.dam?'Rubber dam':'Dam çıkarıldı'); setStep(1); refresh(); });
+document.querySelectorAll('[data-tool]').forEach(b=>b.addEventListener('click',()=>{ S1.tool=b.dataset.tool; refresh(); }));
+function applyZone(z){ const r=useTool(z); if(r) $('toolOut').innerHTML=`<b>${ZNAME[z]} — sond:</b> ${r}`; else $('toolOut').innerHTML=`${S1.tool==='bur'?'Frez':'Ekskavatör'}: ${ZNAME[z]} <b>${S1.removed[z].toFixed(2)} mm</b>`+(S1.exposed&&z==='floor'?' · <b class="bad">pulpa ekspozu</b>':''); if(S1.exposed) setStep(3); else setStep(2); refresh(); }
+document.querySelectorAll('[data-zone]').forEach(b=>b.addEventListener('click',()=>applyZone(b.dataset.zone)));
+$('crossCanvas').addEventListener('pointerdown',e=>{ const cv=e.currentTarget,r=cv.getBoundingClientRect(),x=(e.clientX-r.left)*cv.width/r.width,y=(e.clientY-r.top)*cv.height/r.height;
+  for(const z of ['dejL','dejR','floor']){ const h=HIT[z]; if(h&&x>=h[0]&&x<=h[2]&&y>=h[1]&&y<=h[3]){ applyZone(z); return; } } });
+$('naocBtn').addEventListener('click',()=>{ if(!S1.exposed){ toast('Pulpa ekspozu yok — hemostaz gerekmiyor','warn'); return; } const ok=applyNaOCl(); toast(ok?'3 dk sonunda kanama kontrol altında':'10 dk sonra kanama sürüyor — koyu/hiperemik',ok?'good':'bad'); setStep(3); refresh(); });
+$('pulpTher').addEventListener('change',e=>{S1.pulp=e.target.value;setStep(3);refresh();});
+$('pulpMat').addEventListener('change',e=>{S1.mat=e.target.value;setStep(3);refresh();});
+$('sealChk').addEventListener('change',e=>{S1.seal=e.target.checked;setStep(4);refresh();});
+$('bleedVar').addEventListener('change',e=>{S1.bleed=e.target.value;S1.naocl=false;refresh();});
+// tezgâh 2
+$('tRxT').addEventListener('click',()=>{S2.rxDone=true;$('tDxOut').innerHTML='Periapikal: '+(S2.c.apex==='open'?'açık immatür apeks':'kapalı matür apeks')+(S2.c.dentition==='primary'?'; altta daimî germ':'')+(S2.c.event==='fracture'?'; kron kırık hattı pulpaya ulaşıyor':'');setStep(1);refresh();});
+$('tEptT').addEventListener('click',()=>{S2.eptDone=true;$('tDxOut').innerHTML=S2.c.event==='avulsion'?'EPT/soğuk: yanıt yok'+(S2.c.apex==='open'?' (immatür dişte erken dönemde güvenilmez)':''):'Pulpa ekspoze, vital';refresh();});
+$('t_replant').addEventListener('change',e=>{const v=e.target.value||null; setReplant(v); if(v==='yes'&&S2.locks.length) toast('GÜVENLİK KİLİDİ: süt dişi replante edilmez — daimî germ zarar görür','bad'); setStep(2);refresh();});
+$('t_rinse').addEventListener('change',e=>{S2.tx.rinse=e.target.value||null;setStep(2);refresh();});
+$('t_pulp').addEventListener('change',e=>{S2.tx.pulp=e.target.value;setStep(2);refresh();});
+$('t_reatt').addEventListener('change',e=>{S2.tx.reatt=e.target.value;setStep(2);refresh();});
+$('t_splint').addEventListener('change',e=>{S2.tx.splintType=e.target.value;setStep(3);refresh();});
+$('t_weeks').addEventListener('input',e=>{S2.tx.splintWeeks=+e.target.value;setStep(3);refresh();});
+$('t_rct').addEventListener('change',e=>{S2.tx.rct=e.target.value;setStep(4);refresh();});
+$('t_abx').addEventListener('change',e=>{S2.tx.abx=e.target.value;setStep(4);refresh();});
+$('t_follow').addEventListener('change',e=>{S2.tx.follow=e.target.checked;refresh();});
+$('t_parent').addEventListener('change',e=>{S2.tx.parent=e.target.checked;refresh();});
+
+/* ---------- boot ---------- */
+S1=newS1('V1'); S2=newS2('T1'); renderStepper(); renderCasePick(); refresh();
+
+/* ============ API + SELFTEST ============ */
+window.VPT={
+  setBench, loadCase:(id)=>{ setBench(/^V/.test(id)?1:2); loadCase(id); }, setMode,
+  cases:()=>({v:V_ORDER.slice(),t:T_ORDER.slice()}),
+  // bench 1
+  excavate:(z,mm,tool)=>{ const t0=S1.tool; S1.tool=tool||'bur'; const target=mm; let g=0; while(S1.removed[z]<target-1e-6&&g++<80){ const st=Math.min(stepFor(S1.tool,z),target-S1.removed[z]); applyRemoval(z,st); if(S1.exposed&&z==='floor')break; } S1.tool=t0; refresh(); return {removed:S1.removed[z],exposed:S1.exposed,kind:S1.exposedKind}; },
+  probe:(z)=>{const t=probeZone(z);refresh();return {text:t,h:S1.probed[z].h};},
+  setDam:(v)=>{S1.dam=!!v;refresh();}, test:(k)=>{const r=runTest(k);refresh();return r;}, allTests:()=>{['cold','ept','perc','rx'].forEach(runTest);refresh();},
+  naocl:()=>{const r=applyNaOCl();refresh();return r;}, setPulp:(th,mt)=>{S1.pulp=th;S1.mat=mt||'none';refresh();}, setSeal:(v)=>{S1.seal=!!v;refresh();}, setBleed:(v)=>{S1.bleed=v;S1.naocl=false;refresh();},
+  state1:()=>JSON.parse(JSON.stringify({removed:S1.removed,exposed:S1.exposed,kind:S1.exposedKind,dam:S1.dam,damBeforeExc:S1.damBeforeExc,rdt:rdt(),bleed:S1.bleed})),
+  zoneInfo:(z)=>{const l=layersOf(z)[0];return {h:l.h,color:l.color,pulpDistanceMm:S1.c.pulpDist};},
+  grade1:()=>grade1(),
+  // bench 2
+  setTx:(o)=>{Object.assign(S2.tx,o); if(o.replant!==undefined) setReplant(o.replant); refresh();}, rx2:()=>{S2.rxDone=true;refresh();}, ept2:()=>{S2.eptDone=true;},
+  pdl:(dry,med,min)=>pdlViability(dry,med,min), state2:()=>JSON.parse(JSON.stringify({tx:S2.tx,locks:S2.locks,viability:s2Viability()})),
+  grade2:()=>grade2(), grade:()=>gradeNow(), pack:(d)=>JSON.parse(JSON.stringify(PACK[d]))
+};
+window.__selfTest=function(){
+  const R=[]; const ok=(n,c)=>R.push({n,pass:!!c});
+  try{
+    // ===== test_vpt_selective_vs_sclerotic_and_seal =====
+    VPT.loadCase('V1'); VPT.setDam(true); VPT.allTests();
+    const e1=VPT.excavate('floor',2.75,'bur'); ok('V1-force-hard-exposes', e1.exposed===true && e1.kind==='iatrogenic' && VPT.grade1().codes.includes('UNNECESSARY_EXPOSURE'));
+    VPT.loadCase('V1'); VPT.setDam(true); VPT.allTests(); VPT.excavate('dejL',1.0); VPT.excavate('dejR',1.0); VPT.excavate('floor',1.6); VPT.setSeal(true);
+    const g1=VPT.grade1(); ok('V1-selective-full', VPT.state1().exposed===false && g1.score===100 && !g1.codes.length);
+    VPT.loadCase('V2'); VPT.setDam(true); VPT.allTests(); VPT.excavate('dejL',0.8); VPT.excavate('dejR',0.8); VPT.excavate('floor',0.5); VPT.setSeal(true);
+    const g2=VPT.grade1(); ok('V2-leave-sclerotic-full', g2.score===100 && VPT.state1().exposed===false);
+    VPT.loadCase('V2'); VPT.setDam(true); const e2=VPT.excavate('floor',2.8,'bur'); ok('V2-dig-sclerotic-exposes', e2.exposed===true);
+    VPT.loadCase('V2'); VPT.excavate('floor',0.5); const pr=VPT.probe('floor'); const zi=VPT.zoneInfo('floor'); ok('probe-hardness-not-color', pr.h==='HARD_SCLEROTIC' && /Sert/.test(pr.text));
+    VPT.loadCase('V4'); const pz=VPT.probe('dejL'); ok('V4-pale-but-soft', pz.h==='SOFT_INFECTED' && /Yumuşak/.test(pz.text) && VPT.zoneInfo('dejL').color==='#dcc58e');
+    VPT.loadCase('V4'); VPT.setDam(true); VPT.allTests(); VPT.excavate('floor',1.0); VPT.setSeal(true);
+    const g4=VPT.grade1(); ok('V4-peripheral-seal-failure', g4.codes.includes('PERIPHERAL_SEAL_FAILURE') && g4.score<100);
+    VPT.loadCase('V4'); VPT.setDam(true); VPT.allTests(); VPT.excavate('dejL',1.4); VPT.excavate('dejR',1.4); VPT.excavate('floor',1.0); VPT.setSeal(true); ok('V4-clean-full', VPT.grade1().score===100);
+    VPT.loadCase('V2'); VPT.allTests(); VPT.excavate('dejL',0.8); VPT.excavate('dejR',0.8); VPT.excavate('floor',0.5); VPT.setSeal(true); ok('no-dam-penalized', VPT.grade1().codes.includes('NO_RUBBER_DAM') && VPT.grade1().score<100);
+    VPT.loadCase('V3'); VPT.setDam(true); VPT.allTests(); VPT.excavate('dejL',1.0); VPT.excavate('dejR',1.0); const e3=VPT.excavate('floor',2.7); ok('V3-carious-exposure', e3.exposed&&e3.kind==='carious');
+    VPT.naocl(); VPT.setPulp('partial','cs'); VPT.setSeal(true); ok('V3-partial-pulpotomy-full', VPT.grade1().score===100);
+    VPT.setPulp('rct','none'); ok('V3-rct-overtreatment', VPT.grade1().codes.includes('VPT_OVERTREATMENT'));
+    VPT.setBleed('uncontrolled'); VPT.naocl(); VPT.setPulp('partial','cs'); const g3u=VPT.grade1(); ok('V3-uncontrolled-vpt-fails', g3u.codes.includes('VPT_FAILURE_UNCONTROLLED_BLEED') && g3u.score<80);
+    VPT.setPulp('rct','none'); ok('V3-uncontrolled-rct-full', VPT.grade1().score===100);
+    // ===== test_iadt_primary_vs_permanent_avulsion =====
+    VPT.loadCase('T1'); VPT.rx2(); VPT.setTx({replant:'yes'}); const gt1=VPT.grade2(); ok('T1-primary-replant-locked', gt1.codes.includes('PRIMARY_REPLANT_FORBIDDEN') && gt1.codes.includes('SAFETY_LOCK') && gt1.cats[0].s===0 && gt1.score<=35 && VPT.state2().locks.includes('PRIMARY_REPLANT'));
+    VPT.loadCase('T1'); VPT.rx2(); VPT.setTx({replant:'no',parent:true}); ok('T1-no-replant-full', VPT.grade2().score===100);
+    VPT.loadCase('T1'); VPT.rx2(); VPT.setTx({replant:'no',parent:true,splintType:'flexible',rct:'d7_10'}); ok('rule-packs-not-mixed', VPT.grade2().codes.includes('RULE_PACK_MIXING') && VPT.pack('primary').replant===false && VPT.pack('permanent').replant===true);
+    VPT.loadCase('T2'); VPT.setTx({replant:'yes',rinse:'saline',splintType:'rigid',splintWeeks:5,rct:'d7_10',abx:'amox'}); const gr=VPT.grade2(); ok('T2-rigid-ankylosis', gr.codes.includes('ANKYLOSIS_REPLACEMENT_RESORPTION_RISK') && gr.score<100);
+    VPT.loadCase('T2'); VPT.setTx({replant:'yes',rinse:'saline',splintType:'flexible',splintWeeks:2,rct:'d7_10',abx:'amox'}); ok('T2-flex2wk-rct7-10-full', VPT.grade2().score===100);
+    VPT.loadCase('T2'); VPT.setTx({replant:'yes',rinse:'saline',splintType:'flexible',splintWeeks:2,rct:'late',abx:'amox'}); ok('T2-late-rct-EIRR', VPT.grade2().codes.includes('EIRR_RISK'));
+    VPT.loadCase('T2'); VPT.setTx({replant:'yes',rinse:'scrape',splintType:'flexible',splintWeeks:2,rct:'d7_10',abx:'amox'}); ok('T2-scrape-pdl-damage', VPT.grade2().codes.includes('ROOT_SURFACE_SCRAPING_PDL_DAMAGE'));
+    VPT.loadCase('T3'); VPT.setTx({replant:'yes',rinse:'saline',splintType:'flexible',splintWeeks:2,rct:'emergency',abx:'amox'}); const g3e=VPT.grade2(); ok('T3-emergency-rct-penalized', g3e.codes.includes('UNNEEDED_EMERGENCY_RCT') && g3e.score<100);
+    VPT.setTx({rct:'revascFollow'}); ok('T3-revasc-full', VPT.grade2().score===100);
+    VPT.setTx({abx:'doxy'}); ok('T3-doxy-staining', VPT.grade2().codes.includes('TETRACYCLINE_STAINING_UNDER12'));
+    VPT.loadCase('T4'); VPT.setTx({pulp:'cvekCS',reatt:'fragment',follow:true}); ok('T4-cvek-full', VPT.grade2().score===100);
+    VPT.setTx({pulp:'rct'}); ok('T4-rct-overtreatment', VPT.grade2().codes.includes('OVERTREATMENT_DEVITALIZATION'));
+    ok('pdl-model', VPT.pdl(0,'milk',25)>0.85 && VPT.pdl(40,'none',0)<0.4 && VPT.pdl(0,'water',60)===0 && VPT.pdl(5,'saline',10)>0.7);
+    // spoiler yok
+    const optTxt=[...document.querySelectorAll('select option')].map(o=>o.textContent).join(' | ');
+    ok('vpt-no-option-spoilers', !/\((doğru|güvenli|hatalı|riskli)\)/i.test(optTxt));
+    VPT.setBench(1); VPT.loadCase('V1');
+  }catch(e){R.push({n:'exception',pass:false,err:String(e)});}
+  const pass=R.every(r=>r.pass);
+  return {pass,count:R.length,tests:R,failed:R.filter(r=>!r.pass).map(r=>r.n)};
+};
+console.log('[VPT] ready');
+</script>
+</body></html>

@@ -1013,18 +1013,18 @@
       <div class="modal-head">
         <div>
           <span class="eyebrow accent">DuctusLab · Klinik Simülasyon</span>
-          <div class="card-title" style="font-size:15px; margin-top:2px;">19 Aktif Simülatör · Modül Kitaplığı</div>
+          <div class="card-title" style="font-size:15px; margin-top:2px;">20 Aktif Simülatör · Modül Kitaplığı</div>
         </div>
         <button onclick="togglePortalModal()">Kapat</button>
       </div>
       <div class="portal-filter">
         <input class="portal-search" id="portalSearch" placeholder="🔍 Modül ara (ör. digoksin, pupil, CVC, STEMI, MB2)..." oninput="filterPortal()">
         <div class="pills" id="portalPills">
-          <button class="pill on" data-cat="all" onclick="setPortalCat(this)">Tümü (19)</button>
+          <button class="pill on" data-cat="all" onclick="setPortalCat(this)">Tümü (20)</button>
           <button class="pill" data-cat="muayene" onclick="setPortalCat(this)">🩺 Muayene &amp; Tanı (6)</button>
           <button class="pill" data-cat="akut" onclick="setPortalCat(this)">🫀 Akut · YB &amp; PK/PD (5)</button>
           <button class="pill" data-cat="girisimsel" onclick="setPortalCat(this)">🔬 Girişimsel &amp; Cerrahi (5)</button>
-          <button class="pill" data-cat="dus" onclick="setPortalCat(this)">🦷 Diş Hekimliği · DUS (3)</button>
+          <button class="pill" data-cat="dus" onclick="setPortalCat(this)">🦷 Diş Hekimliği · DUS (4)</button>
         </div>
       </div>
       <div class="portal-scroll">
@@ -1141,6 +1141,12 @@
           <div class="pcard-ttl">Gömülü 3. Molar · Panoramik ↔ CBCT/MPR &amp; Koronektomi</div>
           <div class="pcard-sum">Tek 3B gerçeklikten panoramik + 3-düzlem sentetik CBCT/MPR (ortak crosshair), Winter/Pell-Gregory/Rood-Shehab, EADMFR CBCT kapısı ve İzlem/Çekim/Koronektomi jürisi — 6 vaka.</div>
           <div class="ptags"><span>DUS</span><span>Oral Cerrahi</span><span>CBCT/MPR</span></div>
+        </div>
+        <div class="pcard" data-cat="dus" data-s="vpt vital pulpa tedavisi selektif ekskavasyon derin çürük pulpotomi mta biodentine iadt dental travma avülsiyon splint replantasyon endodonti pedodonti 36 46 11 21 51" onclick="window.open('ductuslab-vpt.html','_blank','noopener')">
+          <div class="pcard-top"><span class="mod-ico">VPT</span><span class="pbadge">Aktif · DUS #4</span></div>
+          <div class="pcard-ttl">VPT &amp; Travma · Selektif Ekskavasyon &amp; IADT Avülsiyon</div>
+          <div class="pcard-sum">Katmanlı dentin fiziği (sertlik ≠ renk), peripheral seal, pulpa ekspozu + NaOCl hemostaz + Ca-silikat VPT (V1–V4) ve IADT 2020 süt/daimî avülsiyon, PDL canlılığı, splint, KKT takvimi (T1–T4).</div>
+          <div class="ptags"><span>DUS</span><span>Endodonti</span><span>IADT</span></div>
         </div>
         <div class="pcard" data-cat="girisimsel" data-s="lap laparoskopik kolesistektomi · 30° kolesistektomi mirizzi" onclick="window.open('ductuslab-lapchole.html','_blank','noopener')">
           <div class="pcard-top"><span class="mod-ico">LAP</span><span class="pbadge">Aktif</span></div>

@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-11-03T10:23:30.354Z",
+  "generatedAt": "2026-11-03T22:44:30.101Z",
   "threeLocal": false,
-  "pages": 21,
+  "pages": 22,
   "viewports": [
     {
       "w": 1920,
@@ -27,7 +27,7 @@
     },
     "gate3_link_integrity": {
       "pass": true,
-      "checked": 46,
+      "checked": 48,
       "skipped": 1,
       "broken": []
     },
@@ -40,7 +40,7 @@
       "fails": []
     },
     "gate6_clinical_selftests": {
-      "hooks": 4,
+      "hooks": 5,
       "pass": true,
       "detail": [
         {
@@ -235,7 +235,7 @@
           "pass": true,
           "selfTest": {
             "pass": true,
-            "count": 32,
+            "count": 33,
             "tests": [
               {
                 "n": "mpr-shared-crosshair-point",
@@ -314,6 +314,10 @@
                 "pass": true
               },
               {
+                "n": "omfs-no-option-spoilers",
+                "pass": true
+              },
+              {
                 "n": "ian-dose-36mg",
                 "pass": true
               },
@@ -363,6 +367,129 @@
               },
               {
                 "n": "extraction-root-into-canal",
+                "pass": true
+              }
+            ],
+            "failed": []
+          }
+        },
+        {
+          "page": "ductuslab-vpt.html",
+          "pass": true,
+          "selfTest": {
+            "pass": true,
+            "count": 28,
+            "tests": [
+              {
+                "n": "V1-force-hard-exposes",
+                "pass": true
+              },
+              {
+                "n": "V1-selective-full",
+                "pass": true
+              },
+              {
+                "n": "V2-leave-sclerotic-full",
+                "pass": true
+              },
+              {
+                "n": "V2-dig-sclerotic-exposes",
+                "pass": true
+              },
+              {
+                "n": "probe-hardness-not-color",
+                "pass": true
+              },
+              {
+                "n": "V4-pale-but-soft",
+                "pass": true
+              },
+              {
+                "n": "V4-peripheral-seal-failure",
+                "pass": true
+              },
+              {
+                "n": "V4-clean-full",
+                "pass": true
+              },
+              {
+                "n": "no-dam-penalized",
+                "pass": true
+              },
+              {
+                "n": "V3-carious-exposure",
+                "pass": true
+              },
+              {
+                "n": "V3-partial-pulpotomy-full",
+                "pass": true
+              },
+              {
+                "n": "V3-rct-overtreatment",
+                "pass": true
+              },
+              {
+                "n": "V3-uncontrolled-vpt-fails",
+                "pass": true
+              },
+              {
+                "n": "V3-uncontrolled-rct-full",
+                "pass": true
+              },
+              {
+                "n": "T1-primary-replant-locked",
+                "pass": true
+              },
+              {
+                "n": "T1-no-replant-full",
+                "pass": true
+              },
+              {
+                "n": "rule-packs-not-mixed",
+                "pass": true
+              },
+              {
+                "n": "T2-rigid-ankylosis",
+                "pass": true
+              },
+              {
+                "n": "T2-flex2wk-rct7-10-full",
+                "pass": true
+              },
+              {
+                "n": "T2-late-rct-EIRR",
+                "pass": true
+              },
+              {
+                "n": "T2-scrape-pdl-damage",
+                "pass": true
+              },
+              {
+                "n": "T3-emergency-rct-penalized",
+                "pass": true
+              },
+              {
+                "n": "T3-revasc-full",
+                "pass": true
+              },
+              {
+                "n": "T3-doxy-staining",
+                "pass": true
+              },
+              {
+                "n": "T4-cvek-full",
+                "pass": true
+              },
+              {
+                "n": "T4-rct-overtreatment",
+                "pass": true
+              },
+              {
+                "n": "pdl-model",
+                "pass": true
+              },
+              {
+                "n": "vpt-no-option-spoilers",
                 "pass": true
               }
             ],
@@ -437,7 +564,7 @@
     "gate7_portal_accessibility": {
       "pass": true,
       "detail": {
-        "cards": 19,
+        "cards": 20,
         "lapBadgeClean": true,
         "frmPresent": true,
         "scrollOk": true,
@@ -742,7 +869,7 @@
       "truthLeak": [],
       "selfTest": {
         "pass": true,
-        "count": 32,
+        "count": 33,
         "tests": [
           {
             "n": "mpr-shared-crosshair-point",
@@ -821,6 +948,10 @@
             "pass": true
           },
           {
+            "n": "omfs-no-option-spoilers",
+            "pass": true
+          },
+          {
             "n": "ian-dose-36mg",
             "pass": true
           },
@@ -870,6 +1001,138 @@
           },
           {
             "n": "extraction-root-into-canal",
+            "pass": true
+          }
+        ],
+        "failed": []
+      },
+      "lifecycle": {
+        "supported": false,
+        "advanced": null
+      }
+    },
+    "ductuslab-vpt.html": {
+      "page": "ductuslab-vpt.html",
+      "pageerrors": [],
+      "consoleErrors": [],
+      "externalAssets": [],
+      "disallowedReq": [],
+      "overflow": [],
+      "truthLeak": [],
+      "selfTest": {
+        "pass": true,
+        "count": 28,
+        "tests": [
+          {
+            "n": "V1-force-hard-exposes",
+            "pass": true
+          },
+          {
+            "n": "V1-selective-full",
+            "pass": true
+          },
+          {
+            "n": "V2-leave-sclerotic-full",
+            "pass": true
+          },
+          {
+            "n": "V2-dig-sclerotic-exposes",
+            "pass": true
+          },
+          {
+            "n": "probe-hardness-not-color",
+            "pass": true
+          },
+          {
+            "n": "V4-pale-but-soft",
+            "pass": true
+          },
+          {
+            "n": "V4-peripheral-seal-failure",
+            "pass": true
+          },
+          {
+            "n": "V4-clean-full",
+            "pass": true
+          },
+          {
+            "n": "no-dam-penalized",
+            "pass": true
+          },
+          {
+            "n": "V3-carious-exposure",
+            "pass": true
+          },
+          {
+            "n": "V3-partial-pulpotomy-full",
+            "pass": true
+          },
+          {
+            "n": "V3-rct-overtreatment",
+            "pass": true
+          },
+          {
+            "n": "V3-uncontrolled-vpt-fails",
+            "pass": true
+          },
+          {
+            "n": "V3-uncontrolled-rct-full",
+            "pass": true
+          },
+          {
+            "n": "T1-primary-replant-locked",
+            "pass": true
+          },
+          {
+            "n": "T1-no-replant-full",
+            "pass": true
+          },
+          {
+            "n": "rule-packs-not-mixed",
+            "pass": true
+          },
+          {
+            "n": "T2-rigid-ankylosis",
+            "pass": true
+          },
+          {
+            "n": "T2-flex2wk-rct7-10-full",
+            "pass": true
+          },
+          {
+            "n": "T2-late-rct-EIRR",
+            "pass": true
+          },
+          {
+            "n": "T2-scrape-pdl-damage",
+            "pass": true
+          },
+          {
+            "n": "T3-emergency-rct-penalized",
+            "pass": true
+          },
+          {
+            "n": "T3-revasc-full",
+            "pass": true
+          },
+          {
+            "n": "T3-doxy-staining",
+            "pass": true
+          },
+          {
+            "n": "T4-cvek-full",
+            "pass": true
+          },
+          {
+            "n": "T4-rct-overtreatment",
+            "pass": true
+          },
+          {
+            "n": "pdl-model",
+            "pass": true
+          },
+          {
+            "n": "vpt-no-option-spoilers",
             "pass": true
           }
         ],
