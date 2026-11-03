@@ -180,7 +180,7 @@ input[type=range]{flex:1;accent-color:var(--accent)}
       <h5>Adım 4 · İnferior Alveolar Sinir Rejyonal Bloğu (Halstead)</h5>
       <canvas id="ianCanvas" width="420" height="360"></canvas>
       <div class="ctrlrow"><label>Yatay şırınga açısı</label>
-        <select id="ianAngle" style="flex:1"><option value="contra">Karşı premolar hattı (doğru)</option><option value="ipsi">İpsilateral paralel (hata)</option><option value="tooLateral">Fazla lateral/posterior (ıskalar)</option></select></div>
+        <select id="ianAngle" style="flex:1"><option value="contra">Karşı premolar hattı</option><option value="ipsi">İpsilateral paralel hat</option><option value="tooLateral">Fazla lateral / posteromedial</option></select></div>
       <div class="ctrlrow"><label>Giriş yüksekliği</label><input type="range" id="ianHeight" min="2" max="14" step="0.5" value="8"><span id="ianHeightV" style="min-width:52px;text-align:right">8.0 mm</span></div>
       <div class="ctrlrow"><label>İlerletme derinliği</label><input type="range" id="ianDepth" min="0" max="30" step="0.5" value="0"><span id="ianDepthV" style="min-width:52px;text-align:right">0.0 mm</span></div>
       <div class="ctrlrow" style="gap:6px"><button class="verdict" id="ianAspBtn" style="margin:0;background:#1a2d3a;color:var(--accent)">🧪 Aspirasyon</button>
@@ -195,7 +195,7 @@ input[type=range]{flex:1;accent-color:var(--accent)}
       <div id="surgTools"></div>
       <div class="ctrlrow" id="coroRow" style="display:none"><label>Koronektomi kesi derinliği</label><input type="range" id="coroCut" min="0" max="4" step="0.5" value="0"><span id="coroCutV" style="min-width:66px;text-align:right">0 mm (CEJ)</span></div>
       <div class="ctrlrow"><label>Elevatör dayanağı</label>
-        <select id="surgFulcrum" style="flex:1"><option value="mesial">Mezial kortikal yiv (güvenli)</option><option value="distal47">47 distaline dayanak (riskli)</option></select></div>
+        <select id="surgFulcrum" style="flex:1"><option value="mesial">Mezial kortikal yiv</option><option value="distal47">47 distal teması</option></select></div>
       <div class="ctrlrow"><label>Elevatör kuvveti</label><input type="range" id="surgForce" min="0" max="1" step="0.05" value="0"><span id="surgForceV" style="min-width:52px;text-align:right">0.00</span></div>
       <div class="ctrlrow" style="gap:6px"><button class="verdict" id="surgApplyBtn" style="margin:0;background:#1a2d3a;color:var(--accent)">⬇ Elevatör Uygula</button>
         <button class="verdict" id="surgFinishBtn" style="margin:0;background:#13201c;color:var(--good)">💧 İrrigasyon + Sütür</button></div>
@@ -484,18 +484,31 @@ function molarDens(x,y,z, mx,my,mz, winterDeg, rootLen, rootsMesialDistal){
       if(Math.hypot(lx-cx, ly-cy)<rr){ if(Math.hypot(lx-cx,ly-cy)<0.4*(1-t))return 'pulp'; return 'dentin'; } } }
   return null;
 }
+// ascending ramus posterior to the 3rd molar: smooth curved anterior border + rounded coronoid top,
+// cortical rim following the outline (NOT a flat bright rectangle).
+function ramusAt(x,y,z){
+  if(y>=-1) return null;
+  const back=(-1-y);                                   // distance posterior to 48
+  const top = 5.2 + back*1.05 - 0.055*back*back;       // parabolic → coronoid rounds off at top
+  const antX = 5.4 - 0.6*back - 0.02*back*back;        // anterior border curves mesially going up
+  const cBL=-1.6, halfBL=3.1;                          // thin bucco-lingual ramus plate (not a solid block)
+  const dBL=Math.abs(x-cBL);
+  if(z>top || z<-12.5 || x>antX || dBL>halfBL) return null;
+  const rim = Math.min(top - z, antX - x, halfBL - dBL, z + 12.5); // distance to nearest ramus outline
+  return rim < 1.0 ? 'cortex' : 'cancellous';
+}
 function densAt(x,y,z){
   const cd=caseDef, m=cd.molar, c=cd.canal;
   let d=MAT.air, mat='air';
-  // mandible corpus (pear) + ramus rising posteriorly (distal = y<0)
+  // mandible corpus (pear, tooth-bearing body) fades posteriorly into the ascending ramus
   const ms=mandibleShape(x,z);
   let inBody = ms.in && (y>-16 && y<16);
-  // ramus: posterior to the 3rd molar (y < -1) the bone sweeps upward (anterior border + angulus)
-  if(y<-1){ const rampUp = 6.2 + (-1-y)*0.9; if(z< rampUp && z>-13 && x>-9 && x< (6 - (-1-y)*0.2)) inBody=true; }
   if(inBody){ d=MAT.cancellous; mat='cancellous';
     if(ms.in && ms.edge>0.86) {d=MAT.cortex;mat='cortex';}
-    if(y<-2 && z>5) {d=MAT.cortex;mat='cortex';}        // ramus anterior border cortex
   }
+  // ascending ramus (smooth curved silhouette, thin plate) — posterior to the molar region
+  const ra=ramusAt(x,y,z);
+  if(ra){ inBody=true; if(mat==='air'||ra==='cortex'){ d=MAT[ra]; mat=ra; } }
   // mandibular canal (oval cortex ring + IAN lumen)
   const dc=Math.hypot((x-c.x)/1.15, z-c.z);
   if(y>-13&&y<14){
@@ -870,6 +883,9 @@ window.__selfTest=function(){
     const asp=window.OMFS.mandibleAspect();
     ok('mandible-not-round', asp.ratio>1.25);
     ok('mandible-lingual-undercut', window.OMFS.hasLingualUndercut()===true);
+    // ===== test_omfs_no_option_spoilers: <select> opsiyonlarında (doğru)/(güvenli)/(hatalı)/(riskli) yok =====
+    const optTxt=[...document.querySelectorAll('select option')].map(o=>o.textContent).join(' | ');
+    ok('omfs-no-option-spoilers', !/\((doğru|güvenli|hatalı|riskli)\)/i.test(optTxt));
     // ===== AŞAMA 2 ·  test_ian_block_parotid_and_aspiration_revision =====
     ok('ian-dose-36mg', window.OMFS.ianDoseMg(2,1.8)===36 && window.OMFS.ianDoseMg(4,1.8)===72);
     // early bone contact <15mm (ipsilateral) → no pulpal anesthesia
