@@ -426,31 +426,64 @@ function grade2(){
 const GEO={S:30,y0:130,xL:200,xR:360};
 let HIT={};
 function rr(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+/* doğal molar kesiti: yuvarlatılmış tüberküller, CEJ daralması, pulpa boynuzları, eğik kökler */
+function crownPath(ctx){ ctx.beginPath();
+  ctx.moveTo(158,304);                                             // CEJ sol
+  ctx.bezierCurveTo(132,270,104,214,110,150);                      // mezial duvar (hafif şişkin)
+  ctx.bezierCurveTo(112,100,116,60,150,50);                        // mezial tüberkül yuvarlağı
+  ctx.bezierCurveTo(182,44,204,62,222,80);                         // tüberkül -> santral fossa
+  ctx.bezierCurveTo(246,98,264,92,280,88);
+  ctx.bezierCurveTo(296,92,314,98,338,80);
+  ctx.bezierCurveTo(356,62,378,44,410,50);                         // distal tüberkül
+  ctx.bezierCurveTo(444,60,448,100,450,150);
+  ctx.bezierCurveTo(456,214,428,270,402,304);                      // distal duvar -> CEJ sağ
+  ctx.bezierCurveTo(360,314,200,314,158,304); ctx.closePath(); }
+function rootPath(ctx,side){ ctx.beginPath();
+  if(side<0){ ctx.moveTo(168,300);ctx.bezierCurveTo(150,340,138,385,160,428);ctx.lineTo(206,428);ctx.bezierCurveTo(216,380,240,340,262,304);ctx.closePath(); }
+  else { ctx.moveTo(398,300);ctx.bezierCurveTo(416,340,428,385,404,428);ctx.lineTo(358,428);ctx.bezierCurveTo(348,380,324,340,300,304);ctx.closePath(); } }
+const SLANT=18;
+function slOf(y,wallY1){ return y>=wallY1?0:SLANT*(wallY1-y)/(wallY1-44); }
+function cavPath(ctx,rm,topY,botY,wallY1,inset){ inset=inset||0;
+  const {xL,xR,S}=GEO; ctx.beginPath(); let first=true;
+  for(let y=topY;y<=botY;y+=3){ const x=xL-rm.dejL*S-slOf(y,wallY1)+inset; if(first){ctx.moveTo(x,y);first=false;} else ctx.lineTo(x,y); }
+  ctx.lineTo(xL-rm.dejL*S+inset,botY);
+  for(let y=botY;y>=topY;y-=3){ ctx.lineTo(xR+rm.dejR*S+slOf(y,wallY1)-inset,y); }
+  ctx.closePath(); }
 function drawCross(cv,truth){
   const ctx=cv.getContext('2d'),W=cv.width,H=cv.height,{S,y0,xL,xR}=GEO,c=S1.c,rm=S1.removed;
   ctx.clearRect(0,0,W,H); ctx.fillStyle='#06080a';ctx.fillRect(0,0,W,H);
   const pulpTop=y0+c.pulpDist*S;
-  // roots + crown dentin
-  ctx.fillStyle='#d6c49a';
-  ctx.beginPath();ctx.moveTo(130,300);ctx.lineTo(255,300);ctx.lineTo(222,425);ctx.lineTo(165,425);ctx.closePath();ctx.fill();
-  ctx.beginPath();ctx.moveTo(305,300);ctx.lineTo(430,300);ctx.lineTo(395,425);ctx.lineTo(338,425);ctx.closePath();ctx.fill();
-  rr(ctx,110,40,340,270,28);ctx.fill();
-  // enamel cap
-  ctx.save();ctx.beginPath();ctx.rect(0,0,W,262);ctx.clip();rr(ctx,110,40,340,270,28);ctx.lineWidth=16;ctx.strokeStyle='#f3efe4';ctx.stroke();ctx.restore();
-  // pulp chamber + canals
-  ctx.fillStyle='#b8566c';ctx.beginPath();ctx.ellipse(280,pulpTop+10,72,18,0,Math.PI,0);ctx.lineTo(352,pulpTop+90);ctx.lineTo(208,pulpTop+90);ctx.closePath();ctx.fill();
+  // kökler (eğik) + furkasyon
+  ctx.fillStyle='#cdb98c'; rootPath(ctx,-1);ctx.fill(); rootPath(ctx,1);ctx.fill();
+  // kron dentini
+  ctx.fillStyle='#d6c49a'; crownPath(ctx);ctx.fill();
+  ctx.fillStyle='#d6c49a'; ctx.beginPath();ctx.moveTo(170,296);ctx.lineTo(390,296);ctx.lineTo(300,336);ctx.lineTo(262,336);ctx.closePath();ctx.fill();   // furkasyon tavanı
+  // mine (kron çevresine içten kalın şerit, CEJ'de incelir)
+  ctx.save(); crownPath(ctx); ctx.clip(); ctx.beginPath(); ctx.rect(0,0,W,268); ctx.clip();
+  crownPath(ctx); ctx.lineWidth=22; ctx.strokeStyle='#f3efe4'; ctx.stroke(); ctx.restore();
+  // CEJ çizgisi
+  ctx.strokeStyle='rgba(120,100,60,.55)';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(160,303);ctx.bezierCurveTo(220,311,340,311,400,303);ctx.stroke();
+  // pulpa odası (2 boynuz) + kanallar
+  ctx.fillStyle='#b8566c';ctx.beginPath();
+  ctx.moveTo(180,pulpTop+92);ctx.lineTo(176,pulpTop+12);ctx.bezierCurveTo(176,pulpTop-10,184,pulpTop-34,192,pulpTop-34);   // sol pulpa boynuzu
+  ctx.bezierCurveTo(202,pulpTop-30,214,pulpTop-6,240,pulpTop-2);ctx.bezierCurveTo(262,pulpTop,298,pulpTop,320,pulpTop-2);
+  ctx.bezierCurveTo(346,pulpTop-6,358,pulpTop-30,368,pulpTop-34);ctx.bezierCurveTo(376,pulpTop-34,384,pulpTop-10,384,pulpTop+12);ctx.lineTo(380,pulpTop+92);ctx.closePath();ctx.fill();
   ctx.strokeStyle='#b8566c';ctx.lineWidth=7;ctx.lineCap='round';
-  ctx.beginPath();ctx.moveTo(232,pulpTop+88);ctx.lineTo(196,418);ctx.moveTo(328,pulpTop+88);ctx.lineTo(366,418);ctx.stroke();
-  // wall layers (DEJ)
-  const wallY0=72, wallY1=y0+8;
+  ctx.beginPath();ctx.moveTo(232,pulpTop+88);ctx.bezierCurveTo(206,pulpTop+160,176,380,176,420);ctx.moveTo(328,pulpTop+88);ctx.bezierCurveTo(354,pulpTop+160,386,380,386,420);ctx.stroke();
+  // wall layers (DEJ) — eğimli duvar şeritleri
+  const wallY0=56, wallY1=y0+8;
+  ctx.save(); crownPath(ctx); ctx.clip();
   const drawWall=(z,side)=>{ const ls=layersOf(z); let acc=0; const r=rm[z];
-    for(const l of ls){ const a=acc,b=acc+l.t; acc=b; const s=Math.max(a,r); if(s>=b-1e-9) continue;
-      const x1=side<0? xL-s*S : xL+ (xR-xL) + s*S, x2=side<0? xL-b*S : xR+b*S;
-      ctx.fillStyle=l.color; ctx.fillRect(Math.min(x1,x2),wallY0,Math.abs(x2-x1),wallY1-wallY0);
+    for(const l of ls){ const a=acc,b=acc+l.t; acc=b; const s0=Math.max(a,r); if(s0>=b-1e-9) continue;
+      ctx.fillStyle=l.color;
+      for(let y=wallY0;y<wallY1;y+=2){ const sl=slOf(y,wallY1);
+        const x1=side<0? xL-s0*S-sl : xR+s0*S+sl, x2=side<0? xL-b*S-sl : xR+b*S+sl;
+        ctx.fillRect(Math.min(x1,x2),y,Math.abs(x2-x1),2.5); }
       if(truth||curMode==='explore'||(S1.probed[z]&&Math.abs(S1.probed[z].at-r)<1e-6&&l===surfLayer(z))){
-        ctx.fillStyle='rgba(0,0,0,.55)';ctx.font='8px sans-serif';ctx.save();ctx.translate(Math.min(x1,x2)+Math.abs(x2-x1)/2+3,wallY1-6);ctx.rotate(-Math.PI/2);ctx.fillText(l.h==='SOUND_DEJ'?'DEJ-SERT':l.h.split('_')[0],0,0);ctx.restore(); }
+        const xm=side<0? xL-(s0+b)/2*S-8 : xR+(s0+b)/2*S+8;
+        ctx.fillStyle='rgba(0,0,0,.55)';ctx.font='8px sans-serif';ctx.save();ctx.translate(xm,wallY1-6);ctx.rotate(-Math.PI/2);ctx.fillText(l.h==='SOUND_DEJ'?'DEJ-SERT':l.h.split('_')[0],0,0);ctx.restore(); }
     } };
-  drawWall('dejL',-1);drawWall('dejR',1);
+  drawWall('dejL',-1);drawWall('dejR',1); ctx.restore();
   // floor layers
   const drawFloor=()=>{ const ls=layersOf('floor'); let acc=0; const r=rm.floor;
     for(const l of ls){ const a=acc,b=acc+l.t; acc=b; const s=Math.max(a,r); if(s>=b-1e-9) continue;
@@ -459,12 +492,12 @@ function drawCross(cv,truth){
       if(truth||curMode==='explore'||(S1.probed.floor&&Math.abs(S1.probed.floor.at-r)<1e-6&&l===surfLayer('floor'))){
         ctx.fillStyle='rgba(0,0,0,.7)';ctx.font='bold 9px sans-serif';ctx.fillText(l.h+' · '+l.t.toFixed(1)+' mm',xL+6,y0+s*S+Math.min(13,(b-s)*S-2)); } } };
   drawFloor();
-  // air in cavity
+  // air in cavity (eğimli duvarlı)
   const gAir=ctx.createLinearGradient(0,44,0,y0+rm.floor*S+1); gAir.addColorStop(0,'#0b0c0e'); gAir.addColorStop(1,'#2a201a');
-  ctx.fillStyle=gAir;
-  ctx.fillRect(xL-rm.dejL*S,44,(xR-xL)+(rm.dejL+rm.dejR)*S,y0+rm.floor*S-44);
-  ctx.strokeStyle='rgba(243,239,228,.35)';ctx.lineWidth=2;ctx.strokeRect(xL-rm.dejL*S+1,44,(xR-xL)+(rm.dejL+rm.dejR)*S-2,y0+rm.floor*S-44);
-  // redraw wall remnants above air for sides (air rect covers x range of removed) — walls already drawn only beyond removal
+  const botY=y0+rm.floor*S;
+  ctx.save(); crownPath(ctx); ctx.clip();
+  cavPath(ctx,rm,44,botY,wallY1,0); ctx.fillStyle=gAir; ctx.fill();
+  ctx.strokeStyle='rgba(243,239,228,.35)';ctx.lineWidth=2;ctx.stroke(); ctx.restore();
   // exposure + bleeding
   const fy=y0+rm.floor*S;
   if(S1.exposed){ const hem=S1.naocl&&S1.bleed==='controlled';
@@ -474,7 +507,8 @@ function drawCross(cv,truth){
       ctx.beginPath();ctx.moveTo(270,fy-4);ctx.quadraticCurveTo(262,fy-30,274,fy-50);ctx.moveTo(292,fy-4);ctx.quadraticCurveTo(300,fy-34,288,fy-52);ctx.stroke(); } }
   // biomaterial + composite seal
   if(S1.mat!=='none'&&S1.pulp!=='none'&&S1.pulp!=='rct'){ ctx.fillStyle=S1.mat==='cs'?'#aab0b6':'#e9ecef';ctx.fillRect(xL,fy-26,xR-xL,26); ctx.fillStyle='#202428';ctx.font='bold 9px sans-serif';ctx.fillText(S1.mat==='cs'?'Ca-silikat (MTA/Biodentine)':'Ca(OH)₂',xL+8,fy-9); }
-  if(S1.seal){ const ty=S1.mat!=='none'&&S1.pulp!=='none'?fy-26:fy; ctx.fillStyle='#e7dcc2';ctx.fillRect(xL-rm.dejL*S,48,(xR-xL)+(rm.dejL+rm.dejR)*S,ty-48);ctx.strokeStyle='#b8a574';ctx.strokeRect(xL-rm.dejL*S+.5,48.5,(xR-xL)+(rm.dejL+rm.dejR)*S-1,ty-49);
+  if(S1.seal){ const ty=S1.mat!=='none'&&S1.pulp!=='none'?fy-26:fy;
+    ctx.save(); crownPath(ctx); ctx.clip(); cavPath(ctx,rm,48,ty,wallY1,0); ctx.fillStyle='#e7dcc2';ctx.fill(); ctx.strokeStyle='#b8a574';ctx.lineWidth=1;ctx.stroke(); ctx.restore();
     ctx.fillStyle='#4a3f22';ctx.font='bold 10px sans-serif';ctx.fillText('Adeziv kompozit — koronal seal',xL+12,(48+ty)/2+3); }
   // rubber dam
   if(S1.dam){ ctx.fillStyle='#2d5f8e';ctx.fillRect(0,30,W,9);ctx.fillStyle='#bcd4ec';ctx.font='bold 8px sans-serif';ctx.fillText('RUBBER DAM',W-70,37); }
@@ -488,15 +522,33 @@ function drawCross(cv,truth){
 }
 function drawOccl(cv){
   const ctx=cv.getContext('2d'),W=cv.width,H=cv.height; ctx.fillStyle='#06080a';ctx.fillRect(0,0,W,H);
-  const cx=W/2,cy=H/2+4,R=96;
-  ctx.fillStyle='#f3efe4';ctx.beginPath();ctx.arc(cx,cy,R,0,7);ctx.fill();
+  const cx=W/2,cy=H/2+2;
+  const outline=()=>{ ctx.beginPath(); ctx.moveTo(cx-100,cy-30);
+    ctx.bezierCurveTo(cx-104,cy-72,cx-70,cy-92,cx-36,cy-86);ctx.bezierCurveTo(cx-14,cy-82,cx-8,cy-74,cx,cy-76);          // bukkal: mezio-bukkal + disto-bukkal lob
+    ctx.bezierCurveTo(cx+8,cy-74,cx+16,cy-84,cx+40,cy-86);ctx.bezierCurveTo(cx+76,cy-90,cx+106,cy-66,cx+100,cy-28);
+    ctx.bezierCurveTo(cx+98,cy+8,cx+110,cy+44,cx+86,cy+72);ctx.bezierCurveTo(cx+62,cy+98,cx+20,cy+92,cx,cy+84);        // lingual lobları
+    ctx.bezierCurveTo(cx-22,cy+94,cx-66,cy+98,cx-88,cy+70);ctx.bezierCurveTo(cx-110,cy+42,cx-98,cy+6,cx-100,cy-30);ctx.closePath(); };
+  const g=ctx.createRadialGradient(cx,cy,10,cx,cy,110); g.addColorStop(0,'#e9e2cf'); g.addColorStop(1,'#f6f2e8');
+  outline(); ctx.fillStyle=g; ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle='rgba(120,105,70,.6)'; ctx.stroke();
+  // tüberkül tepeleri (yumuşak gölge)
+  ctx.save(); outline(); ctx.clip();
+  for(const [dx,dy,r] of [[-56,-48,34],[52,-50,34],[-52,44,32],[54,42,30]]){ const gg=ctx.createRadialGradient(cx+dx,cy+dy,2,cx+dx,cy+dy,r); gg.addColorStop(0,'rgba(255,255,255,.55)'); gg.addColorStop(1,'rgba(150,130,90,.22)'); ctx.fillStyle=gg; ctx.beginPath(); ctx.arc(cx+dx,cy+dy,r,0,7); ctx.fill(); }
+  // fissürler (merkezi oluk + bukkal/lingual oluklar)
+  ctx.strokeStyle='rgba(70,52,28,.75)'; ctx.lineWidth=2.2; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(cx-88,cy-2); ctx.bezierCurveTo(cx-44,cy+8,cx-14,cy-6,cx,cy+2); ctx.bezierCurveTo(cx+20,cy+10,cx+50,cy-4,cx+90,cy+2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx,cy-76); ctx.bezierCurveTo(cx+4,cy-48,cx-4,cy-20,cx,cy+2); ctx.moveTo(cx,cy+84); ctx.bezierCurveTo(cx-4,cy+52,cx+4,cy+26,cx,cy+2); ctx.stroke();
+  ctx.lineWidth=1.3; ctx.beginPath(); ctx.moveTo(cx-60,cy-14); ctx.lineTo(cx-72,cy-34); ctx.moveTo(cx+60,cy-12); ctx.lineTo(cx+74,cy-34); ctx.moveTo(cx-56,cy+14); ctx.lineTo(cx-66,cy+34); ctx.moveTo(cx+56,cy+14); ctx.lineTo(cx+68,cy+36); ctx.stroke();
+  ctx.restore();
+  // kavite: eliptik açıklık (sol/sağ yarı = DEJ rengi) + pulpal taban elipsi
   const cL=surfLayer('dejL').color,cR=surfLayer('dejR').color;
-  ctx.fillStyle=cL;ctx.beginPath();ctx.arc(cx,cy,R-14,Math.PI/2,Math.PI*1.5);ctx.arc(cx,cy,R-34,Math.PI*1.5,Math.PI/2,true);ctx.closePath();ctx.fill();
-  ctx.fillStyle=cR;ctx.beginPath();ctx.arc(cx,cy,R-14,-Math.PI/2,Math.PI/2);ctx.arc(cx,cy,R-34,Math.PI/2,-Math.PI/2,true);ctx.closePath();ctx.fill();
+  const rx=64,ry=48;
+  ctx.fillStyle=cL; ctx.beginPath(); ctx.ellipse(cx,cy,rx,ry,0,Math.PI/2,Math.PI*1.5); ctx.closePath(); ctx.fill();
+  ctx.fillStyle=cR; ctx.beginPath(); ctx.ellipse(cx,cy,rx,ry,0,-Math.PI/2,Math.PI/2); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='rgba(60,45,25,.8)'; ctx.lineWidth=2; ctx.beginPath(); ctx.ellipse(cx,cy,rx,ry,0,0,7); ctx.stroke();
   let fc=surfLayer('floor').color; if(S1.exposed) fc=(S1.naocl&&S1.bleed==='controlled')?'#d9a3a8':(S1.bleed==='controlled'?'#ff2d3f':'#6e0d1c'); if(S1.seal) fc='#e7dcc2';
-  ctx.fillStyle=fc;ctx.beginPath();ctx.arc(cx,cy,R-36,0,7);ctx.fill();
-  ctx.strokeStyle='rgba(255,255,255,.18)';ctx.lineWidth=1;ctx.beginPath();ctx.arc(cx,cy,R-34,0,7);ctx.stroke();
-  ctx.fillStyle='#b1bec5';ctx.font='9px sans-serif';ctx.fillText('DEJ halkası',cx-R+14,cy+R+10>H?H-4:cy-R+10);ctx.fillText('pulpal taban',cx-24,cy+3);
+  ctx.fillStyle=fc; ctx.beginPath(); ctx.ellipse(cx,cy,rx-22,ry-18,0,0,7); ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,.2)'; ctx.lineWidth=1; ctx.beginPath(); ctx.ellipse(cx,cy,rx-22,ry-18,0,0,7); ctx.stroke();
+  ctx.fillStyle='#b1bec5';ctx.font='9px sans-serif';ctx.fillText('DEJ halkası',cx-rx-2,cy-ry-8);ctx.fillText('pulpal taban',cx-24,cy+3);
   ctx.fillStyle='#78898f';ctx.fillText('renk ≠ sertlik — sondla doğrula',8,H-6);
 }
 function drawRx(cv){
@@ -511,54 +563,109 @@ function drawRx(cv){
 }
 
 /* ============ DRAWING — Tezgâh 2 ============ */
+/* ---- Üst kesici (FDI 11/21/51): dişeti üstte, kürek biçimli kron aşağıda, kök YUKARI ---- */
+const MED_COL={none:'#c9c2b0',milk:'#f2efe9',hbss:'#bfe0e8',saline:'#cfe3f0',saliva:'#d8d0b0',water:'#a9cde8'};
+window.LAST2={};
+function incisorPath(ctx,cx,top,h,wN,wE){ ctx.beginPath();
+  ctx.moveTo(cx-wN,top); ctx.bezierCurveTo(cx-wN*0.5,top-9,cx+wN*0.5,top-9,cx+wN,top);                 // servikal hat (yukarı dışbükey)
+  ctx.bezierCurveTo(cx+wN+2,top+h*0.35,cx+wE,top+h*0.55,cx+wE,top+h*0.82);                              // sağ kenar kürek gibi genişler
+  ctx.bezierCurveTo(cx+wE,top+h*0.95,cx+wE-6,top+h,cx+wE-14,top+h);                                      // insizal köşe yuvarlak
+  ctx.lineTo(cx-wE+14,top+h); ctx.bezierCurveTo(cx-wE+6,top+h,cx-wE,top+h*0.95,cx-wE,top+h*0.82);
+  ctx.bezierCurveTo(cx-wE,top+h*0.55,cx-wN-2,top+h*0.35,cx-wN,top); ctx.closePath(); }
+function rxGeometry(c){ const prim=c.dentition==='primary', open=c.apex==='open';
+  const crownTopY=135, crownBottomY=215, rootLen=prim?76:(open?112:118);
+  return {roots:1, rootDir:'up', crownTopY, crownBottomY, rootLen, apexY:crownTopY-rootLen,
+    apexHalfWidth:open?30:5, canalHalfWidthApex:open?24:2.5, canals:1, germAbove:prim, germTop:prim?(crownTopY-rootLen)-54:null, open, prim}; }
 function drawTooth2(cv,mode){ // mode: live | truth
-  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height,c=S2.c,tx=S2.tx; ctx.fillStyle='#06080a';ctx.fillRect(0,0,W,H);
-  const prim=c.dentition==='primary', open=c.apex==='open', frac=c.event==='fracture';
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height,c=S2.c,tx=S2.tx; ctx.fillStyle='#0a0508';ctx.fillRect(0,0,W,H);
+  const prim=c.dentition==='primary', open=c.apex==='open', frac=c.event==='fracture', avul=c.event==='avulsion';
   const via=s2Viability(); const vcol=via>0.6?'#63d08a':via>0.25?'#f0b542':'#e8707a';
-  // gingiva + alveolar bone
-  ctx.fillStyle='#8c3a47';ctx.fillRect(0,170,W,H-170);
-  ctx.fillStyle='#d9cdb4';ctx.fillRect(0,215,W,H-215);
-  ctx.fillStyle='#06080a'; // socket
-  const replanted=tx.replant==='yes'&&c.event==='avulsion';
-  const sockX=240,sockW=80;
-  if(c.event==='avulsion'){ ctx.fillStyle='#3a0f16';ctx.beginPath();ctx.moveTo(sockX,170);ctx.lineTo(sockX+sockW,170);ctx.lineTo(sockX+sockW-14,345);ctx.lineTo(sockX+14,345);ctx.closePath();ctx.fill(); }
-  // permanent germ under primary tooth
-  if(prim){ ctx.fillStyle='#efe6cf';rr(ctx,236,352,88,42,16);ctx.fill();ctx.fillStyle='#b8566c';ctx.beginPath();ctx.ellipse(280,373,14,10,0,0,7);ctx.fill();ctx.fillStyle='#b1bec5';ctx.font='9.5px sans-serif';ctx.fillText('daimî diş germi',216,408); }
-  // tooth geometry
-  const baseY = (c.event==='avulsion'&&!replanted)? 52 : 98;      // avulse diş soket dışında
-  const crownH=70, rootLen=prim?105:(open?150:140); const tx0=280;
-  const root=()=>{ ctx.beginPath(); if(open){ ctx.moveTo(tx0-30,baseY+crownH);ctx.lineTo(tx0-44,baseY+crownH+rootLen);ctx.lineTo(tx0+44,baseY+crownH+rootLen);ctx.lineTo(tx0+30,baseY+crownH);} else { ctx.moveTo(tx0-30,baseY+crownH);ctx.lineTo(tx0-8,baseY+crownH+rootLen);ctx.lineTo(tx0+8,baseY+crownH+rootLen);ctx.lineTo(tx0+30,baseY+crownH);} ctx.closePath(); };
-  // PDL halo
-  if(c.event==='avulsion'){ ctx.save(); root();ctx.lineWidth=7;ctx.strokeStyle=vcol;ctx.globalAlpha=.55;ctx.stroke();ctx.restore(); }
-  ctx.fillStyle='#d9c99f';root();ctx.fill();
-  ctx.fillStyle='#f3efe4';rr(ctx,tx0-38,baseY,76,crownH,14);ctx.fill();
-  // pulpa
-  ctx.fillStyle='#b8566c';ctx.beginPath();ctx.moveTo(tx0-12,baseY+20);ctx.lineTo(tx0+12,baseY+20);ctx.lineTo(open?tx0+22:tx0+3,baseY+crownH+rootLen-4);ctx.lineTo(open?tx0-22:tx0-3,baseY+crownH+rootLen-4);ctx.closePath();ctx.fill();
-  if(frac){ // kırık hattı + açık pulpa
-    ctx.fillStyle='#06080a';ctx.beginPath();ctx.moveTo(tx0-38,baseY);ctx.lineTo(tx0+38,baseY);ctx.lineTo(tx0+38,baseY+16);ctx.lineTo(tx0,baseY+30);ctx.lineTo(tx0-38,baseY+14);ctx.closePath();ctx.fill();
-    ctx.fillStyle=tx.pulp==='cvekCS'||tx.pulp==='caoh'?(tx.pulp==='cvekCS'?'#aab0b6':'#e9ecef'):(tx.pulp==='rct'?'#4a2f18':'#ff2d3f');ctx.beginPath();ctx.ellipse(tx0,baseY+26,13,8,0,0,7);ctx.fill();
-    if(tx.reatt!=='none'){ ctx.fillStyle=tx.reatt==='fragment'?'#f3efe4':'#e7dcc2';ctx.beginPath();ctx.moveTo(tx0-38,baseY);ctx.lineTo(tx0+38,baseY);ctx.lineTo(tx0+38,baseY+16);ctx.lineTo(tx0,baseY+30);ctx.lineTo(tx0-38,baseY+14);ctx.closePath();ctx.fill(); } }
-  // komşu dişler + splint
-  for(const dx of [-88,88]){ ctx.fillStyle='#f3efe4';rr(ctx,tx0+dx-34,98,68,crownH,12);ctx.fill();ctx.fillStyle='#d9c99f';ctx.beginPath();ctx.moveTo(tx0+dx-24,98+crownH);ctx.lineTo(tx0+dx-6,98+crownH+110);ctx.lineTo(tx0+dx+6,98+crownH+110);ctx.lineTo(tx0+dx+24,98+crownH);ctx.closePath();ctx.fill(); }
-  if(tx.splintType!=='none'&&(replanted||frac)){ ctx.strokeStyle=tx.splintType==='flexible'?'#4fb8e0':'#e8707a';ctx.lineWidth=tx.splintType==='flexible'?2.5:7;ctx.beginPath();ctx.moveTo(tx0-122,134);ctx.lineTo(tx0+122,134);ctx.stroke();
-    ctx.fillStyle=ctx.strokeStyle;ctx.font='bold 10px sans-serif';ctx.fillText((tx.splintType==='flexible'?'Esnek splint':'Rijit splint')+' · '+tx.splintWeeks+' hf',tx0-60,124); }
+  const replanted=tx.replant==='yes'&&avul;
+  const k=prim?0.72:1, mY=168, ch=150*k, tx0=280;
+  const wN=26*k, wE=38*k;
+  const cervTop=(replanted||frac&&false)?mY+8:mY-6;    // replante/ekstrüze dişte yalnız servikal kök boynu görünür
+  const teeth=[{cx:tx0-86,k:1,own:false},{cx:tx0,k:k,own:true},{cx:tx0+86,k:1,own:false}];
+  // gerçek alt yapı yalnız şeffaf (truth) modda: kök yukarı, dişeti/kemik içinde
+  const rootLen=prim?105:(open?150:140)*1;
+  const rootArch=(cx,kk,withHalo)=>{ const rl=(prim?96:(open?150:140))*kk, top=cervTop; ctx.beginPath();
+    if(open&&!prim){ ctx.moveTo(cx-wN*0.9,top);ctx.lineTo(cx-34,top-rl);ctx.lineTo(cx+34,top-rl);ctx.lineTo(cx+wN*0.9,top); }
+    else { ctx.moveTo(cx-wN*0.9,top);ctx.lineTo(cx-5,top-rl);ctx.lineTo(cx+5,top-rl);ctx.lineTo(cx+wN*0.9,top); } ctx.closePath(); };
+  // komşu kronlar
+  teeth.forEach(t=>{ if(t.own&&avul&&!replanted) return; const kk=t.k;
+    incisorPath(ctx,t.cx,t.own?cervTop:mY-6,t.own?ch:150,26*kk,38*kk);
+    ctx.fillStyle=t.own&&frac? '#efe9d8':'#f3efe4'; ctx.fill(); ctx.lineWidth=1.5; ctx.strokeStyle='rgba(150,135,95,.7)'; ctx.stroke();
+    const gl=ctx.createLinearGradient(t.cx-38*kk,0,t.cx+38*kk,0); gl.addColorStop(0,'rgba(0,0,0,.12)');gl.addColorStop(.5,'rgba(255,255,255,.18)');gl.addColorStop(1,'rgba(0,0,0,.14)'); ctx.fillStyle=gl; ctx.fill(); });
+  // servikal kök boynu (cementum) — yalnız ekstrüze/replante dişte dişeti ile kron arasında
+  if(replanted){ ctx.fillStyle='#d9c99f'; ctx.beginPath(); ctx.moveTo(tx0-wN*0.95,mY-4); ctx.lineTo(tx0+wN*0.95,mY-4); ctx.lineTo(tx0+wN,cervTop+3); ctx.lineTo(tx0-wN,cervTop+3); ctx.closePath(); ctx.fill(); }
+  // kırık köşe (T4)
+  if(frac){ const x0=tx0+wE, y1=cervTop+ch; ctx.fillStyle='#0a0508'; ctx.beginPath(); ctx.moveTo(x0-26,y1); ctx.lineTo(x0,y1-34); ctx.lineTo(x0+2,y1+2); ctx.closePath(); ctx.fill();
+    const pc=tx.pulp==='cvekCS'?'#aab0b6':tx.pulp==='caoh'?'#e9ecef':tx.pulp==='rct'?'#4a2f18':'#ff2d3f'; ctx.fillStyle=pc; ctx.beginPath(); ctx.ellipse(x0-12,y1-10,9,5,-0.6,0,7); ctx.fill();
+    if(tx.reatt!=='none'){ ctx.fillStyle=tx.reatt==='fragment'?'#f3efe4':'#e7dcc2'; ctx.beginPath(); ctx.moveTo(x0-26,y1); ctx.lineTo(x0,y1-34); ctx.lineTo(x0+2,y1+2); ctx.closePath(); ctx.fill(); ctx.strokeStyle='rgba(150,135,95,.8)'; ctx.stroke(); } }
+  // DİŞETİ (üstte): papilla uçları aşağı, diş ortasında zenit
+  const gg=ctx.createLinearGradient(0,0,0,mY+18); gg.addColorStop(0,'#8c3a47'); gg.addColorStop(1,'#d27a86');
+  ctx.fillStyle=gg; ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(W,0); ctx.lineTo(W,mY+4);
+  const papX=[W,tx0+129,tx0+43,tx0-43,tx0-129,0];
+  for(let i=0;i<papX.length-1;i++){ const x1=papX[i],x2=papX[i+1],mid=(x1+x2)/2; ctx.lineTo(x1,mY+18); ctx.quadraticCurveTo(mid,mY-16,x2,mY+18); }
+  ctx.lineTo(0,mY+4); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='#e89aa5'; ctx.lineWidth=2; ctx.beginPath(); for(let i=0;i<papX.length-1;i++){ const x1=papX[i],x2=papX[i+1],mid=(x1+x2)/2; ctx.moveTo(x1,mY+18); ctx.quadraticCurveTo(mid,mY-16,x2,mY+18); } ctx.stroke();
+  // avülsiyon: boş soket
+  if(avul&&!replanted){ ctx.fillStyle='#2a060d'; ctx.beginPath(); ctx.ellipse(tx0,mY+4,24*k+8,11,0,0,7); ctx.fill(); ctx.strokeStyle='#5a1420'; ctx.lineWidth=2; ctx.stroke(); }
+  // PDL halo (replante dişte, dişeti kenarı boyunca)
+  if(replanted){ ctx.strokeStyle=vcol; ctx.globalAlpha=.7; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(tx0-wN-3,mY+12); ctx.quadraticCurveTo(tx0,mY-22,tx0+wN+3,mY+12); ctx.stroke(); ctx.globalAlpha=1; }
+  // süt dişi: altta (yukarıda) daimî germ ipucu şeffaf modda
+  // ŞEFFAF (truth) mod: kök dişeti/kemik içinde YUKARI doğru
+  window.LAST2={mode, rootInArch:false, gingivaTop:true, gingivaMarginY:mY, crownTopY:cervTop, crownBottomY:cervTop+ch, crownBelowGingiva:true, avulsed:avul&&!replanted, cupRootDrawn:false, neckShown:!!replanted};
+  if(mode==='truth' && !(avul&&!replanted)){
+    ctx.save(); ctx.globalAlpha=.88; ctx.fillStyle='#d9c99f'; rootArch(tx0,k,true); ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle=vcol; ctx.stroke();
+    ctx.fillStyle='#b8566c'; ctx.beginPath(); ctx.moveTo(tx0-8,cervTop+10); ctx.lineTo(tx0+8,cervTop+10); ctx.lineTo(open&&!prim?tx0+20:tx0+2.5,cervTop-(prim?90:(open?144:134))*k); ctx.lineTo(open&&!prim?tx0-20:tx0-2.5,cervTop-(prim?90:(open?144:134))*k); ctx.closePath(); ctx.fill(); ctx.restore();
+    window.LAST2.rootInArch=true; window.LAST2.rootDir='up'; }
+  if(prim&&mode==='truth'){ ctx.strokeStyle='#4fb8e0'; ctx.setLineDash([4,3]); ctx.lineWidth=1.5; rr(ctx,tx0-34,6,68,38,14); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle='#4fb8e0'; ctx.font='9.5px sans-serif'; ctx.fillText('daimî diş germi',tx0+40,28); }
+  // splint teli (komşu kronlar arası, kronların üst-orta bölgesinde)
+  if(tx.splintType!=='none'&&(replanted||frac)){ const sy=cervTop+ch*0.34; ctx.strokeStyle=tx.splintType==='flexible'?'#4fb8e0':'#e8707a'; ctx.lineWidth=tx.splintType==='flexible'?2.5:7; ctx.beginPath(); ctx.moveTo(tx0-120,sy); ctx.lineTo(tx0+120,sy); ctx.stroke();
+    ctx.fillStyle=ctx.strokeStyle; for(const dx of [-86,0,86]){ ctx.beginPath(); ctx.arc(tx0+dx,sy,4,0,7); ctx.fill(); }
+    ctx.font='bold 10px sans-serif'; ctx.fillText((tx.splintType==='flexible'?'Esnek splint':'Rijit splint')+' · '+tx.splintWeeks+' hf',tx0-52,cervTop+ch+22); }
+  // avüle diş: saklama kabında (yatay), kron solda — kesici kenarın altında koni YOK
+  if(avul&&!replanted){ const cx=440, cy=378; ctx.fillStyle=MED_COL[c.med]||'#c9c2b0'; ctx.globalAlpha=.9; rr(ctx,cx-112,cy-34,224,68,14); ctx.fill(); ctx.globalAlpha=1; ctx.strokeStyle='#6d7479'; ctx.lineWidth=2; ctx.stroke();
+    ctx.save(); ctx.translate(cx,cy); const sc=0.5*Math.max(k,0.85); ctx.scale(sc,sc); ctx.rotate(Math.PI/2); ctx.translate(0,-15);   // yatık: kron solda, kök sağda
+    ctx.fillStyle='#d9c99f'; ctx.strokeStyle=vcol; ctx.lineWidth=5; ctx.beginPath();
+    if(open&&!prim){ ctx.moveTo(-26,0);ctx.lineTo(-40,-110);ctx.lineTo(40,-110);ctx.lineTo(26,0);} else { ctx.moveTo(-26,0);ctx.lineTo(-5,-110);ctx.lineTo(5,-110);ctx.lineTo(26,0);} ctx.closePath(); ctx.fill(); ctx.stroke();
+    incisorPath(ctx,0,0,140,26,38); ctx.fillStyle='#f3efe4'; ctx.fill(); ctx.strokeStyle='rgba(150,135,95,.8)'; ctx.lineWidth=2; ctx.stroke();
+    ctx.restore();
+    window.LAST2.cupRootDrawn=true;
+    ctx.fillStyle='#0a0508'; ctx.font='bold 10px sans-serif'; ctx.fillText(MEDIA[c.med].n.split(' (')[0],cx-102,cy+28); }
   // etiketler
-  ctx.fillStyle='#eef2f4';ctx.font='bold 12px sans-serif';ctx.fillText('FDI '+c.fdi+' · '+(prim?'süt dişi':'daimî diş')+' · '+(open?'açık (immatür) apeks':'kapalı (matür) apeks'),12,22);
-  if(c.event==='avulsion'){ ctx.font='11px sans-serif';ctx.fillStyle=vcol;ctx.fillText('PDL canlılık '+Math.round(via*100)+'% · kuru '+c.dry+' dk · '+MEDIA[c.med].n+(c.medMin?' '+c.medMin+' dk':''),12,H-12);
-    if(!replanted){ ctx.fillStyle='#b1bec5';ctx.fillText('diş soket dışında',tx0-50,44); } }
+  ctx.fillStyle='#eef2f4';ctx.font='bold 12px sans-serif';ctx.fillText('FDI '+c.fdi+' · '+(prim?'süt dişi':'daimî diş')+' · '+(open?'açık (immatür) apeks':'kapalı (matür) apeks'),12,44);
+  if(avul){ ctx.font='11px sans-serif';ctx.fillStyle=vcol;ctx.fillText('PDL canlılık '+Math.round(via*100)+'% · kuru '+c.dry+' dk · '+MEDIA[c.med].n+(c.medMin?' '+c.medMin+' dk':''),12,H-12);
+    if(!replanted){ ctx.fillStyle='#b1bec5';ctx.font='10px sans-serif';ctx.fillText('soket boş',tx0-20,mY-26); } }
   if(mode==='truth'){ ctx.fillStyle='#4fb8e0';ctx.font='10px sans-serif';
     const g=gradeNow(); const cd=g.codes.filter(x=>/ANKYLOSIS|EIRR|RESORPTION|STAIN|PDL|SAFETY|FORBIDDEN|PREMATURE|UNNEEDED/.test(x)); ctx.fillText(cd.length?'Risk: '+cd.join(' · '):'Belirgin risk işareti yok',12,H-30); }
 }
 function drawRx2(cv){
   const ctx=cv.getContext('2d'),W=cv.width,H=cv.height,c=S2.c; ctx.fillStyle='#0a0c0d';ctx.fillRect(0,0,W,H);
   if(!S2.rxDone){ ctx.fillStyle='#78898f';ctx.font='11px sans-serif';ctx.fillText('Röntgen çekilmedi',W/2-45,H/2);return; }
-  const prim=c.dentition==='primary',open=c.apex==='open'; ctx.fillStyle='#6d7479';rr(ctx,100,18,80,60,14);ctx.fill();
-  ctx.beginPath(); if(open){ctx.moveTo(110,72);ctx.lineTo(96,170);ctx.lineTo(184,170);ctx.lineTo(170,72);} else {ctx.moveTo(110,72);ctx.lineTo(134,170);ctx.lineTo(146,170);ctx.lineTo(170,72);} ctx.closePath();ctx.fill();
-  ctx.fillStyle='#262b2f';ctx.beginPath();ctx.moveTo(130,40);ctx.lineTo(150,40);ctx.lineTo(open?158:143,166);ctx.lineTo(open?122:137,166);ctx.closePath();ctx.fill();
-  if(open){ ctx.strokeStyle='#cfd6da';ctx.lineWidth=1.5;ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(96,174);ctx.lineTo(184,174);ctx.stroke();ctx.setLineDash([]); }
-  if(prim){ ctx.fillStyle='#8a9197';rr(ctx,108,182,64,34,12);ctx.fill();ctx.fillStyle='#14171a';ctx.beginPath();ctx.ellipse(140,196,10,7,0,0,7);ctx.fill(); }
-  if(c.event==='fracture'){ ctx.strokeStyle='#0a0c0d';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(100,38);ctx.lineTo(140,50);ctx.lineTo(180,36);ctx.stroke(); }
-  if(curMode==='explore'){ ctx.fillStyle='#b1bec5';ctx.font='9.5px sans-serif';ctx.fillText((open?'Açık immatür apeks (divergan duvarlar)':'Kapalı matür apeks')+(prim?' · altta daimî germ':''),8,H-6); }
+  const g=rxGeometry(c), cx=140, open=g.open, prim=g.prim, frac=c.event==='fracture';
+  window.LAST2rx={roots:g.roots, rootDir:g.rootDir, apexY:g.apexY, crownTopY:g.crownTopY, crownBottomY:g.crownBottomY, canals:g.canals, germAbove:g.germAbove, germTop:g.germTop, apexHalfWidth:g.apexHalfWidth, open};
+  // alveol kemik (yukarıda) + dişeti yumuşak doku çizgisi
+  const gb=ctx.createLinearGradient(0,0,0,H); gb.addColorStop(0,'#31373b'); gb.addColorStop(1,'#1d2124'); ctx.fillStyle=gb; ctx.fillRect(0,0,W,g.crownTopY+10);
+  // süt dişi: üstte daimî diş germi (kron aşağı, krip radyolüsen)
+  if(prim){ const gt=g.germTop; ctx.strokeStyle='#14171a'; ctx.lineWidth=3; rr(ctx,cx-26,gt,52,44,14); ctx.stroke();
+    ctx.fillStyle='#9aa3a8'; ctx.beginPath(); ctx.moveTo(cx-18,gt+4);ctx.lineTo(cx+18,gt+4);ctx.lineTo(cx+24,gt+36);ctx.lineTo(cx+14,gt+40);ctx.lineTo(cx-14,gt+40);ctx.lineTo(cx-24,gt+36);ctx.closePath();ctx.fill();
+    ctx.fillStyle='#14171a'; ctx.beginPath(); ctx.ellipse(cx,gt+14,8,6,0,0,7); ctx.fill(); }
+  // KÖK (tek, konik, YUKARI) — PDL aralığı koyu çizgi
+  const rootShape=(pad)=>{ ctx.beginPath();
+    if(open){ ctx.moveTo(cx-17-pad,g.crownTopY);ctx.lineTo(cx-g.apexHalfWidth-pad,g.apexY);ctx.lineTo(cx+g.apexHalfWidth+pad,g.apexY);ctx.lineTo(cx+17+pad,g.crownTopY); }
+    else { ctx.moveTo(cx-17-pad,g.crownTopY);ctx.lineTo(cx-g.apexHalfWidth-pad,g.apexY);ctx.lineTo(cx+g.apexHalfWidth+pad,g.apexY);ctx.lineTo(cx+17+pad,g.crownTopY); } ctx.closePath(); };
+  ctx.fillStyle='#14171a'; rootShape(3); ctx.fill();                 // PDL aralığı
+  ctx.fillStyle='#868e93'; rootShape(0); ctx.fill();                 // kök dentini
+  // KRON (aşağıda): kürek biçimli, mine daha opak
+  ctx.beginPath(); ctx.moveTo(cx-17,g.crownTopY); ctx.bezierCurveTo(cx-18,g.crownTopY+30,cx-32,g.crownTopY+50,cx-32,g.crownBottomY-6); ctx.quadraticCurveTo(cx-32,g.crownBottomY,cx-26,g.crownBottomY); ctx.lineTo(cx+26,g.crownBottomY); ctx.quadraticCurveTo(cx+32,g.crownBottomY,cx+32,g.crownBottomY-6); ctx.bezierCurveTo(cx+32,g.crownTopY+50,cx+18,g.crownTopY+30,cx+17,g.crownTopY); ctx.closePath();
+  ctx.fillStyle='#c4cbcf'; ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle='#e4e8ea'; ctx.stroke();
+  // PULPA: kron odası + TEK kanal YUKARI (apekse)
+  ctx.fillStyle='#262b2f'; ctx.beginPath(); ctx.moveTo(cx-12,g.crownBottomY-30); ctx.lineTo(cx-10,g.crownTopY+8); ctx.lineTo(cx-(open?g.canalHalfWidthApex:g.canalHalfWidthApex),g.apexY+4); ctx.lineTo(cx+(open?g.canalHalfWidthApex:g.canalHalfWidthApex),g.apexY+4); ctx.lineTo(cx+10,g.crownTopY+8); ctx.lineTo(cx+12,g.crownBottomY-30); ctx.quadraticCurveTo(cx,g.crownBottomY-20,cx-12,g.crownBottomY-30); ctx.closePath(); ctx.fill();
+  // açık apeks: divergan ince duvarlar + apikal papilla radyolüsensi
+  if(open){ ctx.fillStyle='#14171a'; ctx.beginPath(); ctx.ellipse(cx,g.apexY-6,g.apexHalfWidth-2,7,0,Math.PI,0); ctx.fill(); ctx.strokeStyle='#cfd6da';ctx.lineWidth=1.5;ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(cx-g.apexHalfWidth-6,g.apexY-2);ctx.lineTo(cx+g.apexHalfWidth+6,g.apexY-2);ctx.stroke();ctx.setLineDash([]); }
+  if(frac){ ctx.strokeStyle='#0a0c0d';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(cx+14,g.crownBottomY);ctx.lineTo(cx+32,g.crownBottomY-26);ctx.stroke(); }
+  if(curMode==='explore'){ ctx.fillStyle='#b1bec5';ctx.font='9.5px sans-serif';ctx.fillText((open?'Açık immatür apeks (blunderbuss)':'Kapalı matür apeks')+(prim?' · üstte daimî germ':''),8,H-6); }
 }
 function gradeNow(){ return bench===1?grade1():grade2(); }
 
@@ -567,7 +674,7 @@ function setStep(i){ stepIdx=Math.max(0,Math.min(4,i)); renderStepper(); }
 function renderStepper(){ const el=$('stepper'),S=bench===1?STEPS1:STEPS2; el.innerHTML='';
   S.forEach((t,i)=>{ const d=document.createElement('div'); d.className='step'+(i===stepIdx?' on':'')+(i<stepIdx?' done':''); d.innerHTML=`<div class="n">${i<stepIdx?'✓':i+1}</div><div class="t">${t}</div>`; el.appendChild(d); }); }
 function renderCasePick(){ const el=$('casePick'); el.innerHTML=''; const ord=bench===1?V_ORDER:T_ORDER, def=bench===1?VC:TC, cur=bench===1?cid1:cid2;
-  ord.forEach(id=>{ const b=document.createElement('button'); b.className='casebtn'+(id===cur?' on':''); b.innerHTML=`${id}<span class="d">${def[id].name.split(' ').slice(0,2).join(' ').slice(0,12)}</span>`; b.onclick=()=>loadCase(id); el.appendChild(b); }); }
+  ord.forEach(id=>{ const b=document.createElement('button'); b.className='casebtn'+(id===cur?' on':''); b.innerHTML=`${id}<span class="d">${curMode==='exam'?'vaka':def[id].name.split(' ').slice(0,2).join(' ').slice(0,12)}</span>`; b.onclick=()=>loadCase(id); el.appendChild(b); }); }
 function refresh1(){
   drawCross($('crossCanvas'),false); drawOccl($('occlCanvas')); drawRx($('rxCanvas'));
   const c=S1.c, z=S1.removed, rd=Math.max(0,rdt());
@@ -587,7 +694,7 @@ function refresh2(){
   const via=s2Viability(); $('pdlBar').style.width=Math.round(via*100)+'%'; $('pdlBar').style.background=via>0.6?'var(--good)':via>0.25?'var(--warn)':'var(--bad)';
   $('pdlOut').innerHTML = c.event==='avulsion' ? `Kuru süre <b>${c.dry} dk</b> · ortam: <b>${MEDIA[c.med].n}</b>${c.medMin?' ('+c.medMin+' dk)':''}<br>Canlılık: <b>${Math.round(via*100)}%</b>${curMode==='explore'?(via>0.6?' — PDL büyük oranda canlı':via>0.25?' — kısmen canlı':' — PDL canlı değil'):''}` : 'Avülsiyon yok — pulpa ekspozu yönetimi.';
   $('tInfo').innerHTML=`<b>FDI ${c.fdi}</b> · ${c.dentition==='primary'?'süt dişi':'daimî diş'} · ${c.age} yaş<br>${c.event==='avulsion'?'Avülsiyon':'Komplike kron kırığı (pulpa ekspozu)'}<br>Apeks: <b>${c.apex==='open'?'açık / immatür':'kapalı / matür'}</b><br>${c.dentition==='primary'?'Alt kesitte daimî germ var.':''}`;
-  $('packOut').innerHTML=`<b>${PACK[c.dentition].label}</b><br>${PACK[c.dentition].note}`+(S2.locks.length?'<br><b class="bad">GÜVENLİK KİLİDİ: süt dişi replante edilmez.</b>':'');
+  $('packOut').innerHTML = curMode==='exam' ? `<b>${PACK[c.dentition].label}</b><br><span style="color:var(--ink-mut)">Kural ipuçları DUS/Sınav modunda gizli.</span>`+(S2.locks.length?'<br><b class="bad">GÜVENLİK KİLİDİ etkin — gerekçe jüri aşamasında.</b>':'') : `<b>${PACK[c.dentition].label}</b><br>${PACK[c.dentition].note}`+(S2.locks.length?'<br><b class="bad">GÜVENLİK KİLİDİ: süt dişi replante edilmez.</b>':'');
   document.querySelectorAll('.pane2 .grp[data-for]').forEach(g=>g.hidden = (g.dataset.for!==(c.event==='avulsion'?'avul':'frac')));
   $('t_replant').value=tx.replant||''; $('t_rinse').value=tx.rinse||''; $('t_splint').value=tx.splintType; $('t_weeks').value=tx.splintWeeks; $('t_weeksV').textContent=tx.splintWeeks+' hf';
   $('t_rct').value=tx.rct; $('t_abx').value=tx.abx; $('t_pulp').value=tx.pulp; $('t_reatt').value=tx.reatt; $('t_follow').checked=tx.follow; $('t_parent').checked=tx.parent;
@@ -600,7 +707,7 @@ function loadCase(id){
   renderCasePick(); refresh(); toast('Vaka '+id+' yüklendi'+(curMode==='explore'?': '+(bench===1?VC[id]:TC[id]).name:' (sınav)'));
 }
 function setBench(n){ bench=n; document.body.dataset.bench=String(n); [...$('benchSeg').children].forEach(b=>b.classList.toggle('on',+b.dataset.bench===n)); $('juryOut').innerHTML=''; renderCasePick(); renderStepper(); if(n===1&&!S1)S1=newS1(cid1); if(n===2&&!S2)S2=newS2(cid2); refresh(); }
-function setMode(m){ curMode=m; [...$('modeSeg').children].forEach(b=>b.classList.toggle('on',b.dataset.mode===m)); $('modeSeg').classList.toggle('exam',m==='exam'); refresh(); }
+function setMode(m){ curMode=m; [...$('modeSeg').children].forEach(b=>b.classList.toggle('on',b.dataset.mode===m)); $('modeSeg').classList.toggle('exam',m==='exam'); renderCasePick(); refresh(); }
 
 /* ---------- Debrief ---------- */
 function openDebrief(g){
@@ -724,6 +831,19 @@ window.__selfTest=function(){
     VPT.loadCase('T4'); VPT.setTx({pulp:'cvekCS',reatt:'fragment',follow:true}); ok('T4-cvek-full', VPT.grade2().score===100);
     VPT.setTx({pulp:'rct'}); ok('T4-rct-overtreatment', VPT.grade2().codes.includes('OVERTREATMENT_DEVITALIZATION'));
     ok('pdl-model', VPT.pdl(0,'milk',25)>0.85 && VPT.pdl(40,'none',0)<0.4 && VPT.pdl(0,'water',60)===0 && VPT.pdl(5,'saline',10)>0.7);
+    // ===== test_vpt_upper_incisor_single_root_up_and_no_exam_rule_leak =====
+    VPT.setMode('explore');
+    const rxs={}; for(const id of ['T1','T2','T3']){ VPT.loadCase(id); VPT.rx2(); rxs[id]={...window.LAST2rx}; }
+    ok('rx-single-root-up', ['T1','T2','T3'].every(id=>rxs[id].roots===1&&rxs[id].canals===1&&rxs[id].rootDir==='up'&&rxs[id].apexY<rxs[id].crownTopY&&rxs[id].crownBottomY>rxs[id].crownTopY));
+    ok('rx-T2-closed-T3-blunderbuss', rxs.T3.apexHalfWidth>rxs.T2.apexHalfWidth*3 && rxs.T2.apexHalfWidth<8);
+    ok('rx-T1-germ-above-root', rxs.T1.germAbove===true && rxs.T1.germTop<rxs.T1.apexY && rxs.T2.germAbove===false);
+    VPT.loadCase('T2'); VPT.rx2(); { const cx=document.getElementById('trxCanvas').getContext('2d'); const above=cx.getImageData(140,rxs.T2.crownTopY-40,1,1).data, below=cx.getImageData(140,225,1,1).data; ok('rx-pixels-root-above-crown-bottom-empty', above[0]>20 && below[0]<20); }
+    VPT.loadCase('T2'); VPT.setTx({replant:'yes'}); VPT.setBench(2); { const L=window.LAST2; ok('clin-gingiva-top-no-cone', L.gingivaTop===true && L.crownBelowGingiva===true && L.rootInArch===false && L.cupRootDrawn===false); }
+    VPT.setMode('exam'); VPT.loadCase('T1'); { const pk=document.getElementById('packOut').innerText, cb=[...document.querySelectorAll('.casebtn .d')].map(x=>x.textContent).join(' ');
+      ok('exam-pack-rules-hidden', !/Replantasyon|splint|KKT|UNUTULMAZ|UYGULANMAZ/i.test(pk) && /gizli/i.test(pk) && !/Avülse|Genç|immatür/i.test(cb)); }
+    VPT.setTx({replant:'yes'}); { const pk=document.getElementById('packOut').innerText; ok('exam-lock-message-neutral', /KİLİDİ/.test(pk) && !/süt dişi replante edilmez/i.test(pk)); }
+    VPT.setMode('explore'); VPT.loadCase('T1'); ok('explore-pack-note-visible', /Replantasyon/.test(document.getElementById('packOut').innerText));
+    VPT.setBench(1); VPT.loadCase('V1');
     // spoiler yok
     const optTxt=[...document.querySelectorAll('select option')].map(o=>o.textContent).join(' | ');
     ok('vpt-no-option-spoilers', !/\((doğru|güvenli|hatalı|riskli)\)/i.test(optTxt));
