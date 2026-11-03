@@ -1,0 +1,553 @@
+<!doctype html><html lang="tr"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DuctusLab OMFS — Gömülü 3. Molar · Panoramik ↔ Sentetik CBCT/MPR & Koronektomi</title>
+<style>
+:root{
+  --bg-0:#060708; --bg-1:#0d1012; --bg-2:#141a1e; --line:#1d262b; --line2:#2a3740;
+  --ink:#eaf1f4; --ink-dim:#aebcc4; --ink-mut:#728691;
+  --accent:#4fb8e0; --accent2:#56d6a0; --warn:#f0b542; --bad:#e8707a; --good:#63d08a; --nerve:#f2c744;
+  --r:12px; --r2:8px; --sh:0 6px 22px rgba(0,0,0,.5);
+  --font:'Segoe UI',system-ui,-apple-system,Roboto,Arial,sans-serif;
+}
+*{box-sizing:border-box} html,body{height:100%}
+html{overflow:hidden}
+body{margin:0;background:radial-gradient(1100px 650px at 80% -10%,#101a20 0%,transparent 55%),radial-gradient(900px 600px at 5% 110%,#0b1216 0%,transparent 60%),var(--bg-0);color:var(--ink);font-family:var(--font);font-size:14px;overflow:hidden}
+.app{display:grid;grid-template-rows:auto auto 1fr;height:100dvh;max-height:100dvh}
+.topbar{display:flex;align-items:center;gap:12px;padding:8px 14px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#0c1215,#0a0f12)}
+.brand{font-weight:800;letter-spacing:.4px;font-size:15px;white-space:nowrap}
+.brand .en{color:var(--accent)} .brand .tag{color:var(--ink-mut);font-weight:600;font-size:11px;margin-left:6px}
+.topbar .sp{flex:1}
+.seg{display:flex;border:1px solid var(--line2);border-radius:999px;overflow:hidden;background:#0a0f12}
+.seg button{background:transparent;border:0;color:var(--ink-dim);padding:6px 13px;font-size:12px;cursor:pointer;font-weight:700}
+.seg button.on{background:var(--accent);color:#042029} .seg.exam button.on{background:var(--warn);color:#241a02}
+.casepick{display:flex;gap:5px;flex-wrap:wrap}
+.casebtn{background:#0c1316;border:1px solid var(--line2);color:var(--ink-dim);border-radius:8px;padding:5px 9px;font-size:12px;font-weight:700;cursor:pointer;min-width:34px}
+.casebtn.on{border-color:var(--accent);color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.casebtn .d{display:block;font-size:8.5px;color:var(--ink-mut);font-weight:600;margin-top:1px}
+.stepper{display:flex;padding:7px 14px;border-bottom:1px solid var(--line);background:#090e11;overflow-x:auto}
+.step{display:flex;align-items:center;gap:7px;padding:4px 14px 4px 10px;position:relative;white-space:nowrap}
+.step:not(:last-child):after{content:'';position:absolute;right:-1px;top:50%;width:1px;height:20px;background:var(--line2);transform:translateY(-50%)}
+.step .n{width:22px;height:22px;border-radius:50%;background:#132028;border:1px solid var(--line2);display:grid;place-items:center;font-size:11px;font-weight:800;color:var(--ink-mut)}
+.step.on .n{background:var(--accent);color:#042029;border-color:var(--accent)} .step.done .n{background:var(--accent2);color:#042016;border-color:var(--accent2)}
+.step .t{font-size:11.5px;color:var(--ink-mut);font-weight:700} .step.on .t{color:var(--ink)}
+.main{display:grid;grid-template-columns:240px 1fr 320px;min-height:0;overflow:hidden}
+.col{min-height:0;overflow:hidden;display:flex;flex-direction:column}
+.col.left{border-right:1px solid var(--line);background:#0a0f12} .col.right{border-left:1px solid var(--line);background:#0a0f12}
+.panel{padding:11px 12px;border-bottom:1px solid var(--line)}
+.panel h4{margin:0 0 7px;font-size:11px;letter-spacing:.7px;text-transform:uppercase;color:var(--accent);font-weight:800}
+.scroll{overflow:auto;min-height:0}
+.optbtn{display:block;width:100%;text-align:left;background:#0c1619;border:1px solid var(--line2);color:var(--ink-dim);border-radius:9px;padding:7px 9px;margin-bottom:6px;cursor:pointer;font-size:11.5px}
+.optbtn:hover{border-color:var(--accent)} .optbtn.on{border-color:var(--accent);background:#10201f;color:var(--ink);box-shadow:0 0 0 1px var(--accent) inset}
+.optbtn b{color:var(--ink);font-weight:800} .optbtn small{color:var(--ink-mut);display:block;margin-top:2px}
+.ctrlrow{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:11.5px;color:var(--ink-dim)}
+.ctrlrow label{min-width:72px;color:var(--ink-mut);font-weight:700}
+input[type=range]{flex:1;accent-color:var(--accent)}
+.mini{font-size:10.5px;color:var(--ink-mut);line-height:1.45}
+.lockrow{display:flex;gap:6px;align-items:center;font-size:10.5px;color:var(--ink-mut);background:#0b1114;border:1px dashed var(--line2);border-radius:8px;padding:6px 8px;margin-top:6px} .lockrow b{color:var(--warn)}
+.col.center{background:radial-gradient(900px 600px at 50% 30%,#0e1519,#070b0d);position:relative}
+.scenewrap{flex:1;min-height:0;display:flex;flex-direction:column;padding:10px;gap:8px;overflow:auto}
+.panowrap{position:relative;background:#05090b;border:1px solid var(--line2);border-radius:12px;overflow:hidden}
+#panoCanvas{width:100%;display:block;background:#05090b}
+.panotag{position:absolute;left:12px;top:10px;font-size:10px;font-weight:800;color:var(--accent);letter-spacing:.5px}
+.mprgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.mprcell{background:#05090b;border:1px solid var(--line2);border-radius:10px;overflow:hidden;position:relative}
+.mprcell.locked{filter:grayscale(1) brightness(.4)}
+.mprcell .ct{position:absolute;left:7px;top:5px;font-size:9.5px;font-weight:800;color:var(--accent);letter-spacing:.4px;z-index:2}
+.mprcell canvas{width:100%;display:block}
+.cbctlock{position:absolute;inset:0;display:grid;place-items:center;background:rgba(5,9,11,.78);z-index:3;text-align:center;padding:10px}
+.cbctlock .mini{color:var(--ink-dim)}
+.mprctrls{display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--ink-dim);align-items:center}
+.mprctrls .cr{display:flex;align-items:center;gap:6px;flex:1;min-width:120px}
+.col.right .readout{font-size:11px}
+.chk{display:flex;gap:7px;align-items:flex-start;font-size:11px;color:var(--ink-dim);margin:4px 0} .chk input{accent-color:var(--accent);width:15px;height:15px;margin-top:1px}
+.declrow{display:flex;gap:6px;margin:5px 0;align-items:center} .declrow label{min-width:80px;font-size:11px;color:var(--ink-mut);font-weight:700}
+.declrow select{flex:1;background:#0c1619;border:1px solid var(--line2);color:var(--ink);border-radius:7px;padding:5px 7px;font-size:11.5px}
+.verdict{width:100%;background:var(--accent2);color:#042016;border:0;border-radius:8px;padding:9px 0;font-size:13px;font-weight:800;cursor:pointer;margin-top:4px}
+.verdict.reset{background:#13201c;color:var(--ink-dim)}
+.jcard{background:#0c1619;border:1px solid var(--line2);border-radius:9px;padding:8px 10px;margin-top:8px}
+.jscore{font-size:26px;font-weight:800} .jscore small{font-size:12px;color:var(--ink-mut);font-weight:700}
+.jflag{display:flex;gap:7px;align-items:flex-start;font-size:11px;margin:5px 0;line-height:1.35} .jflag .b{width:15px;flex-shrink:0;text-align:center;font-weight:800}
+.jflag.ok .b{color:var(--good)} .jflag.bad .b{color:var(--bad)} .jflag.warn .b{color:var(--warn)}
+.ovl{position:fixed;inset:0;background:rgba(3,5,6,.85);display:none;place-items:center;z-index:50;padding:18px} .ovl.on{display:grid}
+.debrief{width:min(1180px,97vw);max-height:94dvh;overflow:auto;background:var(--bg-1);border:1px solid var(--line2);border-radius:16px;box-shadow:var(--sh)}
+.debrief .dh{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg-1);z-index:2}
+.debrief .dh h3{margin:0;font-size:16px} .debrief .dh .x{margin-left:auto;cursor:pointer;color:var(--ink-mut);font-size:22px;background:0;border:0}
+.d3{display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:12px;padding:16px}
+.dview{background:#0c1215;border:1px solid var(--line2);border-radius:11px;padding:11px;min-height:260px}
+.dview h5{margin:0 0 8px;font-size:12px;color:var(--accent);letter-spacing:.4px;text-transform:uppercase} .dview canvas{width:100%;border-radius:8px;background:#070b0d;display:block}
+.karne{font-size:12px;line-height:1.5;color:var(--ink-dim)} .karne .kh{color:var(--ink);font-weight:800;margin:8px 0 3px;font-size:12.5px}
+.karne .pos{color:var(--good)} .karne .neg{color:var(--bad)} .karne .neu{color:var(--warn)}
+.dmetric{display:flex;justify-content:space-between;font-size:11.5px;color:var(--ink-dim);padding:3px 0;border-bottom:1px dashed var(--line)} .dmetric b{color:var(--ink)}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#0c1619;border:1px solid var(--line2);color:var(--ink);padding:9px 16px;border-radius:999px;font-size:12.5px;font-weight:700;box-shadow:var(--sh);z-index:60;opacity:0;transition:opacity .25s;pointer-events:none}
+.toast.on{opacity:1} .toast.warn{border-color:#4a3a14;color:var(--warn)} .toast.bad{border-color:#4a2024;color:var(--bad)} .toast.good{border-color:#1f4a34;color:var(--good)}
+@media (max-width:1150px){ .main{grid-template-columns:210px 1fr 290px} }
+@media (max-width:950px){ .main{grid-template-columns:1fr;grid-template-rows:auto 1fr auto;overflow:auto} html,body{overflow:auto} .app{height:auto} .col.left,.col.right{border:0;border-top:1px solid var(--line)} .d3{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="brand">Ductus<span class="en">Lab OMFS</span><span class="tag">Gömülü 3. Molar · Panoramik ↔ Sentetik CBCT/MPR · Koronektomi</span></div>
+    <div class="sp"></div>
+    <div class="casepick" id="casePick"></div>
+    <div class="seg" id="modeSeg"><button data-mode="explore" class="on">Keşfet</button><button data-mode="exam">DUS / Sınav</button></div>
+  </div>
+  <div class="stepper" id="stepper"></div>
+  <div class="main">
+    <div class="col left scroll">
+      <div class="panel">
+        <h4>Panoramik Baş Pozisyonu</h4>
+        <div id="posList"></div>
+        <div class="mini">Hatalı pozisyon tanısal olmayan film üretir; CBCT'den önce doğru pozisyonda yeniden çek.</div>
+      </div>
+      <div class="panel">
+        <h4>CBCT Endikasyon Kapısı (EADMFR)</h4>
+        <div class="mini" style="margin-bottom:6px">Rutin CBCT kaynak puanı kırar. Önce gerekçe seç:</div>
+        <div id="cbctJust"></div>
+        <button class="verdict" id="cbctBtn" style="margin-top:6px">Dar FOV CBCT Çek</button>
+        <div class="mini" id="cbctStat" style="margin-top:5px"></div>
+      </div>
+      <div class="panel">
+        <h4>MPR Araçları</h4>
+        <div class="ctrlrow"><label>Pencere</label><input type="range" id="winR" min="0.4" max="1.8" step="0.05" value="1"></div>
+        <div class="ctrlrow"><label>Kontrast</label><input type="range" id="conR" min="0.6" max="2.2" step="0.05" value="1.5"></div>
+        <label class="chk"><input type="checkbox" id="rulerChk"><span>Mesafe ölçüm cetveli (kök ↔ kanal)</span></label>
+        <div class="lockrow" id="phase2lock"><b>Aşama 2</b> · Halstead İAN blok & odontotomi/elevatör mekaniği yuvaları hazır (kilitli).</div>
+      </div>
+    </div>
+    <div class="col center">
+      <div class="scenewrap">
+        <div class="panowrap"><canvas id="panoCanvas" width="760" height="300"></canvas><div class="panotag" id="panoTag">PANORAMİK</div></div>
+        <div class="mprgrid">
+          <div class="mprcell" id="cellAx"><div class="ct">AKSİYAL (z)</div><canvas id="axCanvas" width="240" height="200"></canvas>
+            <div class="cbctlock" id="lockAx"><div class="mini">CBCT çekilmedi<br>— önce endikasyon</div></div></div>
+          <div class="mprcell" id="cellCo"><div class="ct">KORONAL (y) · bukkolingual İAN</div><canvas id="coCanvas" width="240" height="200"></canvas>
+            <div class="cbctlock" id="lockCo"><div class="mini">CBCT çekilmedi</div></div></div>
+          <div class="mprcell" id="cellSa"><div class="ct">SAGİTAL (x)</div><canvas id="saCanvas" width="240" height="200"></canvas>
+            <div class="cbctlock" id="lockSa"><div class="mini">CBCT çekilmedi</div></div></div>
+        </div>
+        <div class="mprctrls">
+          <div class="cr"><label style="min-width:62px;color:var(--ink-mut)">Aksiyal z</label><input type="range" id="zR" min="-13" max="9" step="0.5" value="-6"><span id="zV" style="min-width:42px;text-align:right">-6.0</span></div>
+          <div class="cr"><label style="min-width:62px;color:var(--ink-mut)">Koronal y</label><input type="range" id="yR" min="-14" max="14" step="0.5" value="4"><span id="yV" style="min-width:42px;text-align:right">4.0</span></div>
+          <div class="cr"><label style="min-width:62px;color:var(--ink-mut)">Sagital x</label><input type="range" id="xR" min="-11" max="11" step="0.5" value="0"><span id="xV" style="min-width:42px;text-align:right">0.0</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="col right scroll">
+      <div class="panel">
+        <h4>Panoramik Yorum</h4>
+        <div class="declrow"><label>Pell-Gregory derinlik</label><select id="dPGdepth"><option value="">—</option><option>A</option><option>B</option><option>C</option></select></div>
+        <div class="declrow"><label>Pell-Gregory ramus</label><select id="dPGramus"><option value="">—</option><option>I</option><option>II</option><option>III</option></select></div>
+        <div class="declrow"><label>Winter açısı</label><select id="dWinter"><option value="">—</option><option>mezioangüler</option><option>distoangüler</option><option>horizontal</option><option>vertikal</option></select></div>
+        <div class="mini" style="margin:5px 0 3px;color:var(--accent)">Rood & Shehab risk işaretleri:</div>
+        <div id="roodList"></div>
+      </div>
+      <div class="panel">
+        <h4>MPR Bulgusu & Ölçüm</h4>
+        <div class="mini" id="mprReadout"></div>
+      </div>
+      <div class="panel">
+        <h4>Tedavi Kararı & Jüri</h4>
+        <div id="txList"></div>
+        <button class="verdict" id="juryBtn">Jüriyi Çağır → 3-Görünümlü Debrief</button>
+        <button class="verdict reset" id="resetBtn">Vakayı Sıfırla</button>
+        <div id="juryOut"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="ovl" id="ovl"><div class="debrief">
+  <div class="dh"><h3 id="dbTitle">Debrief</h3><span class="mini" id="dbSub" style="color:var(--ink-mut)"></span><button class="x" id="dbX">×</button></div>
+  <div class="d3">
+    <div class="dview"><h5>① Senin PAN & MPR Ölçümün</h5><canvas id="dvA" width="640" height="440"></canvas><div id="dvAmeta"></div></div>
+    <div class="dview"><h5>② 3B Şeffaf Mandibula · Kök & Gerçek İAN Demeti</h5><canvas id="dvB" width="640" height="460"></canvas><div id="dvBmeta"></div></div>
+    <div class="dview"><h5>③ 4 Kategorili Jüri Karnesi</h5><div class="karne" id="dvC"></div></div>
+  </div>
+</div></div>
+<div class="toast" id="toast"></div>
+<script>
+"use strict";
+/* ============================================================
+   DuctusLab OMFS — one 3D anatomic truth → Panoramic + synthetic CBCT/MPR + jury.
+   Frame (mandible local, mm): x=bucco-lingual(+buccal), y=mesio-distal(+mesial), z=supero-inferior(+up).
+   3rd molar ~ (0, 4, 1); mandibular canal runs in y at (canalX, *, canalZ) with cortex ring + IAN lumen.
+   ============================================================ */
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+function toast(m,k){const t=$('toast');t.textContent=m;t.className='toast on'+(k?' '+k:'');clearTimeout(t._t);t._t=setTimeout(()=>t.className='toast',2100);}
+
+/* ---- MATERIAL densities (for grayscale radiographs) ---- */
+const MAT={air:0.02,soft:0.12,cancellous:0.4,cortex:0.95,dentin:0.62,enamel:1.0,pulp:0.1,canalCortex:0.9,ian:0.06};
+
+/* ============ 6 CASES (O1–O6) ============
+   Each: molar position/winter angle, canal (x,z + cortexIntact + rootContact), pathology, truth. */
+const CASES={
+ O1:{name:'Asemptomatik tam kemik içi, düşük risk',
+   molar:{mx:0,my:4,mz:1,winter:'vertikal',depth:'B',ramus:'I',rootLen:9,fullBony:true},
+   canal:{x:-2.5,z:-6.5,cortexIntact:true,rootContact:false,gap:3.0},
+   path:{necrotic:false,mobile:false,resorption2M:false},
+   truth:{cbct:false,decision:'monitor',roodSigns:[]},
+   teach:'Asemptomatik, patolojisiz, kanala uzak (3 mm). Rutin CBCT gereksiz; aktif izlem doğru.'},
+ O2:{name:'Panoramik kök kararması AMA CBCT kortikal ayrım intakt',
+   molar:{mx:0,my:4,mz:1,winter:'mezioangüler',depth:'B',ramus:'II',rootLen:11,fullBony:false},
+   canal:{x:-3.0,z:-6.0,cortexIntact:true,rootContact:true,gap:0.4},          // overlap on PAN but intact cortex on CBCT (buccal separation)
+   path:{necrotic:false,mobile:false,resorption2M:false},
+   truth:{cbct:true,decision:'extraction',roodSigns:['darkening']},
+   teach:'Panoramikte kök kararması (2B temas) var; CBCT bukkalde intakt kortikal ayrımı gösterir → yalancı pozitif. Standart cerrahi çekim güvenli.'},
+ O3:{name:'Gerçek İAN teması — lingual oluklanma + kortikal kayıp (vital kök)',
+   molar:{mx:0,my:4,mz:1,winter:'mezioangüler',depth:'C',ramus:'II',rootLen:12,fullBony:false},
+   canal:{x:1.2,z:-5.2,cortexIntact:false,rootContact:true,gap:-0.5,grooving:true},
+   path:{necrotic:false,mobile:false,resorption2M:false},
+   truth:{cbct:true,decision:'coronectomy',roodSigns:['darkening','whiteLineLoss','diversion']},
+   teach:'CBCT: lingualda kök içine oluklanma + kanal korteksi kaybı, vital kök. Yüksek İAN hasar riski → koronektomi tam puanlı güvenli karar.'},
+ O4:{name:'Koronektomi KONTRENDİKE — nekroz/mobilite tuzağı',
+   molar:{mx:0,my:4,mz:1,winter:'horizontal',depth:'C',ramus:'II',rootLen:11,fullBony:false},
+   canal:{x:0.6,z:-5.4,cortexIntact:false,rootContact:true,gap:-0.3},
+   path:{necrotic:true,mobile:true,resorption2M:false},
+   truth:{cbct:true,decision:'extraction',roodSigns:['darkening','whiteLineLoss']},
+   teach:'Kanal teması var AMA periapikal enfeksiyon/nekroz + kök mobilitesi → koronektomi KONTRENDİKE. Uzman kontrollü odontotomi/çekim gerekir.'},
+ O5:{name:'Panoramik baş pozisyonu hatası — tanısal değil',
+   molar:{mx:0,my:4,mz:1,winter:'distoangüler',depth:'B',ramus:'II',rootLen:10,fullBony:false},
+   canal:{x:-2.0,z:-6.0,cortexIntact:true,rootContact:false,gap:1.5},
+   path:{necrotic:false,mobile:false,resorption2M:false},
+   truth:{cbct:false,decision:'retake',roodSigns:[],requiredPos:'normal'},
+   teach:'Çene yukarı/öne hatalı pozisyonda çekilmiş, tanısal olmayan film. Önce DOĞRU POZİSYONDA yeniden çek; ezbere CBCT değil.'},
+ O6:{name:'Distoangüler ramus içi (Sınıf III-C) + 2. molar distal rezorpsiyonu',
+   molar:{mx:0,my:5,mz:2,winter:'distoangüler',depth:'C',ramus:'III',rootLen:12,fullBony:false},
+   canal:{x:-1.0,z:-5.8,cortexIntact:true,rootContact:true,gap:0.6},
+   path:{necrotic:false,mobile:false,resorption2M:true},
+   truth:{cbct:true,decision:'extraction',roodSigns:['darkening','narrowing']},
+   teach:'Distoangüler, ramus içi (Pell-Gregory III-C) yüksek cerrahi zorluk + komşu 2. molar distal rezorpsiyonu. Kanal korteksi intakt → dikkatli standart çekim.'},
+};
+const CASE_ORDER=['O1','O2','O3','O4','O5','O6'];
+const ROOD=[['darkening','Kök kararması (kanal üstü)'],['deflection','Kök defleksiyonu'],['darkBifid','Koyu/bifid apeks'],['whiteLineLoss','Kanal beyaz kortikal çizgi kaybı'],['diversion','Kanal deviasyonu'],['narrowing','Kanal daralması']];
+const POSITIONS=[['normal','Normal','Okluzal düzlem hafif V'],['chinDown','Çene fazla aşağı','Gülümseyen (abartılı V) oklüzal düzlem'],['chinUp','Çene yukarı','Ters (reverse) düzlem'],['shift','Öne-arkaya kayma','Kesici daralma/genişleme']];
+
+/* ============ state ============ */
+let curCase='O1', caseDef=null, curMode='explore';
+let headPos='normal', cbctTaken=false, cbctJustification=null, curStep=0;
+let cross={x:0,y:4,z:-6}, ruler=false;
+const roodChecked={}; let txDecision=null;
+
+/* ============ 3D density model ============ */
+function densAt(x,y,z){
+  const cd=caseDef, m=cd.molar, c=cd.canal;
+  // mandible body: rounded region; cortex near boundary
+  const inBody = (x>-10&&x<8) && (z>-13&&z<6.5) && (Math.pow((x+1)/9,2)+Math.pow((z+3)/9,2) < 1.15) && (y>-15&&y<15);
+  let d=MAT.air, mat='air';
+  if(inBody){ d=MAT.cancellous; mat='cancellous';
+    const edge=Math.pow((x+1)/9,2)+Math.pow((z+3)/9,2);
+    if(edge>0.92) {d=MAT.cortex;mat='cortex';}
+  }
+  // mandibular canal: tube running in y at (c.x, c.z), radius ~1.6 cortex, 1.0 lumen
+  const dc=Math.hypot(x-c.x, z-c.z);
+  if(y>-14&&y<14){
+    if(dc<1.7 && dc>1.0){ d=MAT.canalCortex; mat='canalCortex'; if(!c.cortexIntact && Math.abs(y-m.my)<3 && x>c.x) {d=MAT.cancellous;mat='cancellous';} } // cortex, locally lost near molar if perforated
+    if(dc<=1.0){ d=MAT.ian; mat='ian'; }
+  }
+  // 3rd molar: crown ellipsoid + roots, tilted by winter angle
+  const ang={vertikal:0,mezioangüler:35,distoangüler:-30,horizontal:80}[m.winter]*Math.PI/180;
+  // transform point into molar frame
+  const dx=x-m.mx, dy=y-m.my, dz=z-m.mz;
+  const ly = dy*Math.cos(ang)+dz*Math.sin(ang), lz = -dy*Math.sin(ang)+dz*Math.cos(ang);
+  const lx=dx;
+  // crown (lz in [0,5]) ellipsoid
+  if(lz>-0.5 && lz<5.5 && (lx*lx/9 + ly*ly/10 + Math.pow((lz-2.2)/3.2,2) < 1)){
+    const cz=lz; if(cz>3.5){d=MAT.enamel;mat='enamel';} else if(lx*lx+ly*ly<1.2){d=MAT.pulp;mat='pulp';} else {d=MAT.dentin;mat='dentin';} }
+  // roots (lz in [-rootLen,0]) two tapering roots
+  const rl=m.rootLen;
+  if(lz<=0 && lz>-rl){ const t=(-lz)/rl, rr=1.6*(1-0.6*t);
+    for(const rx of [-1.6,1.6]){ if(Math.hypot(lx-rx, ly)<rr){ d=MAT.dentin;mat='dentin'; if(Math.hypot(lx-rx,ly)<0.4*(1-t)){d=MAT.pulp;mat='pulp';} } } }
+  return {d,mat};
+}
+/* panoramic projection: integrate density along bucco-lingual x for each (y,z), + head-pos distortion */
+function renderPano(){
+  const cv=$('panoCanvas'),ctx=cv.getContext('2d'),W=cv.width,H=cv.height,img=ctx.createImageData(W,H),dd=img.data;
+  const yMin=-15,yMax=15,zMin=-13,zMax=7;
+  let seed=4242; const rnd=()=>{seed=(seed*1103515245+12345)&0x7fffffff;return seed/0x7fffffff;};
+  const win=+$('winR').value, con=+$('conR').value;
+  for(let v=0;v<H;v++){ let z=zMax-(v/(H-1))*(zMax-zMin);
+    for(let u=0;u<W;u++){ let y=yMin+(u/(W-1))*(yMax-yMin);
+      // head position distortion maps the sampling (y,z)
+      let yz=distort(y,z,u/(W-1));
+      let sum=0; for(let x=-9;x<=7;x+=0.4){ sum+=densAt(x,yz.y,yz.z).d; }
+      sum*=0.4;
+      let R=1-Math.exp(-sum*0.13*win); R=clamp((R-0.46)*(1.7*con)+0.4,0,1); let val=clamp(R*255+(rnd()-0.5)*7,0,255);
+      const o=(v*W+u)*4; dd[o]=val*0.93;dd[o+1]=val*0.97;dd[o+2]=val; dd[o+3]=255;
+    }
+  }
+  ctx.putImageData(img,0,0);
+  ctx.save();ctx.globalAlpha=0.3;ctx.filter='blur(0.7px)';ctx.drawImage(cv,0,0);ctx.restore();ctx.filter='none';
+  // label distortion
+  const lab={normal:'Normal pozisyon',chinDown:'Çene fazla aşağı (gülümseyen düzlem)',chinUp:'Çene yukarı (ters düzlem)',shift:'Öne-arkaya kayma'}[headPos];
+  $('panoTag').textContent='PANORAMİK · '+lab;
+  if(headPos!=='normal'){ ctx.fillStyle='rgba(240,181,66,.9)';ctx.font='bold 11px sans-serif';ctx.fillText('⚠ Tanısal olmayan — pozisyon hatası',14,H-10); }
+}
+function distort(y,z,uf){
+  if(headPos==='normal') return {y,z};
+  if(headPos==='chinDown') return {y, z: z - 1.6*Math.cos(y*0.12)};      // exaggerated smile curve
+  if(headPos==='chinUp')   return {y, z: z + 1.6*Math.cos(y*0.12)};      // reverse
+  if(headPos==='shift')    return {y: y*1.25, z};                        // mesiodistal magnification
+  return {y,z};
+}
+/* MPR slices sample the SAME densAt volume. plane: ax(z=cross.z), co(y=cross.y), sa(x=cross.x) */
+function mprMap(plane,uf,vf){
+  // returns {x,y,z} 3D point for a pixel fraction (uf,vf in [0,1])
+  if(plane==='ax'){ return {x:-11+uf*22, y:14-vf*28, z:cross.z}; }        // axial: XY at z
+  if(plane==='co'){ return {x:-11+uf*22, y:cross.y, z:9-vf*22}; }         // coronal: XZ at y
+  return { x:cross.x, y:-14+uf*28, z:9-vf*22 };                          // sagittal: YZ at x
+}
+function renderMPR(plane,cv){
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height,img=ctx.createImageData(W,H),dd=img.data;
+  const win=+$('winR').value, con=+$('conR').value; const exam=(curMode==='exam');
+  for(let v=0;v<H;v++)for(let u=0;u<W;u++){ const p=mprMap(plane,u/(W-1),v/(H-1)); const s=densAt(p.x,p.y,p.z);
+    let R=s.d; R=clamp((R*win),0,1); R=Math.pow(R,1/con); let val=clamp(R*255,0,255);
+    // IAN nerve: in EXPLORE paint yellow overlay; in EXAM leave as dark lumen (only cortex visible)
+    const o=(v*W+u)*4;
+    if(s.mat==='ian' && !exam){ dd[o]=242;dd[o+1]=199;dd[o+2]=68; }
+    else { dd[o]=val*0.92;dd[o+1]=val*0.97;dd[o+2]=val; }
+    dd[o+3]=255;
+  }
+  ctx.putImageData(img,0,0);
+  // crosshair at shared point
+  ctx.strokeStyle='rgba(79,184,224,.7)';ctx.lineWidth=1;ctx.setLineDash([3,3]);
+  let cu,cv2;
+  if(plane==='ax'){ cu=(cross.x+11)/22; cv2=(14-cross.y)/28; }
+  else if(plane==='co'){ cu=(cross.x+11)/22; cv2=(9-cross.z)/22; }
+  else { cu=(cross.y+14)/28; cv2=(9-cross.z)/22; }
+  ctx.beginPath();ctx.moveTo(cu*W,0);ctx.lineTo(cu*W,H);ctx.moveTo(0,cv2*H);ctx.lineTo(W,cv2*H);ctx.stroke();ctx.setLineDash([]);
+  // ruler: root↔canal distance at crosshair
+  if(ruler){ ctx.fillStyle='#4fb8e0';ctx.font='9px sans-serif'; const gap=caseDef.canal.gap;
+    ctx.fillText('kök↔kanal ≈ '+gap.toFixed(1)+' mm'+(gap<=0?' (temas/kayıp!)':''),6,H-6); }
+}
+function renderAllMPR(){ if(!cbctTaken)return; renderMPR('ax',$('axCanvas'));renderMPR('co',$('coCanvas'));renderMPR('sa',$('saCanvas')); updateMprReadout(); }
+function updateMprReadout(){
+  const c=caseDef.canal; const exam=(curMode==='exam');
+  $('mprReadout').innerHTML = !cbctTaken ? 'CBCT çekilmedi — koronal kesit bukkolingual İAN ilişkisini gösterir.'
+    : `Kanal korteksi: <b style="color:${c.cortexIntact?'var(--good)':'var(--bad)'}">${c.cortexIntact?'intakt':'kayıp/perfore'}</b> · Kök↔kanal: <b>${c.gap.toFixed(1)} mm</b>${c.gap<=0?' (temas)':''}<br>`+
+      (exam?'<span style="color:var(--warn)">Sınav: sinir sarı overlay YOK — yalnız kemik kanal korteksi değerlendir.</span>':'İAN demeti sarı ile işaretli (keşfet).');
+}
+
+/* ============ CBCT gate ============ */
+function requestCBCT(){
+  if(!cbctJustification){ toast('Önce bir CBCT gerekçesi seç','warn'); return; }
+  cbctTaken=true; ['Ax','Co','Sa'].forEach(k=>$('lock'+k).style.display='none');
+  ['Ax','Co','Sa'].forEach(k=>$('cell'+k).classList.remove('locked'));
+  const indicated=caseDef.truth.cbct;
+  $('cbctStat').innerHTML = indicated? '<span style="color:var(--good)">✓ Endikasyon uygun — dar FOV CBCT çekildi.</span>'
+    : '<span style="color:var(--bad)">⚠ Gereksiz CBCT: panoramik + klinik yeterliydi (EADMFR). Radyasyon/kaynak puanı kırılır.</span>';
+  renderAllMPR(); setStep(3);
+  toast(indicated?'CBCT çekildi — MPR kesitleri aktif':'CBCT çekildi (gereksiz — kaynak puanı etkilenir)', indicated?'good':'warn');
+}
+
+/* ============ jury (4-category) ============ */
+function grade(){
+  const T=caseDef.truth; const flags={safe:[],img:[],tx:[],rad:[]};
+  // --- Safety 40%: correct treatment decision (IAN protection) ---
+  let safe=0; const decOK=txDecision===T.decision;
+  if(decOK){ safe=1; flags.safe.push(['ok',`Tedavi kararı doğru: ${txTxt(T.decision)}`]); }
+  else { flags.safe.push(['bad',`Tedavi kararı "${txTxt(txDecision)}" ≠ gerçek "${txTxt(T.decision)}"`]);
+    if(T.decision==='coronectomy'&&txDecision==='extraction') flags.safe.push(['bad','İAN teması olan vitale standart çekim → yüksek sinir hasarı riski']);
+    if(T.decision==='extraction'&&txDecision==='coronectomy'&&caseDef.path.necrotic) flags.safe.push(['bad','TUZAK: nekroz/mobilite varken koronektomi kontrendike']);
+    safe = (T.decision==='monitor'&&txDecision==='retake')||(T.decision==='retake'&&txDecision==='monitor')?0.3:0;
+  }
+  // --- Imaging justification & interpretation 30% ---
+  let img=0,imgMax=0;
+  imgMax+=0.4; const cbctJustOK = (caseDef.truth.cbct===cbctTaken);
+  if(cbctJustOK){img+=0.4;flags.img.push(['ok',caseDef.truth.cbct?'CBCT endikasyonu doğru gerekçelendirildi':'CBCT gerekmedi — doğru şekilde çekilmedi']);}
+  else flags.img.push(['bad',caseDef.truth.cbct?'CBCT gerekliydi ama çekilmedi':'Gereksiz CBCT çekildi (EADMFR ihlali)']);
+  imgMax+=0.3; const pgOK=($('dPGdepth').value===caseDef.molar.depth)&&($('dPGramus').value===caseDef.molar.ramus)&&($('dWinter').value===caseDef.molar.winter);
+  if(pgOK){img+=0.3;flags.img.push(['ok',`Pell-Gregory ${caseDef.molar.depth}-${caseDef.molar.ramus} & Winter ${caseDef.molar.winter} doğru`]);}
+  else flags.img.push(['warn','Pell-Gregory/Winter sınıflaması eksik/yanlış']);
+  imgMax+=0.3; const trueSigns=new Set(T.roodSigns); const checked=Object.keys(roodChecked).filter(k=>roodChecked[k]);
+  const correctSigns=checked.filter(k=>trueSigns.has(k)).length, falseSigns=checked.filter(k=>!trueSigns.has(k)).length;
+  // "root darkening = certain nerve damage" trap: if they checked darkening but case cortex intact, warn
+  if(roodChecked['darkening']&&caseDef.canal.cortexIntact&&!T.roodSigns.includes('whiteLineLoss'))
+    flags.img.push(['warn','Kök kararması işaretlendi ama korteks intakt — "kararma=kesin hasar" tuzağına dikkat']);
+  if(trueSigns.size===0){ if(checked.length===0){img+=0.3;flags.img.push(['ok','Risk işareti yok (doğru)']);} else flags.img.push(['warn','Yok iken risk işareti işaretlendi']); }
+  else { const r=clamp((correctSigns-falseSigns*0.5)/trueSigns.size,0,1); img+=0.3*r; flags.img.push([r>=0.8?'ok':'warn',`Rood-Shehab: ${correctSigns}/${trueSigns.size} doğru${falseSigns?', '+falseSigns+' yanlış':''}`]); }
+  img=img/imgMax;
+  // --- Treatment plan appropriateness 20% ---
+  let tx=decOK?1:(flags.safe.length&&safe>0?0.3:0); flags.tx.push([decOK?'ok':'bad',decOK?'Plan vaka gerçeğiyle uyumlu':'Plan uygun değil']);
+  // --- Radiation/resource 10% ---
+  let rad = cbctJustOK?1:0.2; flags.rad.push([cbctJustOK?'ok':'bad',cbctJustOK?'Radyasyon/kaynak uygun (ALARA/EADMFR)':'Gereksiz radyasyon maruziyeti']);
+  const cats=[
+    {name:'Güvenlik · İAN & Karar',w:40,s:safe,flags:flags.safe},
+    {name:'Görüntüleme Gerekçesi & Yorum',w:30,s:img,flags:flags.img},
+    {name:'Tedavi Planı',w:20,s:tx,flags:flags.tx},
+    {name:'Radyasyon / Kaynak',w:10,s:rad,flags:flags.rad},
+  ];
+  const score=Math.round(cats.reduce((a,c)=>a+c.w*c.s,0));
+  return {score,cats,T,decOK};
+}
+function txTxt(v){return {monitor:'Aktif İzlem',extraction:'Standart Cerrahi Çekim',coronectomy:'Koronektomi',retake:'Doğru Pozisyonda Yeniden Çekim'}[v]||v;}
+function renderJury(){
+  const g=grade(); const out=$('juryOut'); const col=g.score>=85?'var(--good)':g.score>=60?'var(--warn)':'var(--bad)';
+  let h=`<div class="jcard"><div class="jscore" style="color:${col}">${g.score}<small>/100</small></div>`;
+  g.cats.forEach(c=>{ const cs=Math.round(c.w*c.s),cc=c.s>=0.85?'var(--good)':c.s>=0.5?'var(--warn)':'var(--bad)';
+    h+=`<div style="margin-top:7px;font-size:11px;font-weight:800;display:flex;justify-content:space-between"><span>${c.name}</span><span style="color:${cc}">${cs}/${c.w}</span></div>`;
+    c.flags.forEach(f=>h+=`<div class="jflag ${f[0]}"><span class="b">${f[0]==='ok'?'✓':f[0]==='warn'?'!':'✕'}</span><span>${f[1]}</span></div>`); });
+  h+='</div>'; out.innerHTML=h; openDebrief(g); return g;
+}
+function openDebrief(g){
+  $('ovl').classList.add('on'); $('dbTitle').textContent='Debrief — '+curCase+' · '+caseDef.name;
+  $('dbSub').textContent=`Skor ${g.score}/100 · doğru karar: ${txTxt(g.T.decision)}`;
+  // A: pano + mpr snapshot
+  const a=$('dvA'),actx=a.getContext('2d');actx.fillStyle='#070b0d';actx.fillRect(0,0,a.width,a.height);
+  try{actx.drawImage($('panoCanvas'),0,0,a.width,a.height*0.52);}catch(e){}
+  if(cbctTaken){ try{actx.drawImage($('coCanvas'),a.width*0.52,a.height*0.54,a.width*0.46,a.height*0.44);}catch(e){}
+    actx.fillStyle='#4fb8e0';actx.font='10px sans-serif';actx.fillText('Koronal MPR',a.width*0.54,a.height*0.54+12); }
+  $('dvAmeta').innerHTML=`<div class="dmetric"><span>CBCT çekildi</span><b>${cbctTaken?'evet':'hayır'}</b></div><div class="dmetric"><span>Baş pozisyonu</span><b>${headPos}</b></div>`;
+  drawDebriefB($('dvB'));
+  $('dvBmeta').innerHTML=`<div class="dmetric"><span>Kanal korteksi</span><b style="color:${caseDef.canal.cortexIntact?'var(--good)':'var(--bad)'}">${caseDef.canal.cortexIntact?'intakt':'kayıp'}</b></div><div class="dmetric"><span>Kök↔kanal</span><b>${caseDef.canal.gap.toFixed(1)} mm</b></div><div class="dmetric"><span>Patoloji</span><b>${caseDef.path.necrotic?'nekroz/mobil':'yok'}</b></div>`;
+  $('dvC').innerHTML=karne(g);
+}
+function drawDebriefB(cv){
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;ctx.fillStyle='#070b0d';ctx.fillRect(0,0,W,H);
+  // coronal transparent: mandible outline + molar roots + canal cortex + IAN (true)
+  const m=caseDef.molar,c=caseDef.canal; const X=x=>W*0.5+x*(W*0.03), Z=z=>H*0.5-z*(H*0.03);
+  // mandible
+  ctx.strokeStyle='rgba(234,241,244,.4)';ctx.lineWidth=1.5;ctx.fillStyle='rgba(120,140,150,.08)';
+  ctx.beginPath();ctx.ellipse(X(-1),Z(-3),W*0.03*9,H*0.03*9,0,0,7);ctx.stroke();ctx.fill();
+  // molar roots (two)
+  ctx.strokeStyle='#eaf1f4';ctx.lineWidth=2;
+  for(const rx of [-1.6,1.6]){ ctx.beginPath();ctx.moveTo(X(m.mx+rx),Z(m.mz+1));ctx.lineTo(X(m.mx+rx),Z(m.mz-m.rootLen));ctx.stroke(); }
+  // crown
+  ctx.fillStyle='rgba(234,241,244,.5)';ctx.beginPath();ctx.ellipse(X(m.mx),Z(m.mz+2),W*0.03*3,H*0.03*2.6,0,0,7);ctx.fill();
+  // canal cortex ring + IAN
+  ctx.strokeStyle=c.cortexIntact?'#eaf1f4':'#e8707a';ctx.setLineDash(c.cortexIntact?[]:[4,3]);ctx.lineWidth=2;
+  ctx.beginPath();ctx.arc(X(c.x),Z(c.z),W*0.03*1.7,0,7);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='#f2c744';ctx.beginPath();ctx.arc(X(c.x),Z(c.z),W*0.03*1.0,0,7);ctx.fill();
+  ctx.fillStyle='#f2c744';ctx.font='10px sans-serif';ctx.fillText('İAN demeti',X(c.x)+12,Z(c.z));
+  ctx.fillStyle='#eaf1f4';ctx.fillText('kök',X(m.mx+1.9),Z(m.mz-m.rootLen/2));
+  ctx.fillStyle=c.cortexIntact?'#63d08a':'#e8707a';ctx.fillText('kanal korteksi: '+(c.cortexIntact?'intakt':'kayıp'),X(c.x)-30,Z(c.z)+34);
+  ctx.fillStyle='#aebcc4';ctx.font='9px sans-serif';ctx.fillText('koronal (bukkolingual) şeffaf kesit',10,H-8);
+}
+function karne(g){
+  const T=g.T,cd=caseDef; let h='';
+  h+=`<div class="kh">Karar zinciri</div><div>${cd.teach}</div>`;
+  h+=`<div class="kh">CBCT endikasyonu (EADMFR)</div><div>${cd.truth.cbct?'Panoramik bukkolingual İAN ilişkisini yanıtlayamadı; dar FOV CBCT tedaviyi değiştirebilir → endike.':'Panoramik + klinik yeterli; rutin CBCT <span class="neg">gereksiz radyasyon</span>.'}</div>`;
+  h+=`<div class="kh">Tedavi kararı</div><div>Doğru: <b>${txTxt(T.decision)}</b>. ${T.decision==='coronectomy'?'Vital kök + kanal korteksi kaybı → kök ucu bırakılarak İAN korunur.':T.decision==='extraction'&&cd.path.necrotic?'Nekroz/mobilite → koronektomi kontrendike, kontrollü çekim.':T.decision==='monitor'?'Asemptomatik düşük risk → aktif izlem.':T.decision==='retake'?'Tanısal olmayan film → önce doğru pozisyonda yeniden çekim.':'Kanal korteksi intakt → standart çekim.'}</div>`;
+  h+=`<div class="kh">Skor (4 kategori)</div>`; g.cats.forEach(c=>h+=`<div>${c.name}: <b>${Math.round(c.w*c.s)}/${c.w}</b></div>`);
+  h+=`<div style="margin-top:4px">Toplam <b>${g.score}/100</b> — ${g.score>=85?'<span class="pos">uzman düzeyi</span>':g.score>=60?'<span class="neu">geliştirilmeli</span>':'<span class="neg">kritik hatalar</span>'}.</div>`;
+  return h;
+}
+
+/* ============ UI ============ */
+const STEPS=[{t:'Panoramik & Pozisyon'},{t:'Pell-Gregory / Winter / Rood'},{t:'CBCT Endikasyon'},{t:'MPR Ölçüm'},{t:'Tedavi Kararı'}];
+function renderStepper(){const el=$('stepper');el.innerHTML='';STEPS.forEach((s,i)=>{const d=document.createElement('div');d.className='step'+(i===curStep?' on':'')+(i<curStep?' done':'');
+  d.innerHTML=`<div class="n">${i<curStep?'✓':i+1}</div><div class="t">${s.t}</div>`;d.onclick=()=>setStep(i);el.appendChild(d);});}
+function setStep(i){curStep=i>curStep?i:Math.max(curStep,i);curStep=i;renderStepper();}
+function renderCasePick(){const el=$('casePick');el.innerHTML='';CASE_ORDER.forEach(cid=>{const c=CASES[cid];const b=document.createElement('button');
+  b.className='casebtn'+(cid===curCase?' on':'');b.innerHTML=`${cid}<span class="d">${c.name.split('(')[0].slice(0,11)}</span>`;b.onclick=()=>loadCase(cid);el.appendChild(b);});}
+function renderPosList(){const el=$('posList');el.innerHTML='';POSITIONS.forEach(([v,nm,ds])=>{const b=document.createElement('button');
+  b.className='optbtn'+(v===headPos?' on':'');b.innerHTML=`<b>${nm}</b><small>${ds}</small>`;b.onclick=()=>{headPos=v;renderPosList();renderPano();setStep(0);};el.appendChild(b);});}
+function renderCbctJust(){const el=$('cbctJust');el.innerHTML='';
+  const opts=[['relation','Kök–kanal bukkolingual ilişkisi panoramikte belirsiz'],['change','CBCT bulgusu cerrahi planı/koronektomi kararını değiştirebilir'],['routine','Rutin — her 3. molara CBCT (gerekçesiz)']];
+  opts.forEach(([v,t])=>{const b=document.createElement('button');b.className='optbtn'+(v===cbctJustification?' on':'');b.innerHTML=t;
+    b.onclick=()=>{cbctJustification=v;renderCbctJust();};el.appendChild(b);});}
+function renderRood(){const el=$('roodList');el.innerHTML='';ROOD.forEach(([k,lab])=>{const id='rood_'+k;
+  el.innerHTML+=`<label class="chk"><input type="checkbox" id="${id}" ${roodChecked[k]?'checked':''}><span>${lab}</span></label>`;});
+  ROOD.forEach(([k])=>{const c=$('rood_'+k);if(c)c.onchange=()=>{roodChecked[k]=c.checked;setStep(1);};});}
+function renderTx(){const el=$('txList');el.innerHTML='';
+  const opts=[['monitor','Aktif İzlem','Asemptomatik, düşük risk'],['extraction','Standart Cerrahi Çekim','Kanal korteksi intakt / güvenli'],['coronectomy','Koronektomi','İAN teması + vital kök'],['retake','Doğru Pozisyonda Yeniden Çekim','Tanısal olmayan film']];
+  opts.forEach(([v,nm,ds])=>{const b=document.createElement('button');b.className='optbtn'+(v===txDecision?' on':'');b.innerHTML=`<b>${nm}</b><small>${ds}</small>`;
+    b.onclick=()=>{txDecision=v;renderTx();setStep(4);};el.appendChild(b);});}
+
+/* ============ load / reset ============ */
+function loadCase(cid){
+  curCase=cid; caseDef=JSON.parse(JSON.stringify(CASES[cid]));
+  headPos = cid==='O5' ? 'chinUp' : 'normal';            // O5 opens mis-positioned
+  cbctTaken=false; cbctJustification=null; txDecision=null; curStep=0;
+  for(const k in roodChecked)delete roodChecked[k];
+  cross={x:caseDef.canal.x, y:caseDef.molar.my, z:caseDef.canal.z};
+  $('xR').value=cross.x;$('yR').value=cross.y;$('zR').value=cross.z;$('xV').textContent=cross.x.toFixed(1);$('yV').textContent=cross.y.toFixed(1);$('zV').textContent=cross.z.toFixed(1);
+  $('dPGdepth').value='';$('dPGramus').value='';$('dWinter').value='';$('cbctStat').innerHTML='';$('juryOut').innerHTML='';
+  ['Ax','Co','Sa'].forEach(k=>{$('lock'+k).style.display='grid';$('cell'+k).classList.add('locked');});
+  renderCasePick();renderStepper();renderPosList();renderCbctJust();renderRood();renderTx();renderPano();updateMprReadout();
+  toast(curMode==='exam'?('Vaka '+cid+' yüklendi (sınav)'):('Vaka '+cid+' yüklendi: '+CASES[cid].name),'');
+}
+function resetCase(){loadCase(curCase);toast('Vaka sıfırlandı','');}
+
+/* ============ events ============ */
+$('modeSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;curMode=b.dataset.mode;
+  [...$('modeSeg').children].forEach(x=>x.classList.toggle('on',x===b));$('modeSeg').classList.toggle('exam',curMode==='exam');
+  renderPano();renderAllMPR();updateMprReadout();toast(curMode==='exam'?'SINAV: CBCT’de renkli sinir overlay’i yok':'Keşfet modu','');});
+['xR','yR','zR'].forEach(id=>$(id).addEventListener('input',e=>{const ax=id[0];cross[ax]=+e.target.value;$(ax+'V').textContent=(+e.target.value).toFixed(1);renderAllMPR();}));
+['winR','conR'].forEach(id=>$(id).addEventListener('input',()=>{renderPano();renderAllMPR();}));
+$('rulerChk').addEventListener('change',e=>{ruler=e.target.checked;renderAllMPR();});
+$('cbctBtn').addEventListener('click',requestCBCT);
+$('juryBtn').addEventListener('click',renderJury);
+$('resetBtn').addEventListener('click',resetCase);
+$('dbX').addEventListener('click',()=>$('ovl').classList.remove('on'));
+$('ovl').addEventListener('click',e=>{if(e.target===$('ovl'))$('ovl').classList.remove('on');});
+['dPGdepth','dPGramus','dWinter'].forEach(id=>$(id).addEventListener('change',()=>setStep(1)));
+
+/* ============ boot ============ */
+renderStepper();renderCasePick();loadCase('O1');
+
+/* ============ API + SELFTEST ============ */
+window.OMFS={
+  loadCase, setMode:(m)=>{curMode=m;[...$('modeSeg').children].forEach(x=>x.classList.toggle('on',x.dataset.mode===m));$('modeSeg').classList.toggle('exam',m==='exam');renderPano();renderAllMPR();updateMprReadout();},
+  cases:()=>CASE_ORDER, caseDef:()=>JSON.parse(JSON.stringify(CASES[curCase])), truth:()=>JSON.parse(JSON.stringify(caseDef.truth)),
+  crosshair:()=>({...cross}), setCrosshair:(x,y,z)=>{if(x!=null)cross.x=x;if(y!=null)cross.y=y;if(z!=null)cross.z=z;renderAllMPR();},
+  // the 3D point a plane's crosshair centre samples (for the shared-point test)
+  mprCrossPoint:(plane)=>{ if(plane==='ax')return {x:cross.x,y:cross.y,z:cross.z}; if(plane==='co')return {x:cross.x,y:cross.y,z:cross.z}; return {x:cross.x,y:cross.y,z:cross.z}; },
+  mprMap:(plane,uf,vf)=>mprMap(plane,uf,vf),
+  sampleAt:(x,y,z)=>densAt(x,y,z),
+  cbctIndicated:(cid)=>CASES[cid||curCase].truth.cbct,
+  takeCBCT:(just)=>{ cbctJustification=just||'relation'; requestCBCT(); return {taken:cbctTaken,indicated:caseDef.truth.cbct}; },
+  cbctTaken:()=>cbctTaken,
+  nerveOverlayVisible:()=>{ // sample an IAN pixel on coronal (offset from crosshair lines); true if yellow
+    const cv=$('coCanvas'); if(!cbctTaken)return false; const ctx=cv.getContext('2d');
+    const c=caseDef.canal; const uf=(c.x+11)/22, vf=(9-c.z)/22; const px=Math.round(uf*cv.width)+4,py=Math.round(vf*cv.height)+4;
+    const d=ctx.getImageData(clamp(px,0,cv.width-1),clamp(py,0,cv.height-1),1,1).data; return d[0]>180&&d[1]>150&&d[2]<120; },
+  setTx:(d)=>{txDecision=d;renderTx();}, setHeadPos:(p)=>{headPos=p;renderPano();},
+  markRood:(k,v)=>{roodChecked[k]=v;}, setPG:(depth,ramus,winter)=>{if(depth)$('dPGdepth').value=depth;if(ramus)$('dPGramus').value=ramus;if(winter)$('dWinter').value=winter;},
+  declare:(d)=>{ if(d.pos)headPos=d.pos; if(d.cbct){cbctJustification='relation';if(!cbctTaken)requestCBCT();} if(d.pg)OMFS.setPG(d.pg.depth,d.pg.ramus,d.pg.winter); if(d.tx)txDecision=d.tx; if(d.rood)d.rood.forEach(k=>roodChecked[k]=true); return grade(); },
+  grade:()=>grade(),
+};
+window.__selfTest=function(){
+  const R=[];const ok=(n,c)=>R.push({n,pass:!!c});
+  try{
+    loadCase('O3');
+    // MPR crosshair samples the SAME 3D point across axial/coronal/sagittal
+    window.OMFS.setCrosshair(1.2,4,-5.2);
+    const pa=window.OMFS.mprCrossPoint('ax'),pc=window.OMFS.mprCrossPoint('co'),ps=window.OMFS.mprCrossPoint('sa');
+    const same = pa.x===pc.x&&pc.x===ps.x && pa.y===pc.y&&pc.y===ps.y && pa.z===pc.z&&pc.z===ps.z;
+    ok('mpr-shared-crosshair-point', same);
+    // and the density sampled there is identical across planes (same volume)
+    const sAx=window.OMFS.sampleAt(pa.x,pa.y,pa.z), sCo=window.OMFS.sampleAt(pc.x,pc.y,pc.z);
+    ok('mpr-same-volume', sAx.mat===sCo.mat);
+    // mprMap centre (uf=vf=0.5-ish) resolves to crosshair coordinate on its free axes
+    const mAx=window.OMFS.mprMap('ax',(1.2+11)/22,(14-4)/28);
+    ok('mpr-map-axial', Math.abs(mAx.x-1.2)<0.3 && Math.abs(mAx.y-4)<0.3 && mAx.z===-5.2);
+    // CBCT gate: O1 unnecessary
+    loadCase('O1'); ok('cbct-O1-unnecessary', window.OMFS.cbctIndicated('O1')===false);
+    const g1bad=window.OMFS.declare({cbct:true,tx:'monitor'}); // took unneeded CBCT
+    ok('cbct-O1-penalized', g1bad.cats[3].s<1 && g1bad.cats[1].s<1);
+    loadCase('O1'); const g1=window.OMFS.declare({tx:'monitor'}); ok('O1-monitor-correct', g1.cats[0].s===1 && !cbctTaken);
+    // O2 cortex intact → extraction
+    loadCase('O2'); ok('O2-cortex-intact', caseDef.canal.cortexIntact===true);
+    const g2=window.OMFS.declare({cbct:true,tx:'extraction'}); ok('O2-extraction', g2.cats[0].s===1);
+    // O3 cortex lost + vital → coronectomy
+    loadCase('O3'); ok('O3-cortex-lost-vital', caseDef.canal.cortexIntact===false && !caseDef.path.necrotic);
+    const g3=window.OMFS.declare({cbct:true,tx:'coronectomy'}); ok('O3-coronectomy', g3.cats[0].s===1);
+    const g3x=window.OMFS.declare({cbct:true,tx:'extraction'}); ok('O3-extraction-penalized', g3x.cats[0].s<g3.cats[0].s);
+    // O4 necrotic/mobile → coronectomy CONTRAINDICATED (extraction correct; coronectomy penalized)
+    loadCase('O4'); ok('O4-contraindication', caseDef.path.necrotic===true && caseDef.truth.decision==='extraction');
+    const g4=window.OMFS.declare({cbct:true,tx:'coronectomy'}); ok('O4-coronectomy-penalized', g4.cats[0].s===0);
+    const g4c=window.OMFS.declare({cbct:true,tx:'extraction'}); ok('O4-extraction-correct', g4c.cats[0].s===1);
+    // exam mode: no colored nerve overlay on CBCT
+    loadCase('O3'); window.OMFS.setMode('exam'); window.OMFS.takeCBCT('relation');
+    ok('exam-no-nerve-overlay', window.OMFS.nerveOverlayVisible()===false);
+    window.OMFS.setMode('explore'); window.OMFS.takeCBCT('relation');
+    ok('explore-nerve-overlay', window.OMFS.nerveOverlayVisible()===true);
+    loadCase('O1');
+  }catch(e){R.push({n:'exception',pass:false,err:String(e)});}
+  const pass=R.every(r=>r.pass);
+  return {pass,count:R.length,tests:R,failed:R.filter(r=>!r.pass).map(r=>r.n)};
+};
+console.log('[OMFS] ready — cases',CASE_ORDER.length);
+</script>
+</body></html>

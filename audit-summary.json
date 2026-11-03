@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-11-03T00:28:56.394Z",
+  "generatedAt": "2026-11-03T00:39:48.453Z",
   "threeLocal": true,
-  "pages": 20,
+  "pages": 21,
   "viewports": [
     {
       "w": 1920,
@@ -27,7 +27,7 @@
     },
     "gate3_link_integrity": {
       "pass": true,
-      "checked": 44,
+      "checked": 46,
       "skipped": 1,
       "broken": []
     },
@@ -40,7 +40,7 @@
       "fails": []
     },
     "gate6_clinical_selftests": {
-      "hooks": 5,
+      "hooks": 6,
       "pass": true,
       "detail": [
         {
@@ -349,6 +349,81 @@
           }
         },
         {
+          "page": "ductuslab-omfs.html",
+          "pass": true,
+          "selfTest": {
+            "pass": true,
+            "count": 16,
+            "tests": [
+              {
+                "n": "mpr-shared-crosshair-point",
+                "pass": true
+              },
+              {
+                "n": "mpr-same-volume",
+                "pass": true
+              },
+              {
+                "n": "mpr-map-axial",
+                "pass": true
+              },
+              {
+                "n": "cbct-O1-unnecessary",
+                "pass": true
+              },
+              {
+                "n": "cbct-O1-penalized",
+                "pass": true
+              },
+              {
+                "n": "O1-monitor-correct",
+                "pass": true
+              },
+              {
+                "n": "O2-cortex-intact",
+                "pass": true
+              },
+              {
+                "n": "O2-extraction",
+                "pass": true
+              },
+              {
+                "n": "O3-cortex-lost-vital",
+                "pass": true
+              },
+              {
+                "n": "O3-coronectomy",
+                "pass": true
+              },
+              {
+                "n": "O3-extraction-penalized",
+                "pass": true
+              },
+              {
+                "n": "O4-contraindication",
+                "pass": true
+              },
+              {
+                "n": "O4-coronectomy-penalized",
+                "pass": true
+              },
+              {
+                "n": "O4-extraction-correct",
+                "pass": true
+              },
+              {
+                "n": "exam-no-nerve-overlay",
+                "pass": true
+              },
+              {
+                "n": "explore-nerve-overlay",
+                "pass": true
+              }
+            ],
+            "failed": []
+          }
+        },
+        {
           "page": "acil/index.html",
           "pass": null,
           "selfTest": {
@@ -416,7 +491,7 @@
     "gate7_portal_accessibility": {
       "pass": true,
       "detail": {
-        "cards": 18,
+        "cards": 19,
         "lapBadgeClean": true,
         "frmPresent": true,
         "scrollOk": true,
@@ -819,6 +894,90 @@
           },
           {
             "n": "explore-autofills",
+            "pass": true
+          }
+        ],
+        "failed": []
+      },
+      "lifecycle": {
+        "supported": false,
+        "advanced": null
+      }
+    },
+    "ductuslab-omfs.html": {
+      "page": "ductuslab-omfs.html",
+      "pageerrors": [],
+      "consoleErrors": [],
+      "externalAssets": [],
+      "disallowedReq": [],
+      "overflow": [],
+      "truthLeak": [],
+      "selfTest": {
+        "pass": true,
+        "count": 16,
+        "tests": [
+          {
+            "n": "mpr-shared-crosshair-point",
+            "pass": true
+          },
+          {
+            "n": "mpr-same-volume",
+            "pass": true
+          },
+          {
+            "n": "mpr-map-axial",
+            "pass": true
+          },
+          {
+            "n": "cbct-O1-unnecessary",
+            "pass": true
+          },
+          {
+            "n": "cbct-O1-penalized",
+            "pass": true
+          },
+          {
+            "n": "O1-monitor-correct",
+            "pass": true
+          },
+          {
+            "n": "O2-cortex-intact",
+            "pass": true
+          },
+          {
+            "n": "O2-extraction",
+            "pass": true
+          },
+          {
+            "n": "O3-cortex-lost-vital",
+            "pass": true
+          },
+          {
+            "n": "O3-coronectomy",
+            "pass": true
+          },
+          {
+            "n": "O3-extraction-penalized",
+            "pass": true
+          },
+          {
+            "n": "O4-contraindication",
+            "pass": true
+          },
+          {
+            "n": "O4-coronectomy-penalized",
+            "pass": true
+          },
+          {
+            "n": "O4-extraction-correct",
+            "pass": true
+          },
+          {
+            "n": "exam-no-nerve-overlay",
+            "pass": true
+          },
+          {
+            "n": "explore-nerve-overlay",
             "pass": true
           }
         ],
