@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-11-03T22:44:30.101Z",
+  "generatedAt": "2026-11-03T23:27:28.525Z",
   "threeLocal": false,
-  "pages": 22,
+  "pages": 23,
   "viewports": [
     {
       "w": 1920,
@@ -27,7 +27,7 @@
     },
     "gate3_link_integrity": {
       "pass": true,
-      "checked": 48,
+      "checked": 50,
       "skipped": 1,
       "broken": []
     },
@@ -40,7 +40,7 @@
       "fails": []
     },
     "gate6_clinical_selftests": {
-      "hooks": 5,
+      "hooks": 6,
       "pass": true,
       "detail": [
         {
@@ -378,7 +378,7 @@
           "pass": true,
           "selfTest": {
             "pass": true,
-            "count": 28,
+            "count": 36,
             "tests": [
               {
                 "n": "V1-force-hard-exposes",
@@ -489,7 +489,206 @@
                 "pass": true
               },
               {
+                "n": "rx-single-root-up",
+                "pass": true
+              },
+              {
+                "n": "rx-T2-closed-T3-blunderbuss",
+                "pass": true
+              },
+              {
+                "n": "rx-T1-germ-above-root",
+                "pass": true
+              },
+              {
+                "n": "rx-pixels-root-above-crown-bottom-empty",
+                "pass": true
+              },
+              {
+                "n": "clin-gingiva-top-no-cone",
+                "pass": true
+              },
+              {
+                "n": "exam-pack-rules-hidden",
+                "pass": true
+              },
+              {
+                "n": "exam-lock-message-neutral",
+                "pass": true
+              },
+              {
+                "n": "explore-pack-note-visible",
+                "pass": true
+              },
+              {
                 "n": "vpt-no-option-spoilers",
+                "pass": true
+              }
+            ],
+            "failed": []
+          }
+        },
+        {
+          "page": "ductuslab-ortho.html",
+          "pass": true,
+          "selfTest": {
+            "pass": true,
+            "count": 39,
+            "tests": [
+              {
+                "n": "O2-anb-6.5-false-class-II",
+                "pass": true
+              },
+              {
+                "n": "O2-wits-0.5-class-I",
+                "pass": true
+              },
+              {
+                "n": "O2-anb-alone-trap-caught",
+                "pass": true
+              },
+              {
+                "n": "O2-wits-resolves-full",
+                "pass": true
+              },
+              {
+                "n": "O1-anb-and-wits-agree-II",
+                "pass": true
+              },
+              {
+                "n": "O1-1mm-landmark-tolerance-full",
+                "pass": true
+              },
+              {
+                "n": "O1-4mm-drift-flagged",
+                "pass": true
+              },
+              {
+                "n": "MF-0-uncontrolled-tipping",
+                "pass": true
+              },
+              {
+                "n": "MF-eq-d-bodily-translation",
+                "pass": true
+              },
+              {
+                "n": "MF-ge-13-root-torque",
+                "pass": true
+              },
+              {
+                "n": "MF-7-controlled-at-apex",
+                "pass": true
+              },
+              {
+                "n": "bone-loss-Cres-moves-apical",
+                "pass": true
+              },
+              {
+                "n": "bone-loss-same-F-bigger-moment",
+                "pass": true
+              },
+              {
+                "n": "O3-translation-full",
+                "pass": true
+              },
+              {
+                "n": "O3-healthy-ratio-fails",
+                "pass": true
+              },
+              {
+                "n": "TME1-reciprocal-click",
+                "pass": true
+              },
+              {
+                "n": "TME1-deviation-returns-midline-normal-opening",
+                "pass": true
+              },
+              {
+                "n": "TME2-closed-lock-zero-click-restricted",
+                "pass": true
+              },
+              {
+                "n": "TME2-ipsilateral-deflection-contralateral-limited",
+                "pass": true
+              },
+              {
+                "n": "TME1-audio-click-count-2",
+                "pass": true
+              },
+              {
+                "n": "TME2-no-click-blocked-at-25",
+                "pass": true
+              },
+              {
+                "n": "TME2-perfect-100",
+                "pass": true
+              },
+              {
+                "n": "TME2-false-resolution-caught",
+                "pass": true
+              },
+              {
+                "n": "TME2-contralateral-deflection-error",
+                "pass": true
+              },
+              {
+                "n": "TME2-deviation-vs-deflection-confused",
+                "pass": true
+              },
+              {
+                "n": "TME1-irreversible-for-painless-click",
+                "pass": true
+              },
+              {
+                "n": "TME1-perfect-100",
+                "pass": true
+              },
+              {
+                "n": "TME3-michigan-splint-full",
+                "pass": true
+              },
+              {
+                "n": "TME3-irreversible-adjustment-first",
+                "pass": true
+              },
+              {
+                "n": "P1-distal-rest-destructive-torque",
+                "pass": true
+              },
+              {
+                "n": "P1-RPI-plus-anterior-IR-full",
+                "pass": true
+              },
+              {
+                "n": "P1-IR-too-close-to-fulcrum",
+                "pass": true
+              },
+              {
+                "n": "P1-gold-needs-0.50-undercut",
+                "pass": true
+              },
+              {
+                "n": "P1-gold-tilt-ok",
+                "pass": true
+              },
+              {
+                "n": "Kennedy-classifier-a-b-c-d",
+                "pass": true
+              },
+              {
+                "n": "Kennedy-IV-modification-rejected",
+                "pass": true
+              },
+              {
+                "n": "Kennedy-all-correct-100",
+                "pass": true
+              },
+              {
+                "n": "Kennedy-third-molar-rule-caught",
+                "pass": true
+              },
+              {
+                "n": "ortho-no-option-spoilers",
                 "pass": true
               }
             ],
@@ -564,7 +763,7 @@
     "gate7_portal_accessibility": {
       "pass": true,
       "detail": {
-        "cards": 20,
+        "cards": 21,
         "lapBadgeClean": true,
         "frmPresent": true,
         "scrollOk": true,
@@ -1021,7 +1220,7 @@
       "truthLeak": [],
       "selfTest": {
         "pass": true,
-        "count": 28,
+        "count": 36,
         "tests": [
           {
             "n": "V1-force-hard-exposes",
@@ -1132,7 +1331,215 @@
             "pass": true
           },
           {
+            "n": "rx-single-root-up",
+            "pass": true
+          },
+          {
+            "n": "rx-T2-closed-T3-blunderbuss",
+            "pass": true
+          },
+          {
+            "n": "rx-T1-germ-above-root",
+            "pass": true
+          },
+          {
+            "n": "rx-pixels-root-above-crown-bottom-empty",
+            "pass": true
+          },
+          {
+            "n": "clin-gingiva-top-no-cone",
+            "pass": true
+          },
+          {
+            "n": "exam-pack-rules-hidden",
+            "pass": true
+          },
+          {
+            "n": "exam-lock-message-neutral",
+            "pass": true
+          },
+          {
+            "n": "explore-pack-note-visible",
+            "pass": true
+          },
+          {
             "n": "vpt-no-option-spoilers",
+            "pass": true
+          }
+        ],
+        "failed": []
+      },
+      "lifecycle": {
+        "supported": false,
+        "advanced": null
+      }
+    },
+    "ductuslab-ortho.html": {
+      "page": "ductuslab-ortho.html",
+      "pageerrors": [],
+      "consoleErrors": [],
+      "externalAssets": [],
+      "disallowedReq": [],
+      "overflow": [],
+      "truthLeak": [],
+      "selfTest": {
+        "pass": true,
+        "count": 39,
+        "tests": [
+          {
+            "n": "O2-anb-6.5-false-class-II",
+            "pass": true
+          },
+          {
+            "n": "O2-wits-0.5-class-I",
+            "pass": true
+          },
+          {
+            "n": "O2-anb-alone-trap-caught",
+            "pass": true
+          },
+          {
+            "n": "O2-wits-resolves-full",
+            "pass": true
+          },
+          {
+            "n": "O1-anb-and-wits-agree-II",
+            "pass": true
+          },
+          {
+            "n": "O1-1mm-landmark-tolerance-full",
+            "pass": true
+          },
+          {
+            "n": "O1-4mm-drift-flagged",
+            "pass": true
+          },
+          {
+            "n": "MF-0-uncontrolled-tipping",
+            "pass": true
+          },
+          {
+            "n": "MF-eq-d-bodily-translation",
+            "pass": true
+          },
+          {
+            "n": "MF-ge-13-root-torque",
+            "pass": true
+          },
+          {
+            "n": "MF-7-controlled-at-apex",
+            "pass": true
+          },
+          {
+            "n": "bone-loss-Cres-moves-apical",
+            "pass": true
+          },
+          {
+            "n": "bone-loss-same-F-bigger-moment",
+            "pass": true
+          },
+          {
+            "n": "O3-translation-full",
+            "pass": true
+          },
+          {
+            "n": "O3-healthy-ratio-fails",
+            "pass": true
+          },
+          {
+            "n": "TME1-reciprocal-click",
+            "pass": true
+          },
+          {
+            "n": "TME1-deviation-returns-midline-normal-opening",
+            "pass": true
+          },
+          {
+            "n": "TME2-closed-lock-zero-click-restricted",
+            "pass": true
+          },
+          {
+            "n": "TME2-ipsilateral-deflection-contralateral-limited",
+            "pass": true
+          },
+          {
+            "n": "TME1-audio-click-count-2",
+            "pass": true
+          },
+          {
+            "n": "TME2-no-click-blocked-at-25",
+            "pass": true
+          },
+          {
+            "n": "TME2-perfect-100",
+            "pass": true
+          },
+          {
+            "n": "TME2-false-resolution-caught",
+            "pass": true
+          },
+          {
+            "n": "TME2-contralateral-deflection-error",
+            "pass": true
+          },
+          {
+            "n": "TME2-deviation-vs-deflection-confused",
+            "pass": true
+          },
+          {
+            "n": "TME1-irreversible-for-painless-click",
+            "pass": true
+          },
+          {
+            "n": "TME1-perfect-100",
+            "pass": true
+          },
+          {
+            "n": "TME3-michigan-splint-full",
+            "pass": true
+          },
+          {
+            "n": "TME3-irreversible-adjustment-first",
+            "pass": true
+          },
+          {
+            "n": "P1-distal-rest-destructive-torque",
+            "pass": true
+          },
+          {
+            "n": "P1-RPI-plus-anterior-IR-full",
+            "pass": true
+          },
+          {
+            "n": "P1-IR-too-close-to-fulcrum",
+            "pass": true
+          },
+          {
+            "n": "P1-gold-needs-0.50-undercut",
+            "pass": true
+          },
+          {
+            "n": "P1-gold-tilt-ok",
+            "pass": true
+          },
+          {
+            "n": "Kennedy-classifier-a-b-c-d",
+            "pass": true
+          },
+          {
+            "n": "Kennedy-IV-modification-rejected",
+            "pass": true
+          },
+          {
+            "n": "Kennedy-all-correct-100",
+            "pass": true
+          },
+          {
+            "n": "Kennedy-third-molar-rule-caught",
+            "pass": true
+          },
+          {
+            "n": "ortho-no-option-spoilers",
             "pass": true
           }
         ],

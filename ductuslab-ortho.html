@@ -1,0 +1,839 @@
+<!doctype html><html lang="tr"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DuctusLab ORTO · TME · HBP — Sefalometrik Analiz, M/F Biyomekaniği, TME Kondil-Disk Kinematiği & Paralelometre Simülatörü</title>
+<style>
+:root{
+  --bg-0:#07080a; --bg-1:#0e1112; --bg-2:#151a1d; --line:#1f282c; --line2:#2c3a42;
+  --ink:#eef2f4; --ink-dim:#b1bec5; --ink-mut:#78898f;
+  --accent:#e8a35a; --accent2:#56d6a0; --warn:#f0b542; --bad:#e8707a; --good:#63d08a; --cool:#4fb8e0;
+  --r:12px; --sh:0 6px 22px rgba(0,0,0,.5);
+  --font:'Segoe UI',system-ui,-apple-system,Roboto,Arial,sans-serif;
+}
+*{box-sizing:border-box} html,body{height:100%}
+html{overflow:hidden}
+body{margin:0;background:radial-gradient(1100px 650px at 80% -10%,#1b1410 0%,transparent 55%),radial-gradient(900px 600px at 5% 110%,#101418 0%,transparent 60%),var(--bg-0);color:var(--ink);font-family:var(--font);font-size:14px;overflow:hidden}
+.app{display:grid;grid-template-rows:auto auto 1fr;height:100dvh;max-height:100dvh}
+.topbar{display:flex;align-items:center;gap:12px;padding:8px 14px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#140f0b,#0d0a08);flex-wrap:wrap}
+.brand{font-weight:800;letter-spacing:.4px;font-size:15px;white-space:nowrap}
+.brand .en{color:var(--accent)} .brand .tag{color:var(--ink-mut);font-weight:600;font-size:11px;margin-left:6px}
+.topbar .sp{flex:1}
+.seg{display:flex;border:1px solid var(--line2);border-radius:999px;overflow:hidden;background:#0c0a08}
+.seg button{background:transparent;border:0;color:var(--ink-dim);padding:6px 13px;font-size:12px;cursor:pointer;font-weight:700}
+.seg button.on{background:var(--accent);color:#2a1604} .seg.exam button.on{background:var(--warn);color:#241a02}
+.casepick{display:flex;gap:5px;flex-wrap:wrap}
+.casebtn{background:#13100d;border:1px solid var(--line2);color:var(--ink-dim);border-radius:8px;padding:5px 9px;font-size:12px;font-weight:700;cursor:pointer;min-width:34px}
+.casebtn.on{border-color:var(--accent);color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.casebtn .d{display:block;font-size:8.5px;color:var(--ink-mut);font-weight:600;margin-top:1px}
+.stepper{display:flex;padding:7px 14px;border-bottom:1px solid var(--line);background:#0b0908;overflow-x:auto}
+.step{display:flex;align-items:center;gap:7px;padding:4px 14px 4px 10px;position:relative;white-space:nowrap;cursor:default}
+.step:not(:last-child):after{content:'';position:absolute;right:-1px;top:50%;width:1px;height:20px;background:var(--line2);transform:translateY(-50%)}
+.step .n{width:22px;height:22px;border-radius:50%;background:#1d1812;border:1px solid var(--line2);display:grid;place-items:center;font-size:11px;font-weight:800;color:var(--ink-mut)}
+.step.on .n{background:var(--accent);color:#2a1604;border-color:var(--accent)} .step.done .n{background:var(--accent2);color:#042016;border-color:var(--accent2)}
+.step .t{font-size:11.5px;color:var(--ink-mut);font-weight:700} .step.on .t{color:var(--ink)}
+.main{display:grid;grid-template-columns:250px 1fr 330px;min-height:0;overflow:hidden}
+.col{min-height:0;overflow:hidden;display:flex;flex-direction:column}
+.col.left{border-right:1px solid var(--line);background:#0b0908} .col.right{border-left:1px solid var(--line);background:#0b0908}
+.panel{padding:10px 12px;border-bottom:1px solid var(--line)}
+.panel h4{margin:0 0 7px;font-size:11px;letter-spacing:.7px;text-transform:uppercase;color:var(--accent);font-weight:800}
+.scroll{overflow:auto;min-height:0}
+.optbtn{display:block;width:100%;text-align:left;background:#14110e;border:1px solid var(--line2);color:var(--ink-dim);border-radius:9px;padding:7px 9px;margin-bottom:6px;cursor:pointer;font-size:11.5px}
+.optbtn:hover{border-color:var(--accent)} .optbtn.on{border-color:var(--accent);background:#211810;color:var(--ink);box-shadow:0 0 0 1px var(--accent) inset}
+.optbtn.done{border-color:#1f4a34} .optbtn b{color:var(--ink);font-weight:800} .optbtn small{color:var(--ink-mut);display:block;margin-top:2px}
+.zrow{display:flex;gap:5px;margin:4px 0 2px} .zrow button{flex:1;background:#14110e;border:1px solid var(--line2);color:var(--ink-dim);border-radius:8px;padding:6px 2px;font-size:10.5px;font-weight:700;cursor:pointer}
+.zrow button:hover{border-color:var(--accent);color:var(--ink)}
+.ctrlrow{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:11.5px;color:var(--ink-dim)}
+.ctrlrow label{min-width:78px;color:var(--ink-mut);font-weight:700}
+.ctrlrow select{flex:1;min-width:0;background:#14110e;border:1px solid var(--line2);color:var(--ink);border-radius:7px;padding:5px 6px;font-size:11.5px}
+input[type=range]{flex:1;accent-color:var(--accent);min-width:0}
+.mini{font-size:10.5px;color:var(--ink-mut);line-height:1.45}
+.out{font-size:11px;color:var(--ink-dim);line-height:1.5;min-height:30px}
+.out b{color:var(--ink)} .out .ok{color:var(--good)} .out .bad{color:var(--bad)} .out .warn{color:var(--warn)}
+.col.center{background:radial-gradient(900px 600px at 50% 30%,#17120e,#08090a);position:relative}
+.scenewrap{flex:1;min-height:0;display:grid;grid-template-columns:1.7fr 1fr;grid-auto-rows:min-content;gap:8px;padding:10px;overflow:auto;align-content:start}
+.cvbox{position:relative;background:#06080a;border:1px solid var(--line2);border-radius:12px;overflow:hidden}
+.cvbox canvas{width:100%;display:block;background:#06080a;touch-action:none}
+.cvbox .tag{position:absolute;left:10px;top:7px;font-size:9.5px;font-weight:800;color:var(--accent);letter-spacing:.5px;pointer-events:none}
+.stack{display:flex;flex-direction:column;gap:8px}
+.chk{display:flex;gap:7px;align-items:flex-start;font-size:11px;color:var(--ink-dim);margin:5px 0} .chk input{accent-color:var(--accent);width:15px;height:15px;margin-top:1px}
+.verdict{width:100%;background:var(--accent2);color:#042016;border:0;border-radius:8px;padding:9px 0;font-size:13px;font-weight:800;cursor:pointer;margin-top:4px}
+.verdict.sec{background:#1d1812;color:var(--accent);border:1px solid var(--line2)} .verdict.reset{background:#16130f;color:var(--ink-dim)}
+.verdict.sm{padding:7px 0;font-size:11.5px}
+.gauge{height:9px;border-radius:6px;background:#1a1612;border:1px solid var(--line2);overflow:hidden;margin:3px 0 5px} .gauge i{display:block;height:100%;width:0;background:var(--good);transition:width .2s}
+.jcard{background:#14110e;border:1px solid var(--line2);border-radius:9px;padding:8px 10px;margin-top:8px}
+.jscore{font-size:26px;font-weight:800} .jscore small{font-size:12px;color:var(--ink-mut);font-weight:700}
+.jflag{display:flex;gap:7px;align-items:flex-start;font-size:11px;margin:5px 0;line-height:1.35} .jflag .b{width:15px;flex-shrink:0;text-align:center;font-weight:800}
+.jflag.ok .b{color:var(--good)} .jflag.bad .b{color:var(--bad)} .jflag.warn .b{color:var(--warn)}
+.ovl{position:fixed;inset:0;background:rgba(3,4,5,.86);display:none;place-items:center;z-index:50;padding:18px} .ovl.on{display:grid}
+.debrief{width:min(1180px,97vw);max-height:94dvh;overflow:auto;background:var(--bg-1);border:1px solid var(--line2);border-radius:16px;box-shadow:var(--sh)}
+.debrief .dh{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg-1);z-index:2}
+.debrief .dh h3{margin:0;font-size:16px} .debrief .dh .x{margin-left:auto;cursor:pointer;color:var(--ink-mut);font-size:22px;background:0;border:0}
+.d3{display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:12px;padding:16px}
+.dview{background:#100d0b;border:1px solid var(--line2);border-radius:11px;padding:11px;min-height:260px}
+.dview h5{margin:0 0 8px;font-size:12px;color:var(--accent);letter-spacing:.4px;text-transform:uppercase} .dview canvas{width:100%;border-radius:8px;background:#06080a;display:block}
+.karne{font-size:12px;line-height:1.5;color:var(--ink-dim)} .karne .kh{color:var(--ink);font-weight:800;margin:8px 0 3px;font-size:12.5px}
+.karne .pos{color:var(--good)} .karne .neg{color:var(--bad)} .karne .neu{color:var(--warn)}
+.dmetric{display:flex;justify-content:space-between;font-size:11.5px;color:var(--ink-dim);padding:3px 0;border-bottom:1px dashed var(--line)} .dmetric b{color:var(--ink)}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#14110e;border:1px solid var(--line2);color:var(--ink);padding:9px 16px;border-radius:999px;font-size:12.5px;font-weight:700;box-shadow:var(--sh);z-index:60;opacity:0;transition:opacity .25s;pointer-events:none;max-width:92vw;text-align:center}
+.toast.on{opacity:1} .toast.warn{border-color:#4a3a14;color:var(--warn)} .toast.bad{border-color:#4a2024;color:var(--bad)} .toast.good{border-color:#1f4a34;color:var(--good)}
+body[data-bench="1"] .pane2{display:none!important} body[data-bench="2"] .pane1{display:none!important}
+.grp[hidden]{display:none!important}
+@media (max-width:1150px){ .main{grid-template-columns:220px 1fr 300px} }
+@media (max-width:950px){ .main{grid-template-columns:1fr;grid-template-rows:auto 1fr auto;overflow:auto} html,body{overflow:auto} .app{height:auto} .col.left,.col.right{border:0;border-top:1px solid var(--line)} .d3{grid-template-columns:1fr} .scenewrap{grid-template-columns:1fr} }
+body[data-bench="1"] .pane2,body[data-bench="1"] .pane3{display:none!important}
+body[data-bench="2"] .pane1,body[data-bench="2"] .pane3{display:none!important}
+body[data-bench="3"] .pane1,body[data-bench="3"] .pane2{display:none!important}
+body[data-kind="ceph"] .p1mf{display:none!important} body[data-kind="mf"] .p1ceph{display:none!important}
+body[data-kind3="p1"] .p3b{display:none!important} body[data-kind3="p2"] .p3a{display:none!important}
+.lmrow{display:flex;gap:6px;align-items:center;font-size:11px;color:var(--ink-dim);padding:4px 7px;border:1px solid var(--line2);border-radius:8px;margin-bottom:4px;cursor:pointer;background:#14110e}
+.lmrow.on{border-color:var(--accent);background:#211810;color:var(--ink)} .lmrow.placed .dot{background:var(--good)} .lmrow .dot{width:9px;height:9px;border-radius:50%;background:#3a332a;flex-shrink:0}
+.lmrow b{font-weight:800;min-width:30px;color:var(--ink)}
+.kv{display:flex;justify-content:space-between;gap:8px;font-size:11.5px;padding:3px 0;border-bottom:1px dashed var(--line);color:var(--ink-dim)} .kv b{color:var(--ink)}
+.kv .n{color:var(--ink-mut);font-size:10px}
+.cvbox canvas.cross{cursor:crosshair}
+.ctl{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 10px;background:#0d0b09;border:1px solid var(--line2);border-radius:12px;font-size:11.5px;color:var(--ink-dim)}
+.ctl button{background:#1d1812;border:1px solid var(--line2);color:var(--accent);border-radius:8px;padding:5px 10px;font-weight:800;font-size:11.5px;cursor:pointer}
+.ctl input[type=range]{min-width:90px}
+.krow{border:1px solid var(--line2);border-radius:9px;padding:6px 8px;margin-bottom:6px;background:#14110e}
+.krow h6{margin:0 0 4px;font-size:11px;color:var(--accent)}
+</style></head><body data-bench="1" data-kind="ceph" data-kind3="p1">
+<div class="app">
+  <div class="topbar">
+    <div class="brand">Ductus<span class="en">Lab ORTO·TME·HBP</span><span class="tag">Sefalometri · M/F Biyomekaniği · TME Kinematiği · Paralelometre/RPD</span></div>
+    <div class="seg" id="benchSeg"><button data-bench="1" class="on">Tezgâh 1 · Sefalometri &amp; M/F</button><button data-bench="2">Tezgâh 2 · TME Kinematiği</button><button data-bench="3">Tezgâh 3 · HBP Paralelometre</button></div>
+    <div class="sp"></div>
+    <div class="casepick" id="casePick"></div>
+    <div class="seg" id="modeSeg"><button data-mode="explore" class="on">Keşfet</button><button data-mode="exam">DUS / Sınav</button></div>
+  </div>
+  <div class="stepper" id="stepper"></div>
+  <div class="main">
+    <!-- ================= LEFT ================= -->
+    <div class="col left scroll">
+      <div class="pane1 p1ceph">
+        <div class="panel"><h4>1 · Landmark Yerleştirme</h4>
+          <div class="mini" style="margin-bottom:6px">Listeden noktayı seç, röntgende dokun / sürükle. Büyüteç imleci 3× izler.</div>
+          <div id="lmList"></div>
+          <div class="zrow"><button id="lmClear">Tümünü sil</button><button id="lmAuto" title="Test/öğretim: doğru yerlere koy">Hızlı yerleştir</button></div>
+        </div>
+        <div class="panel"><h4>2 · Canlı Ölçümler</h4><div id="cephOut" class="out"></div></div>
+      </div>
+      <div class="pane1 p1mf">
+        <div class="panel"><h4>Vaka Bulguları</h4><div id="mfInfo" class="out"></div></div>
+        <div class="panel"><h4>1 · Direnç Merkezi (C_res)</h4>
+          <div class="mini">Kök ekseninde dokunarak C_res tahminini işaretle (kırmızı artı).</div>
+          <div class="out" id="mfCresOut"></div></div>
+        <div class="panel"><h4>2-3 · Braket Kuvveti &amp; Çift-Kuvvet Momenti</h4>
+          <div class="ctrlrow"><label>F (g)</label><input type="range" id="mfF" min="0" max="200" step="1" value="0"><span id="mfFV" style="min-width:46px;text-align:right">0 g</span></div>
+          <div class="ctrlrow"><label>M (g·mm)</label><input type="range" id="mfM" min="0" max="2800" step="5" value="0"><span id="mfMV" style="min-width:60px;text-align:right">0</span></div>
+          <div class="out" id="mfRead"></div></div>
+      </div>
+      <div class="pane2">
+        <div class="panel"><h4>Hasta Öyküsü</h4><div id="tHist" class="out"></div></div>
+        <div class="panel"><h4>Muayene &amp; Ölçümler</h4>
+          <button class="optbtn" id="tOpenB"><b>Maksimum ağız açıklığı</b><small>İnsizal mesafe (mm) ölç</small></button>
+          <button class="optbtn" id="tListenB"><b>Eklem sesi / palpasyon</b><small>Açma-kapama sırasında dinle</small></button>
+          <button class="optbtn" id="tLatRB"><b>Sağ lateral ekskürsiyon</b><small>mm</small></button>
+          <button class="optbtn" id="tLatLB"><b>Sol lateral ekskürsiyon</b><small>mm</small></button>
+          <button class="optbtn" id="tOccB"><b>Oklüzal kontaklar</b><small>Lateral hareketlerde</small></button>
+          <div class="out" id="tOut"></div></div>
+      </div>
+      <div class="pane3">
+        <div class="p3a">
+          <div class="panel"><h4>1 · Paralelometre Giriş Yolu</h4>
+            <div class="ctrlrow"><label>Alaşım</label><select id="sAlloy"><option value="cocr">Co-Cr kroşe kolu</option><option value="gold">Altın alaşım tel kroşe</option></select></div>
+            <div class="ctrlrow"><label>Eğim</label><input type="range" id="sTilt" min="0" max="14" step="0.1" value="0"><span id="sTiltV" style="min-width:46px;text-align:right">0°</span></div>
+            <div class="out" id="sOut"></div></div>
+          <div class="panel"><h4>2-3 · Destek Dişi Tasarımı (35)</h4>
+            <div class="ctrlrow"><label>Tırnak (rest)</label><select id="rRest"><option value="none">— seç —</option><option value="mesial">Mezial oklüzal tırnak</option><option value="distal">Distal oklüzal tırnak</option></select></div>
+            <div class="ctrlrow"><label>Kroşe</label><select id="rClasp"><option value="none">— seç —</option><option value="circ">Çevresel (circumferential) kroşe</option><option value="ibar">I-bar (gingivalden yaklaşan)</option></select></div>
+            <label class="chk"><input type="checkbox" id="rPlate"><span>Proksimal plak (distal gidiş yolu / kılavuz düzlem)</span></label>
+            <div class="out" id="rOut"></div></div>
+          <div class="panel"><h4>4 · İndirekt Tutucu</h4>
+            <div class="ctrlrow"><label>Konum</label><select id="rIR"><option value="none">İndirekt tutucu yok</option><option value="34">Sol 1. premolar oklüzal tırnak</option><option value="33">Sol kanin cingulum tırnağı</option><option value="31">Sol lateral/santral cingulum tırnağı</option><option value="41">Sağ santral cingulum tırnağı</option><option value="43">Sağ kanin cingulum tırnağı</option></select></div>
+            <div class="out" id="rIROut"></div></div>
+        </div>
+        <div class="p3b">
+          <div class="panel"><h4>Kennedy Sınıflaması — 4 Ark</h4><div class="mini">Her ark için sınıf ve modifikasyon sayısı seç.</div><div id="kRows"></div></div>
+        </div>
+      </div>
+    </div>
+    <!-- ================= CENTER ================= -->
+    <div class="col center">
+      <div class="scenewrap pane1 p1ceph">
+        <div class="cvbox"><div class="tag">LATERAL SEFALOMETRİK RÖNTGEN (sentetik)</div><canvas id="cephCanvas" class="cross" width="620" height="540"></canvas></div>
+        <div class="stack">
+          <div class="cvbox"><div class="tag">BÜYÜTEÇ 3×</div><canvas id="loupeCanvas" width="280" height="240"></canvas></div>
+          <div class="panel" style="border:1px solid var(--line2);border-radius:12px;background:#0d0b09"><h4>Referans</h4><div class="out" id="cephRef"></div></div>
+        </div>
+      </div>
+      <div class="scenewrap pane1 p1mf">
+        <div class="cvbox"><div class="tag">TEK KÖKLÜ ÜST KESİCİ · SAGİTAL KESİT · C_res · C_rot · PDL STRESİ</div><canvas id="mfCanvas" class="cross" width="620" height="540"></canvas></div>
+        <div class="stack">
+          <div class="panel" style="border:1px solid var(--line2);border-radius:12px;background:#0d0b09"><h4>Hareket Analizi</h4><div class="out" id="mfNums"></div></div>
+          <div class="panel" style="border:1px solid var(--line2);border-radius:12px;background:#0d0b09"><h4>PDL Stres Skalası</h4><div class="out" id="mfLegend"></div></div>
+        </div>
+      </div>
+      <div class="scenewrap pane2">
+        <div class="cvbox"><div class="tag">CANLI SAGİTAL TME KESİTİ</div><canvas id="tmjCanvas" width="560" height="430"></canvas></div>
+        <div class="stack">
+          <div class="cvbox"><div class="tag">KARŞIDAN KESİCİ AÇILMA YOLU</div><canvas id="frontCanvas" width="300" height="300"></canvas></div>
+          <div class="ctl"><b>Açıklık</b><input type="range" id="tSl" min="0" max="50" step="0.5" value="0"><span id="tSlV" style="min-width:48px">0 mm</span>
+            <button id="tPlay">▶ Aç-kapa</button><label class="chk" style="margin:0"><input type="checkbox" id="tSnd" checked><span>Ses</span></label></div>
+          <div class="out" id="tRead"></div>
+        </div>
+      </div>
+      <div class="scenewrap pane3 p3a">
+        <div class="cvbox"><div class="tag">ALT ARK · OKLÜZAL GÖRÜNÜM · TASARIM</div><canvas id="archCanvas" width="560" height="430"></canvas></div>
+        <div class="stack">
+          <div class="cvbox"><div class="tag">YAN GÖRÜNÜM · MUKOZA-PDL KALDIRAÇ</div><canvas id="leverCanvas" width="280" height="230"></canvas></div>
+          <div class="cvbox"><div class="tag">PARALELOMETRE · UNDERCUT</div><canvas id="survCanvas" width="280" height="230"></canvas></div>
+          <div class="ctl"><b>Çiğneme yükü</b><input type="range" id="rLoad" min="0" max="100" step="1" value="0"><span id="rLoadV" style="min-width:36px">0%</span></div>
+        </div>
+      </div>
+      <div class="scenewrap pane3 p3b">
+        <div class="cvbox" style="grid-column:1/-1"><div class="tag">KENNEDY SINIFLAMASI — 4 ÖRNEK ARK (kırmızı: dişsiz)</div><canvas id="kenCanvas" width="900" height="470"></canvas></div>
+        <div class="panel" style="grid-column:1/-1;border:1px solid var(--line2);border-radius:12px;background:#0d0b09" id="kRulesBox"><h4>Applegate Kuralları</h4><div class="out" id="kRules"></div></div>
+      </div>
+    </div>
+    <!-- ================= RIGHT ================= -->
+    <div class="col right scroll">
+      <div class="pane1 p1ceph">
+        <div class="panel"><h4>3-4 · Yorum &amp; Karar</h4>
+          <div class="ctrlrow"><label>İskeletsel sınıf</label><select id="dCls"><option value="">— seç —</option><option value="I">Sınıf I</option><option value="II">Sınıf II</option><option value="III">Sınıf III</option></select></div>
+          <div class="ctrlrow"><label>Dayanak</label><select id="dBasis"><option value="">— seç —</option><option value="anb">ANB</option><option value="wits">Wits</option><option value="both">ANB + Wits + SN/MP eğimi</option><option value="sna">SNA / SNB tek başına</option></select></div>
+          <div class="ctrlrow"><label>Vertikal patern</label><select id="dVert"><option value="">— seç —</option><option value="hypo">Hipodiverjan</option><option value="normo">Normodiverjan</option><option value="hyper">Hiperdiverjan</option></select></div>
+          <div class="ctrlrow"><label>E-hattı (dudaklar)</label><select id="dLip"><option value="">— seç —</option><option value="retruded">Geride</option><option value="normal">Normal</option><option value="protruded">Önde</option></select></div>
+        </div>
+      </div>
+      <div class="pane1 p1mf">
+        <div class="panel"><h4>4 · M/F Yorumu</h4>
+          <div class="ctrlrow"><label>Elde edilen hareket</label><select id="dMove"><option value="">— seç —</option><option value="uncontrolled">Kontrolsüz devrilme</option><option value="controlled">Kontrollü devrilme</option><option value="translation">Gövdesel hareket (translasyon)</option><option value="torque">Tork / kök hareketi</option></select></div>
+          <div class="ctrlrow"><label>Kemik kaybı etkisi</label><select id="dAware"><option value="">— seç —</option><option value="none">C_res değişmez</option><option value="apical">C_res apikale kayar; aynı F daha büyük moment üretir</option><option value="coronal">C_res kronale kayar</option></select></div>
+          <label class="chk"><input type="checkbox" id="dSafe"><span>Seçilen kuvvet düzeyi biyolojik olarak uygun</span></label>
+        </div>
+      </div>
+      <div class="pane2">
+        <div class="panel"><h4>3-4 · Tanı &amp; Plan</h4>
+          <div class="ctrlrow"><label>Tanı</label><select id="tDx"><option value="">— seç —</option><option value="addwr">Redüksiyonlu disk deplasmanı (ADDwR)</option><option value="addwor">Redüksiyonsuz disk deplasmanı (ADDwoR)</option><option value="occl">Normal TME + oklüzal / parafonksiyon kaynaklı kas ağrısı</option><option value="oa">Dejeneratif eklem hastalığı</option></select></div>
+          <div class="ctrlrow"><label>Taraf</label><select id="tSide"><option value="">— seç —</option><option value="R">Sağ</option><option value="L">Sol</option><option value="none">Tek taraf yok</option></select></div>
+          <div class="ctrlrow"><label>Açılma yolu</label><select id="tDev"><option value="">— seç —</option><option value="deviation">Deviasyon (orta hatta döner)</option><option value="deflectR">Defleksiyon → sağa (kalıcı)</option><option value="deflectL">Defleksiyon → sola (kalıcı)</option><option value="none">Sapma yok</option></select></div>
+          <div class="ctrlrow"><label>Klik kayboldu</label><select id="tBelief"><option value="">— seç —</option><option value="healed">İyileşme gösterir</option><option value="lock">İlerleme / kilitlenme olabilir</option><option value="na">Geçerli değil</option></select></div>
+          <div class="ctrlrow"><label>Plan</label><select id="tPlan"><option value="">— seç —</option><option value="reassure">Güvence + izlem, tedavisiz</option><option value="conserv">Konservatif: manuel mobilizasyon, yumuşak diyet, NSAİ, açma egzersizi</option><option value="splint">Stabilizasyon (Michigan) splinti + kanin koruması</option><option value="equil">Kalıcı oklüzal aşındırma / oklüzyon yeniden yapılandırma</option><option value="surgery">Cerrahi (artroskopi / artroplasti)</option></select></div>
+          <label class="chk"><input type="checkbox" id="tEdu"><span>Hasta eğitimi (yumuşak diyet, parafonksiyon, aşırı açmaktan kaçınma)</span></label>
+          <label class="chk"><input type="checkbox" id="tFollow"><span>Takip randevusu planla</span></label>
+        </div>
+      </div>
+      <div class="pane3 p3a">
+        <div class="panel"><h4>Tasarım Özeti</h4><div class="out" id="rSum"></div></div>
+      </div>
+      <div class="panel">
+        <h4>Jüri</h4>
+        <button class="verdict" id="juryBtn">Jüriyi Çağır → 3-Görünümlü Debrief</button>
+        <button class="verdict reset" id="resetBtn">Vakayı Sıfırla</button>
+        <div id="juryOut"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="ovl" id="ovl"><div class="debrief">
+  <div class="dh"><h3 id="dbTitle">Debrief</h3><span class="mini" id="dbSub" style="color:var(--ink-mut)"></span><button class="x" id="dbX">×</button></div>
+  <div class="d3">
+    <div class="dview"><h5 id="dvAh">① Senin Çalışman</h5><canvas id="dvA" width="640" height="470"></canvas><div id="dvAmeta"></div></div>
+    <div class="dview"><h5 id="dvBh">② Şeffaf Gerçek</h5><canvas id="dvB" width="640" height="470"></canvas><div id="dvBmeta"></div></div>
+    <div class="dview"><h5>③ 4 Kategorili Jüri Karnesi</h5><div class="karne" id="dvC"></div></div>
+  </div>
+</div></div>
+<div class="toast" id="toast"></div>
+<script>
+"use strict";
+/* ============================================================
+   DuctusLab ORTO · TME · HBP
+   T1: sentetik lateral sefalometri (landmark → SNA/SNB/ANB/Wits/FMA/E-hattı) + M/F biyomekaniği (C_res, C_rot, PDL stresi)
+   T2: TME kondil–disk kinematiği (0–22 mm rotasyon → 22–48 mm translasyon), ADDwR / ADDwoR / oklüzal
+   T3: paralelometre (undercut), Kennedy/Applegate, RPI fulkrum biyomekaniği
+   ============================================================ */
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const rad=d=>d*Math.PI/180, deg=r=>r*180/Math.PI;
+const vec=a=>[Math.cos(rad(a)),Math.sin(rad(a))];
+const add=(p,q)=>[p[0]+q[0],p[1]+q[1]], sub=(p,q)=>[p[0]-q[0],p[1]-q[1]], mul=(p,k)=>[p[0]*k,p[1]*k];
+const dot=(p,q)=>p[0]*q[0]+p[1]*q[1], len=p=>Math.hypot(p[0],p[1]), nrm=p=>{const l=len(p)||1;return [p[0]/l,p[1]/l];};
+const dist=(p,q)=>Math.hypot(p[0]-q[0],p[1]-q[1]);
+const lerp=(p,q,t)=>[p[0]+(q[0]-p[0])*t,p[1]+(q[1]-p[1])*t];
+const r1=v=>Math.round(v*10)/10, r2=v=>Math.round(v*100)/100;
+function toast(m,k){const t=$('toast');t.textContent=m;t.className='toast on'+(k?' '+k:'');clearTimeout(t._t);t._t=setTimeout(()=>t.className='toast',2400);}
+let bench=1, curMode='explore', stepIdx=0; const CID={1:'O1',2:'TME1',3:'P1'};
+function spline(ctx,pts,closed){ const n=pts.length; ctx.moveTo(pts[0][0],pts[0][1]);
+  for(let i=0;i<(closed?n:n-1);i++){ const p0=closed?pts[(i-1+n)%n]:pts[Math.max(i-1,0)], p1=pts[i], p2=pts[(i+1)%n], p3=closed?pts[(i+2)%n]:pts[Math.min(i+2,n-1)];
+    ctx.bezierCurveTo(p1[0]+(p2[0]-p0[0])/6,p1[1]+(p2[1]-p0[1])/6,p2[0]-(p3[0]-p1[0])/6,p2[1]-(p3[1]-p1[1])/6,p2[0],p2[1]); }
+  if(closed)ctx.closePath(); }
+function rr(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+
+/* ================= TEZGÂH 1 — SEFALOMETRİ ================= */
+const OC={
+ O1:{kind:'ceph',name:'Sınıf II iskeletsel',SNA:83,SNB:77.5,wits:4.5,mpsn:33,ls:-1.5,li:0.5,
+   hist:'14 yaş kız. Retrüzyon şikâyeti, overjet artmış. İskeletsel sınıfı sefalometriyle belirle.',
+   teach:'ANB (5.5°) ve Wits (+4.5 mm) birlikte yüksek: iki bağımsız ölçüt uyumlu → gerçek iskeletsel Sınıf II. Dik kraniyal kaide sapması yok.'},
+ O2:{kind:'ceph',name:'ANB tuzağı (hiperdiverjan)',SNA:84,SNB:77.5,wits:0.5,mpsn:45,ls:-4,li:-2.5,
+   hist:'16 yaş kadın. Dik yüz uzunluğu fazla, ön açık eğilimli. Profil yan dengeli görünüyor.',
+   teach:'ANB 6.5° (sahte Sınıf II) ama Wits +0.5 mm: hiperdiverjan saat yönü rotasyon ve dik kranial kaide ANB\'yi şişirir. ANB tek başına iskeletsel sınıfı belirlemez; Wits (oklüzal düzleme göre) gerçek ilişkiyi gösterir → iskeletsel Sınıf I.'},
+ O3:{kind:'mf',name:'M/F · kemik kaybı',bone:4,goal:'translation',
+   hist:'46 yaş, periodontal tedavi görmüş hasta. Üst santral kesicide 4 mm alveoler kemik kaybı. Kesici gövdesel (translasyon) olarak retrakte edilecek.',
+   teach:'Kemik kaybında C_res apikale kayar: braket–C_res mesafesi (d) artar; sağlıklı dişin M/F=10.6 translasyon değeri burada devrilme verir. Translasyon için M/F ≈ d(b) ≈ 13 gerekir; kuvvet kök boyuna göre azaltılır.'}
+};
+const C_ORDER=['O1','O2','O3'];
+const REQ=['S','N','Or','Po','A','B','Go','Gn','Me','Op1','Op2','Pn','PgS','Ls','Li'];
+const LMN={S:'Sella (turcica merkezi)',N:'Nasion',Or:'Orbitale',Po:'Porion',A:'A noktası (subspinale)',B:'B noktası (supramentale)',Go:'Gonion',Gn:'Gnathion',Me:'Menton',Op1:'Oklüzal düzlem · kesici overbite',Op2:'Oklüzal düzlem · 1. molar distal',Pn:'Pronasale (burun ucu)',PgS:'Yumuşak doku Pogonion',Ls:'Labrale superius',Li:'Labrale inferius'};
+function solveOcc(A,B,wits){ const d=sub(A,B); let lo=-40,hi=40; for(let i=0;i<60;i++){ const m=(lo+hi)/2; if(dot(d,vec(m))-wits>0) lo=m; else hi=m; } return (lo+hi)/2; }
+function buildCeph(c){
+  const N=[0,0], S=mul(vec(172),70), A=mul(vec(172-c.SNA),68), B=mul(vec(172-c.SNB),112);
+  const th=c.mpsn-8, thfh=-1;
+  const Po=add(S,[-8,26]), Or=add(Po,mul(vec(thfh),88));
+  const Me=add(B,[-2.5,25]), Go=sub(Me,mul(vec(th),74)), Pg=add(B,[3.2,9]), Gn=add(Me,[2.5,-4]);
+  const UI=add(A,[6.5,28]), LI=add(UI,[-3.2,-2.2]);
+  const phi=solveOcc(A,B,c.wits), u=vec(phi), Op1=add(UI,[-1.5,-1.2]), Op2=sub(Op1,mul(u,47));
+  const Pn=[30,50], PgS=add(Pg,[11,1]);
+  const d=sub(PgS,Pn), nn=nrm([d[1],-d[0]]), n=nn[0]<0?mul(nn,-1):nn;
+  const onLine=y=>add(Pn,mul(d,(y-Pn[1])/d[1]));
+  const Ls=add(onLine(UI[1]-13),mul(n,c.ls)), Li=add(onLine(UI[1]+6),mul(n,c.li));
+  const ANS=add(A,[3,-9]), PNS=add(ANS,[-50,-2]), Co=add(Go,[4,-68]);
+  return {S,N,Or,Po,A,B,Go,Gn,Me,Pg,Op1,Op2,Pn,PgS,Ls,Li,ANS,PNS,Co,UI,LI,phi};
+}
+function ang(p,v,q){ const a=sub(p,v),b=sub(q,v); let d=deg(Math.atan2(b[1],b[0])-Math.atan2(a[1],a[0])); return Math.abs(((d+180)%360+360)%360-180); }
+function lineAng(p,q){ return deg(Math.atan2(q[1]-p[1],q[0]-p[0])); }
+function eDist(P,Pn,Pg){ const d=sub(Pg,Pn), nn=nrm([d[1],-d[0]]), n=nn[0]<0?mul(nn,-1):nn; return dot(sub(P,Pn),n); }
+function measure(M){ const g=k=>M[k]; const has=(...k)=>k.every(x=>M[x]); const o={};
+  o.SNA=has('S','N','A')?ang(g('S'),g('N'),g('A')):null; o.SNB=has('S','N','B')?ang(g('S'),g('N'),g('B')):null;
+  o.ANB=(o.SNA!=null&&o.SNB!=null)?o.SNA-o.SNB:null;
+  o.wits=has('A','B','Op1','Op2')?dot(sub(g('A'),g('B')),nrm(sub(g('Op1'),g('Op2')))):null;
+  o.gognsn=has('Go','Gn','S','N')?lineAng(g('Go'),g('Gn'))-lineAng(g('S'),g('N')):null;
+  o.fma=has('Go','Me','Po','Or')?lineAng(g('Go'),g('Me'))-lineAng(g('Po'),g('Or')):null;
+  o.eLs=has('Pn','PgS','Ls')?eDist(g('Ls'),g('Pn'),g('PgS')):null; o.eLi=has('Pn','PgS','Li')?eDist(g('Li'),g('Pn'),g('PgS')):null; return o; }
+const clsByAnb=a=>a>4?'II':a<0?'III':'I', clsByWits=w=>w>=2.5?'II':w<=-4.5?'III':'I';
+const vertOf=g=>g<27?'hypo':g>37?'hyper':'normo', lipOf=(ls,li)=>(li>1||ls>0)?'protruded':(li<-4||ls<-6)?'retruded':'normal';
+let SC={cid:'O1',c:OC.O1,T:null,truth:null,marks:{},active:'S',drag:null,dec:{cls:'',basis:'',vert:'',lip:''}};
+function newSC(id){ const c=OC[id]; return {cid:id,c,T:buildCeph(c),marks:{},active:'S',drag:null,dec:{cls:'',basis:'',vert:'',lip:''}}; }
+/* canvas dönüşümü */
+const K=2.4, OX=360, OY=175; const P=p=>[OX+p[0]*K,OY+p[1]*K], Pinv=q=>[(q[0]-OX)/K,(q[1]-OY)/K];
+function tooth(ctx,tip,apex,w,fill){ const ax=sub(apex,tip), L=len(ax), t=nrm(ax), nrmv=[-t[1],t[0]];
+  const prof=[[0,.55],[.18,.95],[.32,1],[.42,.8],[.7,.42],[1,.06]]; const left=[],right=[];
+  for(const [s,k] of prof){ const c=add(tip,mul(ax,s)); left.push(P(add(c,mul(nrmv,w*k/2)))); right.push(P(add(c,mul(nrmv,-w*k/2)))); }
+  ctx.beginPath(); spline(ctx,left.concat(right.reverse()),true); ctx.fillStyle=fill; ctx.fill(); ctx.lineWidth=1.5; ctx.strokeStyle='rgba(255,255,255,.7)'; ctx.stroke(); }
+function drawAnat(ctx,T){
+  const Ps=a=>a.map(P); ctx.lineJoin='round'; ctx.lineCap='round';
+  // yumuşak doku
+  const Sn=[T.A[0]+9,T.A[1]-3], St=[T.UI[0]+7,T.UI[1]-2], Si=[T.B[0]+8,T.B[1]+2], MeS=[T.Me[0]+9,T.Me[1]+5], Nk=[T.Me[0]-6,T.Me[1]+16];
+  const prof=[[-2,-16],[3,0],[11,20],T.Pn,[22,58],Sn,T.Ls,St,T.Li,Si,T.PgS,MeS,Nk];
+  { const gx0=P([40,0])[0], gx1=P([8,0])[0]-60; const gr=ctx.createLinearGradient(gx0,0,gx1,0); gr.addColorStop(0,'rgba(140,150,156,.22)'); gr.addColorStop(1,'rgba(140,150,156,0)');
+    ctx.beginPath(); spline(ctx,Ps(prof),false); ctx.lineTo(P([-30,Nk[1]])[0],P([-30,Nk[1]])[1]); ctx.lineTo(P([-30,-16])[0],P([-30,-16])[1]); ctx.closePath(); ctx.save(); ctx.clip(); ctx.fillStyle=gr; ctx.fillRect(0,0,640,600); ctx.restore(); }
+  ctx.beginPath(); spline(ctx,Ps(prof),false); ctx.strokeStyle='#a2aaaf'; ctx.lineWidth=2; ctx.stroke();
+  // kalvaryum
+  ctx.save(); ctx.shadowColor='rgba(210,215,218,.5)'; ctx.shadowBlur=8;
+  ctx.beginPath(); spline(ctx,Ps([[-2,-16],[-6,-40],[-20,-70],[-55,-84],[-95,-70],[-118,-35],[-118,10],[-108,40],[-96,62]]),false); ctx.strokeStyle='#b4b9bd'; ctx.lineWidth=5; ctx.stroke();
+  ctx.beginPath(); spline(ctx,Ps([[-7,-14],[-10,-36],[-22,-62],[-55,-77],[-90,-64],[-111,-33],[-111,8]]),false); ctx.strokeStyle='rgba(180,185,190,.45)'; ctx.lineWidth=2; ctx.stroke();
+  // ön kranial kaide + sella
+  ctx.beginPath(); ctx.moveTo(...P(add(T.S,[-6,-2]))); ctx.lineTo(...P([2,3])); ctx.strokeStyle='#9aa0a4'; ctx.lineWidth=6; ctx.stroke();
+  ctx.beginPath(); ctx.arc(...P(add(T.S,[0,-1])),6.5*K,rad(20),rad(160)); ctx.strokeStyle='#c8cdd0'; ctx.lineWidth=3; ctx.stroke();
+  ctx.beginPath(); spline(ctx,Ps([T.S,[T.S[0]-25,T.S[1]+8],[T.Po[0]+8,T.Po[1]-6]]),false); ctx.strokeStyle='rgba(180,185,190,.5)'; ctx.lineWidth=3; ctx.stroke();
+  ctx.restore();
+  // orbita + frontal sinüs
+  ctx.beginPath(); ctx.ellipse(...P([11,16]),12*K,18*K,0,0,7); ctx.fillStyle='rgba(0,0,0,.45)'; ctx.fill(); ctx.strokeStyle='#aeb3b6'; ctx.lineWidth=3; ctx.stroke();
+  ctx.beginPath(); ctx.ellipse(...P([3,-14]),5*K,7*K,0.4,0,7); ctx.fillStyle='rgba(0,0,0,.4)'; ctx.fill();
+  // burun boşluğu, damak
+  ctx.beginPath(); ctx.moveTo(...P([10,22])); ctx.lineTo(...P([26,40])); ctx.lineTo(...P([T.ANS[0]+2,T.ANS[1]-6])); ctx.lineTo(...P([T.PNS[0],T.PNS[1]-8])); ctx.lineTo(...P([-30,26])); ctx.lineTo(...P([-8,18])); ctx.closePath(); ctx.fillStyle='rgba(0,0,0,.5)'; ctx.fill();
+  ctx.beginPath(); ctx.moveTo(...P(T.ANS)); ctx.lineTo(...P(T.PNS)); ctx.strokeStyle='#d2d6d9'; ctx.lineWidth=4; ctx.stroke();
+  // maksilla
+  const u=vec(T.phi), nup=[u[1],-u[0]];
+  ctx.beginPath(); spline(ctx,Ps([T.ANS,T.A,[T.UI[0]+1.5,T.UI[1]-11],add(T.Op1,add(mul(u,-14),mul(nup,9))),add(T.Op2,mul(nup,9)),add(T.PNS,[2,9]),T.PNS]),true);
+  ctx.fillStyle='rgba(170,176,181,.26)'; ctx.fill(); ctx.strokeStyle='#b9bec2'; ctx.lineWidth=2.5; ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(...P(T.N)); ctx.lineTo(...P([11,20])); ctx.strokeStyle='#cfd3d6'; ctx.lineWidth=3; ctx.stroke();
+  ctx.beginPath(); ctx.arc(...P(T.Po),4.5*K,0,7); ctx.strokeStyle='rgba(215,220,223,.8)'; ctx.lineWidth=2.5; ctx.stroke(); ctx.beginPath(); ctx.ellipse(...P(T.Po),2.2*K,2.8*K,0,0,7); ctx.fillStyle='rgba(0,0,0,.55)'; ctx.fill();
+  ctx.beginPath(); ctx.ellipse(...P([T.A[0]-26,T.A[1]-16]),17*K,11*K,0,0,7); ctx.fillStyle='rgba(0,0,0,.42)'; ctx.fill(); ctx.strokeStyle='rgba(190,195,198,.5)'; ctx.lineWidth=1.5; ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(...P(T.PNS)); ctx.lineTo(...P([T.PNS[0]-5,T.PNS[1]-26])); ctx.strokeStyle='#c4c9cc'; ctx.lineWidth=3; ctx.stroke();
+  // mandibula
+  const md=[(T.Go[0]+T.Me[0])/2,(T.Go[1]+T.Me[1])/2+2];
+  const Mp=[add(T.Co,[-5,2]),add(T.Co,[5,-1]),add(T.Co,[13,9]),add(T.Co,[24,-6]),[T.Go[0]+27,T.Go[1]-14],add(T.Op2,[-3,9]),add(T.Op1,[-3,10]),[T.LI[0]+4,T.LI[1]+6],T.B,T.Pg,T.Gn,T.Me,md,[T.Go[0]+8,T.Go[1]+3],add(T.Go,[0,1]),add(T.Go,[-1,-10]),add(T.Go,[1,-38])];
+  ctx.save(); ctx.shadowColor='rgba(210,215,218,.45)'; ctx.shadowBlur=7;
+  ctx.beginPath(); spline(ctx,Ps(Mp),true); ctx.fillStyle='rgba(175,181,186,.27)'; ctx.fill(); ctx.strokeStyle='#c1c6c9'; ctx.lineWidth=3; ctx.stroke(); ctx.restore();
+  ctx.beginPath(); ctx.ellipse(...P(add(T.Co,[0,-1])),6*K,5*K,0,0,7); ctx.fillStyle='rgba(215,219,222,.55)'; ctx.fill();
+  // dişler
+  const UIap=add(T.UI,[-7.5,-20.5]), LIap=add(T.LI,[-2.5,21]);
+  tooth(ctx,T.UI,UIap,8.6,'rgba(238,241,243,.92)'); tooth(ctx,T.LI,LIap,6.6,'rgba(232,236,238,.9)');
+  tooth(ctx,add(T.Op2,mul(u,5)),add(add(T.Op2,mul(u,3)),mul(nup,19)),10.5,'rgba(236,239,241,.92)'); tooth(ctx,add(T.Op2,mul(u,5)),add(add(T.Op2,mul(u,3)),mul(nup,-17)),10.5,'rgba(232,236,238,.9)');
+  ctx.beginPath(); spline(ctx,Ps([T.Go,[md[0]+0,md[1]+1.5],T.Me]),false); ctx.strokeStyle='#d6dbde'; ctx.lineWidth=3.5; ctx.stroke();
+}
+function drawCeph(cv,o){ o=o||{}; const ctx=cv.getContext('2d'),W=cv.width,H=cv.height,T=SC.T;
+  const g=ctx.createRadialGradient(W*0.42,H*0.4,40,W*0.42,H*0.45,W*0.75); g.addColorStop(0,'#1b1e20'); g.addColorStop(1,'#040506'); ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  drawAnat(ctx,T);
+  const M=o.marks||SC.marks;
+  // çizgiler
+  const ln=(a,b,col,w,dash)=>{ if(!M[a]||!M[b])return; ctx.save(); ctx.setLineDash(dash||[]); ctx.strokeStyle=col; ctx.lineWidth=w||1.6; ctx.beginPath(); ctx.moveTo(...P(M[a])); ctx.lineTo(...P(M[b])); ctx.stroke(); ctx.restore(); };
+  ln('S','N','#4fb8e0',1.8); ln('N','A','#e8a35a',1.6); ln('N','B','#e8a35a',1.6); ln('Po','Or','#63d08a',1.6); ln('Go','Me','#e8707a',1.6); ln('Go','Gn','#e8707a',1.2,[4,3]); ln('Pn','PgS','#f0b542',1.6,[6,3]);
+  if(M.Op1&&M.Op2){ const u=nrm(sub(M.Op1,M.Op2)); ctx.save(); ctx.strokeStyle='#b57ad9'; ctx.lineWidth=1.6; ctx.beginPath(); ctx.moveTo(...P(add(M.Op2,mul(u,-12)))); ctx.lineTo(...P(add(M.Op1,mul(u,14)))); ctx.stroke();
+    for(const k of ['A','B']) if(M[k]){ const t=dot(sub(M[k],M.Op2),u), foot=add(M.Op2,mul(u,t)); ctx.setLineDash([3,3]); ctx.strokeStyle='#d9b3ee'; ctx.beginPath(); ctx.moveTo(...P(M[k])); ctx.lineTo(...P(foot)); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle='#d9b3ee'; ctx.font='bold 10px sans-serif'; ctx.fillText(k+'O',...add(P(foot),[5,-4])); } ctx.restore(); }
+  // ipucu halkası (yalnız Keşfet)
+  if(!o.noHint&&curMode==='explore'&&SC.active&&!M[SC.active]){ const q=P(T[SC.active]); ctx.save(); ctx.setLineDash([4,4]); ctx.strokeStyle='rgba(232,163,90,.55)'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.arc(q[0],q[1],8*K,0,7); ctx.stroke(); ctx.restore(); }
+  const mark=(p,lab,col,hollow)=>{ const q=P(p); ctx.strokeStyle=col; ctx.lineWidth=1.6; ctx.beginPath(); if(hollow){ctx.arc(q[0],q[1],7,0,7);} else { ctx.moveTo(q[0]-7,q[1]);ctx.lineTo(q[0]+7,q[1]);ctx.moveTo(q[0],q[1]-7);ctx.lineTo(q[0],q[1]+7);} ctx.stroke(); ctx.fillStyle=col; ctx.font='bold 11px sans-serif'; ctx.fillText(lab,q[0]+8,q[1]-7); };
+  for(const k of REQ) if(M[k]) mark(M[k],k,SC.active===k&&!o.truth?'#ffe08a':'#fff2c9',false);
+  if(o.truth) for(const k of REQ) mark(T[k],k,'#4fb8e0',true);
+  ctx.fillStyle='#78898f'; ctx.font='10px sans-serif'; ctx.fillText('ölçek: 1 mm = '+K.toFixed(1)+' px',10,H-8);
+}
+function loupe(px,py){ const lc=$('loupeCanvas'),ctx=lc.getContext('2d'),src=$('cephCanvas'); const z=3,sw=lc.width/z,sh=lc.height/z; ctx.fillStyle='#000'; ctx.fillRect(0,0,lc.width,lc.height);
+  ctx.imageSmoothingEnabled=true; ctx.drawImage(src,px-sw/2,py-sh/2,sw,sh,0,0,lc.width,lc.height);
+  ctx.strokeStyle='rgba(255,224,138,.9)'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(lc.width/2-14,lc.height/2); ctx.lineTo(lc.width/2+14,lc.height/2); ctx.moveTo(lc.width/2,lc.height/2-14); ctx.lineTo(lc.width/2,lc.height/2+14); ctx.stroke();
+  const w=Pinv([px,py]); ctx.fillStyle='#b1bec5'; ctx.font='10px sans-serif'; ctx.fillText('x '+w[0].toFixed(1)+' · y '+w[1].toFixed(1)+' mm',6,lc.height-6); }
+function placeMark(k,p){ SC.marks[k]=[p[0],p[1]]; const i=REQ.indexOf(k); const nxt=REQ.find((x,j)=>!SC.marks[x]); SC.active=nxt||k; }
+function lmError(k){ return SC.marks[k]?dist(SC.marks[k],SC.T[k]):null; }
+function gradeCeph(){ const c=SC.c,T=SC.T,d=SC.dec,codes=[]; const flags=[[],[],[],[]];
+  // 1 landmark
+  let ls=0,miss=0,big=[]; for(const k of REQ){ const e=lmError(k); if(e==null){miss++;continue;} const s=e<=1.5?1:e>=5?0:(5-e)/3.5; ls+=s; if(e>3)big.push(k+' '+e.toFixed(1)+' mm'); }
+  const s1=ls/REQ.length; if(miss){codes.push('MISSING_LANDMARKS');flags[0].push(['bad',miss+' landmark işaretlenmedi']);} if(big.length){codes.push('LANDMARK_DRIFT');flags[0].push(['warn','Sapma >3 mm: '+big.join(', ')]);} if(!miss&&!big.length) flags[0].push(['ok','Tüm landmarklar ≤3 mm içinde']);
+  // 2 sınıf
+  const tm=measure(T), trueCls=clsByWits(tm.wits), anbCls=clsByAnb(tm.ANB); let s2=0;
+  if(d.cls===trueCls){ s2=(d.basis==='both')?1:(d.basis==='wits'?0.85:0.6); flags[1].push(['ok','Sınıf '+d.cls+' doğru (gerçek iskeletsel ilişki)']); if(d.basis==='anb'||d.basis==='sna'){ flags[1].push(['warn','Doğru sonuç ama dayanak tek ölçüt: ANB tek başına güvenilmez']); } }
+  else { flags[1].push(['bad','Sınıf '+(d.cls||'—')+' ≠ gerçek Sınıf '+trueCls]); if(d.basis==='anb'&&anbCls!==trueCls&&d.cls===anbCls){ codes.push('ANB_ALONE_TRAP'); flags[1].push(['bad','ANB tuzağı: ANB='+tm.ANB.toFixed(1)+'° '+anbCls+' gösteriyor, Wits='+tm.wits.toFixed(1)+' mm gerçeği söylüyor']); } else codes.push('WRONG_SKELETAL_CLASS'); }
+  // 3 vertikal
+  const tv=vertOf(tm.gognsn); const s3=d.vert===tv?1:0; flags[2].push([s3?'ok':'bad','Vertikal patern: '+tv+' (GoGn-SN '+tm.gognsn.toFixed(1)+'°)'+(s3?'':' — seçimin '+(d.vert||'—'))]); if(!s3) codes.push('WRONG_VERTICAL');
+  // 4 E-hattı
+  const tl=lipOf(tm.eLs,tm.eLi); const s4=d.lip===tl?1:0; flags[3].push([s4?'ok':'bad','E-hattı: '+tl+' (Ls '+tm.eLs.toFixed(1)+', Li '+tm.eLi.toFixed(1)+' mm)']); if(!s4) codes.push('WRONG_ELINE');
+  const cats=[{name:'Landmark doğruluğu',w:30,s:s1,flags:flags[0]},{name:'İskeletsel sınıf (ANB↔Wits)',w:35,s:s2,flags:flags[1]},{name:'Vertikal patern',w:20,s:s3,flags:flags[2]},{name:'Ricketts E-hattı',w:15,s:s4,flags:flags[3]}];
+  return fin('Sefalometri · '+c.name,cats,codes,c.teach); }
+function fin(title,cats,codes,teach){ let sc=0; cats.forEach(x=>sc+=x.w*x.s); sc=Math.round(sc); return {title,score:sc,cats,codes,teach}; }
+/* ================= TEZGÂH 1b — M/F ================= */
+const MFC={bracketCEJ:4.5,crestCEJ:1.5,rootLen:13,incisalFromBracket:5.5};
+function mfGeom(b){ const L=MFC.rootLen-MFC.crestCEJ-b, cres=0.4*L, d=MFC.bracketCEJ+MFC.crestCEJ+b+cres; return {b,L,d,apex:0.6*L,crest:cres,incisal:d+MFC.incisalFromBracket,kk:L*L/5.3,cresFromCEJ:MFC.crestCEJ+b+cres}; }
+function mfCalc(b,F,M){ const g=mfGeom(b), r=F>0?M/F:0, den=g.d-r; const y=Math.abs(den)<1e-9?-1e6:-g.kk/den;
+  const area=2*Math.PI*0.23*(g.L/10), s0=F/area, v=h=>1+den*h/g.kk;
+  const peak=s0*Math.max(Math.abs(v(g.crest)),Math.abs(v(-g.apex)),Math.abs(v(g.incisal)*0));
+  let cls='none'; if(F>0){ if(Math.abs(y)>=30) cls='translation'; else if(y>0) cls='torque'; else if(y>-g.apex*0.6) cls='uncontrolled'; else cls='controlled'; }
+  return {g,F,M,r,y,den,area,s0,v,peak,cls,Fopt:7*g.L}; }
+const MFN={none:'—',uncontrolled:'Kontrolsüz devrilme',controlled:'Kontrollü devrilme',translation:'Gövdesel hareket (translasyon)',torque:'Tork / kök hareketi'};
+let SM={cid:'O3',c:OC.O3,F:0,M:0,cres:null,dec:{move:'',aware:'',safe:false}};
+function newSM(id){ return {cid:id,c:OC[id],F:0,M:0,cres:null,dec:{move:'',aware:'',safe:false}}; }
+const MF_S=20, MF_CX=250, MF_CEJ=300, MF_BR=390;
+function mfY(h,g){ return (MF_BR-g.d*MF_S)+h*MF_S; }   // h: C_res'ten kron yönüne (aşağı) mm
+function stressCol(a){ return a<20?'#6aa7d9':a<=70?'#63d08a':a<=110?'#f0b542':'#e8707a'; }
+function drawMF(cv,o){ o=o||{}; const ctx=cv.getContext('2d'),W=cv.width,H=cv.height; const c=SM.c,b=c.bone; const R=mfCalc(b,SM.F,SM.M),g=R.g;
+  ctx.fillStyle='#06080a'; ctx.fillRect(0,0,W,H);
+  const cx=MF_CX, yc=mfY(0,g), crestY=yc+g.crest*MF_S, apexY=yc-g.apex*MF_S;
+  const wy=y=>4+51*Math.pow(clamp((y-apexY)/(MF_CEJ-apexY),0,1.2),1.15);
+  const bone=ctx.createLinearGradient(0,0,0,H); bone.addColorStop(0,'#cdbf9d'); bone.addColorStop(1,'#a89b7b');
+  for(const sg of [-1,1]){ ctx.beginPath(); ctx.moveTo(cx+sg*190,crestY+4); for(let y=crestY+4;y>=18;y-=6) ctx.lineTo(cx+sg*(wy(Math.max(y,apexY))+8),y); ctx.lineTo(cx+sg*190,18); ctx.closePath(); ctx.fillStyle=bone; ctx.fill();
+    ctx.strokeStyle='#efe6cc'; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(cx+sg*190,crestY+4); ctx.lineTo(cx+sg*(wy(crestY)+8),crestY+4); ctx.stroke();
+    ctx.fillStyle='#c9606f'; ctx.beginPath(); ctx.moveTo(cx+sg*(wy(crestY)+8),crestY+4); ctx.lineTo(cx+sg*190,crestY+4); ctx.lineTo(cx+sg*190,MF_CEJ+8); ctx.lineTo(cx+sg*(wy(MF_CEJ)+1),MF_CEJ+8); ctx.closePath(); ctx.fill(); }
+  // PDL stres haritası
+  const seg=26; for(let i=0;i<seg;i++){ const y0=apexY+(crestY-apexY)*i/seg, y1=apexY+(crestY-apexY)*(i+1)/seg, hm=((y0+y1)/2-yc)/MF_S; const st=SM.F>0?Math.abs(R.s0*R.v(hm)):0; const col=SM.F>0?stressCol(st):'#3a2a2a';
+    ctx.fillStyle=col; for(const sg of [-1,1]){ ctx.beginPath(); ctx.moveTo(cx+sg*wy(y0),y0); ctx.lineTo(cx+sg*(wy(y0)+8),y0); ctx.lineTo(cx+sg*(wy(y1)+8),y1); ctx.lineTo(cx+sg*wy(y1),y1); ctx.closePath(); ctx.fill(); } }
+  // diş: kök (wy) + kron
+  const tg=ctx.createLinearGradient(cx-70,0,cx+70,0); tg.addColorStop(0,'#cdb98c'); tg.addColorStop(.5,'#f0e6c8'); tg.addColorStop(1,'#d4c196');
+  ctx.beginPath(); ctx.moveTo(cx-wy(MF_CEJ),MF_CEJ); for(let y=MF_CEJ-6;y>=apexY;y-=6) ctx.lineTo(cx-wy(y),y); ctx.lineTo(cx,apexY-1); for(let y=apexY+6;y<=MF_CEJ;y+=6) ctx.lineTo(cx+wy(y),y);
+  ctx.bezierCurveTo(cx+66,MF_CEJ+60,cx+64,MF_CEJ+120,cx+52,MF_CEJ+170); ctx.bezierCurveTo(cx+44,MF_CEJ+195,cx+36,500,cx+26,500); ctx.lineTo(cx-18,500); ctx.bezierCurveTo(cx-40,MF_CEJ+190,cx-70,MF_CEJ+110,cx-wy(MF_CEJ),MF_CEJ); ctx.closePath();
+  ctx.fillStyle=tg; ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle='#8a7c58'; ctx.stroke();
+  ctx.strokeStyle='rgba(120,100,60,.6)'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(cx-56,MF_CEJ); ctx.lineTo(cx+56,MF_CEJ); ctx.stroke();
+  // pulpa kanalı
+  ctx.fillStyle='rgba(184,86,108,.65)'; ctx.beginPath(); ctx.moveTo(cx-12,MF_CEJ+60); ctx.lineTo(cx-2,apexY+6); ctx.lineTo(cx+2,apexY+6); ctx.lineTo(cx+12,MF_CEJ+60); ctx.closePath(); ctx.fill();
+  // braket
+  ctx.fillStyle='#9aa6ad'; ctx.fillRect(cx+56,MF_BR-12,22,24); ctx.strokeStyle='#e2e8ec'; ctx.lineWidth=1.5; ctx.strokeRect(cx+56,MF_BR-12,22,24); ctx.fillStyle='#222'; ctx.fillRect(cx+60,MF_BR-3,16,6);
+  // ölçü: braket–CEJ, kemik kaybı
+  ctx.fillStyle='#b1bec5'; ctx.font='10px sans-serif'; ctx.fillText('CEJ',cx-102,MF_CEJ+4); ctx.fillText('kemik krestı',cx+68,crestY+1);
+  ctx.strokeStyle='#e8707a'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(cx-100,MF_CEJ-(MFC.crestCEJ*MF_S)); ctx.lineTo(cx-100,crestY); ctx.stroke(); ctx.fillStyle='#e8707a'; ctx.fillText('kemik kaybı '+b+' mm',cx-210,(crestY+MF_CEJ-MFC.crestCEJ*MF_S)/2+4);
+  // kuvvet oku (lingual yöne) ve moment
+  if(SM.F>0){ const a=clamp(SM.F*0.9,18,150); ctx.strokeStyle='#4fb8e0'; ctx.fillStyle='#4fb8e0'; ctx.lineWidth=4; ctx.beginPath(); ctx.moveTo(cx+78+a,MF_BR); ctx.lineTo(cx+78,MF_BR); ctx.stroke(); ctx.beginPath(); ctx.moveTo(cx+70,MF_BR); ctx.lineTo(cx+84,MF_BR-8); ctx.lineTo(cx+84,MF_BR+8); ctx.closePath(); ctx.fill(); ctx.font='bold 12px sans-serif'; ctx.fillText('F '+SM.F+' g',cx+80,MF_BR-16); }
+  if(SM.M>0){ ctx.strokeStyle='#b57ad9'; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(cx+100,MF_BR+46,22,rad(200),rad(-40),true); ctx.stroke(); ctx.fillStyle='#b57ad9'; ctx.font='bold 12px sans-serif'; ctx.fillText('M '+SM.M+' g·mm',cx+64,MF_BR+84); }
+  // hayalet (hareket sonrası)
+  if(SM.F>0){ const amp=clamp(SM.F,0,200)*0.2; ctx.save(); ctx.setLineDash([5,4]); ctx.strokeStyle='#ff9f43'; ctx.lineWidth=2; ctx.beginPath(); const pts=[]; for(let y=apexY;y<=500;y+=10){ const h=(y-yc)/MF_S; const dx=-amp*clamp(R.v(h),-4,4); pts.push([cx-(y<MF_CEJ?wy(y):55)+dx,y]); } pts.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1])); ctx.stroke(); ctx.beginPath(); for(let y=apexY;y<=500;y+=10){ const h=(y-yc)/MF_S; const dx=-amp*clamp(R.v(h),-4,4); const xx=cx+(y<MF_CEJ?wy(y):(y<430?60:40))+dx; y===apexY?ctx.moveTo(xx,y):ctx.lineTo(xx,y);} ctx.stroke(); ctx.restore(); }
+  // C_res (hesap) — Keşfet'te veya debrief
+  if(curMode==='explore'||o.truth){ ctx.strokeStyle='#ffb35a'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(cx-12,yc); ctx.lineTo(cx+12,yc); ctx.moveTo(cx,yc-12); ctx.lineTo(cx,yc+12); ctx.stroke(); ctx.fillStyle='#ffb35a'; ctx.font='bold 11px sans-serif'; ctx.fillText('C_res (gerçek)',cx+16,yc+4); }
+  if(SM.cres!=null){ const yy=MF_CEJ+(SM.cres)*MF_S*0; ctx.strokeStyle='#ff4d6d'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(cx-10,SM.cres-10); ctx.lineTo(cx+10,SM.cres+10); ctx.moveTo(cx+10,SM.cres-10); ctx.lineTo(cx-10,SM.cres+10); ctx.stroke(); ctx.fillStyle='#ff4d6d'; ctx.font='bold 11px sans-serif'; ctx.fillText('senin C_res',cx-100,SM.cres+4); }
+  // C_rot
+  if(SM.F>0){ const yr=yc+R.y*MF_S; if(Math.abs(R.y)<30){ ctx.fillStyle='#ff4d4d'; ctx.beginPath(); ctx.arc(cx,clamp(yr,16,520),6,0,7); ctx.fill(); ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.stroke(); ctx.fillStyle='#ffdede'; ctx.font='bold 11px sans-serif'; ctx.fillText('C_rot',cx-48,clamp(yr,16,520)+4); }
+    else { ctx.fillStyle='#ffdede'; ctx.font='bold 11px sans-serif'; ctx.fillText('C_rot → ∞ (saf öteleme)',cx-200,62); } }
+  ctx.fillStyle='#78898f'; ctx.font='10px sans-serif'; ctx.fillText('Kök yukarı · kron aşağı · labial taraf sağda · 1 mm = '+MF_S+' px',10,H-8);
+  if(o.truth){ ctx.fillStyle='#4fb8e0'; ctx.fillText('d(braket→C_res) = '+g.d.toFixed(1)+' mm · L='+g.L.toFixed(1)+' mm',10,H-22); }
+}
+function gradeMF(){ const c=SM.c,d=SM.dec,codes=[]; const R=mfCalc(c.bone,SM.F,SM.M), g=R.g, fl=[[],[],[],[]];
+  const yc=mfY(0,g); let e=SM.cres==null?99:Math.abs(SM.cres-yc)/MF_S; const s1=e<=1.2?1:e>=4?0:(4-e)/2.8; if(SM.cres==null){codes.push('CRES_NOT_MARKED');fl[0].push(['bad','C_res işaretlenmedi']);} else fl[0].push([s1>=.85?'ok':'warn','C_res hatası '+e.toFixed(1)+' mm']);
+  let s2=0; if(R.cls===c.goal){ s2=d.move===R.cls?1:0.6; fl[1].push(['ok','Hedef hareket elde edildi: '+MFN[R.cls]+(d.move===R.cls?'':' (yorum eksik/yanlış)')]); } else { fl[1].push(['bad','Hedef '+MFN[c.goal]+'; elde edilen '+MFN[R.cls]]); if(R.cls==='uncontrolled'||R.cls==='controlled'){ codes.push('UNCONTROLLED_TIPPING_ROOT_RESORPTION_RISK'); } if(Math.abs(R.r-mfGeom(0).d)<0.6&&c.bone>0){ codes.push('HEALTHY_C_RES_ASSUMED'); fl[1].push(['bad','Sağlıklı diş M/F (≈10.6) kullanıldı; kemik kaybında d='+g.d.toFixed(1)+' mm']); } }
+  if(R.F===0){codes.push('NO_FORCE');}
+  let s3=0; if(R.F>0){ const okF=R.F>=0.5*R.Fopt; if(R.peak<=70&&okF) s3=1; else if(R.peak<=100) s3=0.5; if(R.peak>110){codes.push('EXCESS_PDL_STRESS');} fl[2].push([s3>=1?'ok':'warn','Tepe PDL stresi '+R.peak.toFixed(0)+' g/cm² · F '+R.F+' g (F_opt ≈ '+R.Fopt.toFixed(0)+' g)']); if(d.safe&&s3<1) fl[2].push(['bad','"Uygun" işaretlendi ama stres/kuvvet uygun değil']); }
+  const s4=d.aware==='apical'?1:0; if(!s4){codes.push('BONE_LOSS_IGNORED');} fl[3].push([s4?'ok':'bad',s4?'Kemik kaybında C_res apikale kayar → aynı F daha büyük moment':'Kemik kaybı etkisi yanlış/boş']);
+  const cats=[{name:'C_res doğruluğu',w:25,s:s1,flags:fl[0]},{name:'Hareket tipi (M/F)',w:35,s:s2,flags:fl[1]},{name:'Kuvvet / PDL stresi',w:25,s:s3,flags:fl[2]},{name:'Kemik kaybı farkındalığı',w:15,s:s4,flags:fl[3]}];
+  return fin('M/F biyomekaniği · '+c.name,cats,codes,c.teach); }
+
+/* ================= TEZGÂH 2 — TME KİNEMATİĞİ ================= */
+const TMC={
+ TME1:{type:'addwr',name:'Sağ ADDwR (redüksiyonlu)',side:'R',maxOpen:46,openClick:18,closeClick:12,devAmp:3.2,latR:10,latL:10,pain:false,
+   hist:'22 yaşında kadın. Sağ TME\'de ağzını açarken "klik" duyuyor; ağrı yok, yemek yemeyi engellemiyor.',
+   teach:'Sağ ADDwR: disk dinlenmede kondilin önünde; açılışta kondil arka bandı yakalayıp üstüne biner (açılış kliği ~18 mm), çene sağa sapıp klik anında orta hatta döner (S-şekilli DEVİASYON), açıklık normal (46 mm), kapanışta disk yeniden öne kayar (resiprokal klik ~12 mm). Ağrısız izole klik tedavi gerektirmez; geri dönüşümsüz oklüzal aşındırma/cerrahi YANLIŞ.'},
+ TME2:{type:'addwor',name:'Sağ akut ADDwoR (closed lock)',side:'R',maxOpen:25,openClick:0,closeClick:0,devAmp:4.5,latR:9,latL:3,pain:true,
+   hist:'30 yaşında kadın. Sağ TME eskiden kütlerdi; bir hafta önce ses kesildi ama ağzı açılmıyor, açarken sağ eklem ağrıyor.',
+   teach:'Sağ ADDwoR (closed lock): disk kondilin önünde sıkışmış → klik YOK, açıklık ≈25 mm, açarken çene etkilenen SAĞ tarafa kalıcı DEFLEKSİYON yapar; kondil translasyonu kısıtlı olduğundan karşı (SOL) lateral hareket kısıtlı (<4 mm), sağ lateral normal. "Ses kesildi = iyileşti" yanılgısı: klik kaybı disk redüksiyonunun kaybıdır.'},
+ TME3:{type:'occl',name:'Kanin koruması ↔ balans çatışması',side:null,maxOpen:49,openClick:0,closeClick:0,devAmp:0,latR:10,latL:10,pain:true,
+   hist:'27 yaşında erkek. Sabahları çiğneme kası ağrısı, diş sıkma/gıcırdatma; eklem sesi yok, açıklık normal.',
+   teach:'Eklem normal. Sağ lateralde kanin koruması yerine SOL çalışmayan (balans) arka dişlerde kontak var → parafonksiyonu tetikleyen oklüzal çatışma. İlk adım geri dönüşümlü stabilizasyon (Michigan) splinti + kanin koruması; kalıcı oklüzal aşındırma ilk seçenek değildir.'}
+};
+const T_ORDER=['TME1','TME2','TME3'];
+const tTrans=o=>o<=22?0:(o-22)/26*14, tRot=o=>o<=22?25*o/22:25+(o-22)*0.35;
+function tDev(c,o,dir,disp){ if(c.type==='addwr'){ if(disp) return dir==='open'?c.devAmp*Math.pow(clamp(o/c.openClick,0,1),1.6):1.4*Math.sin(Math.PI*clamp(o/c.closeClick,0,1)); return 0; }
+  if(c.type==='addwor') return c.devAmp*clamp(o/c.maxOpen,0,1); return 0; }
+function tStep(c,st,o){ // st:{o,dir,disp} -> yeni durum + olaylar
+  const ev=[]; const n={o:clamp(o,0,c.maxOpen),dir:st.dir,disp:st.disp};
+  if(n.o>st.o) n.dir='open'; else if(n.o<st.o) n.dir='close';
+  if(c.type==='addwr'){ if(n.dir==='open'&&st.disp&&st.o<c.openClick&&n.o>=c.openClick){ n.disp=false; ev.push({o:c.openClick,dir:'open'}); }
+    if(n.dir==='close'&&!st.disp&&st.o>c.closeClick&&n.o<=c.closeClick){ n.disp=true; ev.push({o:c.closeClick,dir:'close'}); } }
+  return {n,ev}; }
+function tInit(c){ return {o:0,dir:'open',disp:c.type!=='occl'}; }
+function tSweep(c){ let st=tInit(c); const path=[],clicks=[]; const run=(to,stp)=>{ const sg=to>=st.o?1:-1; for(let o=st.o;sg>0?o<=to+1e-9:o>=to-1e-9;o+=sg*stp){ const r=tStep(c,st,o); st=r.n; r.ev.forEach(e=>clicks.push(e)); path.push({o:st.o,dir:st.dir,disp:st.disp,dev:tDev(c,st.o,st.dir,st.disp)}); } };
+  run(c.maxOpen,0.5); run(0,0.5);
+  const opening=path.filter(p=>p.dir==='open'); const devMax=Math.max(...path.map(p=>Math.abs(p.dev))); const atMax=opening[opening.length-1].dev;
+  const dtype=(Math.abs(atMax)>=1.5)?'deflection':(devMax>=1.5?'deviation':'none');
+  return {path,clicks,openClick:(clicks.find(e=>e.dir==='open')||{}).o||0,closeClick:(clicks.find(e=>e.dir==='close')||{}).o||0,maxOpen:c.maxOpen,devMax,devAtMax:atMax,dtype,deflectSide:dtype==='deflection'?(atMax>0?'R':'L'):null,
+    reciprocal:clicks.some(e=>e.dir==='open')&&clicks.some(e=>e.dir==='close'),latR:c.latR,latL:c.latL,contralateralLimited:(c.type==='addwor')?c.latL<4:false}; }
+let TS={cid:'TME1',c:TMC.TME1,st:tInit(TMC.TME1),sw:null,heard:0,f:{},dec:{dx:'',side:'',dev:'',belief:'',plan:'',edu:false,follow:false},playing:false};
+function newTS(id){ const c=TMC[id]; return {cid:id,c,st:tInit(c),sw:tSweep(c),heard:0,f:{},dec:{dx:'',side:'',dev:'',belief:'',plan:'',edu:false,follow:false},playing:false}; }
+let AC=null; window.__audio={clicks:0,last:null};
+function playClick(kind){ window.__audio.clicks++; window.__audio.last=kind; const ck=$('tSnd'); if(ck&&!ck.checked) return; try{ AC=AC||new (window.AudioContext||window.webkitAudioContext)(); const t=AC.currentTime,o=AC.createOscillator(),g=AC.createGain(); o.type='square'; o.frequency.setValueAtTime(kind==='open'?1400:900,t); o.frequency.exponentialRampToValueAtTime(300,t+0.06); g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.25,t+0.005); g.gain.exponentialRampToValueAtTime(0.0001,t+0.08); o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t+0.09); }catch(e){} }
+function setOpening(o){ const r=tStep(TS.c,TS.st,o); TS.st=r.n; r.ev.forEach(e=>{ TS.heard++; playClick(e.dir); }); return r; }
+const FO=[240,185], FU=vec(40), FR=[34,26];
+function condPt(phi,C,extra){ const ph=rad(phi); const p=[C[0]+FR[0]*Math.sin(ph),C[1]-FR[1]*Math.cos(ph)]; const n=nrm([Math.sin(ph)/FR[0],-Math.cos(ph)/FR[1]]); return add(p,mul(n,extra||0)); }
+function drawTMJ(cv,o,dir,disp,opts){ opts=opts||{}; const c=TS.c,ctx=cv.getContext('2d'),W=cv.width,H=cv.height; ctx.fillStyle='#06080a'; ctx.fillRect(0,0,W,H);
+  const tm=tTrans(o), C=add(FO,mul(FU,tm*6)), rot=tRot(o);
+  // temporal kemik: fossa + eminens
+  const Pe=[255,150], bone=ctx.createLinearGradient(0,0,0,300); bone.addColorStop(0,'#d7d0bd'); bone.addColorStop(1,'#a79f88');
+  ctx.beginPath(); ctx.moveTo(40,0); ctx.lineTo(W,0); ctx.lineTo(W,Pe[1]+(W-Pe[0])*0.84); ctx.lineTo(Pe[0],Pe[1]); ctx.quadraticCurveTo(238,160,222,150); ctx.quadraticCurveTo(205,140,196,108); ctx.lineTo(150,70); ctx.lineTo(40,58); ctx.closePath(); ctx.fillStyle=bone; ctx.fill(); ctx.strokeStyle='#f0ead6'; ctx.lineWidth=2.5; ctx.stroke();
+  // mandibula (rotasyon)
+  ctx.save(); ctx.translate(C[0],C[1]); ctx.rotate(rad(rot));
+  ctx.beginPath(); ctx.moveTo(-17,18); ctx.lineTo(17,18); ctx.lineTo(34,240); ctx.lineTo(-26,240); ctx.closePath(); ctx.fillStyle='#bcb59f'; ctx.fill(); ctx.strokeStyle='#e6dfc8'; ctx.lineWidth=2; ctx.stroke();
+  ctx.restore();
+  ctx.beginPath(); ctx.ellipse(C[0],C[1],FR[0],FR[1],rad(rot)*0.4,0,7); ctx.fillStyle='#d0c9b0'; ctx.fill(); ctx.strokeStyle='#f3edd8'; ctx.lineWidth=2.5; ctx.stroke();
+  // retrodiskal doku (diskin arkasından fossa arka duvarına)
+  const shift=disp?(c.type==='addwor'?66:58):0, kT=(c.type==='addwor'&&disp)?1.3:1;
+  const pPost=condPt(-80+shift,C,6), wall=[200,118];
+  ctx.strokeStyle='#c26a78'; ctx.lineWidth=9; ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(wall[0],wall[1]); ctx.quadraticCurveTo(wall[0]+4,(wall[1]+pPost[1])/2+6,pPost[0],pPost[1]); ctx.stroke();
+  // disk (bikonkav): arka bant / ara zon / ön bant
+  const up=[],lo=[]; for(let p0=-80;p0<=80;p0+=4){ const th=(6+12*Math.exp(-Math.pow((p0+48)/20,2))+6*Math.exp(-Math.pow((p0-48)/20,2)))*kT; lo.push(condPt(p0+shift,C,1)); up.push(condPt(p0+shift,C,1+th)); }
+  ctx.beginPath(); ctx.moveTo(lo[0][0],lo[0][1]); lo.forEach(q=>ctx.lineTo(q[0],q[1])); for(let i=up.length-1;i>=0;i--) ctx.lineTo(up[i][0],up[i][1]); ctx.closePath(); ctx.fillStyle='#4a86c9'; ctx.fill(); ctx.strokeStyle='#bcd6f2'; ctx.lineWidth=1.5; ctx.stroke();
+  if(opts.labels!==false){ ctx.fillStyle='#e8eef2'; ctx.font='10px sans-serif'; const lb=(t,p,col)=>{ctx.fillStyle=col||'#e8eef2';ctx.fillText(t,p[0],p[1]);};
+    lb('glenoid fossa',[98,92],'#222'); lb('artiküler eminens',[330,170],'#222'); lb('retrodiskal doku',[110,142],'#ffd0d6');
+    const mid=condPt(0+shift,C,24), ab=condPt(-48+shift,C,36), aa=condPt(48+shift,C,34); lb('arka bant',[ab[0]-48,ab[1]-6],'#bcd6f2'); lb('ara zon',[mid[0]-16,mid[1]-8],'#bcd6f2'); lb('ön bant',[aa[0]+4,aa[1]-8],'#bcd6f2'); }
+  // lat. pterigoid oku
+  ctx.strokeStyle='#e8a35a'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(C[0]+20,C[1]+30); ctx.lineTo(C[0]+90,C[1]+62); ctx.stroke(); ctx.fillStyle='#e8a35a'; ctx.font='10px sans-serif'; ctx.fillText('lat. pterigoid',C[0]+40,C[1]+66);
+  ctx.fillStyle='#eef2f4'; ctx.font='bold 12px sans-serif'; ctx.fillText('Açıklık '+o.toFixed(1)+' mm · '+(o<=22?'saf rotasyon':'rotasyon + translasyon')+' · translasyon '+tm.toFixed(1)+' mm',12,H-12);
+  ctx.fillStyle='#78898f'; ctx.font='10px sans-serif'; ctx.fillText('0–22 mm: rotasyon (≈25°) · 22–48 mm: öne-aşağı translasyon (≈14 mm)',12,H-28);
+  if(opts.truth){ ctx.fillStyle='#4fb8e0'; ctx.fillText('Disk: '+(disp?'önde (deplase)':'kondil üstünde (redükte)'),12,22); } }
+function drawFront(cv,o,opts){ opts=opts||{}; const c=TS.c,ctx=cv.getContext('2d'),W=cv.width,H=cv.height; ctx.fillStyle='#06080a'; ctx.fillRect(0,0,W,H);
+  const X=dv=>150-dv*10, Y=om=>30+om*5; ctx.strokeStyle='#1f282c'; ctx.lineWidth=1; for(let m=0;m<=50;m+=10){ ctx.beginPath(); ctx.moveTo(10,Y(m)); ctx.lineTo(290,Y(m)); ctx.stroke(); ctx.fillStyle='#78898f'; ctx.font='9px sans-serif'; ctx.fillText(m+' mm',12,Y(m)-2); }
+  ctx.setLineDash([5,4]); ctx.strokeStyle='#4fb8e0'; ctx.beginPath(); ctx.moveTo(150,20); ctx.lineTo(150,285); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle='#4fb8e0'; ctx.fillText('maksiller orta hat',156,18);
+  ctx.fillStyle='#b1bec5'; ctx.textAlign='right'; ctx.fillText('◀ hastanın SAĞ',292,296); ctx.textAlign='left'; ctx.fillText('SOL ▶',8,296);
+  const sw=TS.sw||tSweep(c); const trace=(dirName,col)=>{ ctx.strokeStyle=col; ctx.lineWidth=2.2; ctx.beginPath(); let first=true; for(const p of sw.path){ if(p.dir!==dirName) continue; const x=X(p.dev),y=Y(p.o); if(first){ctx.moveTo(x,y);first=false;} else ctx.lineTo(x,y); } ctx.stroke(); };
+  trace('open','#4fb8e0'); trace('close','#e8a35a'); ctx.fillStyle='#4fb8e0'; ctx.fillText('açılış',250,48); ctx.fillStyle='#e8a35a'; ctx.fillText('kapanış',250,60);
+  for(const e of sw.clicks){ const p=sw.path.find(q=>q.dir===e.dir&&Math.abs(q.o-e.o)<0.3); if(!p) continue; ctx.fillStyle='#ffe08a'; ctx.beginPath(); ctx.arc(X(p.dev),Y(p.o),5,0,7); ctx.fill(); ctx.fillText('klik '+e.o+' mm',X(p.dev)+(p.dev>0?-60:8),Y(p.o)-6); }
+  const dv=tDev(c,TS.st.o,TS.st.dir,TS.st.disp), oo=(opts.o!=null?opts.o:TS.st.o), dd=(opts.o!=null?tDev(c,oo,TS.st.dir,TS.st.disp):dv);
+  ctx.fillStyle='#ff4d6d'; ctx.beginPath(); ctx.arc(X(dd),Y(oo),6,0,7); ctx.fill(); ctx.strokeStyle='#fff'; ctx.stroke();
+  // lateral ekskürsiyon çubukları
+  ctx.fillStyle='rgba(99,208,138,.8)'; ctx.fillRect(150-c.latR*10,271,c.latR*10,7); ctx.fillStyle='rgba(232,112,122,.85)'; ctx.fillRect(150,271,c.latL*10,7);
+  ctx.fillStyle='#b1bec5'; ctx.fillText('lat R '+c.latR+' mm',150-c.latR*10-2,268); ctx.fillText('lat L '+c.latL+' mm',150+4,268); }
+function tReadout(){ const c=TS.c,st=TS.st; const dev=tDev(c,st.o,st.dir,st.disp);
+  let h=`Açıklık <b>${st.o.toFixed(1)} mm</b> · yön <b>${st.dir==='open'?'açılış':'kapanış'}</b>`; if(st.o>=c.maxOpen-0.01) h+=' · <b class="warn">daha fazla açılamıyor</b>';
+  h+=`<br>Orta hattan sapma: <b>${dev>0.05?'sağa ':dev<-0.05?'sola ':''}${Math.abs(dev).toFixed(1)} mm</b>`; if(curMode==='explore') h+=`<br>Disk: <b>${st.disp?'öne deplase':'redükte'}</b>`; h+=`<br>Duyulan klik: <b>${TS.heard}</b>`; return h; }
+function gradeTMJ(){ const c=TS.c,d=TS.dec,codes=[],fl=[[],[],[],[]]; const sw=TS.sw||tSweep(c);
+  const T={TME1:{dx:'addwr',side:'R',dev:'deviation',belief:'na',plan:{reassure:1,conserv:.7,splint:.4}},TME2:{dx:'addwor',side:'R',dev:'deflectR',belief:'lock',plan:{conserv:1,splint:.6}},TME3:{dx:'occl',side:'none',dev:'none',belief:'na',plan:{splint:1,conserv:.6,reassure:.3}}}[TS.cid];
+  // 1 tanı + taraf + klik yorumu
+  let s1=0,wt=0; const part=(w,ok)=>{wt+=w; if(ok)s1+=w;}; part(.45,d.dx===T.dx); part(.25,d.side===T.side||(T.side==='none'&&d.side==='none'));
+  if(TS.cid==='TME2'){ part(.30,d.belief==='lock'); if(d.belief==='healed'){ codes.push('FALSE_RESOLUTION_LOCK_MISSED'); fl[0].push(['bad','"Ses kesildi = iyileşti": klik kaybı kilitlenmeyi (ADDwoR) gösterir']); } else if(d.belief!=='lock') fl[0].push(['warn','Klik kaybının anlamı yorumlanmadı']); } else part(.30,true);
+  s1=s1/wt; fl[0].push([d.dx===T.dx?'ok':'bad','Tanı: '+({addwr:'ADDwR',addwor:'ADDwoR',occl:'normal TME + oklüzal',oa:'dejeneratif'}[T.dx])+(d.dx===T.dx?'':' (seçimin: '+(d.dx||'—')+')')]); if(d.dx!==T.dx) codes.push('WRONG_TMJ_DIAGNOSIS');
+  // 2 deviasyon ↔ defleksiyon
+  let s2=0; const devOk=d.dev===T.dev; if(devOk) s2=1; else { if(T.dev==='deflectR'&&d.dev==='deflectL'){ codes.push('DEFLECTION_CONTRALATERAL_ERROR'); fl[1].push(['bad','Defleksiyon etkilenen (sağ) tarafa olur, karşıya değil']); } else if((T.dev==='deviation'&&/deflect/.test(d.dev))||(T.dev==='deflectR'&&d.dev==='deviation')){ codes.push('DEVIATION_DEFLECTION_CONFUSED'); fl[1].push(['bad','Deviasyon (orta hatta dönen) ile defleksiyon (kalıcı) karıştırıldı']); } else fl[1].push(['bad','Açılma yolu yanlış/boş']); }
+  if(devOk) fl[1].push(['ok',T.dev==='deviation'?'S-şekilli deviasyon: klik anında orta hatta döner':T.dev==='deflectR'?'Etkilenen SAĞ tarafa kalıcı defleksiyon; sol lateral kısıtlı (<4 mm)':'Sapma yok']);
+  // 3 tedavi
+  const pv=T.plan[d.plan]||0; let s3=pv; if(d.plan==='equil'){ s3=0; codes.push(TS.cid==='TME1'?'IRREVERSIBLE_FOR_PAINLESS_CLICK':'IRREVERSIBLE_OCCLUSAL_ADJUSTMENT_FIRST'); fl[2].push(['bad','Kalıcı oklüzal aşındırma ilk seçenek değil']); }
+  else if(d.plan==='surgery'){ s3=0; codes.push(TS.cid==='TME1'?'IRREVERSIBLE_FOR_PAINLESS_CLICK':'SURGERY_FIRST'); fl[2].push(['bad','Cerrahi/irreversibl yaklaşım yanlış öncelik']); }
+  else if(!d.plan) fl[2].push(['bad','Plan seçilmedi']); else fl[2].push([pv>=1?'ok':'warn',pv>=1?'En uygun konservatif plan':'Kısmen uygun; daha iyi seçenek var']);
+  if(TS.cid==='TME2'&&d.plan==='reassure') codes.push('FALSE_RESOLUTION_LOCK_MISSED');
+  // 4 hasta & takip
+  const s4=(d.edu?.5:0)+(d.follow?.5:0); fl[3].push([s4>=1?'ok':'warn','Hasta eğitimi '+(d.edu?'✓':'✗')+' · Takip '+(d.follow?'✓':'✗')]);
+  const cats=[{name:'Tanı, taraf & klik yorumu',w:30,s:s1,flags:fl[0]},{name:'Deviasyon ↔ defleksiyon',w:25,s:s2,flags:fl[1]},{name:'Tedavi seçimi',w:30,s:s3,flags:fl[2]},{name:'Hasta eğitimi & takip',w:15,s:s4,flags:fl[3]}];
+  return fin('TME kinematiği · '+c.name,cats,[...new Set(codes)],c.teach); }
+
+/* ================= TEZGÂH 3 — HBP / RPD ================= */
+const ARCH_P=[[3,36],[8.5,35],[13.5,32],[19,26],[23.5,19],[27,9],[28.5,-3],[28,-14]], ARCH_S=[5,5.5,7,7,7,10,10,9];
+function fpos(f){ const q=Math.floor(f/10), i=f%10-1, p=ARCH_P[i]; return (q===1||q===4)?[p[0],p[1]]:[-p[0],p[1]]; }
+const LOW_ORDER=[48,47,46,45,44,43,42,41,31,32,33,34,35,36,37,38], UP_ORDER=[18,17,16,15,14,13,12,11,21,22,23,24,25,26,27,28];
+function kennedyClassify(a){ const order=a.jaw==='mand'?LOW_ORDER:UP_ORDER; const ign=new Set(a.ignore||[]); const miss=new Set(a.missing);
+  const red=order.filter(f=>!ign.has(f)); const runs=[]; let cur=null;
+  red.forEach((f,i)=>{ if(miss.has(f)){ if(!cur){cur={teeth:[],s:i};runs.push(cur);} cur.teeth.push(f); cur.e=i; } else cur=null; });
+  runs.forEach(r=>{ r.free=(r.s===0||r.e===red.length-1); r.mid=r.teeth.some(f=>f===11||f===41)&&r.teeth.some(f=>f===21||f===31); });
+  const frees=runs.filter(r=>r.free), bounded=runs.filter(r=>!r.free); let cls,mods;
+  if(frees.length>=2){ cls='I'; mods=bounded.length; } else if(frees.length===1){ cls='II'; mods=bounded.length; }
+  else if(runs.length===1&&runs[0].mid){ cls='IV'; mods=0; } else { cls='III'; mods=Math.max(0,bounded.length-1); }
+  return {cls,mods,runs:runs.map(r=>r.teeth)}; }
+const KARCH=[
+ {id:'a',jaw:'mand',missing:[36,37,38,46],ignore:[38],note:'38 çekilmiş, restore edilmeyecek'},
+ {id:'b',jaw:'max',missing:[12,11,21,22],ignore:[],note:''},
+ {id:'c',jaw:'mand',missing:[34,35,45],ignore:[],note:''},
+ {id:'d',jaw:'max',missing:[18,17,16,27],ignore:[18,27],note:'18 yok; 27 eksik, karşıtı yok → restore edilmeyecek'}];
+const RC={
+ P1:{kind:'p1',name:'Kennedy Sınıf II · serbest sonlu',hist:'48 yaş erkek. Sol 36-37-38 eksik (serbest sonlu), sağ taraf bütün. 35 son destek dişi. Parsiyel protez tasarla: paralelometre → tırnak/kroşe/plak → indirekt tutucu.',
+   teach:'Serbest sonlu yapıda mukoza gömülür (≈1.5 mm) PDL gömülmesinden (≈0.1 mm) çok fazladır → distal oklüzal tırnak + çevresel kroşe destek dişi distale devirir (DESTRUCTIVE_DISTAL_TORQUE). Çözüm RPI: mezial tırnak + proksimal plak + I-bar; fulkrum hattının önünde uzak bir indirekt tutucu.'},
+ P2:{kind:'p2',name:'Kennedy sınıflaması & Applegate',hist:'Dört dişsiz ark: sınıf ve modifikasyon sayısını belirle.',
+   teach:'Applegate: sınıflamayı en posteriordaki dişsiz alan belirler; modifikasyon sayısı sınıfı belirleyen alan dışındaki dişsiz alanlardır; Sınıf IV\'te modifikasyon OLMAZ; restore edilmeyecek 3. molar ve karşıtı olmayan 2. molar sınıflamaya katılmaz.'}};
+const R_ORDER=['P1','P2'];
+const FL2=[27,9];   // karşı taraf 46 oklüzal tırnağı (sabit)
+const IRMAP={34:fpos(34),33:fpos(33),31:fpos(31),41:fpos(41),43:fpos(43)};
+let SR={cid:'P1',c:RC.P1,d:{rest:'none',clasp:'none',plate:false,ir:'none',tilt:0,alloy:'cocr'},load:0,k:KARCH.map(()=>({cls:'',mods:''})),rej:0};
+function newSR(id){ return {cid:id,c:RC[id],d:{rest:'none',clasp:'none',plate:false,ir:'none',tilt:0,alloy:'cocr'},load:0,k:KARCH.map(()=>({cls:'',mods:''})),rej:0}; }
+function torqueFactor(rest,clasp,plate){ if(rest==='none') return 1.0; if(rest==='distal') return clasp==='ibar'?0.75:1.0; if(clasp==='circ') return 0.55; if(clasp==='ibar') return plate?0.12:0.35; return 0.6; }
+function undercutAt(t){ return 0.10+0.045*t; }
+const UC_T={cocr:0.25,gold:0.50};
+function restPt(rest){ const p=fpos(35),m=nrm(sub(fpos(34),p)); return rest==='mesial'?add(p,mul(m,3.4)):rest==='distal'?add(p,mul(m,-3.4)):p; }
+function nAnt(a,b){ const d=sub(b,a),nn=nrm([d[1],-d[0]]); return nn[1]<0?mul(nn,-1):nn; }
+function irLever(rest,ir){ if(ir==='none') return 0; const a=restPt(rest),n=nAnt(a,FL2); return Math.max(0,dot(sub(IRMAP[ir],a),n)); }
+function rpdEval(){ const d=SR.d, tf=torqueFactor(d.rest,d.clasp,d.plate), lever=irLever(d.rest,d.ir), uc=undercutAt(d.tilt), tgt=UC_T[d.alloy], ucE=Math.abs(uc-tgt);
+  return {torque:tf,lever,irOk:lever>=10,uc,ucTarget:tgt,ucErr:ucE,tiltAngle:5*tf*SR.load/100}; }
+function gradeRPD1(){ const d=SR.d,E=rpdEval(),codes=[],fl=[[],[],[],[]];
+  const s1=E.ucErr<=0.06?1:E.ucErr<=0.12?0.5:0; if(s1<1) codes.push('UNDERCUT_OUT_OF_RANGE'); fl[0].push([s1>=1?'ok':'bad','Undercut '+E.uc.toFixed(2)+' mm · hedef '+E.ucTarget.toFixed(2)+' mm ('+(d.alloy==='cocr'?'Co-Cr':'altın')+')']);
+  if(d.rest==='none') codes.push('NO_REST_SEAT'); if(d.clasp==='none') codes.push('NO_RETENTION'); if(d.rest==='distal'){ codes.push('DESTRUCTIVE_DISTAL_TORQUE'); }
+  const s2=clamp(1-(E.torque-0.12)/0.88,0,1); fl[1].push([s2>=1?'ok':s2>=.5?'warn':'bad','Tork faktörü '+E.torque.toFixed(2)+(d.rest==='distal'?' — distal tırnak destek dişi distale devirir':d.rest==='mesial'&&d.clasp==='ibar'&&d.plate?' — RPI stres kırıcı':'')]);
+  let s3=0; if(d.ir==='none'){ codes.push('INDIRECT_RETAINER_MISSING'); fl[2].push(['bad','İndirekt tutucu yok → protez fulkrum etrafında döner, ön bölge kalkar']); } else if(!E.irOk){ codes.push('INDIRECT_RETAINER_TOO_CLOSE'); s3=0.35; fl[2].push(['warn','İndirekt tutucu fulkrum hattına çok yakın ('+E.lever.toFixed(1)+' mm)']); } else { s3=1; fl[2].push(['ok','İndirekt tutucu fulkrum hattının önünde '+E.lever.toFixed(1)+' mm']); }
+  const full=d.rest==='mesial'&&d.clasp==='ibar'&&d.plate&&E.irOk&&s1>=1; const s4=full?1:(d.rest==='mesial'?0.5:0); fl[3].push([full?'ok':'warn',full?'RPI + indirekt tutucu + doğru undercut: tam tasarım':'RPI bileşenlerinin tümü tamamlanmadı']);
+  const cats=[{name:'Paralelometre / undercut',w:20,s:s1,flags:fl[0]},{name:'Tırnak-kroşe-plak torku',w:40,s:s2,flags:fl[1]},{name:'İndirekt tutucu (fulkrum)',w:25,s:s3,flags:fl[2]},{name:'Bütünsel RPI tasarımı',w:15,s:s4,flags:fl[3]}];
+  return fin('HBP · '+SR.c.name,cats,codes,SR.c.teach); }
+function gradeRPD2(){ const codes=[],fl=[[],[],[],[]]; let c1=0,c2=0; const res=KARCH.map((a,i)=>kennedyClassify(a)); const st=SR.k;
+  res.forEach((r,i)=>{ const ok=st[i].cls===r.cls, mok=ok&&String(st[i].mods)===String(r.mods); if(ok)c1++; if(mok)c2++; fl[ok?0:0].push([ok?'ok':'bad','Ark '+KARCH[i].id+': Sınıf '+r.cls+(r.mods?' mod '+r.mods:'')+(mok?'':' (seçimin '+(st[i].cls||'—')+(st[i].mods!==''?' mod '+st[i].mods:'')+')')]); if(!ok) codes.push('WRONG_KENNEDY_CLASS_'+KARCH[i].id); else if(!mok) codes.push('WRONG_MODIFICATION_COUNT_'+KARCH[i].id); });
+  const okA=String(st[0].cls)===res[0].cls&&String(st[0].mods)===String(res[0].mods), okD=String(st[3].cls)===res[3].cls&&String(st[3].mods)===String(res[3].mods);
+  const s3=(okA?.5:0)+(okD?.5:0); fl[2].push([s3>=1?'ok':'bad','3. molar / karşıtsız 2. molar kuralı (ark a, d): '+(s3>=1?'doğru':'sınıflamaya katılmaz')]); if(s3<1) codes.push('THIRD_MOLAR_RULE_MISSED');
+  const okB=st[1].cls==='IV'&&String(st[1].mods)==='0'; const s4=okB&&SR.rej===0?1:okB?0.6:0; if(SR.rej) codes.push('CLASS_IV_MODIFICATION_REJECTED'); fl[3].push([okB?'ok':'bad','Sınıf IV\'te modifikasyon olmaz (ark b)'+(SR.rej?' — reddedilen deneme: '+SR.rej:'')]);
+  const cats=[{name:'Sınıf tespiti (en posterior alan)',w:40,s:c1/4,flags:fl[0]},{name:'Modifikasyon sayısı',w:30,s:c2/4,flags:fl[1]},{name:'3./2. molar kuralı',w:15,s:s3,flags:fl[2]},{name:'Sınıf IV kuralı',w:15,s:s4,flags:fl[3]}];
+  return fin('Kennedy · '+SR.c.name,cats,[...new Set(codes)],SR.c.teach); }
+function declareKennedy(i,cls,mods){ if(cls==='IV'&&Number(mods)>0){ SR.rej++; SR.k[i]={cls:'IV',mods:0}; return {rejected:true,code:'CLASS_IV_NO_MODIFICATION'}; } SR.k[i]={cls,mods}; return {rejected:false}; }
+/* ---- çizimler ---- */
+function drawToothShape(ctx,p,w,fill,stroke,lw){ ctx.beginPath(); ctx.ellipse(p[0],p[1],w[0],w[1],0,0,7); ctx.fillStyle=fill; ctx.fill(); ctx.strokeStyle=stroke; ctx.lineWidth=lw||1.5; ctx.stroke(); }
+function drawMiniArch(ctx,a,ox,oy,sc,opts){ opts=opts||{}; const S=f=>{const p=fpos(f);return [ox+p[0]*sc,oy-p[1]*sc];}; const order=a.jaw==='mand'?LOW_ORDER:UP_ORDER; const ign=new Set(a.ignore||[]),miss=new Set(a.missing);
+  for(const f of order){ const i=f%10-1, w=[ARCH_S[i]*sc/2*(i>=5?1:1.05),ARCH_S[i]*sc/2*0.9]; const p=S(f);
+    if(miss.has(f)){ ctx.save(); ctx.setLineDash([3,3]); drawToothShape(ctx,p,w,'rgba(201,96,111,.35)','#e8707a',1.5); ctx.restore(); if(ign.has(f)){ ctx.fillStyle='#f0b542'; ctx.font='bold 9px sans-serif'; ctx.fillText('✕',p[0]-3,p[1]+3); } }
+    else drawToothShape(ctx,p,w,'#efe6cf','#a79b7d',1.2);
+    if(opts.nums){ ctx.fillStyle=miss.has(f)?'#ffd0d6':'#556'; ctx.font='8.5px sans-serif'; ctx.fillText(f,p[0]-6,p[1]+3); } } }
+function drawArch(cv){ const ctx=cv.getContext('2d'),W=cv.width,H=cv.height,sc=6.2,ox=270,oy=262; ctx.fillStyle='#06080a'; ctx.fillRect(0,0,W,H);
+  const S=p=>[ox+p[0]*sc,oy-p[1]*sc], a={jaw:'mand',missing:[36,37,38],ignore:[]};
+  // dişsiz kret (denture base)
+  ctx.fillStyle='rgba(201,96,111,.45)'; ctx.beginPath(); const rp=[fpos(36),fpos(37),fpos(38)].map(S); ctx.ellipse((rp[0][0]+rp[2][0])/2,(rp[0][1]+rp[2][1])/2+4,22,62,0.25,0,7); ctx.fill();
+  drawMiniArch(ctx,a,ox,oy,sc,{nums:true});
+  // ana bağlayıcı (lingual bar)
+  const lingual=f=>{ const p=fpos(f); return S(add(p,mul(sub([0,14],p),0.34))); };
+  ctx.strokeStyle='#9aa6ad'; ctx.lineWidth=5; ctx.lineCap='round'; ctx.beginPath(); [35,34,33,32,31,41,42,43,44,45].forEach((f,i)=>{ const q=lingual(f); i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]); }); ctx.stroke();
+  // 35 vurgusu, rest, kroşe, plak
+  const p35=S(fpos(35)); ctx.strokeStyle='#e8a35a'; ctx.lineWidth=2.5; ctx.beginPath(); ctx.ellipse(p35[0],p35[1],ARCH_S[4]*sc/2+4,ARCH_S[4]*sc/2*0.9+4,0,0,7); ctx.stroke(); ctx.fillStyle='#e8a35a'; ctx.font='bold 11px sans-serif'; ctx.fillText('destek 35',p35[0]-70,p35[1]-24);
+  const d=SR.d; const rp0=S(restPt(d.rest)); if(d.rest!=='none'){ ctx.fillStyle='#4fb8e0'; ctx.fillRect(rp0[0]-6,rp0[1]-6,12,12); ctx.fillStyle='#bfe6f6'; ctx.font='bold 10px sans-serif'; ctx.fillText(d.rest==='mesial'?'mezial tırnak':'distal tırnak',rp0[0]-30,rp0[1]+22); }
+  const out=nrm(sub(fpos(35),[0,15])), bk=S(add(fpos(35),mul(out,3.6)));
+  if(d.clasp==='circ'){ ctx.strokeStyle='#63d08a'; ctx.lineWidth=3.5; ctx.beginPath(); ctx.arc(p35[0],p35[1],ARCH_S[4]*sc/2+1,rad(300),rad(60)); ctx.stroke(); ctx.fillStyle='#63d08a'; ctx.fillText('çevresel kroşe',bk[0]+6,bk[1]+4); }
+  if(d.clasp==='ibar'){ ctx.strokeStyle='#63d08a'; ctx.lineWidth=3.5; ctx.beginPath(); ctx.moveTo(bk[0]+18,bk[1]+30); ctx.lineTo(bk[0]+4,bk[1]+4); ctx.lineTo(bk[0]-6,bk[1]+4); ctx.stroke(); ctx.fillStyle='#63d08a'; ctx.fillText('I-bar',bk[0]+10,bk[1]+36); }
+  if(d.plate){ const dp=S(add(fpos(35),mul(nrm(sub(fpos(35),fpos(34))),3.4))); ctx.strokeStyle='#ffd166'; ctx.lineWidth=5; ctx.beginPath(); ctx.moveTo(dp[0]-8,dp[1]-10); ctx.lineTo(dp[0]-8,dp[1]+10); ctx.stroke(); ctx.fillStyle='#ffd166'; ctx.fillText('proksimal plak',dp[0]-80,dp[1]+34); }
+  // indirekt tutucu
+  if(d.ir!=='none'){ const q=S(IRMAP[d.ir]); ctx.fillStyle='#b57ad9'; ctx.fillRect(q[0]-6,q[1]-6,12,12); ctx.fillStyle='#d9b3ee'; ctx.font='bold 10px sans-serif'; ctx.fillText('IR '+d.ir,q[0]+9,q[1]-8); ctx.strokeStyle='#b57ad9'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(q[0],q[1]); ctx.lineTo(...lingual(d.ir)); ctx.stroke(); }
+  // fulkrum hattı
+  if(d.rest!=='none'||curMode==='explore'){ const A=S(restPt(d.rest==='none'?'mesial':d.rest)),B=S(FL2); ctx.save(); ctx.setLineDash([7,5]); ctx.strokeStyle='#e8707a'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(A[0]-30,A[1]+8); ctx.lineTo(B[0]+30,B[1]-8); ctx.stroke(); ctx.restore(); ctx.fillStyle='#e8707a'; ctx.font='10px sans-serif'; ctx.fillText('fulkrum hattı',B[0]-70,B[1]+24);
+    if(d.ir!=='none'){ const q=S(IRMAP[d.ir]); ctx.strokeStyle='rgba(181,122,217,.8)'; ctx.setLineDash([3,3]); ctx.beginPath(); const n=nAnt(restPt(d.rest==='none'?'mesial':d.rest),FL2),ft=add(restPt(d.rest==='none'?'mesial':d.rest),mul(n,-dot(sub(restPt(d.rest==='none'?'mesial':d.rest),IRMAP[d.ir]),n))); ctx.moveTo(q[0],q[1]); ctx.lineTo(...S(ft)); ctx.stroke(); ctx.setLineDash([]); } }
+  ctx.fillStyle='#b1bec5'; ctx.font='11px sans-serif'; ctx.fillText('Kennedy Sınıf II (36-37-38 yok)',12,H-30);
+  ctx.fillStyle='#78898f'; ctx.fillText('ön',ox-8,34); }
+function drawLever(cv,factor,load,label){ const ctx=cv.getContext('2d'),W=cv.width,H=cv.height; ctx.fillStyle='#06080a'; ctx.fillRect(0,0,W,H);
+  const mu=1.5*load/100*8; ctx.fillStyle='#d9cdb4'; ctx.fillRect(0,170,W,60); ctx.fillStyle='#c9606f'; ctx.fillRect(130,160+mu*0.2,150,12+0); ctx.fillStyle='#8c3a47'; ctx.beginPath(); ctx.moveTo(130,160); ctx.lineTo(280,160+mu); ctx.lineTo(280,172); ctx.lineTo(130,172); ctx.closePath(); ctx.fill();
+  const tilt=5*factor*load/100; ctx.save(); ctx.translate(90,195); ctx.rotate(rad(tilt)); ctx.translate(-90,-195);
+  ctx.fillStyle='#d9c99f'; ctx.beginPath(); ctx.moveTo(70,160); ctx.lineTo(110,160); ctx.lineTo(96,215); ctx.lineTo(84,215); ctx.closePath(); ctx.fill(); ctx.fillStyle='#f3efe4'; rr(ctx,64,98,52,62,12); ctx.fill(); ctx.strokeStyle='#8a7c58'; ctx.stroke(); ctx.restore();
+  const rest=SR.d.rest; ctx.fillStyle='#4fb8e0'; if(rest==='mesial') ctx.fillRect(58,98,10,6); if(rest==='distal') ctx.fillRect(112,98,10,6);
+  ctx.fillStyle='#b8a574'; rr(ctx,130,128,150,34,8); ctx.fill(); ctx.strokeStyle='#e8a35a'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(240,100); ctx.lineTo(240,128); ctx.stroke(); ctx.fillStyle='#e8a35a'; ctx.beginPath(); ctx.moveTo(234,122); ctx.lineTo(246,122); ctx.lineTo(240,132); ctx.closePath(); ctx.fill(); ctx.font='bold 10px sans-serif'; ctx.fillText('çiğneme yükü '+load+'%',160,98);
+  ctx.fillStyle='#eef2f4'; ctx.font='bold 11px sans-serif'; ctx.fillText('Tork faktörü '+factor.toFixed(2)+' · destek dişi eğimi '+tilt.toFixed(1)+'°',8,40);
+  ctx.fillStyle='#b1bec5'; ctx.font='10px sans-serif'; ctx.fillText('mukoza gömülmesi ≈ '+(1.5*load/100).toFixed(1)+' mm · PDL ≈ 0.1 mm',8,54); if(label){ ctx.fillStyle=factor>=0.75?'#e8707a':'#63d08a'; ctx.fillText(label,8,68); } }
+function drawSurv(cv){ const ctx=cv.getContext('2d'),W=cv.width,H=cv.height,d=SR.d,E=rpdEval(); ctx.fillStyle='#06080a'; ctx.fillRect(0,0,W,H);
+  ctx.save(); ctx.translate(120,200); ctx.rotate(rad(d.tilt*0.6)); ctx.translate(-120,-200);
+  ctx.fillStyle='#f3efe4'; ctx.beginPath(); ctx.moveTo(90,190); ctx.bezierCurveTo(70,150,62,100,84,52); ctx.lineTo(160,52); ctx.bezierCurveTo(182,100,174,150,152,190); ctx.closePath(); ctx.fill(); ctx.strokeStyle='#8a7c58'; ctx.lineWidth=2; ctx.stroke(); ctx.restore();
+  ctx.strokeStyle='#e8a35a'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(62,20); ctx.lineTo(62,215); ctx.stroke(); ctx.fillStyle='#e8a35a'; ctx.font='10px sans-serif'; ctx.fillText('analiz çubuğu',6,38);
+  const gx=205,gy=160,gw=44; ctx.fillStyle='#14110e'; ctx.fillRect(gx,gy-110,gw,120); ctx.strokeStyle='#2c3a42'; ctx.strokeRect(gx,gy-110,gw,120);
+  const yv=m=>gy-m*200; for(const [m,l,col] of [[0.25,'0.25',' #63d08a'],[0.50,'0.50',' #f0b542']]){ ctx.strokeStyle=col.trim(); ctx.setLineDash([3,3]); ctx.beginPath(); ctx.moveTo(gx,yv(m)); ctx.lineTo(gx+gw,yv(m)); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle=col.trim(); ctx.fillText(l,gx+gw+3,yv(m)+3); }
+  ctx.fillStyle=Math.abs(E.uc-E.ucTarget)<=0.06?'#63d08a':'#e8707a'; ctx.fillRect(gx+8,yv(E.uc),gw-16,gy-yv(E.uc)); ctx.fillStyle='#eef2f4'; ctx.font='bold 11px sans-serif'; ctx.fillText('undercut '+E.uc.toFixed(2)+' mm',gx-60,gy+26);
+  ctx.fillStyle='#b1bec5'; ctx.font='10px sans-serif'; ctx.fillText('eğim '+d.tilt.toFixed(1)+'° · hedef '+E.ucTarget.toFixed(2)+' ±0.06 mm',gx-100,gy+42); }
+function drawKen(cv,mode){ const ctx=cv.getContext('2d'),W=cv.width,H=cv.height; ctx.fillStyle='#06080a'; ctx.fillRect(0,0,W,H); const sc=3.3;
+  KARCH.forEach((a,i)=>{ const ox=(i%4)*225+112, oy=(Math.floor(i/4))*0+250; drawMiniArch(ctx,a,ox,oy,sc,{nums:true}); ctx.fillStyle='#e8a35a'; ctx.font='bold 14px sans-serif'; ctx.fillText('Ark '+a.id+' · '+(a.jaw==='mand'?'alt':'üst'),ox-44,24);
+    if(a.note){ ctx.fillStyle='#f0b542'; ctx.font='9.5px sans-serif'; ctx.fillText(a.note,ox-104,H-48); }
+    const st=SR.k[i], tr=kennedyClassify(a); ctx.font='bold 12px sans-serif';
+    if(mode==='truth'){ ctx.fillStyle='#4fb8e0'; ctx.fillText('Doğru: Sınıf '+tr.cls+(tr.mods?' mod '+tr.mods:''),ox-56,H-28); }
+    ctx.fillStyle=st.cls?'#eef2f4':'#78898f'; ctx.fillText('Senin: '+(st.cls?('Sınıf '+st.cls+(st.mods!==''&&st.mods>0?' mod '+st.mods:'')):'—'),ox-56,H-10); }); }
+
+/* ================= UI ================= */
+const STEPS={ceph:['Landmark Yerleştirme','Ölçümler','Sınıf Yorumu','Vertikal / Yumuşak Doku','Jüri'],mf:['C_res Tahmini','Kuvvet F','Moment M','M/F Yorumu','Jüri'],
+  t2:['Öykü & Muayene','Açılma Yolu','Klik / Defleksiyon','Tanı & Plan','Jüri'],p1:['Paralelometre','Tırnak & Kroşe','Plak / I-bar','İndirekt Tutucu','Jüri'],p2:['Dişsiz Boşluklar','Kennedy Sınıfı','Modifikasyon','Applegate Kuralları','Jüri']};
+const kindNow=()=>bench===1?OC[CID[1]].kind:bench===2?'t2':RC[CID[3]].kind;
+function setStep(i){ stepIdx=clamp(i,0,4); renderStepper(); }
+function renderStepper(){ const el=$('stepper'),S=STEPS[kindNow()]; el.innerHTML=''; S.forEach((t,i)=>{ const d=document.createElement('div'); d.className='step'+(i===stepIdx?' on':'')+(i<stepIdx?' done':''); d.innerHTML=`<div class="n">${i<stepIdx?'✓':i+1}</div><div class="t">${t}</div>`; el.appendChild(d); }); }
+function renderCasePick(){ const el=$('casePick'); el.innerHTML=''; const ord=bench===1?C_ORDER:bench===2?T_ORDER:R_ORDER, def=bench===1?OC:bench===2?TMC:RC;
+  ord.forEach(id=>{ const b=document.createElement('button'); b.className='casebtn'+(id===CID[bench]?' on':''); b.innerHTML=`${id}<span class="d">${curMode==='exam'?'vaka':def[id].name.split(' ').slice(0,2).join(' ').slice(0,13)}</span>`; b.onclick=()=>loadCase(id); el.appendChild(b); }); }
+const NORM={SNA:'82 ± 2°',SNB:'80 ± 2°',ANB:'2 ± 2°',wits:'0 ± 2 mm',gognsn:'32 ± 5°',fma:'25 ± 3°',eLs:'−4 mm',eLi:'−2 mm'};
+function kvRow(l,v,n){ return `<div class="kv"><span>${l}</span><span><b>${v}</b>${n?` <span class="n">${n}</span>`:''}</span></div>`; }
+const f1=(v,u)=>v==null?'—':(v>0&&u==='mm'?'+':'')+v.toFixed(1)+(u||'');
+function refreshCeph(){ drawCeph($('cephCanvas')); if(!window.__lp) loupe(300,300);
+  const el=$('lmList'); el.innerHTML=''; for(const k of REQ){ const d=document.createElement('div'); d.className='lmrow'+(SC.active===k?' on':'')+(SC.marks[k]?' placed':''); const e=lmError(k);
+    d.innerHTML=`<span class="dot"></span><b>${k}</b><span>${curMode==='explore'?LMN[k]:LMN[k].split(' · ')[0].split(' (')[0]}</span>`+(curMode==='explore'&&e!=null?`<span class="n" style="margin-left:auto;font-size:10px;color:var(--ink-mut)">${e.toFixed(1)} mm</span>`:''); d.onclick=()=>{ SC.active=k; refreshCeph(); }; el.appendChild(d); }
+  const m=measure(SC.marks), ex=curMode==='explore';
+  $('cephOut').innerHTML=kvRow('SNA',f1(m.SNA,'°'),ex?NORM.SNA:'')+kvRow('SNB',f1(m.SNB,'°'),ex?NORM.SNB:'')+kvRow('ANB',f1(m.ANB,'°'),ex?NORM.ANB:'')+kvRow('Wits (AO–BO)',f1(m.wits,'mm'),ex?NORM.wits:'')+kvRow('GoGn–SN',f1(m.gognsn,'°'),ex?NORM.gognsn:'')+kvRow('FMA',f1(m.fma,'°'),ex?NORM.fma:'')+kvRow('E-hattı · Ls',f1(m.eLs,'mm'),ex?NORM.eLs:'')+kvRow('E-hattı · Li',f1(m.eLi,'mm'),ex?NORM.eLi:'');
+  $('cephRef').innerHTML=ex?'Ricketts E-hattı: Pn → Pg′. Wits: A ve B noktalarının oklüzal düzleme dik izdüşümleri (AO, BO); AO önde ise +.<br>Sınıflama eşikleri: ANB &gt;4° ↔ II, &lt;0° ↔ III; Wits ≥ +2.5 ↔ II, ≤ −4.5 ↔ III.':'<span style="color:var(--ink-mut)">Referans değerler DUS/Sınav modunda gizli.</span>';
+  $('dCls').value=SC.dec.cls; $('dBasis').value=SC.dec.basis; $('dVert').value=SC.dec.vert; $('dLip').value=SC.dec.lip;
+  const pl=REQ.filter(k=>SC.marks[k]).length; setStep(pl<REQ.length?0:!SC.dec.cls?1:(!SC.dec.vert||!SC.dec.lip)?2:3); }
+function refreshMF(){ const c=SM.c,g=mfGeom(c.bone),R=mfCalc(c.bone,SM.F,SM.M); drawMF($('mfCanvas'));
+  $('mfInfo').innerHTML=c.hist+`<div class="kv"><span>Alveoler kemik kaybı</span><b>${c.bone} mm</b></div><div class="kv"><span>Kök boyu</span><b>13 mm</b></div><div class="kv"><span>Braket → CEJ</span><b>4.5 mm</b></div><div class="kv"><span>Amaç</span><b>${MFN[c.goal]}</b></div>`;
+  $('mfCresOut').innerHTML=SM.cres==null?'<span class="warn">Henüz işaretlenmedi</span>':`Senin tahmin: CEJ\'ye göre <b>${((SM.cres-MF_CEJ)/-MF_S).toFixed(1)} mm apikal</b>`+(curMode==='explore'?` · gerçek ${g.cresFromCEJ.toFixed(1)} mm`:'');
+  $('mfFV').textContent=SM.F+' g'; $('mfMV').textContent=SM.M; $('mfF').value=SM.F; $('mfM').value=SM.M;
+  $('mfRead').innerHTML=SM.F>0?`M/F = <b>${R.r.toFixed(2)} mm</b><br>C_rot: <b>${Math.abs(R.y)>=500?'→ ∞ (|y|>500 mm)':R.y.toFixed(1)+' mm (C_res\'e göre, +kron)'}</b>`:'F=0: hareket yok';
+  $('mfNums').innerHTML=kvRow('F',SM.F+' g')+kvRow('M',SM.M+' g·mm')+kvRow('M/F',SM.F>0?R.r.toFixed(2)+' mm':'—')+(curMode==='explore'?kvRow('d (braket→C_res)',g.d.toFixed(1)+' mm')+kvRow('Hareket',MFN[R.cls])+kvRow('F_opt',R.Fopt.toFixed(0)+' g'):kvRow('Hareket','<span style="color:var(--ink-mut)">sınav modunda sen yorumla</span>'))+kvRow('Tepe PDL stresi',SM.F>0?R.peak.toFixed(0)+' g/cm²':'—','≤70 optimal')+kvRow('Ortalama stres',SM.F>0?R.s0.toFixed(0)+' g/cm²':'—');
+  $('mfLegend').innerHTML=[['#6aa7d9','&lt;20 g/cm² hafif'],['#63d08a','20–70 optimal'],['#f0b542','70–110 yüksek'],['#e8707a','&gt;110 hasar riski']].map(x=>`<div class="kv"><span><span style="color:${x[0]}">■</span> ${x[1]}</span></div>`).join('');
+  $('dMove').value=SM.dec.move; $('dAware').value=SM.dec.aware; $('dSafe').checked=SM.dec.safe; setStep(SM.cres==null?0:SM.F===0?1:SM.M===0?2:3); }
+function refreshTMJ(){ const c=TS.c,st=TS.st; drawTMJ($('tmjCanvas'),st.o,st.dir,st.disp,{labels:curMode==='explore'}); drawFront($('frontCanvas'),st.o);
+  $('tSl').value=st.o; $('tSlV').textContent=st.o.toFixed(1)+' mm'; $('tRead').innerHTML=tReadout(); $('tHist').innerHTML=c.hist;
+  $('tPlayBtn')&&0; for(const [k,v] of Object.entries({tDx:TS.dec.dx,tSide:TS.dec.side,tDev:TS.dec.dev,tBelief:TS.dec.belief,tPlan:TS.dec.plan})) $(k).value=v; $('tEdu').checked=TS.dec.edu; $('tFollow').checked=TS.dec.follow;
+  setStep(!Object.keys(TS.f).length?0:!TS.dec.dx?2:3); }
+function refreshRPD(){ const c=SR.c; document.body.dataset.kind3=c.kind; const d=SR.d,E=rpdEval();
+  if(c.kind==='p1'){ drawArch($('archCanvas')); drawLever($('leverCanvas'),E.torque,SR.load,d.rest==='none'?'tırnak seçilmedi':null); drawSurv($('survCanvas'));
+    $('sTilt').value=d.tilt; $('sTiltV').textContent=d.tilt.toFixed(1)+'°'; $('sAlloy').value=d.alloy; $('rRest').value=d.rest; $('rClasp').value=d.clasp; $('rPlate').checked=d.plate; $('rIR').value=d.ir; $('rLoad').value=SR.load; $('rLoadV').textContent=SR.load+'%';
+    $('sOut').innerHTML=`Undercut: <b>${E.uc.toFixed(2)} mm</b>`+(curMode==='explore'?` · hedef ${E.ucTarget.toFixed(2)} mm (±0.06)`:'');
+    $('rOut').innerHTML=d.rest==='none'?'Tırnak seçilmedi.':`Tork faktörü: <b>${E.torque.toFixed(2)}</b>`+(curMode==='explore'?(d.rest==='distal'?' — <span class="bad">destek dişini distale deviren kaldıraç</span>':E.torque<=0.12?' — <span class="ok">RPI stres kırıcı</span>':''):'');
+    $('rIROut').innerHTML=d.ir==='none'?'İndirekt tutucu seçilmedi.':`Fulkrum hattının önünde <b>${E.lever.toFixed(1)} mm</b>`+(curMode==='explore'?(E.irOk?' — <span class="ok">etkili</span>':' — <span class="bad">çok yakın</span>'):'');
+    $('rSum').innerHTML=kvRow('Tırnak',{none:'—',mesial:'mezial',distal:'distal'}[d.rest])+kvRow('Kroşe',{none:'—',circ:'çevresel',ibar:'I-bar'}[d.clasp])+kvRow('Plak',d.plate?'var':'yok')+kvRow('İndirekt tutucu',d.ir==='none'?'yok':d.ir)+kvRow('Alaşım / eğim',(d.alloy==='cocr'?'Co-Cr':'altın')+' · '+d.tilt.toFixed(1)+'°');
+    setStep(d.tilt===0?0:d.rest==='none'||d.clasp==='none'?1:!d.plate?2:3); }
+  else { drawKen($('kenCanvas'),'live'); const el=$('kRows'); if(!el.children.length||el.dataset.cid!==SR.cid){ el.dataset.cid=SR.cid; el.innerHTML='';
+      KARCH.forEach((a,i)=>{ const r=document.createElement('div'); r.className='krow'; r.innerHTML=`<h6>Ark ${a.id} · ${a.jaw==='mand'?'alt':'üst'}</h6><div class="ctrlrow"><label>Sınıf</label><select data-k="${i}" data-f="cls"><option value="">—</option><option>I</option><option>II</option><option>III</option><option>IV</option></select></div><div class="ctrlrow"><label>Modifikasyon</label><select data-k="${i}" data-f="mods"><option value="">—</option><option>0</option><option>1</option><option>2</option><option>3</option></select></div>`; el.appendChild(r); });
+      el.querySelectorAll('select').forEach(s=>s.addEventListener('change',()=>{ const i=+s.dataset.k, row=SR.k[i]; const cls=el.querySelector(`select[data-k="${i}"][data-f="cls"]`).value, mods=el.querySelector(`select[data-k="${i}"][data-f="mods"]`).value;
+        if(cls==='IV'&&mods!==''&&+mods>0){ const r=declareKennedy(i,cls,mods); toast('Sınıf IV\'te modifikasyon olmaz — reddedildi','bad'); } else { SR.k[i]={cls,mods}; } refreshRPD(); })); }
+    el.querySelectorAll('select').forEach(s=>{ const v=SR.k[+s.dataset.k][s.dataset.f]; s.value=v==null?'':String(v); });
+    $('kRulesBox').style.display=curMode==='explore'?'':'none'; $('kRules').innerHTML='1) En posteriordaki dişsiz alan sınıfı belirler. 2) Modifikasyon sayısı = sınıfı belirleyen alan dışındaki dişsiz alanlar. 3) Sınıf IV\'te modifikasyon OLMAZ. 4) Restore edilmeyecek 3. molar ve karşıtı olmayan 2. molar sınıflamaya katılmaz. 5) Sınıfı belirleyen alan sayılmaz; alanın uzunluğu önemsizdir.';
+    setStep(SR.k.every(k=>!k.cls)?0:SR.k.some(k=>!k.cls)?1:SR.k.some(k=>k.mods==='')?2:3); } }
+function refresh(){ if(bench===1){ if(OC[CID[1]].kind==='ceph') refreshCeph(); else refreshMF(); } else if(bench===2) refreshTMJ(); else refreshRPD(); renderStepper(); }
+function gradeNow(){ return bench===1?(OC[CID[1]].kind==='ceph'?gradeCeph():gradeMF()):bench===2?gradeTMJ():(RC[CID[3]].kind==='p1'?gradeRPD1():gradeRPD2()); }
+function loadCase(id){ const b=/^O/.test(id)?1:/^TME/.test(id)?2:3; if(b!==bench){ bench=b; document.body.dataset.bench=String(b); [...$('benchSeg').children].forEach(x=>x.classList.toggle('on',+x.dataset.bench===b)); }
+  CID[b]=id; $('juryOut').innerHTML='';
+  if(b===1){ if(OC[id].kind==='ceph'){ SC=newSC(id); document.body.dataset.kind='ceph'; } else { SM=newSM(id); document.body.dataset.kind='mf'; } }
+  else if(b===2){ TS=newTS(id); } else { SR=newSR(id); document.body.dataset.kind3=RC[id].kind; $('kRows').innerHTML=''; }
+  renderCasePick(); setStep(0); refresh(); toast('Vaka '+id+' yüklendi'+(curMode==='explore'?': '+(b===1?OC[id]:b===2?TMC[id]:RC[id]).name:' (sınav)')); }
+function setBench(n){ bench=n; document.body.dataset.bench=String(n); [...$('benchSeg').children].forEach(b=>b.classList.toggle('on',+b.dataset.bench===n)); $('juryOut').innerHTML=''; const id=CID[n]; if(n===1) document.body.dataset.kind=OC[id].kind; if(n===3) document.body.dataset.kind3=RC[id].kind; renderCasePick(); refresh(); }
+function setMode(m){ curMode=m; [...$('modeSeg').children].forEach(b=>b.classList.toggle('on',b.dataset.mode===m)); $('modeSeg').classList.toggle('exam',m==='exam'); renderCasePick(); refresh(); }
+/* ---- debrief ---- */
+function tmpCv(w,h){ const c=document.createElement('canvas'); c.width=w; c.height=h; return c; }
+function fitDraw(ctx,src){ const k=Math.min(640/src.width,470/src.height); const w=src.width*k,h=src.height*k; ctx.fillStyle='#06080a'; ctx.fillRect(0,0,640,470); ctx.drawImage(src,(640-w)/2,(470-h)/2,w,h); }
+function openDebrief(g){ $('ovl').classList.add('on'); $('dbTitle').textContent='Debrief — '+g.title; $('dbSub').textContent='Skor '+g.score+'/100'; const A=$('dvA').getContext('2d'),B=$('dvB').getContext('2d'); const kd=kindNow(); let ma='',mb='';
+  if(kd==='ceph'){ $('dvAh').textContent='① Senin Landmarkların & Ölçümlerin'; $('dvBh').textContent='② Şeffaf Gerçek Landmarklar'; const t1=tmpCv(620,540); drawCeph(t1,{noHint:true}); fitDraw(A,t1); const t2=tmpCv(620,540); drawCeph(t2,{truth:true,noHint:true}); fitDraw(B,t2);
+    const ms=measure(SC.marks),mt=measure(SC.T); const row=(l,a,b)=>`<div class="dmetric"><span>${l}</span><b>${a}</b></div>`; ma=row('ANB / Wits',f1(ms.ANB,'°')+' / '+f1(ms.wits,'mm'))+row('SNA / SNB',f1(ms.SNA,'°')+' / '+f1(ms.SNB,'°'))+row('GoGn–SN / FMA',f1(ms.gognsn,'°')+' / '+f1(ms.fma,'°')); mb=row('ANB / Wits',f1(mt.ANB,'°')+' / '+f1(mt.wits,'mm'))+row('ANB sınıfı ↔ Wits sınıfı',clsByAnb(mt.ANB)+' ↔ '+clsByWits(mt.wits))+row('Vertikal',vertOf(mt.gognsn)+' ('+f1(mt.gognsn,'°')+')'); }
+  else if(kd==='mf'){ $('dvAh').textContent='① Senin M/F Ayarın'; $('dvBh').textContent='② Şeffaf C_res & Hareket'; const t1=tmpCv(620,540); drawMF(t1,{}); fitDraw(A,t1); const t2=tmpCv(620,540); drawMF(t2,{truth:true}); fitDraw(B,t2); const R=mfCalc(SM.c.bone,SM.F,SM.M);
+    ma=`<div class="dmetric"><span>F / M / M/F</span><b>${SM.F} g / ${SM.M} / ${SM.F?R.r.toFixed(2):'—'}</b></div><div class="dmetric"><span>Elde edilen</span><b>${MFN[R.cls]}</b></div>`; mb=`<div class="dmetric"><span>d(braket→C_res)</span><b>${R.g.d.toFixed(1)} mm</b></div><div class="dmetric"><span>Tepe stres</span><b>${SM.F?R.peak.toFixed(0):'—'} g/cm²</b></div>`; }
+  else if(kd==='t2'){ $('dvAh').textContent='① Sagital TME · maksimum açıklık'; $('dvBh').textContent='② Şeffaf Açılma Yolu & Klik Noktaları'; const sw=TS.sw||tSweep(TS.c), last=sw.path.filter(p=>p.dir==='open').pop(); const t1=tmpCv(560,430); drawTMJ(t1,last.o,'open',last.disp,{labels:true,truth:true}); fitDraw(A,t1); const t2=tmpCv(300,300); drawFront(t2,last.o,{o:last.o}); fitDraw(B,t2);
+    ma=`<div class="dmetric"><span>Tanı / taraf</span><b>${TS.dec.dx||'—'} / ${TS.dec.side||'—'}</b></div><div class="dmetric"><span>Açılma yolu</span><b>${TS.dec.dev||'—'}</b></div><div class="dmetric"><span>Plan</span><b>${TS.dec.plan||'—'}</b></div>`; mb=`<div class="dmetric"><span>Klik açılış / kapanış</span><b>${sw.openClick||'—'} / ${sw.closeClick||'—'} mm</b></div><div class="dmetric"><span>Maks açıklık</span><b>${sw.maxOpen} mm</b></div><div class="dmetric"><span>Yol</span><b>${sw.dtype}${sw.deflectSide?' → '+sw.deflectSide:''}</b></div><div class="dmetric"><span>Lateral R / L</span><b>${sw.latR} / ${sw.latL} mm</b></div>`; }
+  else if(kd==='p1'){ $('dvAh').textContent='① Senin RPD Tasarımın'; $('dvBh').textContent='② Şeffaf Kaldıraç: Seninki ↔ RPI'; const t1=tmpCv(560,430); drawArch(t1); fitDraw(A,t1); const E=rpdEval(); const l1=tmpCv(280,230),l2=tmpCv(280,230); drawLever(l1,E.torque,100,'seninki'); drawLever(l2,0.12,100,'RPI (mezial tırnak + plak + I-bar)'); B.fillStyle='#06080a'; B.fillRect(0,0,640,470); B.drawImage(l1,0,40,320,263); B.drawImage(l2,320,40,320,263);
+    ma=`<div class="dmetric"><span>Tırnak / kroşe</span><b>${SR.d.rest} / ${SR.d.clasp}${SR.d.plate?' + plak':''}</b></div><div class="dmetric"><span>İndirekt tutucu</span><b>${SR.d.ir} (${E.lever.toFixed(1)} mm)</b></div>`; mb=`<div class="dmetric"><span>Tork faktörü (seninki → RPI)</span><b>${E.torque.toFixed(2)} → 0.12</b></div><div class="dmetric"><span>Undercut</span><b>${E.uc.toFixed(2)} → ${E.ucTarget.toFixed(2)} mm</b></div>`; }
+  else { $('dvAh').textContent='① Senin Sınıflaman'; $('dvBh').textContent='② Şeffaf Doğru Sınıflama'; const t1=tmpCv(900,470); drawKen(t1,'live'); fitDraw(A,t1); const t2=tmpCv(900,470); drawKen(t2,'truth'); fitDraw(B,t2);
+    ma=SR.k.map((k,i)=>`<div class="dmetric"><span>Ark ${KARCH[i].id}</span><b>${k.cls?'Sınıf '+k.cls+(k.mods>0?' mod '+k.mods:''):'—'}</b></div>`).join(''); mb=KARCH.map((a,i)=>{const t=kennedyClassify(a);return `<div class="dmetric"><span>Ark ${a.id}</span><b>Sınıf ${t.cls}${t.mods?' mod '+t.mods:''}</b></div>`;}).join(''); }
+  $('dvAmeta').innerHTML=ma; $('dvBmeta').innerHTML=mb; $('dvC').innerHTML=karne(g); }
+function karne(g){ let h=`<div class="kh">Karar zinciri</div><div>${g.teach}</div>`; if(g.codes.length) h+=`<div class="kh">Yakalanan hata kodları</div><div class="neg">${g.codes.join(' · ')}</div>`;
+  h+=`<div class="kh">Skor (4 kategori)</div>`; g.cats.forEach(c=>h+=`<div>${c.name}: <b>${Math.round(c.w*c.s)}/${c.w}</b></div>`); h+=`<div style="margin-top:4px">Toplam <b>${g.score}/100</b> — ${g.score>=85?'<span class="pos">uzman düzeyi</span>':g.score>=60?'<span class="neu">geliştirilmeli</span>':'<span class="neg">kritik hatalar</span>'}.</div>`; return h; }
+function renderJury(){ const g=gradeNow(); const col=g.score>=85?'var(--good)':g.score>=60?'var(--warn)':'var(--bad)'; let h=`<div class="jcard"><div class="jscore" style="color:${col}">${g.score}<small>/100</small></div>`;
+  g.cats.forEach(c=>{ const cs=Math.round(c.w*c.s),cc=c.s>=0.85?'var(--good)':c.s>=0.5?'var(--warn)':'var(--bad)'; h+=`<div style="margin-top:7px;font-size:11px;font-weight:800;display:flex;justify-content:space-between"><span>${c.name}</span><span style="color:${cc}">${cs}/${c.w}</span></div>`; c.flags.forEach(f=>h+=`<div class="jflag ${f[0]}"><span class="b">${f[0]==='ok'?'✓':f[0]==='warn'?'!':'✕'}</span><span>${f[1]}</span></div>`); });
+  h+='</div>'; $('juryOut').innerHTML=h; setStep(4); openDebrief(g); return g; }
+/* ---- olaylar ---- */
+const cxy=(e,cv)=>{ const r=cv.getBoundingClientRect(); return [(e.clientX-r.left)*cv.width/r.width,(e.clientY-r.top)*cv.height/r.height]; };
+$('benchSeg').addEventListener('click',e=>{const b=e.target.closest('button'); if(b) setBench(+b.dataset.bench);});
+$('modeSeg').addEventListener('click',e=>{const b=e.target.closest('button'); if(b) setMode(b.dataset.mode);});
+$('juryBtn').addEventListener('click',renderJury); $('resetBtn').addEventListener('click',()=>loadCase(CID[bench]));
+$('dbX').addEventListener('click',()=>$('ovl').classList.remove('on')); $('ovl').addEventListener('click',e=>{if(e.target===$('ovl'))$('ovl').classList.remove('on');});
+// ceph
+const cephCv=$('cephCanvas');
+cephCv.addEventListener('pointerdown',e=>{ const q=cxy(e,cephCv); let near=null,bd=14; for(const k of REQ) if(SC.marks[k]){ const pp=P(SC.marks[k]),dd=Math.hypot(pp[0]-q[0],pp[1]-q[1]); if(dd<bd){bd=dd;near=k;} }
+  if(near&&(near!==SC.active||SC.marks[SC.active])){ SC.drag=near; SC.active=near; } else { const k=SC.active; placeMark(k,Pinv(q)); SC.drag=k; } try{cephCv.setPointerCapture(e.pointerId);}catch(_){} loupe(q[0],q[1]); refreshCeph(); });
+cephCv.addEventListener('pointermove',e=>{ const q=cxy(e,cephCv); window.__lp=1; if(SC.drag){ SC.marks[SC.drag]=Pinv(q); refreshCeph(); } loupe(q[0],q[1]); });
+cephCv.addEventListener('pointerup',()=>{ SC.drag=null; refreshCeph(); });
+$('lmClear').addEventListener('click',()=>{ SC.marks={}; SC.active='S'; refreshCeph(); });
+$('lmAuto').addEventListener('click',()=>{ REQ.forEach(k=>SC.marks[k]=[SC.T[k][0]+0.3,SC.T[k][1]-0.3]); SC.active='S'; refreshCeph(); });
+for(const [id,k] of [['dCls','cls'],['dBasis','basis'],['dVert','vert'],['dLip','lip']]) $(id).addEventListener('change',e=>{ SC.dec[k]=e.target.value; refreshCeph(); });
+// mf
+$('mfCanvas').addEventListener('pointerdown',e=>{ const q=cxy(e,$('mfCanvas')); SM.cres=clamp(q[1],40,500); refreshMF(); });
+$('mfF').addEventListener('input',e=>{ SM.F=+e.target.value; refreshMF(); }); $('mfM').addEventListener('input',e=>{ SM.M=+e.target.value; refreshMF(); });
+$('dMove').addEventListener('change',e=>{ SM.dec.move=e.target.value; refreshMF(); }); $('dAware').addEventListener('change',e=>{ SM.dec.aware=e.target.value; refreshMF(); }); $('dSafe').addEventListener('change',e=>{ SM.dec.safe=e.target.checked; refreshMF(); });
+// tmj
+$('tSl').addEventListener('input',e=>{ setOpening(+e.target.value); refreshTMJ(); });
+let tAnim=null; $('tPlay').addEventListener('click',()=>{ if(tAnim){ cancelAnimationFrame(tAnim); tAnim=null; $('tPlay').textContent='▶ Aç-kapa'; return; } $('tPlay').textContent='■ Durdur'; const t0=performance.now(), T=7000; const loop=now=>{ const ph=((now-t0)%T)/T, o=(ph<0.5?ph*2:(1-ph)*2)*TS.c.maxOpen; setOpening(o); refreshTMJ(); tAnim=requestAnimationFrame(loop); }; tAnim=requestAnimationFrame(loop); });
+$('tOpenB').addEventListener('click',()=>{ TS.f.open=true; $('tOut').innerHTML+=`<div>Maksimum açıklık: <b>${TS.c.maxOpen} mm</b></div>`; refreshTMJ(); });
+$('tListenB').addEventListener('click',()=>{ TS.f.listen=true; const sw=TS.sw; $('tOut').innerHTML+=sw.clicks.length?`<div>Klik: ${sw.clicks.map(e=>(e.dir==='open'?'açılışta ':'kapanışta ')+e.o+' mm').join(' · ')}</div>`:'<div>Eklem sesi: <b>yok</b></div>'; sw.clicks.forEach((e,i)=>setTimeout(()=>playClick(e.dir),i*500)); refreshTMJ(); });
+$('tLatRB').addEventListener('click',()=>{ TS.f.latR=true; $('tOut').innerHTML+=`<div>Sağ lateral: <b>${TS.c.latR} mm</b></div>`; refreshTMJ(); });
+$('tLatLB').addEventListener('click',()=>{ TS.f.latL=true; $('tOut').innerHTML+=`<div>Sol lateral: <b>${TS.c.latL} mm</b></div>`; refreshTMJ(); });
+$('tOccB').addEventListener('click',()=>{ TS.f.occ=true; const occ=TS.cid==='TME3'?'Sağ lateralde: sağ kanin ayrılmayı sağlıyor AMA sol arka dişlerde çalışmayan taraf kontağı var; sol lateralde kanin koruması yeterli.':'Lateral hareketlerde kanin koruması var, çalışmayan taraf kontağı yok.'; $('tOut').innerHTML+=`<div>${occ}</div>`; refreshTMJ(); });
+for(const [id,k] of [['tDx','dx'],['tSide','side'],['tDev','dev'],['tBelief','belief'],['tPlan','plan']]) $(id).addEventListener('change',e=>{ TS.dec[k]=e.target.value; refreshTMJ(); });
+$('tEdu').addEventListener('change',e=>{ TS.dec.edu=e.target.checked; refreshTMJ(); }); $('tFollow').addEventListener('change',e=>{ TS.dec.follow=e.target.checked; refreshTMJ(); });
+// rpd
+const rd=(k,v)=>{ SR.d[k]=v; refreshRPD(); };
+$('sTilt').addEventListener('input',e=>rd('tilt',+e.target.value)); $('sAlloy').addEventListener('change',e=>rd('alloy',e.target.value));
+$('rRest').addEventListener('change',e=>rd('rest',e.target.value)); $('rClasp').addEventListener('change',e=>rd('clasp',e.target.value)); $('rPlate').addEventListener('change',e=>rd('plate',e.target.checked)); $('rIR').addEventListener('change',e=>rd('ir',e.target.value));
+$('rLoad').addEventListener('input',e=>{ SR.load=+e.target.value; refreshRPD(); });
+/* ---- boot ---- */
+SC=newSC('O1'); SM=newSM('O3'); TS=newTS('TME1'); SR=newSR('P1'); renderCasePick(); renderStepper(); refresh();
+/* ============ API + SELFTEST ============ */
+window.ORTHO={
+  setBench, loadCase, setMode, cases:()=>({o:C_ORDER.slice(),t:T_ORDER.slice(),p:R_ORDER.slice()}),
+  // tezgâh 1a
+  placeAll:(err)=>{ err=err||0; REQ.forEach(k=>SC.marks[k]=[SC.T[k][0]+err,SC.T[k][1]]); SC.active='S'; refreshCeph(); }, placeMark:(k,x,y)=>{ placeMark(k,[x,y]); refreshCeph(); },
+  truthPt:k=>SC.T[k].slice(), measures:()=>measure(SC.marks), truthMeasures:()=>measure(SC.T), classByAnb:clsByAnb, classByWits:clsByWits, vertOf, lipOf,
+  decide:o=>{ Object.assign(SC.dec,o); refreshCeph(); }, grade:()=>gradeNow(),
+  // tezgâh 1b
+  mfGeom:b=>mfGeom(b), mf:(b,F,M)=>{ const R=mfCalc(b,F,M); return {cls:R.cls,y:R.y,d:R.g.d,apex:R.g.apex,r:R.r,peak:R.peak,s0:R.s0,Fopt:R.Fopt,cresFromCEJ:R.g.cresFromCEJ}; },
+  mfSet:(F,M)=>{ SM.F=F; SM.M=M; refreshMF(); }, mfMark:(errMm)=>{ SM.cres=mfY(0,mfGeom(SM.c.bone))+(errMm||0)*MF_S; refreshMF(); }, mfDecide:o=>{ Object.assign(SM.dec,o); refreshMF(); }, mfState:()=>({F:SM.F,M:SM.M,cls:mfCalc(SM.c.bone,SM.F,SM.M).cls}),
+  // tezgâh 2
+  tmj:id=>tSweep(TMC[id||TS.cid]), tmjMove:o=>{ const r=setOpening(o); refreshTMJ(); return r.ev; }, tmjReset:()=>{ TS.st=tInit(TS.c); TS.heard=0; window.__audio.clicks=0; refreshTMJ(); }, tmjDecide:o=>{ Object.assign(TS.dec,o); refreshTMJ(); }, tmjState:()=>JSON.parse(JSON.stringify({st:TS.st,heard:TS.heard,audio:window.__audio.clicks})),
+  // tezgâh 3
+  rpdSet:o=>{ Object.assign(SR.d,o); refreshRPD(); }, rpdEval:()=>rpdEval(), irLever, kennedy:i=>kennedyClassify(KARCH[i]), declareKennedy:(i,c,m)=>{ const r=declareKennedy(i,c,m); refreshRPD(); return r; }, kennedyArches:()=>KARCH.map(a=>({id:a.id,missing:a.missing.slice()})), torqueFactor,
+  gradeRPD:()=>gradeNow(), state:()=>({bench,mode:curMode,case:CID[bench]})
+};
+window.__selfTest=function(){
+  const R=[]; const ok=(n,c)=>R.push({n,pass:!!c});
+  try{
+    // ===== test_ortho_anb_wits_and_mf_translation =====
+    ORTHO.setMode('explore'); ORTHO.loadCase('O2'); ORTHO.placeAll(0); const m=ORTHO.measures();
+    ok('O2-anb-6.5-false-class-II', Math.abs(m.ANB-6.5)<0.15 && ORTHO.classByAnb(m.ANB)==='II');
+    ok('O2-wits-0.5-class-I', Math.abs(m.wits-0.5)<0.15 && ORTHO.classByWits(m.wits)==='I' && ORTHO.vertOf(m.gognsn)==='hyper');
+    ORTHO.decide({cls:'II',basis:'anb',vert:'hyper',lip:'normal'}); let g=ORTHO.grade(); ok('O2-anb-alone-trap-caught', g.codes.includes('ANB_ALONE_TRAP') && g.score<75);
+    ORTHO.decide({cls:'I',basis:'both',vert:'hyper',lip:'normal'}); g=ORTHO.grade(); ok('O2-wits-resolves-full', g.score===100 && !g.codes.length);
+    ORTHO.loadCase('O1'); ORTHO.placeAll(0); const m1=ORTHO.measures(); ok('O1-anb-and-wits-agree-II', ORTHO.classByAnb(m1.ANB)==='II' && ORTHO.classByWits(m1.wits)==='II' && ORTHO.vertOf(m1.gognsn)==='normo' && ORTHO.lipOf(m1.eLs,m1.eLi)==='normal');
+    ORTHO.placeAll(1.0); ORTHO.decide({cls:'II',basis:'both',vert:'normo',lip:'normal'}); ok('O1-1mm-landmark-tolerance-full', ORTHO.grade().score===100);
+    ORTHO.placeAll(4); ok('O1-4mm-drift-flagged', ORTHO.grade().codes.includes('LANDMARK_DRIFT'));
+    const gh=ORTHO.mf(0,100,0), gdd=ORTHO.mfGeom(0).d, gT=ORTHO.mf(0,100,100*gdd), g13=ORTHO.mf(0,100,1300), gC=ORTHO.mf(0,100,700);
+    ok('MF-0-uncontrolled-tipping', gh.cls==='uncontrolled' && gh.y<0 && gh.y>-gh.apex);
+    ok('MF-eq-d-bodily-translation', Math.abs(gT.y)>500 && gT.cls==='translation' && Math.abs(gdd-10.6)<0.05);
+    ok('MF-ge-13-root-torque', g13.cls==='torque' && g13.y>0);
+    ok('MF-7-controlled-at-apex', gC.cls==='controlled' && Math.abs(gC.y+gC.apex)<1);
+    const g4=ORTHO.mfGeom(4), g0=ORTHO.mfGeom(0); ok('bone-loss-Cres-moves-apical', g4.cresFromCEJ>g0.cresFromCEJ+2 && g4.d>g0.d+2 && Math.abs(g4.d-13)<0.05);
+    ok('bone-loss-same-F-bigger-moment', ORTHO.mf(4,100,0).peak>ORTHO.mf(0,100,0).peak*0.6 && ORTHO.mf(4,100,gdd*100).cls!=='translation');
+    ORTHO.loadCase('O3'); ORTHO.mfMark(0); ORTHO.mfSet(60,60*13); ORTHO.mfDecide({move:'translation',aware:'apical',safe:true}); ok('O3-translation-full', ORTHO.mfState().cls==='translation' && ORTHO.grade().score===100);
+    ORTHO.mfSet(60,60*10.6); ORTHO.mfDecide({move:'translation',aware:'none',safe:true}); g=ORTHO.grade(); ok('O3-healthy-ratio-fails', g.codes.includes('HEALTHY_C_RES_ASSUMED') && g.score<70);
+    // ===== test_tmj_deviation_vs_deflection =====
+    const s1=ORTHO.tmj('TME1'); ok('TME1-reciprocal-click', s1.reciprocal && s1.openClick===18 && s1.closeClick===12 && s1.openClick>s1.closeClick);
+    ok('TME1-deviation-returns-midline-normal-opening', s1.dtype==='deviation' && s1.devMax>3 && Math.abs(s1.devAtMax)<0.3 && s1.maxOpen>=40);
+    const s2=ORTHO.tmj('TME2'); ok('TME2-closed-lock-zero-click-restricted', s2.clicks.length===0 && s2.maxOpen<30);
+    ok('TME2-ipsilateral-deflection-contralateral-limited', s2.dtype==='deflection' && s2.deflectSide==='R' && s2.devAtMax>=4 && s2.latL<4 && s2.latR>=8 && s2.contralateralLimited);
+    ORTHO.loadCase('TME1'); ORTHO.tmjReset(); for(let o=0;o<=46;o+=1) ORTHO.tmjMove(o); for(let o=46;o>=0;o-=1) ORTHO.tmjMove(o); ok('TME1-audio-click-count-2', ORTHO.tmjState().audio===2);
+    ORTHO.loadCase('TME2'); ORTHO.tmjReset(); for(let o=0;o<=40;o+=1) ORTHO.tmjMove(o); ok('TME2-no-click-blocked-at-25', ORTHO.tmjState().audio===0 && ORTHO.tmjState().st.o<=25.01);
+    ORTHO.tmjDecide({dx:'addwor',side:'R',dev:'deflectR',belief:'lock',plan:'conserv',edu:true,follow:true}); ok('TME2-perfect-100', ORTHO.grade().score===100);
+    ORTHO.tmjDecide({belief:'healed',plan:'reassure'}); g=ORTHO.grade(); ok('TME2-false-resolution-caught', g.codes.includes('FALSE_RESOLUTION_LOCK_MISSED'));
+    ORTHO.tmjDecide({belief:'lock',plan:'conserv',dev:'deflectL'}); ok('TME2-contralateral-deflection-error', ORTHO.grade().codes.includes('DEFLECTION_CONTRALATERAL_ERROR'));
+    ORTHO.tmjDecide({dev:'deviation'}); ok('TME2-deviation-vs-deflection-confused', ORTHO.grade().codes.includes('DEVIATION_DEFLECTION_CONFUSED'));
+    ORTHO.loadCase('TME1'); ORTHO.tmjDecide({dx:'addwr',side:'R',dev:'deviation',belief:'na',plan:'equil',edu:true,follow:true}); ok('TME1-irreversible-for-painless-click', ORTHO.grade().codes.includes('IRREVERSIBLE_FOR_PAINLESS_CLICK'));
+    ORTHO.tmjDecide({plan:'reassure'}); ok('TME1-perfect-100', ORTHO.grade().score===100);
+    ORTHO.loadCase('TME3'); ORTHO.tmjDecide({dx:'occl',side:'none',dev:'none',belief:'na',plan:'splint',edu:true,follow:true}); ok('TME3-michigan-splint-full', ORTHO.grade().score===100); ORTHO.tmjDecide({plan:'equil'}); ok('TME3-irreversible-adjustment-first', ORTHO.grade().codes.includes('IRREVERSIBLE_OCCLUSAL_ADJUSTMENT_FIRST'));
+    // ===== test_rpd_distal_extension_rpi_and_kennedy4 =====
+    ORTHO.loadCase('P1'); const tilt=(0.25-0.10)/0.045; ORTHO.rpdSet({rest:'distal',clasp:'circ',plate:false,ir:'none',tilt,alloy:'cocr'}); let r=ORTHO.gradeRPD();
+    ok('P1-distal-rest-destructive-torque', r.codes.includes('DESTRUCTIVE_DISTAL_TORQUE') && ORTHO.rpdEval().torque===1 && r.score<50);
+    ORTHO.rpdSet({rest:'mesial',clasp:'ibar',plate:true,ir:'41'}); r=ORTHO.gradeRPD(); ok('P1-RPI-plus-anterior-IR-full', r.score===100 && !r.codes.length);
+    ORTHO.rpdSet({ir:'34'}); ok('P1-IR-too-close-to-fulcrum', ORTHO.gradeRPD().codes.includes('INDIRECT_RETAINER_TOO_CLOSE') && ORTHO.irLever('mesial','34')<10 && ORTHO.irLever('mesial','41')>=10);
+    ORTHO.rpdSet({ir:'41',alloy:'gold'}); ok('P1-gold-needs-0.50-undercut', ORTHO.gradeRPD().codes.includes('UNDERCUT_OUT_OF_RANGE')); ORTHO.rpdSet({tilt:(0.5-0.1)/0.045}); ok('P1-gold-tilt-ok', ORTHO.gradeRPD().score===100);
+    ORTHO.loadCase('P2'); const kc=[0,1,2,3].map(i=>ORTHO.kennedy(i)); ok('Kennedy-classifier-a-b-c-d', kc[0].cls==='II'&&kc[0].mods===1 && kc[1].cls==='IV'&&kc[1].mods===0 && kc[2].cls==='III'&&kc[2].mods===1 && kc[3].cls==='II'&&kc[3].mods===0);
+    const rej=ORTHO.declareKennedy(1,'IV',1); ok('Kennedy-IV-modification-rejected', rej.rejected===true && rej.code==='CLASS_IV_NO_MODIFICATION' && ORTHO.gradeRPD().codes.includes('CLASS_IV_MODIFICATION_REJECTED'));
+    ORTHO.loadCase('P2'); [['II',1],['IV',0],['III',1],['II',0]].forEach((x,i)=>ORTHO.declareKennedy(i,x[0],x[1])); ok('Kennedy-all-correct-100', ORTHO.gradeRPD().score===100);
+    ORTHO.declareKennedy(0,'I',0); ok('Kennedy-third-molar-rule-caught', ORTHO.gradeRPD().codes.includes('THIRD_MOLAR_RULE_MISSED'));
+    const optTxt=[...document.querySelectorAll('select option')].map(o=>o.textContent).join(' | '); ok('ortho-no-option-spoilers', !/\((doğru|güvenli|hatalı|riskli)\)/i.test(optTxt));
+    ORTHO.setBench(1); ORTHO.loadCase('O1');
+  }catch(e){ R.push({n:'exception',pass:false,err:String(e&&e.stack||e)}); }
+  const pass=R.every(r=>r.pass); return {pass,count:R.length,tests:R,failed:R.filter(r=>!r.pass).map(r=>r.n||r.err)};
+};
+console.log('[ORTHO] ready');
+</script>
+</body></html>
