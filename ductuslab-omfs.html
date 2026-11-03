@@ -73,6 +73,11 @@ input[type=range]{flex:1;accent-color:var(--accent)}
 .debrief .dh{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg-1);z-index:2}
 .debrief .dh h3{margin:0;font-size:16px} .debrief .dh .x{margin-left:auto;cursor:pointer;color:var(--ink-mut);font-size:22px;background:0;border:0}
 .d3{display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:12px;padding:16px}
+.surg2{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:16px}
+.surg2 .dview canvas{height:300px;object-fit:contain}
+.toolbtn{display:inline-block;background:#0c1619;border:1px solid var(--line2);color:var(--ink-dim);border-radius:8px;padding:6px 8px;margin:0 5px 5px 0;cursor:pointer;font-size:11px}
+.toolbtn.on{border-color:var(--good);background:#10201f;color:var(--ink);box-shadow:0 0 0 1px var(--good) inset}
+@media (max-width:950px){ .surg2{grid-template-columns:1fr} }
 .dview{background:#0c1215;border:1px solid var(--line2);border-radius:11px;padding:11px;min-height:260px}
 .dview h5{margin:0 0 8px;font-size:12px;color:var(--accent);letter-spacing:.4px;text-transform:uppercase} .dview canvas{width:100%;border-radius:8px;background:#070b0d;display:block}
 .karne{font-size:12px;line-height:1.5;color:var(--ink-dim)} .karne .kh{color:var(--ink);font-weight:800;margin:8px 0 3px;font-size:12.5px}
@@ -112,7 +117,8 @@ input[type=range]{flex:1;accent-color:var(--accent)}
         <div class="ctrlrow"><label>Pencere</label><input type="range" id="winR" min="0.4" max="1.8" step="0.05" value="1"></div>
         <div class="ctrlrow"><label>Kontrast</label><input type="range" id="conR" min="0.6" max="2.2" step="0.05" value="1.5"></div>
         <label class="chk"><input type="checkbox" id="rulerChk"><span>Mesafe ölçüm cetveli (kök ↔ kanal)</span></label>
-        <div class="lockrow" id="phase2lock"><b>Aşama 2</b> · Halstead İAN blok & odontotomi/elevatör mekaniği yuvaları hazır (kilitli).</div>
+        <div class="lockrow" id="phase2lock"><b>Aşama 2</b> · İAN blok + cerrahi mekanik yalnız girişim (çekim/koronektomi) kararında açılır.</div>
+        <button class="verdict" id="surgOpenBtn" style="background:#143a52;color:var(--accent);display:none;margin-top:6px">⚕ Aşama 2 · İAN Blok + Cerrahi Uygulama (Adım 4-5)</button>
       </div>
     </div>
     <div class="col center">
@@ -163,6 +169,40 @@ input[type=range]{flex:1;accent-color:var(--accent)}
     <div class="dview"><h5>② 3B Şeffaf Mandibula · Kök & Gerçek İAN Demeti</h5><canvas id="dvB" width="640" height="460"></canvas><div id="dvBmeta"></div></div>
     <div class="dview"><h5>③ 4 Kategorili Jüri Karnesi</h5><div class="karne" id="dvC"></div></div>
   </div>
+</div></div>
+
+<!-- ========== AŞAMA 2 · İAN BLOK + CERRAHİ OVERLAY ========== -->
+<div class="ovl" id="surgOvl"><div class="debrief">
+  <div class="dh"><h3>Aşama 2 — Halstead İAN Blok & Cerrahi Uygulama</h3><span class="mini" id="surgSub" style="color:var(--ink-mut)"></span><button class="x" id="surgX">×</button></div>
+  <div class="surg2">
+    <!-- STEP 4: IAN BLOCK -->
+    <div class="dview">
+      <h5>Adım 4 · İnferior Alveolar Sinir Rejyonal Bloğu (Halstead)</h5>
+      <canvas id="ianCanvas" width="420" height="360"></canvas>
+      <div class="ctrlrow"><label>Yatay şırınga açısı</label>
+        <select id="ianAngle" style="flex:1"><option value="contra">Karşı premolar hattı (doğru)</option><option value="ipsi">İpsilateral paralel (hata)</option><option value="tooLateral">Fazla lateral/posterior (ıskalar)</option></select></div>
+      <div class="ctrlrow"><label>Giriş yüksekliği</label><input type="range" id="ianHeight" min="2" max="14" step="0.5" value="8"><span id="ianHeightV" style="min-width:52px;text-align:right">8.0 mm</span></div>
+      <div class="ctrlrow"><label>İlerletme derinliği</label><input type="range" id="ianDepth" min="0" max="30" step="0.5" value="0"><span id="ianDepthV" style="min-width:52px;text-align:right">0.0 mm</span></div>
+      <div class="ctrlrow" style="gap:6px"><button class="verdict" id="ianAspBtn" style="margin:0;background:#1a2d3a;color:var(--accent)">🧪 Aspirasyon</button>
+        <select id="ianDrug" style="flex:1"><option value="2">%2 Lidokain 1:100.000</option><option value="4">%4 Artikain</option></select>
+        <button class="verdict" id="ianInjBtn" style="margin:0;background:#2a1a3a;color:#d7b4ff">💉 1.8 mL Enjekte</button></div>
+      <div class="mini" id="ianReadout" style="margin-top:6px;min-height:46px"></div>
+    </div>
+    <!-- STEP 5: SURGERY -->
+    <div class="dview">
+      <h5>Adım 5 · Cerrahi Uygulama (τ = r × F)</h5>
+      <canvas id="surgCanvas" width="420" height="360"></canvas>
+      <div id="surgTools"></div>
+      <div class="ctrlrow" id="coroRow" style="display:none"><label>Koronektomi kesi derinliği</label><input type="range" id="coroCut" min="0" max="4" step="0.5" value="0"><span id="coroCutV" style="min-width:66px;text-align:right">0 mm (CEJ)</span></div>
+      <div class="ctrlrow"><label>Elevatör dayanağı</label>
+        <select id="surgFulcrum" style="flex:1"><option value="mesial">Mezial kortikal yiv (güvenli)</option><option value="distal47">47 distaline dayanak (riskli)</option></select></div>
+      <div class="ctrlrow"><label>Elevatör kuvveti</label><input type="range" id="surgForce" min="0" max="1" step="0.05" value="0"><span id="surgForceV" style="min-width:52px;text-align:right">0.00</span></div>
+      <div class="ctrlrow" style="gap:6px"><button class="verdict" id="surgApplyBtn" style="margin:0;background:#1a2d3a;color:var(--accent)">⬇ Elevatör Uygula</button>
+        <button class="verdict" id="surgFinishBtn" style="margin:0;background:#13201c;color:var(--good)">💧 İrrigasyon + Sütür</button></div>
+      <div class="mini" id="surgReadout" style="margin-top:6px;min-height:46px"></div>
+    </div>
+  </div>
+  <div style="padding:0 16px 16px"><button class="verdict" id="surgToJuryBtn">Cerrahiyi Bitir → Jüriyi Çağır</button></div>
 </div></div>
 <div class="toast" id="toast"></div>
 <script>
@@ -229,35 +269,247 @@ let headPos='normal', cbctTaken=false, cbctJustification=null, curStep=0;
 let cross={x:0,y:4,z:-6}, ruler=false;
 const roodChecked={}; let txDecision=null;
 
+/* ============ AŞAMA 2 · İAN blok + cerrahi mekanik durumu ============ */
+let p2=null;
+function newP2(){ return {
+  engaged:false,
+  ianAngle:'contra', ianHeight:8, ianDepth:0,
+  asp:[], needleRevision:0, injMg:0, ianResult:null,
+  ostectomy:false, odontotomy:false, coroCut:0, crownRemoved:false,
+  fulcrum:'mesial', force:0, rootMobilized:false, irrigated:false, sutured:false,
+  ianStrain:0, adjacentLoad:0, residualEnamel:false, rootPushedCanal:false, neighborLuxation:false,
+  needleTrack:null
+}; }
+// correct contralateral-premolar angle contacts ramus medial ~22mm (lingula); ipsilateral hits bone early <15mm; too-lateral misses bone
+function ianContactDepth(angle){ return angle==='contra'?22 : angle==='ipsi'?13 : 99; }
+function ianVesselBand(d){ return d>=22.8 && d<=24.2; }            // inferior alveolar vessels zone
+function ianDoseMg(percent,mL){ return +((percent*10)*mL).toFixed(1); }  // C_mg/mL = 10×%  →  %2 × 1.8mL = 36mg
+function ianLiveAsp(){ return p2.asp.filter(a=>!a.historical); }
+function ianMoveNeedle(){ // any needle displacement invalidates prior aspiration (becomes HISTORICAL) + revision++
+  if(ianLiveAsp().length){ p2.asp.forEach(a=>a.historical=true); p2.needleRevision++; } }
+function ianSetAngle(a){ if(a===p2.ianAngle)return; ianMoveNeedle(); p2.ianAngle=a; p2.ianDepth=0; }
+function ianSetDepth(d){ d=clamp(d,0,30); if(Math.abs(d-p2.ianDepth)>0.001) ianMoveNeedle(); p2.ianDepth=d; }
+function ianAspirate(){ const positive=ianVesselBand(p2.ianDepth); const rec={depth:p2.ianDepth,positive,historical:false}; p2.asp.push(rec); return rec; }
+function ianInject(percent,mL){
+  p2.engaged=true; const mg=ianDoseMg(percent,mL); p2.injMg=+(p2.injMg+mg).toFixed(1);
+  const cd=ianContactDepth(p2.ianAngle); const live=ianLiveAsp(); const lastAsp=live.length?live[live.length-1]:null;
+  const intravasc = (lastAsp&&lastAsp.positive) || (!lastAsp && ianVesselBand(p2.ianDepth));
+  const r={mg, cumulative:p2.injMg, angle:p2.ianAngle, depth:p2.ianDepth, revision:p2.needleRevision};
+  if(intravasc){ r.outcome='last'; r.success=false; r.systemicToxicity=true;
+    r.msg='⚠ İntravasküler enjeksiyon (pozitif/eksik aspirasyon) → Sistemik toksisite (LAST) + adrenalin taşikardisi!'; }
+  else if(p2.ianAngle==='ipsi' && p2.ianDepth>=cd){ r.outcome='early-contact'; r.success=false; r.earlyContact=true;
+    r.msg='⚠ Erken kemik teması <15 mm — iğne lingula ÖNÜNDE kaldı; pulpal anestezi TUTMAZ (ipsilateral/fazla medial açı).'; }
+  else if(p2.ianAngle==='tooLateral' && p2.ianDepth>26){ r.outcome='parotid'; r.success=false; r.facialPalsy=true;
+    r.msg='⚠ Kemik teması yok, >26 mm posteromedial → parotis lojuna enjeksiyon → GEÇİCİ FASİYAL PARALİZİ (göz kapanmıyor, ağız köşesi asimetrisi).'; }
+  else if(p2.ianAngle==='contra' && p2.ianDepth>=20 && p2.ianDepth<=25 && lastAsp && !lastAsp.positive){
+    r.outcome='block-success'; r.success=true;
+    r.msg='✓ Başarılı İAN bloğu — karşı premolar açısı, ramus iç yüzü teması ~20-25 mm, 1 mm geri çekme + negatif aspirasyon + yavaş enjeksiyon.'; }
+  else { r.outcome='uncertain'; r.success=false;
+    r.msg='Konum belirsiz — doğru derinlik (20-25 mm) + taze negatif aspirasyon sağlanmadı.'; }
+  p2.ianResult=r; p2.needleTrack={angle:p2.ianAngle,depth:p2.ianDepth}; return r;
+}
+/* ---- surgery ---- */
+function surgSetCoroCut(mm){ p2.engaged=true; p2.coroCut=mm; p2.crownRemoved=mm>0; p2.residualEnamel = (mm>0 && mm<2); } // crown must be cut 2-3mm apical to CEJ
+function surgApplyElevator(force,fulcrum){
+  p2.engaged=true; p2.force=force; if(fulcrum)p2.fulcrum=fulcrum;
+  if(txDecision==='extraction'){
+    const prepped = p2.ostectomy && p2.odontotomy;
+    if(prepped){ p2.ianStrain=Math.max(p2.ianStrain, 0.05); if(p2.fulcrum==='distal47'&&force>0.5){p2.adjacentLoad=Math.max(p2.adjacentLoad,force*0.6);} }
+    else if(force>0.5){ // high force without buccal ostectomy + crown odontotomy
+      if(p2.fulcrum==='distal47'){ p2.neighborLuxation=true; p2.adjacentLoad=Math.max(p2.adjacentLoad,force); }
+      else { p2.rootPushedCanal=true; p2.ianStrain=Math.max(p2.ianStrain, force); }
+    }
+  } else if(txDecision==='coronectomy'){
+    // residual roots must be LEFT UNTOUCHED; elevator force to them = mobilization trap
+    if(force>0.2){ p2.rootMobilized=true; p2.ianStrain=Math.max(p2.ianStrain, force*0.8); }
+  }
+}
+function surgFinish(){ p2.engaged=true; p2.irrigated=true; p2.sutured=true; }
+function surgicalCaseNeedsIntervention(){ return txDecision==='extraction'||txDecision==='coronectomy'; }
+
+/* ---- Step 4 drawing: intraoral pterygomandibular triangle + needle ---- */
+function drawIanBlock(){
+  const cv=$('ianCanvas'); if(!cv)return; const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  ctx.fillStyle='#120a0c';ctx.fillRect(0,0,W,H);
+  // mucosa field
+  ctx.fillStyle='#7d2733';ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#8f3340';ctx.beginPath();ctx.ellipse(W*0.5,H*0.52,W*0.46,H*0.44,0,0,7);ctx.fill();
+  // occlusal plane (mandibular posterior teeth ridge) along bottom
+  const occY=H*0.80;
+  ctx.fillStyle='#e9e4da';ctx.fillRect(W*0.12,occY,W*0.5,H*0.14);
+  ctx.fillStyle='#b7b0a2';for(let i=0;i<4;i++){ctx.fillRect(W*0.14+i*W*0.12,occY,2,H*0.14);}
+  ctx.fillStyle='#5a2630';ctx.font='9px sans-serif';ctx.fillText('alt molar oklüzal düzlem',W*0.14,occY+H*0.12);
+  // anterior border of ramus (coronoid notch) — right side rising ridge
+  ctx.strokeStyle='#d7cfc0';ctx.lineWidth=3;ctx.beginPath();
+  ctx.moveTo(W*0.70,occY); ctx.quadraticCurveTo(W*0.74,H*0.45,W*0.72,H*0.12); ctx.stroke();
+  ctx.fillStyle='#efe9dd';ctx.font='10px sans-serif';ctx.fillText('ramus ön kenarı',W*0.73,H*0.30);
+  // coronoid notch (deepest concavity ~ mid)
+  ctx.fillStyle='#efe3b0';ctx.beginPath();ctx.arc(W*0.705,H*0.47,4,0,7);ctx.fill();
+  ctx.fillStyle='#efe3b0';ctx.fillText('koronoid çentik',W*0.50,H*0.44);
+  // pterygomandibular raphe (vertical fold, lingual to insertion)
+  ctx.strokeStyle='#c98a93';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(W*0.46,H*0.18);ctx.lineTo(W*0.46,occY);ctx.stroke();
+  ctx.fillStyle='#f3d9dd';ctx.font='10px sans-serif';ctx.fillText('pterygomandibular rafe',W*0.05,H*0.14);
+  // target lingula (medial ramus, ~6-10mm above occlusal plane, deep to triangle)
+  const tgtX=W*0.62, tgtY=occY-(8/12)*(occY-H*0.18);  // height mapped
+  ctx.fillStyle='#63d08a';ctx.beginPath();ctx.arc(tgtX,tgtY,5,0,7);ctx.fill();
+  ctx.strokeStyle='rgba(99,208,138,.5)';ctx.beginPath();ctx.arc(tgtX,tgtY,12,0,7);ctx.stroke();
+  ctx.fillStyle='#9fe3b8';ctx.fillText('lingula / İAN hedefi',tgtX+10,tgtY-6);
+  // needle: entry between raphe and ramus, 6-10mm above occlusal; angle from contralateral premolars vs ipsilateral
+  const entryY = occY - (p2.ianHeight/14)*(occY-H*0.14);
+  const entryX = W*0.52;
+  // barrel position: contra = barrel over opposite premolars (coming from low-left), ipsi = parallel (from directly below), tooLateral = from far right
+  let bx,by;
+  if(p2.ianAngle==='contra'){ bx=W*0.04; by=H*0.96; }
+  else if(p2.ianAngle==='ipsi'){ bx=W*0.44; by=H*0.99; }
+  else { bx=W*0.96; by=H*0.99; }
+  // needle tip advanced along entry→(direction) by depth
+  const dirx=(entryX-bx), diry=(entryY-by); const dl=Math.hypot(dirx,diry); const ux=dirx/dl, uy=diry/dl;
+  const tipLen=(p2.ianDepth/30)*(W*0.42);
+  const tipX=entryX+ux*tipLen, tipY=entryY+uy*tipLen;
+  ctx.strokeStyle='#cfd6da';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(bx,by);ctx.lineTo(tipX,tipY);ctx.stroke();
+  ctx.fillStyle='#a9b4ba';ctx.beginPath();ctx.arc(bx,by,8,0,7);ctx.fill();   // syringe hub
+  ctx.fillStyle='#ff5a6a';ctx.beginPath();ctx.arc(tipX,tipY,3.5,0,7);ctx.fill(); // tip
+  // contact marker
+  const cd=ianContactDepth(p2.ianAngle);
+  if(p2.ianDepth>=cd && cd<90){ ctx.strokeStyle='#f0b542';ctx.lineWidth=2;ctx.beginPath();ctx.arc(tipX,tipY,9,0,7);ctx.stroke();
+    ctx.fillStyle='#f0b542';ctx.font='bold 10px sans-serif';ctx.fillText('kemik teması '+cd+'mm',tipX-20,tipY+22); }
+  ctx.fillStyle='#e9eef1';ctx.font='10px sans-serif';
+  ctx.fillText('giriş '+p2.ianHeight.toFixed(0)+'mm · derinlik '+p2.ianDepth.toFixed(1)+'mm · revizyon '+p2.needleRevision, 8, H-8);
+}
+/* ---- Step 5 drawing: 48 + 47 + canal + buccal plate + elevator ---- */
+function drawSurg(){
+  const cv=$('surgCanvas'); if(!cv)return; const ctx=cv.getContext('2d'),W=cv.width,H=cv.height; const m=caseDef.molar,c=caseDef.canal;
+  ctx.fillStyle='#0b0f11';ctx.fillRect(0,0,W,H);
+  const X=x=>W*0.52+x*(W*0.03), Z=z=>H*0.52-z*(H*0.03);
+  // bone (buccal + lingual plates)
+  ctx.fillStyle='rgba(120,140,150,.12)';ctx.strokeStyle='rgba(234,241,244,.35)';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.ellipse(X(-0.5),Z(-3),W*0.03*9,H*0.03*9,0,0,7);ctx.stroke();ctx.fill();
+  // buccal ostectomy removed?
+  if(p2.ostectomy){ ctx.fillStyle='#0b0f11';ctx.beginPath();ctx.moveTo(X(2),Z(4));ctx.lineTo(X(6),Z(4));ctx.lineTo(X(6),Z(-4));ctx.lineTo(X(2),Z(-4));ctx.closePath();ctx.fill();
+    ctx.fillStyle='#7fd0e0';ctx.font='9px sans-serif';ctx.fillText('bukkal ostektomi',X(2.4),Z(5)); }
+  // 47 neighbour (mesial, higher y→ draw to left)
+  ctx.fillStyle=p2.neighborLuxation?'rgba(232,112,122,.8)':'rgba(234,241,244,.5)';
+  ctx.beginPath();ctx.ellipse(X(-6),Z(3),W*0.03*2.4,H*0.03*2.8,0,0,7);ctx.fill();
+  for(const rx of [-7,-5]){ctx.strokeStyle=p2.neighborLuxation?'#e8707a':'#cdd6da';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(X(rx),Z(1));ctx.lineTo(X(rx),Z(-7));ctx.stroke();}
+  ctx.fillStyle=p2.neighborLuxation?'#e8707a':'#aebcc4';ctx.font='10px sans-serif';ctx.fillText('47'+(p2.neighborLuxation?' LÜKSE!':''),X(-6.6),Z(6));
+  // 48 crown (removed if coronectomy cut or odontotomy)
+  const crownGone = (txDecision==='coronectomy'&&p2.coroCut>0) || (txDecision==='extraction'&&p2.odontotomy);
+  if(!crownGone){ ctx.fillStyle='#eef2ef';ctx.beginPath();ctx.ellipse(X(m.mx),Z(m.mz+2.5),W*0.03*2.9,H*0.03*2.6,0,0,7);ctx.fill();
+    if(p2.residualEnamel){ ctx.fillStyle='#f0b542';ctx.beginPath();ctx.arc(X(m.mx),Z(m.mz+0.5),4,0,7);ctx.fill();
+      ctx.fillStyle='#f0b542';ctx.font='bold 9px sans-serif';ctx.fillText('ARTIK MİNE!',X(m.mx)+8,Z(m.mz+0.5)); } }
+  else { // cut line
+    const cy = txDecision==='coronectomy'? m.mz - (p2.coroCut) + 0.5 : m.mz+0.5;
+    ctx.strokeStyle='#7fd0e0';ctx.setLineDash([4,3]);ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(X(m.mx-3),Z(cy));ctx.lineTo(X(m.mx+3),Z(cy));ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle='#7fd0e0';ctx.font='9px sans-serif';ctx.fillText(txDecision==='coronectomy'?('kesi '+p2.coroCut+'mm apikal'):'odontotomi',X(m.mx+3.4),Z(cy)); }
+  // 48 roots (mesial+distal) — left in coronectomy
+  for(const rx of [-1.6,1.6]){ ctx.strokeStyle=(p2.rootMobilized?'#e8707a':(p2.rootPushedCanal?'#f0b542':'#eaf1f4'));ctx.lineWidth=2.4;
+    ctx.beginPath();ctx.moveTo(X(m.mx+rx),Z(m.mz+0.5));ctx.lineTo(X(m.mx+rx*0.6),Z(m.mz-m.rootLen));ctx.stroke(); }
+  if(p2.rootMobilized){ctx.fillStyle='#e8707a';ctx.font='bold 9px sans-serif';ctx.fillText('kök MOBİLİZE — çıkarılmalı!',X(m.mx-3),Z(m.mz-m.rootLen-0.6));}
+  // canal + IAN + strain
+  ctx.strokeStyle=c.cortexIntact?'#eaf1f4':'#e8707a';ctx.setLineDash(c.cortexIntact?[]:[4,3]);ctx.lineWidth=2;
+  ctx.beginPath();ctx.arc(X(c.x),Z(c.z),W*0.03*1.7,0,7);ctx.stroke();ctx.setLineDash([]);
+  const strainCol = p2.ianStrain>0.5?'#ff5a6a':p2.ianStrain>0.15?'#f0b542':'#f2c744';
+  ctx.fillStyle=strainCol;ctx.beginPath();ctx.arc(X(c.x),Z(c.z),W*0.03*(1.0+p2.ianStrain*0.8),0,7);ctx.fill();
+  ctx.fillStyle=strainCol;ctx.font='10px sans-serif';ctx.fillText('İAN · gerinim '+p2.ianStrain.toFixed(2),X(c.x)+10,Z(c.z)+2);
+  // elevator vector (τ=r×F) from fulcrum
+  if(p2.force>0){ const fx=p2.fulcrum==='distal47'?X(-4):X(m.mx-2.2), fy=Z(m.mz-2);
+    ctx.strokeStyle='#ffd27f';ctx.lineWidth=2+p2.force*4;ctx.beginPath();ctx.moveTo(fx,fy+30);ctx.lineTo(fx,fy);ctx.stroke();
+    ctx.fillStyle='#ffd27f';ctx.font='9px sans-serif';ctx.fillText('F='+p2.force.toFixed(2)+' ('+(p2.fulcrum==='distal47'?'47 dayanak':'mezial yiv')+')',fx-10,fy+44); }
+  ctx.fillStyle='#aebcc4';ctx.font='9px sans-serif';ctx.fillText('koronal cerrahi kesit — 48 kök ↔ İAN ↔ 47',8,H-8);
+}
+function renderSurgTools(){
+  const el=$('surgTools'); if(!el)return;
+  const tools=[['ostectomy','1 · Bukkal Ostektomi'],['odontotomy','2 · Kron-Kök Ayırma (Odontotomi)']];
+  el.innerHTML='';
+  tools.forEach(([k,lab])=>{ const b=document.createElement('button'); b.className='toolbtn'+(p2[k]?' on':'');
+    b.textContent=lab; b.onclick=()=>{ p2.engaged=true; p2[k]=!p2[k]; if(k==='odontotomy'&&txDecision==='extraction'&&p2[k])p2.crownRemoved=true; renderSurgTools(); drawSurg(); }; el.appendChild(b); });
+  $('coroRow').style.display = (txDecision==='coronectomy')?'flex':'none';
+}
+function updateIanReadout(){ const r=p2.ianResult; const el=$('ianReadout'); if(!el)return;
+  let h=`<div>Kümülatif doz: <b>${p2.injMg.toFixed(1)} mg</b> · aspirasyon kayıtları: ${p2.asp.length} (taze: ${ianLiveAsp().length}, tarihsel: ${p2.asp.filter(a=>a.historical).length})</div>`;
+  if(r){ const col=r.success?'var(--good)':(r.facialPalsy||r.systemicToxicity)?'var(--bad)':'var(--warn)'; h+=`<div style="color:${col};margin-top:4px">${r.msg}</div>`; }
+  el.innerHTML=h; }
+function updateSurgReadout(){ const el=$('surgReadout'); if(!el)return; let fl=[];
+  if(p2.residualEnamel)fl.push(['bad','RESIDUAL_ENAMEL_ERROR — kron tam kesilmedi']);
+  if(p2.rootMobilized)fl.push(['bad','Kalan kök mobilize edildi → çıkarılmalı']);
+  if(p2.neighborLuxation)fl.push(['bad','47 komşu diş lüksasyonu (dayanak travması)']);
+  if(p2.rootPushedCanal)fl.push(['bad','Kök apeksi kanala bastırıldı — ianStrain↑']);
+  if(txDecision==='coronectomy'&&p2.crownRemoved&&!p2.residualEnamel&&!p2.rootMobilized)fl.push(['ok','Temiz koronektomi: kron 2-3mm apikal, kökler korundu']);
+  if(txDecision==='extraction'&&p2.ostectomy&&p2.odontotomy&&!p2.neighborLuxation&&!p2.rootPushedCanal)fl.push(['ok','Kontrollü çekim: ostektomi+odontotomi, düşük sinir yükü']);
+  if(p2.irrigated&&p2.sutured)fl.push(['ok','İrrigasyon + sütür tamam']);
+  el.innerHTML = fl.length? fl.map(f=>`<div style="color:${f[0]==='ok'?'var(--good)':'var(--bad)'}">${f[0]==='ok'?'✓':'✕'} ${f[1]}</div>`).join('') : 'Araçları uygula: ostektomi → odontotomi/kesi → elevatör → irrigasyon/sütür.';
+}
+function syncSurgUI(){
+  $('ianAngle').value=p2.ianAngle; $('ianHeight').value=p2.ianHeight; $('ianHeightV').textContent=p2.ianHeight.toFixed(1)+' mm';
+  $('ianDepth').value=p2.ianDepth; $('ianDepthV').textContent=p2.ianDepth.toFixed(1)+' mm';
+  $('surgFulcrum').value=p2.fulcrum; $('surgForce').value=p2.force; $('surgForceV').textContent=p2.force.toFixed(2);
+  $('coroCut').value=p2.coroCut; $('coroCutV').textContent=(p2.coroCut===0?'0 mm (CEJ)':p2.coroCut+' mm apikal');
+  renderSurgTools(); drawIanBlock(); drawSurg(); updateIanReadout(); updateSurgReadout();
+}
+function openSurg(){
+  if(!surgicalCaseNeedsIntervention()){ toast('Bu vaka girişim gerektirmiyor ('+txTxt(txDecision||'—')+') — cerrahiye zorlama yok','warn'); return; }
+  $('surgSub').textContent=curCase+' · '+txTxt(txDecision)+' — Adım 4 İAN blok, Adım 5 cerrahi';
+  $('surgOvl').classList.add('on'); syncSurgUI();
+}
+
 /* ============ 3D density model ============ */
+// mandible corpus: pear / horseshoe cross-section (NOT a round tube) with lingual undercut.
+// lingual = x<0, buccal = x>0. Returns {inside, edgeDist(0..1 where 1=at cortex)}.
+function mandibleShape(x,z){
+  if(z>6.5||z<-15) return {in:false};
+  const zt=(z+15)/21.5;                                  // 0 inferior border .. 1 alveolar crest
+  // buccal + lingual half-widths vary with height: narrow alveolar top, full body, taper to inferior (corpus taller than wide)
+  let wB = 2.2 + 4.6*Math.sin(clamp(zt,0,1)*Math.PI);    // buccal half-width
+  let wL = 2.6 + 5.0*Math.sin(clamp(zt,0,1)*Math.PI);    // lingual half-width
+  if(zt>0.82){ wB*= (1-(zt-0.82)*2.5); wL*=(1-(zt-0.82)*2.5); } // alveolar ridge narrows
+  // LINGUAL UNDERCUT (submandibular fossa) below mylohyoid ridge, z ~ -6..-1
+  if(z>-6.8 && z<-0.3) wL -= 3.8*Math.exp(-Math.pow((z+3.3)/1.7,2));
+  const xc=x+0.5;                                        // centre offset
+  const inside = xc>=0 ? (xc<wB) : (-xc<wL);
+  const half = xc>=0? wB : wL; const edge = inside? (Math.abs(xc)/half) : 2;
+  return {in:inside, edge, wB, wL};
+}
+// a single molar's material at point, given centre + winter angle + rootLen + roots layout
+function molarDens(x,y,z, mx,my,mz, winterDeg, rootLen, rootsMesialDistal){
+  const ang=winterDeg*Math.PI/180;
+  const dx=x-mx, dy=y-my, dz=z-mz;
+  const ly=dy*Math.cos(ang)+dz*Math.sin(ang), lz=-dy*Math.sin(ang)+dz*Math.cos(ang), lx=dx;
+  // crown
+  if(lz>-0.5&&lz<5.4&&(lx*lx/9+ly*ly/10+Math.pow((lz-2.2)/3.1,2)<1)){
+    if(lz>3.4)return 'enamel'; if(lx*lx+ly*ly<1.1)return 'pulp'; return 'dentin'; }
+  // two roots: mesial & distal (along y = ly axis) OR bucco-lingual
+  if(lz<=0&&lz>-rootLen){ const t=(-lz)/rootLen, rr=1.55*(1-0.58*t);
+    const offs = rootsMesialDistal? [[0,-1.7],[0,1.7]] : [[-1.6,0],[1.6,0]];
+    for(const [ox,oy] of offs){ const cx=ox*(1+0.15*t), cy=oy*(1+0.15*t);
+      if(Math.hypot(lx-cx, ly-cy)<rr){ if(Math.hypot(lx-cx,ly-cy)<0.4*(1-t))return 'pulp'; return 'dentin'; } } }
+  return null;
+}
 function densAt(x,y,z){
   const cd=caseDef, m=cd.molar, c=cd.canal;
-  // mandible body: rounded region; cortex near boundary
-  const inBody = (x>-10&&x<8) && (z>-13&&z<6.5) && (Math.pow((x+1)/9,2)+Math.pow((z+3)/9,2) < 1.15) && (y>-15&&y<15);
   let d=MAT.air, mat='air';
+  // mandible corpus (pear) + ramus rising posteriorly (distal = y<0)
+  const ms=mandibleShape(x,z);
+  let inBody = ms.in && (y>-16 && y<16);
+  // ramus: posterior to the 3rd molar (y < -1) the bone sweeps upward (anterior border + angulus)
+  if(y<-1){ const rampUp = 6.2 + (-1-y)*0.9; if(z< rampUp && z>-13 && x>-9 && x< (6 - (-1-y)*0.2)) inBody=true; }
   if(inBody){ d=MAT.cancellous; mat='cancellous';
-    const edge=Math.pow((x+1)/9,2)+Math.pow((z+3)/9,2);
-    if(edge>0.92) {d=MAT.cortex;mat='cortex';}
+    if(ms.in && ms.edge>0.86) {d=MAT.cortex;mat='cortex';}
+    if(y<-2 && z>5) {d=MAT.cortex;mat='cortex';}        // ramus anterior border cortex
   }
-  // mandibular canal: tube running in y at (c.x, c.z), radius ~1.6 cortex, 1.0 lumen
-  const dc=Math.hypot(x-c.x, z-c.z);
-  if(y>-14&&y<14){
-    if(dc<1.7 && dc>1.0){ d=MAT.canalCortex; mat='canalCortex'; if(!c.cortexIntact && Math.abs(y-m.my)<3 && x>c.x) {d=MAT.cancellous;mat='cancellous';} } // cortex, locally lost near molar if perforated
+  // mandibular canal (oval cortex ring + IAN lumen)
+  const dc=Math.hypot((x-c.x)/1.15, z-c.z);
+  if(y>-13&&y<14){
+    if(dc<1.7 && dc>1.0){ d=MAT.canalCortex; mat='canalCortex'; if(!c.cortexIntact && Math.abs(y-m.my)<3 && x>c.x){d=MAT.cancellous;mat='cancellous';} }
     if(dc<=1.0){ d=MAT.ian; mat='ian'; }
   }
-  // 3rd molar: crown ellipsoid + roots, tilted by winter angle
-  const ang={vertikal:0,mezioangüler:35,distoangüler:-30,horizontal:80}[m.winter]*Math.PI/180;
-  // transform point into molar frame
-  const dx=x-m.mx, dy=y-m.my, dz=z-m.mz;
-  const ly = dy*Math.cos(ang)+dz*Math.sin(ang), lz = -dy*Math.sin(ang)+dz*Math.cos(ang);
-  const lx=dx;
-  // crown (lz in [0,5]) ellipsoid
-  if(lz>-0.5 && lz<5.5 && (lx*lx/9 + ly*ly/10 + Math.pow((lz-2.2)/3.2,2) < 1)){
-    const cz=lz; if(cz>3.5){d=MAT.enamel;mat='enamel';} else if(lx*lx+ly*ly<1.2){d=MAT.pulp;mat='pulp';} else {d=MAT.dentin;mat='dentin';} }
-  // roots (lz in [-rootLen,0]) two tapering roots
-  const rl=m.rootLen;
-  if(lz<=0 && lz>-rl){ const t=(-lz)/rl, rr=1.6*(1-0.6*t);
-    for(const rx of [-1.6,1.6]){ if(Math.hypot(lx-rx, ly)<rr){ d=MAT.dentin;mat='dentin'; if(Math.hypot(lx-rx,ly)<0.4*(1-t)){d=MAT.pulp;mat='pulp';} } } }
+  // impacted 3rd molar (winter-tilted, mesial+distal curved roots)
+  const mm=molarDens(x,y,z, m.mx,m.my,m.mz, {vertikal:0,mezioangüler:35,distoangüler:-30,horizontal:80}[m.winter], m.rootLen, true);
+  if(mm){ d=MAT[mm]; mat=mm; }
+  // ERUPTED NEIGHBOURS: 2nd molar (47) & 1st molar (46), mesial to 48 (higher y), normal vertical, roots down
+  for(const nb of [{my:9.5,mz:2.5,rl:8},{my:15,mz:2.5,rl:8}]){
+    const nm=molarDens(x,y,z, 0.5,nb.my,nb.mz, 0, nb.rl, true);
+    if(nm){ d=MAT[nm]; mat=nm; }
+  }
   return {d,mat};
 }
 /* panoramic projection: integrate density along bucco-lingual x for each (y,z), + head-pos distortion */
@@ -351,6 +603,22 @@ function grade(){
     if(T.decision==='extraction'&&txDecision==='coronectomy'&&caseDef.path.necrotic) flags.safe.push(['bad','TUZAK: nekroz/mobilite varken koronektomi kontrendike']);
     safe = (T.decision==='monitor'&&txDecision==='retake')||(T.decision==='retake'&&txDecision==='monitor')?0.3:0;
   }
+  // --- AŞAMA 2 surgical execution safety (IAN block + mechanics) ---
+  if(decOK && p2 && p2.engaged && (txDecision==='extraction'||txDecision==='coronectomy')){
+    const r=p2.ianResult;
+    if(r){ if(r.success){ flags.safe.push(['ok','Halstead İAN bloğu başarılı (ramus iç yüzü + negatif aspirasyon)']); }
+      else if(r.earlyContact){ safe-=0.15; flags.safe.push(['warn','İAN blok: erken kemik teması <15mm — anestezi yetersiz']); }
+      else if(r.facialPalsy){ safe-=0.4; flags.safe.push(['bad','İAN blok: parotis enjeksiyonu → geçici fasiyal paralizi']); }
+      else if(r.systemicToxicity){ safe-=0.4; flags.safe.push(['bad','İAN blok: intravasküler enjeksiyon → LAST/taşikardi']); }
+    }
+    if(p2.residualEnamel){ safe-=0.3; flags.safe.push(['bad','RESIDUAL_ENAMEL_ERROR: kron CEJ 2-3mm apikalinden tam kesilmedi']); }
+    if(p2.rootMobilized){ safe-=0.3; flags.safe.push(['bad','Koronektomide kalan kök mobilize edildi → içeride bırakma hatası']); }
+    if(p2.neighborLuxation){ safe-=0.25; flags.safe.push(['bad','47 dayanaklı aşırı kuvvet → komşu diş lüksasyonu']); }
+    if(p2.rootPushedCanal){ safe-=0.25; flags.safe.push(['bad','Ostektomi/odontotomi yapılmadan yüksek kuvvet → kök apeksi kanala bastırıldı']); }
+    if(txDecision==='coronectomy'&&p2.crownRemoved&&!p2.residualEnamel&&!p2.rootMobilized) flags.safe.push(['ok','Temiz koronektomi: kron 2-3mm apikal kesildi, kökler korundu']);
+    if(txDecision==='extraction'&&p2.ostectomy&&p2.odontotomy&&!p2.neighborLuxation&&!p2.rootPushedCanal) flags.safe.push(['ok','Kontrollü çekim: bukkal ostektomi + odontotomi']);
+    safe=clamp(safe,0,1);
+  }
   // --- Imaging justification & interpretation 30% ---
   let img=0,imgMax=0;
   imgMax+=0.4; const cbctJustOK = (caseDef.truth.cbct===cbctTaken);
@@ -421,6 +689,16 @@ function drawDebriefB(cv){
   ctx.fillStyle='#f2c744';ctx.font='10px sans-serif';ctx.fillText('İAN demeti',X(c.x)+12,Z(c.z));
   ctx.fillStyle='#eaf1f4';ctx.fillText('kök',X(m.mx+1.9),Z(m.mz-m.rootLen/2));
   ctx.fillStyle=c.cortexIntact?'#63d08a':'#e8707a';ctx.fillText('kanal korteksi: '+(c.cortexIntact?'intakt':'kayıp'),X(c.x)-30,Z(c.z)+34);
+  // AŞAMA 2: needle track + IAN strain/compression map
+  if(p2 && p2.engaged){
+    if(p2.needleTrack){ ctx.strokeStyle='rgba(207,214,218,.8)';ctx.lineWidth=2;ctx.setLineDash([5,3]);
+      ctx.beginPath();ctx.moveTo(X(-9),Z(c.z+5));ctx.lineTo(X(c.x-1),Z(c.z+1.4));ctx.stroke();ctx.setLineDash([]);
+      ctx.fillStyle='#cfd6da';ctx.font='9px sans-serif';ctx.fillText('iğne izi ('+p2.needleTrack.depth.toFixed(0)+'mm)',X(-9),Z(c.z+5)-4); }
+    const sc=p2.ianStrain>0.5?'#ff5a6a':p2.ianStrain>0.15?'#f0b542':'#63d08a';
+    ctx.strokeStyle=sc;ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(X(c.x),Z(c.z),W*0.03*(1.0+p2.ianStrain*1.2),0,7);ctx.stroke();
+    ctx.fillStyle=sc;ctx.font='bold 10px sans-serif';ctx.fillText('ianStrain '+p2.ianStrain.toFixed(2),X(c.x)-24,Z(c.z)-16);
+    if(p2.ianResult)ctx.fillText('blok: '+(p2.ianResult.success?'başarılı':p2.ianResult.outcome),X(c.x)-24,Z(c.z)-28);
+  }
   ctx.fillStyle='#aebcc4';ctx.font='9px sans-serif';ctx.fillText('koronal (bukkolingual) şeffaf kesit',10,H-8);
 }
 function karne(g){
@@ -452,19 +730,21 @@ function renderRood(){const el=$('roodList');el.innerHTML='';ROOD.forEach(([k,la
 function renderTx(){const el=$('txList');el.innerHTML='';
   const opts=[['monitor','Aktif İzlem','Asemptomatik, düşük risk'],['extraction','Standart Cerrahi Çekim','Kanal korteksi intakt / güvenli'],['coronectomy','Koronektomi','İAN teması + vital kök'],['retake','Doğru Pozisyonda Yeniden Çekim','Tanısal olmayan film']];
   opts.forEach(([v,nm,ds])=>{const b=document.createElement('button');b.className='optbtn'+(v===txDecision?' on':'');b.innerHTML=`<b>${nm}</b><small>${ds}</small>`;
-    b.onclick=()=>{txDecision=v;renderTx();setStep(4);};el.appendChild(b);});}
+    b.onclick=()=>{txDecision=v;renderTx();setStep(4);updateSurgBtn();};el.appendChild(b);});}
+function updateSurgBtn(){ const b=$('surgOpenBtn'); if(!b)return; b.style.display = surgicalCaseNeedsIntervention()?'block':'none'; }
 
 /* ============ load / reset ============ */
 function loadCase(cid){
   curCase=cid; caseDef=JSON.parse(JSON.stringify(CASES[cid]));
   headPos = cid==='O5' ? 'chinUp' : 'normal';            // O5 opens mis-positioned
-  cbctTaken=false; cbctJustification=null; txDecision=null; curStep=0;
+  cbctTaken=false; cbctJustification=null; txDecision=null; curStep=0; p2=newP2();
   for(const k in roodChecked)delete roodChecked[k];
   cross={x:caseDef.canal.x, y:caseDef.molar.my, z:caseDef.canal.z};
   $('xR').value=cross.x;$('yR').value=cross.y;$('zR').value=cross.z;$('xV').textContent=cross.x.toFixed(1);$('yV').textContent=cross.y.toFixed(1);$('zV').textContent=cross.z.toFixed(1);
   $('dPGdepth').value='';$('dPGramus').value='';$('dWinter').value='';$('cbctStat').innerHTML='';$('juryOut').innerHTML='';
   ['Ax','Co','Sa'].forEach(k=>{$('lock'+k).style.display='grid';$('cell'+k).classList.add('locked');});
   renderCasePick();renderStepper();renderPosList();renderCbctJust();renderRood();renderTx();renderPano();updateMprReadout();
+  if($('surgOpenBtn'))$('surgOpenBtn').style.display='none'; if($('surgOvl'))$('surgOvl').classList.remove('on');
   toast(curMode==='exam'?('Vaka '+cid+' yüklendi (sınav)'):('Vaka '+cid+' yüklendi: '+CASES[cid].name),'');
 }
 function resetCase(){loadCase(curCase);toast('Vaka sıfırlandı','');}
@@ -479,6 +759,21 @@ $('rulerChk').addEventListener('change',e=>{ruler=e.target.checked;renderAllMPR(
 $('cbctBtn').addEventListener('click',requestCBCT);
 $('juryBtn').addEventListener('click',renderJury);
 $('resetBtn').addEventListener('click',resetCase);
+/* --- AŞAMA 2 events --- */
+$('surgOpenBtn').addEventListener('click',openSurg);
+$('surgX').addEventListener('click',()=>$('surgOvl').classList.remove('on'));
+$('surgOvl').addEventListener('click',e=>{if(e.target===$('surgOvl'))$('surgOvl').classList.remove('on');});
+$('ianAngle').addEventListener('change',e=>{ianSetAngle(e.target.value);syncSurgUI();});
+$('ianHeight').addEventListener('input',e=>{p2.ianHeight=+e.target.value;$('ianHeightV').textContent=p2.ianHeight.toFixed(1)+' mm';drawIanBlock();});
+$('ianDepth').addEventListener('input',e=>{ianSetDepth(+e.target.value);$('ianDepthV').textContent=p2.ianDepth.toFixed(1)+' mm';drawIanBlock();updateIanReadout();});
+$('ianAspBtn').addEventListener('click',()=>{const a=ianAspirate();toast(a.positive?'🩸 POZİTİF aspirasyon — damar içi!':'Negatif aspirasyon (derinlik '+a.depth.toFixed(1)+'mm)',a.positive?'bad':'good');updateIanReadout();});
+$('ianInjBtn').addEventListener('click',()=>{const r=ianInject(+$('ianDrug').value,1.8);toast(r.msg,r.success?'good':(r.facialPalsy||r.systemicToxicity)?'bad':'warn');drawIanBlock();updateIanReadout();});
+$('surgApplyBtn').addEventListener('click',()=>{surgApplyElevator(+$('surgForce').value,$('surgFulcrum').value);drawSurg();updateSurgReadout();});
+$('surgForce').addEventListener('input',e=>{$('surgForceV').textContent=(+e.target.value).toFixed(2);});
+$('surgFulcrum').addEventListener('change',e=>{p2.fulcrum=e.target.value;});
+$('coroCut').addEventListener('input',e=>{surgSetCoroCut(+e.target.value);$('coroCutV').textContent=(p2.coroCut===0?'0 mm (CEJ)':p2.coroCut+' mm apikal');drawSurg();updateSurgReadout();});
+$('surgFinishBtn').addEventListener('click',()=>{surgFinish();updateSurgReadout();toast('İrrigasyon + sütür tamam','good');});
+$('surgToJuryBtn').addEventListener('click',()=>{$('surgOvl').classList.remove('on');renderJury();});
 $('dbX').addEventListener('click',()=>$('ovl').classList.remove('on'));
 $('ovl').addEventListener('click',e=>{if(e.target===$('ovl'))$('ovl').classList.remove('on');});
 ['dPGdepth','dPGramus','dWinter'].forEach(id=>$(id).addEventListener('change',()=>setStep(1)));
@@ -495,6 +790,15 @@ window.OMFS={
   mprCrossPoint:(plane)=>{ if(plane==='ax')return {x:cross.x,y:cross.y,z:cross.z}; if(plane==='co')return {x:cross.x,y:cross.y,z:cross.z}; return {x:cross.x,y:cross.y,z:cross.z}; },
   mprMap:(plane,uf,vf)=>mprMap(plane,uf,vf),
   sampleAt:(x,y,z)=>densAt(x,y,z),
+  has47:()=>{const s=densAt(0.5,9.5,2.5);return s.mat==='enamel'||s.mat==='dentin'||s.mat==='pulp';},
+  hasRamus:()=>{const s=densAt(0,-6,4);return s.mat==='cortex'||s.mat==='cancellous';},
+  mandibleAspect:()=>{ // bounding box of mandible in coronal XZ plane at y=cross.y
+    let minx=99,maxx=-99,minz=99,maxz=-99;
+    for(let x=-11;x<=9;x+=0.3)for(let z=-13;z<=7;z+=0.3){const s=densAt(x,cross.y,z);if(s.mat==='cortex'||s.mat==='cancellous'){if(x<minx)minx=x;if(x>maxx)maxx=x;if(z<minz)minz=z;if(z>maxz)maxz=z;}}
+    const w=maxx-minx, h=maxz-minz; return {w:+w.toFixed(1),h:+h.toFixed(1),ratio:+(h/w).toFixed(2)};},
+  hasLingualUndercut:()=>{ // lingual half-width at fossa (z≈-3.5) < at inferior (z≈-9) and alveolar (z≈1)
+    const wf=mandibleShape(0,-3.5).wL, wi=mandibleShape(0,-9).wL, wa=mandibleShape(0,0).wL;
+    return wf < wi-0.5 && wf < wa-0.5; },
   cbctIndicated:(cid)=>CASES[cid||curCase].truth.cbct,
   takeCBCT:(just)=>{ cbctJustification=just||'relation'; requestCBCT(); return {taken:cbctTaken,indicated:caseDef.truth.cbct}; },
   cbctTaken:()=>cbctTaken,
@@ -506,6 +810,23 @@ window.OMFS={
   markRood:(k,v)=>{roodChecked[k]=v;}, setPG:(depth,ramus,winter)=>{if(depth)$('dPGdepth').value=depth;if(ramus)$('dPGramus').value=ramus;if(winter)$('dWinter').value=winter;},
   declare:(d)=>{ if(d.pos)headPos=d.pos; if(d.cbct){cbctJustification='relation';if(!cbctTaken)requestCBCT();} if(d.pg)OMFS.setPG(d.pg.depth,d.pg.ramus,d.pg.winter); if(d.tx)txDecision=d.tx; if(d.rood)d.rood.forEach(k=>roodChecked[k]=true); return grade(); },
   grade:()=>grade(),
+  // ---- AŞAMA 2 · İAN blok + cerrahi API ----
+  needsIntervention:()=>surgicalCaseNeedsIntervention(),
+  p2state:()=>JSON.parse(JSON.stringify(p2)),
+  ianDoseMg:(percent,mL)=>ianDoseMg(percent,mL),
+  ianContactDepth:(a)=>ianContactDepth(a),
+  ianSetAngle:(a)=>{ianSetAngle(a);return {angle:p2.ianAngle};},
+  ianSetDepth:(d)=>{ianSetDepth(d);return {depth:p2.ianDepth,revision:p2.needleRevision};},
+  ianSetHeight:(h)=>{p2.ianHeight=h;},
+  ianAspirate:()=>ianAspirate(),
+  ianAspirations:()=>JSON.parse(JSON.stringify(p2.asp)),
+  ianNeedleRevision:()=>p2.needleRevision,
+  ianInject:(percent,mL)=>ianInject(percent,mL),
+  surgTool:(k,v)=>{p2.engaged=true;p2[k]=(v==null?true:v);if(k==='odontotomy'&&txDecision==='extraction'&&p2[k])p2.crownRemoved=true;},
+  surgCoronectomyCut:(mm)=>{surgSetCoroCut(mm);return {coroCut:p2.coroCut,residualEnamel:p2.residualEnamel};},
+  surgElevator:(force,fulcrum)=>{surgApplyElevator(force,fulcrum);return JSON.parse(JSON.stringify(p2));},
+  surgFinish:()=>{surgFinish();},
+  ianStrain:()=>p2.ianStrain,
 };
 window.__selfTest=function(){
   const R=[];const ok=(n,c)=>R.push({n,pass:!!c});
@@ -543,6 +864,57 @@ window.__selfTest=function(){
     ok('exam-no-nerve-overlay', window.OMFS.nerveOverlayVisible()===false);
     window.OMFS.setMode('explore'); window.OMFS.takeCBCT('relation');
     ok('explore-nerve-overlay', window.OMFS.nerveOverlayVisible()===true);
+    // test_omfs_47_ramus_and_mandible_undercut
+    loadCase('O3'); window.OMFS.setCrosshair(0,9.5,-3);
+    ok('pano-has-47-and-ramus', window.OMFS.has47()===true && window.OMFS.hasRamus()===true);
+    const asp=window.OMFS.mandibleAspect();
+    ok('mandible-not-round', asp.ratio>1.25);
+    ok('mandible-lingual-undercut', window.OMFS.hasLingualUndercut()===true);
+    // ===== AŞAMA 2 ·  test_ian_block_parotid_and_aspiration_revision =====
+    ok('ian-dose-36mg', window.OMFS.ianDoseMg(2,1.8)===36 && window.OMFS.ianDoseMg(4,1.8)===72);
+    // early bone contact <15mm (ipsilateral) → no pulpal anesthesia
+    loadCase('O2'); window.OMFS.setTx('extraction');
+    window.OMFS.ianSetAngle('ipsi'); window.OMFS.ianSetDepth(14); const rE=window.OMFS.ianInject(2,1.8);
+    ok('ian-early-contact', rE.earlyContact===true && rE.success===false && rE.outcome==='early-contact');
+    // correct contralateral-premolar lingula block ~20-25mm + withdraw + negative aspiration
+    loadCase('O2'); window.OMFS.setTx('extraction');
+    window.OMFS.ianSetAngle('contra'); window.OMFS.ianSetDepth(22); window.OMFS.ianSetDepth(21);
+    const aspN=window.OMFS.ianAspirate(); const rB=window.OMFS.ianInject(2,1.8);
+    ok('ian-block-success', aspN.positive===false && rB.success===true && rB.outcome==='block-success' && rB.cumulative===36);
+    // >26mm, no bone contact (too lateral/posteromedial) → parotid → facial palsy
+    loadCase('O2'); window.OMFS.setTx('extraction');
+    window.OMFS.ianSetAngle('tooLateral'); window.OMFS.ianSetDepth(28); const rP=window.OMFS.ianInject(2,1.8);
+    ok('ian-parotid-facial-palsy', rP.facialPalsy===true && rP.outcome==='parotid');
+    // these three outcomes are distinct
+    ok('ian-three-outcomes-distinct', rE.outcome!==rB.outcome && rB.outcome!==rP.outcome && rE.outcome!==rP.outcome);
+    // needle moves after aspiration → old aspiration becomes HISTORICAL + needlePlacementRevision++
+    loadCase('O2'); window.OMFS.setTx('extraction');
+    window.OMFS.ianSetAngle('contra'); window.OMFS.ianSetDepth(21); window.OMFS.ianAspirate();
+    const revBefore=window.OMFS.ianNeedleRevision(); window.OMFS.ianSetDepth(24);
+    const asps=window.OMFS.ianAspirations();
+    ok('ian-aspiration-historical', asps[0].historical===true && window.OMFS.ianNeedleRevision()===revBefore+1);
+    // intravascular positive aspiration → inject anyway → LAST
+    loadCase('O2'); window.OMFS.setTx('extraction');
+    window.OMFS.ianSetAngle('contra'); window.OMFS.ianSetDepth(23.2); const aspP=window.OMFS.ianAspirate(); const rL=window.OMFS.ianInject(2,1.8);
+    ok('ian-intravascular-last', aspP.positive===true && rL.systemicToxicity===true && rL.outcome==='last');
+    // ===== AŞAMA 2 ·  test_coronectomy_enamel_and_mobilized_root_trap =====
+    // O3 clean coronectomy → ianStrain minimal + full safety score
+    loadCase('O3'); window.OMFS.declare({cbct:true,tx:'coronectomy',pg:{depth:'C',ramus:'II',winter:'mezioangüler'},rood:['darkening','whiteLineLoss','diversion']});
+    window.OMFS.surgCoronectomyCut(2.5); window.OMFS.surgFinish(); const gClean=window.OMFS.grade();
+    ok('coronectomy-clean-min-strain-fullscore', gClean.cats[0].s===1 && window.OMFS.ianStrain()<0.1 && gClean.score>=90);
+    // residual enamel (<2mm apical cut) → RESIDUAL_ENAMEL_ERROR + safety penalty
+    loadCase('O3'); window.OMFS.setTx('coronectomy'); const rc=window.OMFS.surgCoronectomyCut(1);
+    ok('coronectomy-residual-enamel', rc.residualEnamel===true && window.OMFS.p2state().residualEnamel===true);
+    const gEnamel=window.OMFS.grade(); ok('residual-enamel-penalized', gEnamel.cats[0].s<1);
+    // mobilized residual root trap → safety error
+    loadCase('O3'); window.OMFS.setTx('coronectomy'); window.OMFS.surgCoronectomyCut(2.5); window.OMFS.surgElevator(0.5,'mesial');
+    ok('coronectomy-mobilized-root-trap', window.OMFS.p2state().rootMobilized===true && window.OMFS.grade().cats[0].s<1);
+    // 47-fulcrum high force without ostectomy/odontotomy → adjacent tooth load (luxation)
+    loadCase('O2'); window.OMFS.setTx('extraction'); window.OMFS.surgElevator(0.8,'distal47');
+    const psN=window.OMFS.p2state(); ok('extraction-47-neighbor-load', psN.neighborLuxation===true && psN.adjacentLoad>0);
+    // root apex pressed into canal (mesial fulcrum, no prep, high force) → ianStrain↑
+    loadCase('O2'); window.OMFS.setTx('extraction'); window.OMFS.surgElevator(0.9,'mesial');
+    ok('extraction-root-into-canal', window.OMFS.p2state().rootPushedCanal===true && window.OMFS.ianStrain()>0.5);
     loadCase('O1');
   }catch(e){R.push({n:'exception',pass:false,err:String(e)});}
   const pass=R.every(r=>r.pass);

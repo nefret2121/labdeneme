@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-11-03T00:39:48.453Z",
-  "threeLocal": true,
+  "generatedAt": "2026-11-03T10:23:30.354Z",
+  "threeLocal": false,
   "pages": 21,
   "viewports": [
     {
@@ -40,7 +40,7 @@
       "fails": []
     },
     "gate6_clinical_selftests": {
-      "hooks": 6,
+      "hooks": 4,
       "pass": true,
       "detail": [
         {
@@ -80,43 +80,9 @@
         },
         {
           "page": "ductuslab-lapchole.html",
-          "pass": true,
+          "pass": null,
           "selfTest": {
-            "hook": true,
-            "module": "LapChole",
-            "pass": true,
-            "total": 7,
-            "failed": [],
-            "checks": [
-              {
-                "n": "optic 60° çift koni",
-                "ok": true
-              },
-              {
-                "n": "V1 çadırlaşma açısı <22°",
-                "ok": true
-              },
-              {
-                "n": "V1 doğru traksiyon açı >50°",
-                "ok": true
-              },
-              {
-                "n": "CBD kesi → Strasberg E",
-                "ok": true
-              },
-              {
-                "n": "Fenestre drensiz tamamlanamaz",
-                "ok": true
-              },
-              {
-                "n": "Tam subtotal → skor ≥75",
-                "ok": true
-              },
-              {
-                "n": "3 trokar aleti mevcut",
-                "ok": true
-              }
-            ]
+            "hook": false
           }
         },
         {
@@ -172,101 +138,9 @@
         },
         {
           "page": "ductuslab-endo.html",
-          "pass": true,
+          "pass": null,
           "selfTest": {
-            "pass": true,
-            "tests": [
-              {
-                "n": "blender-meshes",
-                "pass": true
-              },
-              {
-                "n": "voxel-field",
-                "pass": true
-              },
-              {
-                "n": "roof-closed-intact",
-                "pass": true
-              },
-              {
-                "n": "floor-exposed-after-roof",
-                "pass": true
-              },
-              {
-                "n": "perforation",
-                "pass": true
-              },
-              {
-                "n": "old-film-immutable",
-                "pass": true
-              },
-              {
-                "n": "slob-+20-mesial",
-                "pass": true
-              },
-              {
-                "n": "slob--20-opposite",
-                "pass": true
-              },
-              {
-                "n": "slob-0-superimpose",
-                "pass": true
-              },
-              {
-                "n": "slob-samedepth-zero",
-                "pass": true
-              },
-              {
-                "n": "e4-safe-full",
-                "pass": true
-              },
-              {
-                "n": "e4-perf-penalized",
-                "pass": true
-              },
-              {
-                "n": "xray-pulp-chamber-visible",
-                "pass": true
-              },
-              {
-                "n": "endo-xray-pulp-contrast-visual",
-                "pass": true
-              },
-              {
-                "n": "eal-no-early-apex-normal",
-                "pass": true
-              },
-              {
-                "n": "eal-coronal-bridge-false-apex",
-                "pass": true
-              },
-              {
-                "n": "eal-dry-fixes-bridge",
-                "pass": true
-              },
-              {
-                "n": "eal-perf-persists-after-dry",
-                "pass": true
-              },
-              {
-                "n": "eal-e5-radiographic-apex-over",
-                "pass": true
-              },
-              {
-                "n": "eal-e5-constriction-green",
-                "pass": true
-              },
-              {
-                "n": "naocl-safe-no-extrusion",
-                "pass": true
-              },
-              {
-                "n": "naocl-wedging-accident",
-                "pass": true
-              }
-            ],
-            "count": 22,
-            "failed": []
+            "hook": false
           }
         },
         {
@@ -274,7 +148,7 @@
           "pass": true,
           "selfTest": {
             "pass": true,
-            "count": 17,
+            "count": 19,
             "tests": [
               {
                 "n": "cal-rec-pos",
@@ -343,6 +217,14 @@
               {
                 "n": "explore-autofills",
                 "pass": true
+              },
+              {
+                "n": "upper-roots-up",
+                "pass": true
+              },
+              {
+                "n": "upright-loupe-readable",
+                "pass": true
               }
             ],
             "failed": []
@@ -353,7 +235,7 @@
           "pass": true,
           "selfTest": {
             "pass": true,
-            "count": 16,
+            "count": 32,
             "tests": [
               {
                 "n": "mpr-shared-crosshair-point",
@@ -417,6 +299,70 @@
               },
               {
                 "n": "explore-nerve-overlay",
+                "pass": true
+              },
+              {
+                "n": "pano-has-47-and-ramus",
+                "pass": true
+              },
+              {
+                "n": "mandible-not-round",
+                "pass": true
+              },
+              {
+                "n": "mandible-lingual-undercut",
+                "pass": true
+              },
+              {
+                "n": "ian-dose-36mg",
+                "pass": true
+              },
+              {
+                "n": "ian-early-contact",
+                "pass": true
+              },
+              {
+                "n": "ian-block-success",
+                "pass": true
+              },
+              {
+                "n": "ian-parotid-facial-palsy",
+                "pass": true
+              },
+              {
+                "n": "ian-three-outcomes-distinct",
+                "pass": true
+              },
+              {
+                "n": "ian-aspiration-historical",
+                "pass": true
+              },
+              {
+                "n": "ian-intravascular-last",
+                "pass": true
+              },
+              {
+                "n": "coronectomy-clean-min-strain-fullscore",
+                "pass": true
+              },
+              {
+                "n": "coronectomy-residual-enamel",
+                "pass": true
+              },
+              {
+                "n": "residual-enamel-penalized",
+                "pass": true
+              },
+              {
+                "n": "coronectomy-mobilized-root-trap",
+                "pass": true
+              },
+              {
+                "n": "extraction-47-neighbor-load",
+                "pass": true
+              },
+              {
+                "n": "extraction-root-into-canal",
                 "pass": true
               }
             ],
@@ -589,45 +535,11 @@
       "overflow": [],
       "truthLeak": [],
       "selfTest": {
-        "hook": true,
-        "module": "LapChole",
-        "pass": true,
-        "total": 7,
-        "failed": [],
-        "checks": [
-          {
-            "n": "optic 60° çift koni",
-            "ok": true
-          },
-          {
-            "n": "V1 çadırlaşma açısı <22°",
-            "ok": true
-          },
-          {
-            "n": "V1 doğru traksiyon açı >50°",
-            "ok": true
-          },
-          {
-            "n": "CBD kesi → Strasberg E",
-            "ok": true
-          },
-          {
-            "n": "Fenestre drensiz tamamlanamaz",
-            "ok": true
-          },
-          {
-            "n": "Tam subtotal → skor ≥75",
-            "ok": true
-          },
-          {
-            "n": "3 trokar aleti mevcut",
-            "ok": true
-          }
-        ]
+        "hook": false
       },
       "lifecycle": {
-        "supported": true,
-        "advanced": true
+        "supported": false,
+        "advanced": null
       }
     },
     "ductuslab-neurosurgery.html": {
@@ -717,99 +629,7 @@
       "overflow": [],
       "truthLeak": [],
       "selfTest": {
-        "pass": true,
-        "tests": [
-          {
-            "n": "blender-meshes",
-            "pass": true
-          },
-          {
-            "n": "voxel-field",
-            "pass": true
-          },
-          {
-            "n": "roof-closed-intact",
-            "pass": true
-          },
-          {
-            "n": "floor-exposed-after-roof",
-            "pass": true
-          },
-          {
-            "n": "perforation",
-            "pass": true
-          },
-          {
-            "n": "old-film-immutable",
-            "pass": true
-          },
-          {
-            "n": "slob-+20-mesial",
-            "pass": true
-          },
-          {
-            "n": "slob--20-opposite",
-            "pass": true
-          },
-          {
-            "n": "slob-0-superimpose",
-            "pass": true
-          },
-          {
-            "n": "slob-samedepth-zero",
-            "pass": true
-          },
-          {
-            "n": "e4-safe-full",
-            "pass": true
-          },
-          {
-            "n": "e4-perf-penalized",
-            "pass": true
-          },
-          {
-            "n": "xray-pulp-chamber-visible",
-            "pass": true
-          },
-          {
-            "n": "endo-xray-pulp-contrast-visual",
-            "pass": true
-          },
-          {
-            "n": "eal-no-early-apex-normal",
-            "pass": true
-          },
-          {
-            "n": "eal-coronal-bridge-false-apex",
-            "pass": true
-          },
-          {
-            "n": "eal-dry-fixes-bridge",
-            "pass": true
-          },
-          {
-            "n": "eal-perf-persists-after-dry",
-            "pass": true
-          },
-          {
-            "n": "eal-e5-radiographic-apex-over",
-            "pass": true
-          },
-          {
-            "n": "eal-e5-constriction-green",
-            "pass": true
-          },
-          {
-            "n": "naocl-safe-no-extrusion",
-            "pass": true
-          },
-          {
-            "n": "naocl-wedging-accident",
-            "pass": true
-          }
-        ],
-        "count": 22,
-        "failed": []
+        "hook": false
       },
       "lifecycle": {
         "supported": false,
@@ -826,7 +646,7 @@
       "truthLeak": [],
       "selfTest": {
         "pass": true,
-        "count": 17,
+        "count": 19,
         "tests": [
           {
             "n": "cal-rec-pos",
@@ -895,6 +715,14 @@
           {
             "n": "explore-autofills",
             "pass": true
+          },
+          {
+            "n": "upper-roots-up",
+            "pass": true
+          },
+          {
+            "n": "upright-loupe-readable",
+            "pass": true
           }
         ],
         "failed": []
@@ -914,7 +742,7 @@
       "truthLeak": [],
       "selfTest": {
         "pass": true,
-        "count": 16,
+        "count": 32,
         "tests": [
           {
             "n": "mpr-shared-crosshair-point",
@@ -978,6 +806,70 @@
           },
           {
             "n": "explore-nerve-overlay",
+            "pass": true
+          },
+          {
+            "n": "pano-has-47-and-ramus",
+            "pass": true
+          },
+          {
+            "n": "mandible-not-round",
+            "pass": true
+          },
+          {
+            "n": "mandible-lingual-undercut",
+            "pass": true
+          },
+          {
+            "n": "ian-dose-36mg",
+            "pass": true
+          },
+          {
+            "n": "ian-early-contact",
+            "pass": true
+          },
+          {
+            "n": "ian-block-success",
+            "pass": true
+          },
+          {
+            "n": "ian-parotid-facial-palsy",
+            "pass": true
+          },
+          {
+            "n": "ian-three-outcomes-distinct",
+            "pass": true
+          },
+          {
+            "n": "ian-aspiration-historical",
+            "pass": true
+          },
+          {
+            "n": "ian-intravascular-last",
+            "pass": true
+          },
+          {
+            "n": "coronectomy-clean-min-strain-fullscore",
+            "pass": true
+          },
+          {
+            "n": "coronectomy-residual-enamel",
+            "pass": true
+          },
+          {
+            "n": "residual-enamel-penalized",
+            "pass": true
+          },
+          {
+            "n": "coronectomy-mobilized-root-trap",
+            "pass": true
+          },
+          {
+            "n": "extraction-47-neighbor-load",
+            "pass": true
+          },
+          {
+            "n": "extraction-root-into-canal",
             "pass": true
           }
         ],
