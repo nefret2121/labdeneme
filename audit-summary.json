@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-11-02T23:46:12.766Z",
+  "generatedAt": "2026-11-03T00:15:14.683Z",
   "threeLocal": true,
-  "pages": 19,
+  "pages": 20,
   "viewports": [
     {
       "w": 1920,
@@ -27,7 +27,7 @@
     },
     "gate3_link_integrity": {
       "pass": true,
-      "checked": 42,
+      "checked": 44,
       "skipped": 1,
       "broken": []
     },
@@ -40,7 +40,7 @@
       "fails": []
     },
     "gate6_clinical_selftests": {
-      "hooks": 4,
+      "hooks": 5,
       "pass": true,
       "detail": [
         {
@@ -229,6 +229,10 @@
                 "pass": true
               },
               {
+                "n": "endo-xray-pulp-contrast-visual",
+                "pass": true
+              },
+              {
                 "n": "eal-no-early-apex-normal",
                 "pass": true
               },
@@ -261,7 +265,66 @@
                 "pass": true
               }
             ],
-            "count": 21,
+            "count": 22,
+            "failed": []
+          }
+        },
+        {
+          "page": "ductuslab-perio.html",
+          "pass": true,
+          "selfTest": {
+            "pass": true,
+            "count": 12,
+            "tests": [
+              {
+                "n": "cal-rec-pos",
+                "pass": true
+              },
+              {
+                "n": "cal-pseudopocket",
+                "pass": true
+              },
+              {
+                "n": "cal-rec-neg",
+                "pass": true
+              },
+              {
+                "n": "cal-unknown-cej",
+                "pass": true
+              },
+              {
+                "n": "unmeasured-unknown",
+                "pass": true
+              },
+              {
+                "n": "force-overpenetration",
+                "pass": true
+              },
+              {
+                "n": "col-angle-contact",
+                "pass": true
+              },
+              {
+                "n": "p2-not-periodontitis",
+                "pass": true
+              },
+              {
+                "n": "p4-furcation-stage3",
+                "pass": true
+              },
+              {
+                "n": "p5-grade-c",
+                "pass": true
+              },
+              {
+                "n": "p6-nonperio-exclusion",
+                "pass": true
+              },
+              {
+                "n": "p6-correct-nonperio",
+                "pass": true
+              }
+            ],
             "failed": []
           }
         },
@@ -333,7 +396,7 @@
     "gate7_portal_accessibility": {
       "pass": true,
       "detail": {
-        "cards": 17,
+        "cards": 18,
         "lapBadgeClean": true,
         "frmPresent": true,
         "scrollOk": true,
@@ -614,6 +677,10 @@
             "pass": true
           },
           {
+            "n": "endo-xray-pulp-contrast-visual",
+            "pass": true
+          },
+          {
             "n": "eal-no-early-apex-normal",
             "pass": true
           },
@@ -646,7 +713,75 @@
             "pass": true
           }
         ],
-        "count": 21,
+        "count": 22,
+        "failed": []
+      },
+      "lifecycle": {
+        "supported": false,
+        "advanced": null
+      }
+    },
+    "ductuslab-perio.html": {
+      "page": "ductuslab-perio.html",
+      "pageerrors": [],
+      "consoleErrors": [],
+      "externalAssets": [],
+      "disallowedReq": [],
+      "overflow": [],
+      "truthLeak": [],
+      "selfTest": {
+        "pass": true,
+        "count": 12,
+        "tests": [
+          {
+            "n": "cal-rec-pos",
+            "pass": true
+          },
+          {
+            "n": "cal-pseudopocket",
+            "pass": true
+          },
+          {
+            "n": "cal-rec-neg",
+            "pass": true
+          },
+          {
+            "n": "cal-unknown-cej",
+            "pass": true
+          },
+          {
+            "n": "unmeasured-unknown",
+            "pass": true
+          },
+          {
+            "n": "force-overpenetration",
+            "pass": true
+          },
+          {
+            "n": "col-angle-contact",
+            "pass": true
+          },
+          {
+            "n": "p2-not-periodontitis",
+            "pass": true
+          },
+          {
+            "n": "p4-furcation-stage3",
+            "pass": true
+          },
+          {
+            "n": "p5-grade-c",
+            "pass": true
+          },
+          {
+            "n": "p6-nonperio-exclusion",
+            "pass": true
+          },
+          {
+            "n": "p6-correct-nonperio",
+            "pass": true
+          }
+        ],
         "failed": []
       },
       "lifecycle": {

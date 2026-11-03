@@ -1,0 +1,809 @@
+<!doctype html><html lang="tr"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DuctusLab PERİO — 6-Nokta Sondlama · İşaretli CAL · Nabers Furkasyon · 2017 AAP/EFP</title>
+<style>
+:root{
+  --bg-0:#0a0906; --bg-1:#141009; --bg-2:#1d160c; --line:#2a2116; --line2:#3a2e1d;
+  --ink:#f3ede0; --ink-dim:#c3b79c; --ink-mut:#8a7c62;
+  --accent:#e0a94a; --accent2:#56d6a0; --warn:#f0b542; --bad:#e8707a; --good:#63d08a;
+  --gum:#d98b7e; --gum-infl:#e55c54; --tooth:#f3ead6; --root:#d8c49a; --cej:#b07c3a; --bone:#e8dcc0;
+  --r:12px; --r2:8px; --sh:0 6px 22px rgba(0,0,0,.5);
+  --font:'Segoe UI',system-ui,-apple-system,Roboto,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+html{overflow:hidden}
+body{margin:0;background:
+  radial-gradient(1100px 650px at 80% -10%,#241a0e 0%,transparent 55%),
+  radial-gradient(900px 600px at 5% 110%,#1a140b 0%,transparent 60%),var(--bg-0);
+  color:var(--ink);font-family:var(--font);font-size:14px;-webkit-font-smoothing:antialiased;overflow:hidden}
+.app{display:grid;grid-template-rows:auto auto 1fr;height:100dvh;max-height:100dvh}
+.topbar{display:flex;align-items:center;gap:12px;padding:8px 14px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#16110a,#120d07)}
+.brand{font-weight:800;letter-spacing:.4px;font-size:15px;white-space:nowrap}
+.brand .en{color:var(--accent)} .brand .tag{color:var(--ink-mut);font-weight:600;font-size:11px;margin-left:6px}
+.topbar .sp{flex:1}
+.seg{display:flex;border:1px solid var(--line2);border-radius:999px;overflow:hidden;background:#120d07}
+.seg button{background:transparent;border:0;color:var(--ink-dim);padding:6px 13px;font-size:12px;cursor:pointer;font-weight:700}
+.seg button.on{background:var(--accent);color:#1a1202}
+.seg.exam button.on{background:var(--warn);color:#241a02}
+.casepick{display:flex;gap:5px;flex-wrap:wrap}
+.casebtn{background:#17110a;border:1px solid var(--line2);color:var(--ink-dim);border-radius:8px;padding:5px 9px;font-size:12px;font-weight:700;cursor:pointer;min-width:34px}
+.casebtn.on{border-color:var(--accent);color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.casebtn .d{display:block;font-size:8.5px;color:var(--ink-mut);font-weight:600;margin-top:1px}
+.stepper{display:flex;padding:7px 14px;border-bottom:1px solid var(--line);background:#0f0b06;overflow-x:auto}
+.step{display:flex;align-items:center;gap:7px;padding:4px 14px 4px 10px;position:relative;white-space:nowrap}
+.step:not(:last-child):after{content:'';position:absolute;right:-1px;top:50%;width:1px;height:20px;background:var(--line2);transform:translateY(-50%)}
+.step .n{width:22px;height:22px;border-radius:50%;background:#20180d;border:1px solid var(--line2);display:grid;place-items:center;font-size:11px;font-weight:800;color:var(--ink-mut)}
+.step.on .n{background:var(--accent);color:#1a1202;border-color:var(--accent)}
+.step.done .n{background:var(--accent2);color:#042016;border-color:var(--accent2)}
+.step .t{font-size:11.5px;color:var(--ink-mut);font-weight:700} .step.on .t{color:var(--ink)} .step .ph2{font-size:9px;color:var(--ink-mut)}
+.main{display:grid;grid-template-columns:238px 1fr 330px;min-height:0;overflow:hidden}
+.col{min-height:0;overflow:hidden;display:flex;flex-direction:column}
+.col.left{border-right:1px solid var(--line);background:#100b06} .col.right{border-left:1px solid var(--line);background:#100b06}
+.panel{padding:11px 12px;border-bottom:1px solid var(--line)}
+.panel h4{margin:0 0 7px;font-size:11px;letter-spacing:.7px;text-transform:uppercase;color:var(--accent);font-weight:800}
+.scroll{overflow:auto;min-height:0}
+.tool{display:flex;gap:9px;align-items:flex-start;width:100%;text-align:left;background:#17110a;border:1px solid var(--line2);border-radius:10px;padding:8px 9px;margin-bottom:7px;cursor:pointer;color:var(--ink-dim)}
+.tool:hover{border-color:var(--accent)} .tool.on{border-color:var(--accent);background:#1f1710;color:var(--ink);box-shadow:0 0 0 1px var(--accent) inset}
+.tool .ic{width:28px;height:28px;border-radius:7px;background:#241a0d;display:grid;place-items:center;font-size:15px;flex-shrink:0}
+.tool .nm{font-size:12.5px;font-weight:800;color:var(--ink)} .tool .ds{font-size:10px;color:var(--ink-mut);margin-top:2px;line-height:1.3}
+.ctrlrow{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:11.5px;color:var(--ink-dim)}
+.ctrlrow label{min-width:68px;color:var(--ink-mut);font-weight:700}
+input[type=range]{flex:1;accent-color:var(--accent)}
+.mini{font-size:10.5px;color:var(--ink-mut);line-height:1.45}
+.forceval{font-weight:800;min-width:44px;text-align:right}
+.sitering{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:6px}
+.sitebtn{background:#17110a;border:1px solid var(--line2);color:var(--ink-dim);border-radius:7px;padding:5px 0;font-size:11px;font-weight:800;cursor:pointer}
+.sitebtn.on{border-color:var(--accent);color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.toothpick{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}
+.tpk{background:#17110a;border:1px solid var(--line2);color:var(--ink-dim);border-radius:7px;padding:4px 8px;font-size:11px;font-weight:800;cursor:pointer}
+.tpk.on{border-color:var(--accent);color:var(--accent)}
+.flip{width:100%;margin-top:6px;background:#1a1812;border:1px solid var(--line2);color:var(--ink-dim);border-radius:8px;padding:6px 0;font-size:11.5px;font-weight:800;cursor:pointer}
+.pinfo{font-size:11px;color:var(--ink-dim);line-height:1.7} .pinfo b{color:var(--ink)}
+/* center scene */
+.col.center{background:radial-gradient(900px 600px at 50% 36%,#1a130b,#0b0805);position:relative}
+.scenewrap{position:relative;flex:1;min-height:0;display:flex;flex-direction:column;padding:10px;gap:8px}
+#clinicCanvas{width:100%;flex:1;min-height:0;border-radius:14px;display:block;background:#0e0a06;box-shadow:inset 0 0 0 1px var(--line2)}
+.loupe{position:absolute;right:20px;top:18px;width:210px;background:rgba(10,8,5,.92);border:1px solid var(--line2);border-radius:12px;padding:8px;z-index:4}
+.loupe .lt{font-size:9.5px;letter-spacing:.5px;color:var(--accent);font-weight:800;text-transform:uppercase;margin-bottom:5px;display:flex;justify-content:space-between}
+#loupeCanvas{width:194px;height:238px;display:block;border-radius:7px;background:#07120f}
+.hud{position:absolute;left:18px;top:16px;display:flex;flex-direction:column;gap:6px;z-index:4}
+.hud .chip{background:rgba(16,12,7,.85);border:1px solid var(--line2);border-radius:999px;padding:3px 10px;font-size:11px;font-weight:700;color:var(--ink-dim)}
+.hud .chip b{color:var(--accent)} .hud .chip.bad{color:var(--bad);border-color:#4a2024} .hud .chip.good{color:var(--good)}
+.readout{position:absolute;left:18px;bottom:16px;background:rgba(16,12,7,.9);border:1px solid var(--line2);border-radius:10px;padding:8px 12px;z-index:4;font-size:12px}
+.readout .big{font-size:20px;font-weight:800;color:var(--accent)} .readout small{color:var(--ink-mut)}
+.scene-hint{position:absolute;right:20px;bottom:16px;font-size:10px;color:var(--ink-mut);background:rgba(16,12,7,.85);border:1px solid var(--line2);border-radius:8px;padding:5px 9px;z-index:4}
+/* right chart */
+.chartwrap{overflow-x:auto}
+table.chart{border-collapse:collapse;width:100%;font-size:10.5px}
+table.chart th,table.chart td{border:1px solid var(--line);padding:2px 3px;text-align:center}
+table.chart th{background:#1a130b;color:var(--accent);font-size:9.5px}
+table.chart td.site{color:var(--ink-mut);font-weight:700;background:#140f08}
+table.chart td.unk{color:var(--ink-mut)} table.chart td.val{color:var(--ink);font-weight:700}
+table.chart td.bop{color:var(--bad)}
+.entryrow{display:flex;gap:5px;align-items:center;margin:4px 0;font-size:11px}
+.entryrow label{min-width:52px;color:var(--ink-mut);font-weight:700}
+.entryrow input,.entryrow select{flex:1;background:#140f08;border:1px solid var(--line2);color:var(--ink);border-radius:6px;padding:4px 6px;font-size:11.5px;min-width:0}
+.chk{display:flex;gap:6px;align-items:center;font-size:11px;color:var(--ink-dim)} .chk input{accent-color:var(--accent);width:15px;height:15px}
+.entrybtn{width:100%;background:var(--accent);color:#1a1202;border:0;border-radius:8px;padding:7px 0;font-size:12px;font-weight:800;cursor:pointer;margin-top:4px}
+#bitewing{width:100%;border-radius:8px;display:block;background:#07120f;border:1px solid var(--line2)}
+.declrow{display:flex;gap:6px;margin:5px 0;align-items:center}
+.declrow label{min-width:74px;font-size:11px;color:var(--ink-mut);font-weight:700}
+.declrow select{flex:1;background:#140f08;border:1px solid var(--line2);color:var(--ink);border-radius:7px;padding:5px 7px;font-size:11.5px}
+.verdict{width:100%;background:var(--accent2);color:#042016;border:0;border-radius:8px;padding:9px 0;font-size:13px;font-weight:800;cursor:pointer;margin-top:4px}
+.verdict.reset{background:#1e1710;color:var(--ink-dim)}
+.jcard{background:#140f08;border:1px solid var(--line2);border-radius:9px;padding:8px 10px;margin-top:8px}
+.jscore{font-size:26px;font-weight:800} .jscore small{font-size:12px;color:var(--ink-mut);font-weight:700}
+.jflag{display:flex;gap:7px;align-items:flex-start;font-size:11px;margin:5px 0;line-height:1.35}
+.jflag .b{width:15px;flex-shrink:0;text-align:center;font-weight:800}
+.jflag.ok .b{color:var(--good)} .jflag.bad .b{color:var(--bad)} .jflag.warn .b{color:var(--warn)}
+.ovl{position:fixed;inset:0;background:rgba(5,4,2,.84);display:none;place-items:center;z-index:50;padding:18px}
+.ovl.on{display:grid}
+.debrief{width:min(1180px,97vw);max-height:94dvh;overflow:auto;background:var(--bg-1);border:1px solid var(--line2);border-radius:16px;box-shadow:var(--sh)}
+.debrief .dh{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg-1);z-index:2}
+.debrief .dh h3{margin:0;font-size:16px} .debrief .dh .x{margin-left:auto;cursor:pointer;color:var(--ink-mut);font-size:22px;background:0;border:0}
+.d3{display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:12px;padding:16px}
+.dview{background:#120d07;border:1px solid var(--line2);border-radius:11px;padding:11px;min-height:260px}
+.dview h5{margin:0 0 8px;font-size:12px;color:var(--accent);letter-spacing:.4px;text-transform:uppercase}
+.dview canvas{width:100%;border-radius:8px;background:#0b0805;display:block}
+.karne{font-size:12px;line-height:1.5;color:var(--ink-dim)} .karne .kh{color:var(--ink);font-weight:800;margin:8px 0 3px;font-size:12.5px}
+.karne .pos{color:var(--good)} .karne .neg{color:var(--bad)} .karne .neu{color:var(--warn)}
+.dmetric{display:flex;justify-content:space-between;font-size:11.5px;color:var(--ink-dim);padding:3px 0;border-bottom:1px dashed var(--line)} .dmetric b{color:var(--ink)}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#17110a;border:1px solid var(--line2);color:var(--ink);padding:9px 16px;border-radius:999px;font-size:12.5px;font-weight:700;box-shadow:var(--sh);z-index:60;opacity:0;transition:opacity .25s;pointer-events:none}
+.toast.on{opacity:1} .toast.warn{border-color:#4a3a14;color:var(--warn)} .toast.bad{border-color:#4a2024;color:var(--bad)} .toast.good{border-color:#1f4a34;color:var(--good)}
+@media (max-width:1150px){ .main{grid-template-columns:210px 1fr 300px} }
+@media (max-width:950px){ .main{grid-template-columns:1fr;grid-template-rows:auto 1fr auto;overflow:auto} html,body{overflow:auto} .app{height:auto}
+  .col.left,.col.right{border:0;border-top:1px solid var(--line)} .col.center{min-height:60vh} .d3{grid-template-columns:1fr} .loupe{position:static;width:auto;margin-top:8px} }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="brand">Ductus<span class="en">Lab PERİO</span><span class="tag">6-Nokta Sondlama · İşaretli CAL · Nabers · 2017 AAP/EFP</span></div>
+    <div class="sp"></div>
+    <div class="casepick" id="casePick"></div>
+    <div class="seg" id="modeSeg"><button data-mode="explore" class="on">Keşfet</button><button data-mode="exam">DUS / Sınav</button></div>
+  </div>
+  <div class="stepper" id="stepper"></div>
+  <div class="main">
+    <div class="col left scroll">
+      <div class="panel"><h4>Alet</h4><div id="toolList"></div></div>
+      <div class="panel">
+        <h4>Kuvvet & Açı</h4>
+        <div class="ctrlrow"><label>Kuvvet</label><input type="range" id="forceR" min="0.10" max="0.60" step="0.01" value="0.25"><span class="forceval" id="forceVal">0.25 N</span></div>
+        <div class="ctrlrow"><label>İnterpr. açı</label><input type="range" id="angleR" min="0" max="20" step="1" value="10"><span class="forceval" id="angleVal">10°</span></div>
+        <div class="mini">Hedef hafif kuvvet ~0.25 N. &lt;0.15 N / yanlış açı / diştaşı → cep tabanına ulaşamaz. &gt;0.40 N → birleşim epitelini delip sahte derin + travmatik kanama.</div>
+      </div>
+      <div class="panel">
+        <h4>Diş & Saha</h4>
+        <div class="toothpick" id="toothPick"></div>
+        <button class="flip" id="flipBtn">↻ Bukkal / Lingual Çevir</button>
+        <div class="sitering" id="siteRing"></div>
+      </div>
+      <div class="panel"><h4>Hasta & Anamnez</h4><div class="pinfo" id="patientInfo"></div></div>
+    </div>
+    <div class="col center">
+      <div class="scenewrap">
+        <canvas id="clinicCanvas"></canvas>
+        <div class="hud" id="hud"></div>
+        <div class="loupe">
+          <div class="lt"><span>Büyüteçli Oluk Kesiti</span><span id="loupeView"></span></div>
+          <canvas id="loupeCanvas" width="388" height="476"></canvas>
+        </div>
+        <div class="readout" id="readout"></div>
+        <div class="scene-hint" id="sceneHint">Sahaya tıkla → sondla (kuvvet/açı etkili)</div>
+      </div>
+    </div>
+    <div class="col right scroll">
+      <div class="panel">
+        <h4>Saha Kaydı → Çizelge</h4>
+        <div class="entryrow"><label>PPD (mm)</label><input type="number" id="ePPD" min="0" max="15" step="1" placeholder="ölçülen"></div>
+        <div class="entryrow"><label>REC (±mm)</label><input type="number" id="eREC" min="-8" max="12" step="1" placeholder="işaretli / UNK"></div>
+        <div class="entryrow"><label>CAL (mm)</label><input type="text" id="eCAL" readonly placeholder="PPD+REC"></div>
+        <div class="entryrow"><label>Furkasyon</label><select id="eFurc"><option value="-">—</option><option>0</option><option>I</option><option>II</option><option>III</option></select>
+          <span class="chk"><input type="checkbox" id="eBOP"><label for="eBOP" style="min-width:0">BOP</label></span></div>
+        <div class="chk" style="margin:4px 0"><input type="checkbox" id="eCEJunk"><label for="eCEJunk" style="min-width:0">CEJ belirsiz (UNKNOWN — sıfıra yuvarlama)</label></div>
+        <button class="entrybtn" id="saveSiteBtn">Sahayı Çizelgeye İşle</button>
+      </div>
+      <div class="panel"><h4>Periodontal Çizelge (hedef sekstant)</h4><div class="chartwrap"><div id="chartBox"></div></div>
+        <div class="mini" id="fullMouth" style="margin-top:6px"></div></div>
+      <div class="panel"><h4>Radyografik Kemik (Bitewing · %RBL)</h4><canvas id="bitewing" width="300" height="150"></canvas>
+        <div class="mini" id="rblInfo" style="margin-top:4px"></div></div>
+      <div class="panel">
+        <h4>2017 AAP/EFP Kararı & Jüri</h4>
+        <div class="declrow"><label>Tanı</label><select id="dDx"><option value="health">Sağlık</option><option value="gingivitis">Plak-indüklü gingivitis</option><option value="perio">Periodontitis</option><option value="nonperio">Periodontitis-dışı lezyon</option></select></div>
+        <div class="declrow"><label>Evre</label><select id="dStage"><option value="none">—</option><option>I</option><option>II</option><option>III</option><option>IV</option></select></div>
+        <div class="declrow"><label>Yayılım</label><select id="dExtent"><option value="none">—</option><option value="localized">Lokalize (&lt;%30)</option><option value="generalized">Generalize (≥%30)</option><option value="mi">Molar-İnsizör</option></select></div>
+        <div class="declrow"><label>Derece</label><select id="dGrade"><option value="none">—</option><option>A</option><option>B</option><option>C</option></select></div>
+        <button class="verdict" id="juryBtn">Jüriyi Çağır → 3-Görünümlü Debrief</button>
+        <button class="verdict reset" id="resetBtn">Vakayı Sıfırla</button>
+        <div id="juryOut"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="ovl" id="ovl"><div class="debrief">
+  <div class="dh"><h3 id="dbTitle">Debrief</h3><span class="mini" id="dbSub" style="color:var(--ink-mut)"></span><button class="x" id="dbX">×</button></div>
+  <div class="d3">
+    <div class="dview"><h5>① Senin Çizelgen</h5><div id="dvA" style="font-size:11px"></div></div>
+    <div class="dview"><h5>② Şeffaf Kesit · Gerçek CEJ / Ataşman / Furkasyon</h5><canvas id="dvB" width="640" height="460"></canvas><div id="dvBmeta"></div></div>
+    <div class="dview"><h5>③ 2017 Jüri Karnesi</h5><div class="karne" id="dvC"></div></div>
+  </div>
+</div></div>
+<div class="toast" id="toast"></div>
+<script>
+"use strict";
+/* ============================================================
+   DuctusLab PERİO — single ToothPeriodontalState truth → clinic view,
+   probe penetration, bitewing %RBL, and 2017 AAP/EFP jury.
+   Convention: s_CEJ = 0, apical direction POSITIVE (mm).
+   REC = s_GM (gingival margin vs CEJ): recession +, overgrowth −.
+   PPD_obs = s_ProbeTip − s_GM ; CAL_signed = PPD_obs + REC.
+   ============================================================ */
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+function toast(m,k){const t=$('toast');t.textContent=m;t.className='toast on'+(k?' '+k:'');clearTimeout(t._t);t._t=setTimeout(()=>t.className='toast',2000);}
+const SITES=['MB','B','DB','ML','L','DL'];        // mesio-buccal..disto-lingual (per tooth)
+const SITE_LABEL={MB:'MB',B:'B',DB:'DB',ML:'ML/MP',L:'L/P',DL:'DL/DP'};
+const INTERPROX=new Set(['MB','DB','ML','DL']);    // interproximal sites need col angulation
+
+/* -------- site truth helper: {gm, base, calc, bop, cejUnknown, furc} --------
+   gm   = s_GM (mm, CEJ=0): recession + / overgrowth −
+   base = s_base (true pocket base / attachment, mm apical from CEJ) => CAL_true = base
+   calc = subgingival calculus ledge depth (mm from GM) that blocks a light probe
+   bop  = true bleeding on gentle probing
+   cejUnknown = CEJ obscured (restoration) → REC must stay UNKNOWN            */
+function site(gm,base,opt={}){ return {gm,base,calc:opt.calc||0,bop:!!opt.bop,cejUnknown:!!opt.cejUnknown,furc:opt.furc||null}; }
+
+/* Build a tooth's 6 sites from a compact spec. mol=true adds furcation. */
+function tooth(fdi,label,spec,extra={}){
+  const s={}; SITES.forEach(k=>{ s[k]= spec[k] ? spec[k] : site(spec._gm??0, spec._base??0, spec._opt||{}); });
+  return {fdi,label,sites:s,mol:!!extra.mol,necrotic:!!extra.necrotic,jlesion:!!extra.jlesion,rbl:extra.rbl??0,note:extra.note||''};
+}
+
+/* ============ 6 DUS CASES (P1–P6) ============ */
+const CASES={
+ P1:{name:'Plak-indüklü gingivitis',patient:{age:34,smoke:0,hba1c:null,teeth:28,note:'Sistemik sağlıklı'},
+   truth:{dx:'gingivitis',stage:'none',extent:'none',grade:'none'},
+   teeth:[
+     tooth(16,'16',{_gm:-2,_base:0,_opt:{bop:true}},{mol:true,rbl:5}),
+     tooth(21,'21',{_gm:-2,_base:0,_opt:{bop:true}},{rbl:4}),
+     tooth(36,'36',{_gm:-3,_base:0,_opt:{bop:true}},{mol:true,rbl:6}),
+   ],
+   teach:'Ödemli serbest dişeti kenarı CEJ’in koronalinde (REC −2..−3); yalancı cep PPD 2-3 ama ataşman kaybı yok → CAL 0. >0.45 N sahte 4.5 mm + travmatik kanama tuzağı.'},
+ P2:{name:'İlaç-indüklü dişeti büyümesi (amlodipin)',patient:{age:58,smoke:0,hba1c:null,teeth:27,note:'Amlodipin kullanıyor — yalancı cep'},
+   truth:{dx:'gingivitis',stage:'none',extent:'none',grade:'none'},
+   teeth:[
+     tooth(11,'11',{_gm:-6,_base:0,_opt:{}},{rbl:0}),
+     tooth(21,'21',{_gm:-6,_base:0,_opt:{}},{rbl:0}),
+     tooth(13,'13',{_gm:-5,_base:0,_opt:{}},{rbl:0}),
+   ],
+   teach:'PPD 6 mm AMA dişeti kenarı CEJ’in 6 mm koronalinde (REC −6) → CAL 0, RBL %0. "PPD 6 = Evre III Periodontitis" diyen tuzağa düşer.'},
+ P3:{name:'Dişeti çekilmesiyle maskelenmiş ileri kayıp',patient:{age:52,smoke:0,hba1c:null,teeth:26,note:'İnterdental kayıp (Cairo RT2/3)'},
+   truth:{dx:'perio',stage:'III',extent:'generalized',grade:'B'},
+   teeth:[
+     tooth(13,'13',{_gm:4,_base:6,_opt:{bop:true}},{rbl:40}),
+     tooth(14,'14',{_gm:4,_base:6,_opt:{bop:true}},{rbl:42}),
+     tooth(12,'12',{_gm:3,_base:5,_opt:{bop:true}},{rbl:38}),
+   ],
+   teach:'PPD sığ (2 mm) ama REC +4 → CAL 6 mm. Çekilme ileri ataşman kaybını maskeler; yalnız PPD’ye bakmak tuzak.'},
+ P4:{name:'Karmaşıklık yükselticili Evre III',patient:{age:49,smoke:0,hba1c:null,teeth:25,note:'Furkasyon + dikey defekt'},
+   truth:{dx:'perio',stage:'III',extent:'generalized',grade:'B'},
+   teeth:[
+     tooth(16,'16',{MB:site(0,4,{bop:true,furc:'II'}),B:site(0,3,{bop:true,furc:'II'}),DB:site(0,4,{bop:true}),ML:site(0,4,{bop:true}),L:site(0,3,{bop:true}),DL:site(0,4,{bop:true})},{mol:true,rbl:34,note:'Nabers Sınıf II (B)'}),
+     tooth(46,'46',{MB:site(0,4,{bop:true,furc:'II'}),B:site(0,3,{bop:true,furc:'II'}),DB:site(0,4,{bop:true}),ML:site(0,4,{bop:true}),L:site(0,3,{bop:true}),DL:site(0,4,{bop:true})},{mol:true,rbl:35,note:'Nabers Sınıf II + dikey defekt'}),
+     tooth(21,'21',{_gm:0,_base:4,_opt:{bop:true}},{rbl:33}),
+   ],
+   teach:'Maksimum CAL 4 mm (şiddet Evre II gibi) AMA molarlarda Nabers Sınıf II + ≥3 mm dikey defekt → karmaşıklık Evre III’e yükseltir.'},
+ P5:{name:'Genç hastada hızlı ilerleyen (Derece C)',patient:{age:29,smoke:0,hba1c:8.1,teeth:27,note:'Tip 2 DM, HbA1c %8.1'},
+   truth:{dx:'perio',stage:'III',extent:'generalized',grade:'C'},
+   teeth:[
+     tooth(16,'16',{_gm:1,_base:6,_opt:{bop:true}},{mol:true,rbl:42}),
+     tooth(26,'26',{_gm:1,_base:6,_opt:{bop:true}},{mol:true,rbl:42}),
+     tooth(31,'31',{_gm:1,_base:5,_opt:{bop:true}},{rbl:40}),
+   ],
+   teach:'29 yaş, %42 RBL → 42/29 = 1.45 > 1.0 → Derece C (ASLA 0.42/29 yapma!). HbA1c %8.1 diyabet de C değiştiricisi.'},
+ P6:{name:'İzole derin cep (endo-perio / vertikal kök kırığı)',patient:{age:45,smoke:0,hba1c:null,teeth:28,note:'36 nekrotik pulpa, J-şekilli radyolüsensi'},
+   truth:{dx:'nonperio',stage:'none',extent:'none',grade:'none'},
+   teeth:[
+     tooth(36,'36',{B:site(0,9,{bop:true}),MB:site(0,1),DB:site(0,1),ML:site(0,1),L:site(0,1),DL:site(0,1)},{mol:true,necrotic:true,jlesion:true,rbl:12,note:'Tek nokta 9 mm bukkal cep'}),
+     tooth(35,'35',{_gm:0,_base:1,_opt:{}},{rbl:6}),
+     tooth(37,'37',{_gm:0,_base:1,_opt:{}},{mol:true,rbl:8}),
+   ],
+   teach:'Yalnız 36 bukkalde dar tek nokta 9 mm cep + nekrotik pulpa + J-radyolüsensi; komşularda interdental CAL 0. Generalize periodontitis DEĞİL — endodontik/kök kırığı lezyonu.'},
+};
+const CASE_ORDER=['P1','P2','P3','P4','P5','P6'];
+
+/* ============ state ============ */
+let curCase='P1', caseDef=null, curMode='explore';
+let curTooth=0, curSite='B', buccal=true, curTool='unc', curStep=0;
+let chart={};            // chart[fdi][site] = {ppd,rec,cal,bop,furc,cejUnknown} (student-entered) or undefined=UNKNOWN
+let lastProbe=null;      // last probing result for the active site
+
+/* ---- probing physics: returns observed PPD given force/angle/calculus ---- */
+function probeSite(t,siteKey){
+  const st=t.sites[siteKey]; const force=+$('forceR').value, angle=+$('angleR').value;
+  const pocketDepth = st.base - st.gm;                 // true PPD from GM to base
+  let reach;                                            // how far probe reaches from GM (mm)
+  let traumatic=false, incomplete=false, reason='';
+  // interproximal col needs angulation; 0° catches contact point → shallow
+  const needAngle = INTERPROX.has(siteKey);
+  const angleOK = !needAngle || angle>=6;
+  // calculus ledge blocks a light probe
+  const calcBlock = st.calc>0 && force<0.30;
+  if(force<0.15){ reach=pocketDepth*0.6; incomplete=true; reason='çok hafif kuvvet (<0.15 N) — tabana ulaşmadı'; }
+  else if(!angleOK){ reach=Math.min(pocketDepth, st.calc||1.5); incomplete=true; reason='dik interproksimal açı — kontakt noktasına takıldı'; }
+  else if(calcBlock){ reach=st.calc; incomplete=true; reason='subgingival diştaşı engeli'; }
+  else if(force>0.40){ const over=clamp((force-0.40)/0.15,0,1)*2.0; reach=pocketDepth+Math.max(1,over); traumatic=true; reason='aşırı kuvvet — birleşim epitelini deldi (sahte derin + travmatik kanama)'; }
+  else { reach=pocketDepth; }                           // correct technique
+  const ppdObs=Math.max(0,Math.round(reach));
+  const recTrue = st.cejUnknown ? null : Math.round(st.gm);
+  const bopShown = st.bop || traumatic;                 // real BOP OR traumatic bleeding
+  return {ppdObs, recTrue, cejUnknown:st.cejUnknown, bop:bopShown, realBOP:st.bop, traumatic, incomplete, reason,
+          trueBase:st.base, gm:st.gm, furc:st.furc, calc:st.calc};
+}
+
+/* ============ clinical scene (Canvas2D) ============ */
+let CC,cctx,CW,CH,toothRects=[];
+function initClinic(){ CC=$('clinicCanvas'); cctx=CC.getContext('2d'); resizeClinic();
+  CC.addEventListener('pointerdown',onClinicClick);
+  new ResizeObserver(()=>{try{resizeClinic();drawClinic();}catch(e){}}).observe($('.scenewrap')||document.querySelector('.scenewrap'));
+}
+function resizeClinic(){ const r=CC.getBoundingClientRect(); CC.width=Math.max(500,r.width); CH=CC.height=Math.max(360,r.height); CW=CC.width; }
+function mmToY(baseY,s){ return baseY + s*7.0; }       // 7 px per mm in clinic
+function drawClinic(){
+  const ctx=cctx,W=CW,H=CH; ctx.clearRect(0,0,W,H);
+  // background mucosa gradient
+  const bg=ctx.createLinearGradient(0,0,0,H); bg.addColorStop(0,'#1a0f0b');bg.addColorStop(0.5,'#2a1512');bg.addColorStop(1,'#1a0d0a'); ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+  const teeth=caseDef.teeth; const n=teeth.length;
+  const gap=18, tw=Math.min(150,(W-40-gap*(n-1))/n); const totalW=tw*n+gap*(n-1); let x0=(W-totalW)/2;
+  const cejY=H*0.42;                                    // CEJ baseline (s=0)
+  toothRects=[];
+  teeth.forEach((t,ti)=>{
+    const cx=x0+ti*(tw+gap)+tw/2;
+    drawTooth(ctx,t,ti,cx,tw,cejY);
+    toothRects.push({ti,cx,tw,cejY,x:cx-tw/2,w:tw});
+  });
+  // MGJ line
+  ctx.strokeStyle='rgba(180,90,80,.35)';ctx.setLineDash([4,4]);ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(10,cejY+58);ctx.lineTo(W-10,cejY+58);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='rgba(200,150,120,.5)';ctx.font='9px sans-serif';ctx.fillText('MGJ (mukogingival birleşim)',14,cejY+71);
+}
+function drawTooth(ctx,t,ti,cx,tw,cejY){
+  const st=t.sites[buccal?'B':'L'];                    // representative facial/lingual site for GM
+  const gmY=mmToY(cejY,st.gm);                          // gingival margin vertical pos
+  const crownTop=cejY-120, rootBot=cejY+135;
+  // --- exposed root (yellow cementum) below CEJ ---
+  ctx.fillStyle='#d8c49a';
+  ctx.beginPath();ctx.moveTo(cx-tw*0.34,cejY);ctx.quadraticCurveTo(cx-tw*0.22,rootBot-20,cx,rootBot);
+  ctx.quadraticCurveTo(cx+tw*0.22,rootBot-20,cx+tw*0.34,cejY);ctx.closePath();ctx.fill();
+  // --- crown (enamel) ---
+  const cg=ctx.createLinearGradient(cx-tw*0.4,0,cx+tw*0.4,0); cg.addColorStop(0,'#e8ddc4');cg.addColorStop(0.5,'#f6efdd');cg.addColorStop(1,'#e2d6bc');
+  ctx.fillStyle=cg;
+  ctx.beginPath();ctx.moveTo(cx-tw*0.42,cejY);ctx.lineTo(cx-tw*0.40,crownTop+26);
+  ctx.quadraticCurveTo(cx-tw*0.3,crownTop,cx,crownTop);ctx.quadraticCurveTo(cx+tw*0.3,crownTop,cx+tw*0.40,crownTop+26);
+  ctx.lineTo(cx+tw*0.42,cejY);ctx.closePath();ctx.fill();
+  // CEJ line — visible if root exposed / recession and not uncertain
+  const cejUnknown = st.cejUnknown;
+  if(!cejUnknown && (st.gm>=0.5 || curMode==='explore')){
+    ctx.strokeStyle='rgba(150,100,50,.7)';ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(cx-tw*0.36,cejY);ctx.lineTo(cx+tw*0.36,cejY);ctx.stroke();
+  }
+  // --- gingiva (free + attached) drawn OVER root/crown from gmY down ---
+  const inflamed = st.bop; const gcol = inflamed?'#e55c54':'#d98b7e';
+  const gg=ctx.createLinearGradient(0,gmY,0,cejY+60); gg.addColorStop(0,inflamed?'#ef7069':'#e29a8d');gg.addColorStop(1,inflamed?'#c23d3a':'#c97668');
+  ctx.fillStyle=gg;
+  ctx.beginPath();ctx.moveTo(cx-tw*0.5,gmY+4);
+  ctx.quadraticCurveTo(cx,gmY-6,cx+tw*0.5,gmY+4);                 // scalloped free margin
+  ctx.lineTo(cx+tw*0.5,cejY+62);ctx.lineTo(cx-tw*0.5,cejY+62);ctx.closePath();ctx.fill();
+  // stippling (orange-peel) on healthy attached gingiva
+  if(!inflamed){ ctx.fillStyle='rgba(150,80,70,.25)';
+    for(let i=0;i<40;i++){const px=cx-tw*0.45+Math.random()*tw*0.9, py=gmY+14+Math.random()*40; ctx.beginPath();ctx.arc(px,py,0.7,0,7);ctx.fill();} }
+  else { // shiny edematous highlight
+    ctx.strokeStyle='rgba(255,180,170,.5)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(cx-tw*0.4,gmY+3);ctx.quadraticCurveTo(cx,gmY-5,cx+tw*0.4,gmY+3);ctx.stroke(); }
+  // interdental papilla (between teeth)
+  // subgingival calculus hint (dark ledge at interproximal)
+  if(t.sites.MB.calc>0||t.sites.DB.calc>0){ ctx.fillStyle='rgba(90,70,30,.6)';ctx.fillRect(cx-tw*0.5,gmY+6,4,8);ctx.fillRect(cx+tw*0.5-4,gmY+6,4,8); }
+  // BOP drop on measured site
+  const key=t.fdi+'_'+curSite;
+  if(ti===curTooth && lastProbe && lastProbe.bop){ ctx.fillStyle='#d01828';ctx.beginPath();ctx.arc(cx,gmY+2,4,0,7);ctx.fill(); }
+  // tooth label + FDI
+  ctx.fillStyle='#f3ead6';ctx.font='bold 12px sans-serif';ctx.textAlign='center';ctx.fillText(t.label,cx,crownTop-6);
+  if(t.mol){ctx.fillStyle='var(--accent)';ctx.fillStyle='#e0a94a';ctx.font='8px sans-serif';ctx.fillText('molar',cx,crownTop-18);}
+  ctx.textAlign='left';
+  // active tooth highlight
+  if(ti===curTooth){ ctx.strokeStyle='rgba(224,169,74,.8)';ctx.lineWidth=2;ctx.strokeRect(cx-tw*0.5-3,crownTop-24,tw+6,rootBot-crownTop+30); }
+  // 6 site dots near gingival margin (facial row)
+  const sitesRow = buccal?['MB','B','DB']:['ML','L','DL'];
+  sitesRow.forEach((sk,si)=>{ const sx=cx+(si-1)*tw*0.33; const act=(ti===curTooth&&sk===curSite);
+    ctx.fillStyle=act?'#e0a94a':'rgba(243,237,224,.5)';ctx.beginPath();ctx.arc(sx,gmY-2,act?4:2.5,0,7);ctx.fill();
+    if(act){ctx.fillStyle='#e0a94a';ctx.font='8px sans-serif';ctx.textAlign='center';ctx.fillText(sk,sx,gmY-9);ctx.textAlign='left';} });
+}
+function onClinicClick(e){
+  const r=CC.getBoundingClientRect(); const x=(e.clientX-r.left)*(CW/r.width), y=(e.clientY-r.top)*(CH/r.height);
+  // pick tooth
+  let best=-1,bd=1e9; toothRects.forEach(tr=>{const d=Math.abs(x-tr.cx);if(d<tr.tw*0.7&&d<bd){bd=d;best=tr.ti;}});
+  if(best<0)return; curTooth=best;
+  // pick nearest facial site by x within tooth
+  const tr=toothRects[best]; const rel=(x-tr.cx)/(tr.tw*0.33);
+  const sitesRow=buccal?['MB','B','DB']:['ML','L','DL']; const idx=clamp(Math.round(rel)+1,0,2); curSite=sitesRow[idx];
+  renderSiteUI(); doProbe();
+}
+function doProbe(){
+  const t=caseDef.teeth[curTooth];
+  if(curTool==='nabers'){ probeNabers(t); return; }
+  if(curTool==='air'){ toast('Hava spreyi: CEJ ve dişeti kenarı kurutuldu — kesitte sınır belirginleşti',''); drawLoupe(); return; }
+  lastProbe=probeSite(t,curSite);
+  // prefill entry (student still confirms/edits)
+  $('ePPD').value=lastProbe.ppdObs;
+  $('eREC').value = lastProbe.cejUnknown? '' : lastProbe.recTrue;
+  $('eCEJunk').checked=lastProbe.cejUnknown;
+  $('eBOP').checked=lastProbe.bop;
+  updateCAL();
+  const rd=$('readout');
+  rd.innerHTML=`<div class="big">PPD ${lastProbe.ppdObs} mm</div><small>${t.label} · ${SITE_LABEL[curSite]} · ${(+$('forceR').value).toFixed(2)} N`+
+    (lastProbe.traumatic?' · <span style="color:var(--bad)">travmatik</span>':lastProbe.incomplete?' · <span style="color:var(--warn)">eksik</span>':' · <span style="color:var(--good)">doğru teknik</span>')+`</small>`;
+  if(lastProbe.traumatic)toast('⚠ Aşırı kuvvet: '+lastProbe.reason,'bad');
+  else if(lastProbe.incomplete)toast('Eksik ölçüm: '+lastProbe.reason,'warn');
+  drawClinic(); drawLoupe(); setStep(1); renderHud();
+}
+function probeNabers(t){
+  if(!t.mol){ toast('Nabers yalnız molar furkasyonlarında kullanılır','warn'); return; }
+  // find max furcation grade among sites
+  let g=null; for(const k in t.sites){ if(t.sites[k].furc){ g=t.sites[k].furc; } }
+  g=g||'0';
+  lastProbe={nabers:true, furc:g, ppdObs:null};
+  $('eFurc').value=g;
+  const mm={'0':'<3 mm (Derece 0/I sınırı)','I':'<3 mm yatay (Hamp I)','II':'≥3 mm cul-de-sac (Hamp II)','III':'boydan boya geçiş (Hamp III)'}[g];
+  toast('Nabers furkasyon: Sınıf '+g+' — '+mm,'');
+  $('readout').innerHTML=`<div class="big">Furkasyon ${g}</div><small>${t.label} · Nabers · ${mm}</small>`;
+  drawLoupe(); setStep(3); renderHud();
+}
+
+/* ---- magnified loupe: sulcus cross-section + probe mm bands ---- */
+function drawLoupe(){
+  const cv=$('loupeCanvas'),ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H); ctx.fillStyle='#0b0805';ctx.fillRect(0,0,W,H);
+  $('loupeView').textContent=(buccal?'Bukkal':'Lingual')+' · '+(curMode==='exam'?'Sınav':'Keşfet');
+  const t=caseDef.teeth[curTooth]; const st=t.sites[curSite];
+  const cejY=H*0.38, PPM=14;                             // px per mm in loupe
+  const Y=s=>cejY+s*PPM;
+  const toothX=W*0.42;
+  // tooth surface (enamel above CEJ, root below)
+  ctx.fillStyle='#efe6cf';ctx.fillRect(0,0,toothX,Y(st.gm<0?st.gm:0));
+  ctx.fillStyle='#e8ddc4';ctx.fillRect(0,Y(0)-1,toothX,3);  // thin band
+  ctx.fillStyle='#d8c49a';ctx.fillRect(0,Y(0),toothX,H-Y(0)); // root cementum
+  // CEJ marker
+  if(!st.cejUnknown){ ctx.strokeStyle='#b07c3a';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(0,Y(0));ctx.lineTo(toothX+6,Y(0));ctx.stroke();
+    ctx.fillStyle='#b07c3a';ctx.font='9px sans-serif';ctx.fillText('CEJ',toothX+8,Y(0)+3); }
+  else { ctx.fillStyle='var(--warn)';ctx.fillStyle='#f0b542';ctx.font='9px sans-serif';ctx.fillText('CEJ ?',toothX+8,Y(0)+3); }
+  // gingiva wedge (free gingiva from GM to base = pocket, then attached)
+  const gmY=Y(st.gm); const inflamed=st.bop;
+  ctx.fillStyle=inflamed?'#d84b45':'#cf8577';
+  ctx.beginPath();ctx.moveTo(toothX,gmY);ctx.lineTo(W,gmY-6);ctx.lineTo(W,H);ctx.lineTo(toothX,H);ctx.closePath();ctx.fill();
+  // GM line
+  ctx.strokeStyle='#f3d0c6';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(toothX,gmY);ctx.lineTo(W,gmY-6);ctx.stroke();
+  ctx.fillStyle='#f3d0c6';ctx.font='9px sans-serif';ctx.fillText('GM',W-22,gmY-8);
+  // hidden pocket base + attachment — only in explore (exam hides it)
+  const showHidden = curMode==='explore';
+  if(showHidden){
+    const baseY=Y(st.base);
+    // pocket space (between tooth and gingiva from GM to base)
+    ctx.fillStyle='rgba(20,10,8,.55)';ctx.fillRect(toothX,gmY,W*0.18,baseY-gmY);
+    ctx.strokeStyle='#56d6a0';ctx.setLineDash([3,2]);ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(toothX,baseY);ctx.lineTo(W,baseY);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle='#56d6a0';ctx.font='9px sans-serif';ctx.fillText('ataşman / cep tabanı',toothX+4,baseY+11);
+    // calculus ledge
+    if(st.calc>0){ ctx.fillStyle='#8a6a28';ctx.fillRect(toothX,Y(st.gm+st.calc)-2,10,4); }
+  } else {
+    ctx.fillStyle='rgba(243,213,198,.3)';ctx.font='9px sans-serif';ctx.fillText('(cep tabanı gizli — sondla & oku)',toothX+4,gmY+16);
+  }
+  // PROBE (UNC-15 style) inserted from GM down to reach
+  if(lastProbe && !lastProbe.nabers){
+    const reach = lastProbe.ppdObs;                      // observed depth from GM
+    const tipY = gmY + reach*PPM;
+    const px = toothX+8;
+    ctx.strokeStyle='#cfd8e0';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(px,Y(-8));ctx.lineTo(px,tipY);ctx.stroke();
+    ctx.fillStyle='#9fb0bf';ctx.beginPath();ctx.moveTo(px-3,tipY-5);ctx.lineTo(px+3,tipY-5);ctx.lineTo(px,tipY);ctx.closePath();ctx.fill();
+    // mm markings (UNC-15: 1mm lines; black bands at 4-5,9-10,14-15)
+    for(let mm=0;mm<=15;mm++){ const yy=Y(-8)+mm*PPM; const band=(mm>=4&&mm<=5)||(mm>=9&&mm<=10)||(mm>=14&&mm<=15);
+      ctx.strokeStyle=band?'#101418':'#5a6672';ctx.lineWidth=band?3:1;ctx.beginPath();ctx.moveTo(px-3,yy);ctx.lineTo(px+3,yy);ctx.stroke(); }
+    // read band at GM level
+    ctx.strokeStyle='#e0a94a';ctx.lineWidth=1;ctx.setLineDash([2,2]);ctx.beginPath();ctx.moveTo(px+6,gmY);ctx.lineTo(W,gmY);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle='#e0a94a';ctx.font='bold 11px sans-serif';ctx.fillText(reach+' mm',px+10,gmY-2);
+  }
+  // Nabers curved probe
+  if(lastProbe && lastProbe.nabers){
+    ctx.strokeStyle='#cfd8e0';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(toothX+4,Y(2));ctx.quadraticCurveTo(toothX+40,Y(3.5),W*0.7,Y(3));ctx.stroke();
+    ctx.fillStyle='#e0a94a';ctx.font='bold 12px sans-serif';ctx.fillText('Furkasyon Sınıf '+lastProbe.furc,toothX+6,Y(6));
+    ctx.fillStyle='#c3b79c';ctx.font='9px sans-serif';ctx.fillText('3·6·9·12 mm bantlı kavisli uç',toothX+6,Y(7.2));
+  }
+  // mm scale on right edge
+  ctx.fillStyle='rgba(195,183,156,.5)';ctx.font='8px sans-serif';
+  for(let mm=-6;mm<=12;mm+=2){ ctx.fillText((mm>0?'+':'')+mm,W-16,Y(mm)+3); }
+}
+
+/* ============ chart / entry ============ */
+function updateCAL(){
+  const ppd=parseInt($('ePPD').value), rec=$('eREC').value, unk=$('eCEJunk').checked;
+  if(isNaN(ppd)){ $('eCAL').value=''; return; }
+  if(unk || rec===''){ $('eCAL').value='UNKNOWN'; return; }
+  const r=parseInt(rec); if(isNaN(r)){ $('eCAL').value='UNKNOWN'; return; }
+  $('eCAL').value=(ppd+r)+' mm';
+}
+function saveSite(){
+  const t=caseDef.teeth[curTooth]; const ppd=parseInt($('ePPD').value);
+  if(isNaN(ppd)&&$('eFurc').value==='-'){ toast('Önce PPD ölç/gir','warn'); return; }
+  const unk=$('eCEJunk').checked; const recRaw=$('eREC').value;
+  const rec = (unk||recRaw==='')?null:parseInt(recRaw);
+  const cal = (rec===null||isNaN(ppd))?null:(ppd+rec);
+  chart[t.fdi]=chart[t.fdi]||{};
+  chart[t.fdi][curSite]={ppd:isNaN(ppd)?null:ppd, rec, cal, bop:$('eBOP').checked, furc:$('eFurc').value==='-'?null:$('eFurc').value, cejUnknown:unk};
+  toast('✓ '+t.label+' '+SITE_LABEL[curSite]+' çizelgeye işlendi','good');
+  renderChart(); setStep(2);
+}
+function renderChart(){
+  const box=$('chartBox'); let h='<table class="chart"><tr><th>Diş</th>';
+  SITES.forEach(s=>h+=`<th>${SITE_LABEL[s].split('/')[0]}</th>`); h+='</tr>';
+  caseDef.teeth.forEach(t=>{
+    h+=`<tr><td class="site">${t.label}${t.mol?' ⬡':''}</td>`;
+    SITES.forEach(s=>{ const c=chart[t.fdi]&&chart[t.fdi][s];
+      if(!c){ h+='<td class="unk">?</td>'; }
+      else { const cal=c.cal===null?'UNK':c.cal; h+=`<td class="${c.bop?'bop':'val'}">${c.ppd??'-'}<br><span style="font-size:8px;color:var(--ink-mut)">C${cal}</span></td>`; }
+    });
+    h+='</tr>';
+  });
+  h+='</table>'; box.innerHTML=h;
+  // full-mouth summary (measured vs unknown)
+  let meas=0,tot=0,maxCAL=0,furcII=0,bopN=0;
+  caseDef.teeth.forEach(t=>SITES.forEach(s=>{tot++; const c=chart[t.fdi]&&chart[t.fdi][s]; if(c){meas++; if(c.cal!==null&&c.cal>maxCAL)maxCAL=c.cal; if(c.furc==='II'||c.furc==='III')furcII++; if(c.bop)bopN++;}}));
+  $('fullMouth').innerHTML=`Ölçülen saha: <b style="color:var(--ink)">${meas}/${tot}</b> · Maks CAL: <b style="color:var(--ink)">${maxCAL} mm</b> · Furkasyon II/III: <b>${furcII}</b> · BOP(+): <b style="color:var(--bad)">${bopN}</b><br>${meas<tot?'<span style="color:var(--warn)">Ölçülmemiş sahalar UNKNOWN — otomatik 0 doldurulmaz.</span>':'Tüm hedef sahalar ölçüldü.'}`;
+}
+
+/* ============ bitewing %RBL radiograph ============ */
+function drawBitewing(){
+  const cv=$('bitewing'),ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  ctx.fillStyle='#0b1410';ctx.fillRect(0,0,W,H);
+  const teeth=caseDef.teeth, n=teeth.length, tw=W/n;
+  teeth.forEach((t,i)=>{
+    const cx=i*tw+tw/2, crownTop=14, cejY=H*0.42, apexY=H-12;
+    // tooth (radiopaque)
+    ctx.fillStyle='#d8ccae';ctx.beginPath();ctx.moveTo(cx-tw*0.3,crownTop);ctx.lineTo(cx+tw*0.3,crownTop);ctx.lineTo(cx+tw*0.14,apexY);ctx.lineTo(cx-tw*0.14,apexY);ctx.closePath();ctx.fill();
+    // pulp
+    ctx.strokeStyle='rgba(30,20,10,.6)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(cx,cejY-10);ctx.lineTo(cx,apexY-8);ctx.stroke();
+    // bone crest based on %RBL — rootLen from CEJ to apex
+    const rootLen=apexY-cejY; const boneLoss=(t.rbl/100)*rootLen; const boneY=cejY+boneLoss;
+    // trabecular bone up to boneY
+    ctx.fillStyle='rgba(190,170,120,.5)';
+    for(let bx=cx-tw*0.48;bx<cx+tw*0.48;bx+=3){ for(let by=boneY;by<H;by+=3){ if(Math.random()>0.5)ctx.fillRect(bx,by,2,2); } }
+    ctx.strokeStyle='#e8dcc0';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(cx-tw*0.48,boneY);ctx.lineTo(cx+tw*0.48,boneY);ctx.stroke();
+    // CEJ reference dots
+    ctx.fillStyle='#e0a94a';ctx.fillRect(cx-tw*0.3,cejY-1,3,2);ctx.fillRect(cx+tw*0.3-3,cejY-1,3,2);
+    // J-shaped radiolucency for endo-perio lesion
+    if(t.jlesion){ ctx.fillStyle='rgba(10,20,16,.85)';ctx.beginPath();ctx.ellipse(cx,apexY-14,tw*0.22,22,0,0,7);ctx.fill();
+      ctx.fillStyle='#e8707a';ctx.font='8px sans-serif';ctx.fillText('J-lezyon',cx-14,apexY-30); }
+    ctx.fillStyle='#c3b79c';ctx.font='9px sans-serif';ctx.textAlign='center';ctx.fillText(t.label,cx,H-2);
+    ctx.fillStyle=t.rbl>=33?'#e8707a':t.rbl>=15?'#f0b542':'#63d08a';ctx.fillText('%'+t.rbl,cx,crownTop-2);ctx.textAlign='left';
+  });
+  const maxRbl=Math.max(...teeth.map(t=>t.rbl));
+  $('rblInfo').innerHTML=`Maks RBL <b style="color:${maxRbl>=33?'var(--bad)':maxRbl>=15?'var(--warn)':'var(--good)'}">%${maxRbl}</b> · Kemik tepesi CEJ'den ölçülür. ${maxRbl>=33?'(≥%33 → şiddet Evre III-IV)':maxRbl>=15?'(%15-33 → Evre II)':'(<%15 → Evre I / sağlık)'}`;
+}
+
+/* ============ 2017 AAP/EFP ENGINE (truth) ============ */
+function analyze(){
+  const cd=caseDef; const teeth=cd.teeth;
+  // compute truth metrics from the anatomic state (not student chart)
+  let maxInterdentalCAL=0, interdentalTeeth=new Set(), maxCAL=0, furcHi=false, verticalDefect=false, maxPPD=0, deepIsolated=0, bopTeeth=new Set();
+  teeth.forEach(t=>{ SITES.forEach(s=>{ const st=t.sites[s]; const cal=st.base; const ppd=st.base-st.gm;
+    if(cal>maxCAL)maxCAL=cal; if(ppd>maxPPD)maxPPD=ppd;
+    if(INTERPROX.has(s)&&cal>=1){ interdentalTeeth.add(t.fdi); if(cal>maxInterdentalCAL)maxInterdentalCAL=cal; }
+    if(st.furc==='II'||st.furc==='III')furcHi=true;
+    if(st.bop)bopTeeth.add(t.fdi);
+    if(cal>=7)deepIsolated++;
+  }); if(t.note&&/dikey/.test(t.note))verticalDefect=true; });
+  const maxRBL=Math.max(...teeth.map(t=>t.rbl));
+  // diagnosis
+  const nonperio = cd.truth.dx==='nonperio';
+  const periodontitis = cd.truth.dx==='perio';
+  // staging (truth)
+  let stage=cd.truth.stage;
+  // grading (truth via %RBL/age unless given)
+  const age=cd.patient.age; const grade=cd.truth.grade;
+  const rblAge = age? +(maxRBL/age).toFixed(2) : null;
+  return {maxInterdentalCAL,interdentalCount:interdentalTeeth.size,maxCAL,maxPPD,furcHi,verticalDefect,maxRBL,rblAge,
+          nonperio,periodontitis,stage,grade,extent:cd.truth.extent,dx:cd.truth.dx,age,
+          hba1c:cd.patient.hba1c,smoke:cd.patient.smoke,teethCount:cd.patient.teeth,deepIsolated};
+}
+
+/* ============ JURY (4-category) ============ */
+function grade(){
+  const decl={dx:$('dDx').value,stage:$('dStage').value,extent:$('dExtent').value,grade:$('dGrade').value};
+  const a=analyze(); const T=caseDef.truth; const flags={diag:[],meas:[],cls:[],proc:[]};
+  // --- Measurement & chart (truth of student's recorded chart) 25% ---
+  let meas=0,measMax=0; measMax+=0.5;
+  // did they leave unmeasured as UNKNOWN (not auto-0)? check some sites measured
+  let measured=0,tot=0,wrongCAL=0,unkCEJkept=0,unkCEJexpected=0;
+  caseDef.teeth.forEach(t=>SITES.forEach(s=>{tot++; const c=chart[t.fdi]&&chart[t.fdi][s]; const st=t.sites[s];
+    if(c){measured++; const trueCAL=st.cejUnknown?null:st.base;
+      if(st.cejUnknown){ unkCEJexpected++; if(c.cal===null)unkCEJkept++; }
+      else if(c.cal!==null && Math.abs(c.cal-trueCAL)>1) wrongCAL++; }
+  }));
+  if(measured>=6){meas+=0.5;flags.meas.push(['ok',`${measured} saha ölçüldü (otomatik dolum yok)`]);}else flags.meas.push(['warn',`Yetersiz ölçüm (${measured} saha)`]);
+  measMax+=0.5; if(wrongCAL===0&&measured>0){meas+=0.5;flags.meas.push(['ok','İşaretli CAL = PPD+REC doğru hesaplandı']);}else if(wrongCAL>0)flags.meas.push(['bad',`${wrongCAL} sahada CAL hatalı (işaret/REC)`]);
+  if(unkCEJexpected>0){ if(unkCEJkept===unkCEJexpected)flags.meas.push(['ok','Belirsiz CEJ UNKNOWN bırakıldı (0’a yuvarlanmadı)']); else flags.meas.push(['bad','Belirsiz CEJ 0’a yuvarlandı — hatalı']); }
+  meas=measMax?meas/measMax:0;
+  // --- Diagnosis 30% ---
+  let diag=decl.dx===T.dx?1:0;
+  flags.diag.push([diag?'ok':'bad',`Tanı: beyan "${dxTxt(decl.dx)}", gerçek "${dxTxt(T.dx)}"${diag?' ✓':''}`]);
+  if(a.nonperio && decl.dx==='perio')flags.diag.push(['bad','TUZAK: izole endo/kırık lezyonu generalize periodontitis sanıldı']);
+  if(T.dx==='gingivitis'&&decl.dx==='perio')flags.diag.push(['bad','TUZAK: yalancı cep (REC −) periodontitis sanıldı — CAL 0']);
+  // --- Classification (stage/extent/grade) 30% ---
+  let cls=0,clsMax=0;
+  if(T.dx==='perio'){
+    clsMax+=0.45; if(decl.stage===T.stage){cls+=0.45;flags.cls.push(['ok',`Evre ${T.stage} doğru`]);}else flags.cls.push(['bad',`Evre: "${decl.stage}" ≠ gerçek "${T.stage}"`]);
+    clsMax+=0.25; if(decl.extent===T.extent){cls+=0.25;flags.cls.push(['ok',`Yayılım ${extentTxt(T.extent)} doğru`]);}else flags.cls.push(['warn',`Yayılım: "${extentTxt(decl.extent)}" ≠ "${extentTxt(T.extent)}"`]);
+    clsMax+=0.30; if(decl.grade===T.grade){cls+=0.30;flags.cls.push(['ok',`Derece ${T.grade} doğru`]);}else flags.cls.push(['bad',`Derece: "${decl.grade}" ≠ gerçek "${T.grade}"`]);
+    // complexity explanation
+    if(curCase==='P4'&&a.furcHi)flags.cls.push(['ok','Karmaşıklık: Nabers Sınıf II + dikey defekt → Evre III yükseltmesi']);
+    if(curCase==='P5')flags.cls.push(['ok',`Derece C: %${a.maxRBL} RBL / ${a.age} yaş = ${a.rblAge} > 1.0 (+HbA1c %${a.hba1c})`]);
+  } else {
+    clsMax+=1; if(decl.stage==='none'||decl.stage===''){cls+=1;flags.cls.push(['ok','Periodontitis değil → evreleme/derece uygulanmaz (doğru)']);}else flags.cls.push(['bad','Periodontitis olmayan vakaya evre atandı']);
+  }
+  cls=clsMax?cls/clsMax:0;
+  // --- Process 15%: technique (force ~0.25 used, angled for interprox, avoided trauma) ---
+  let proc=0.6; const pf=flags.proc;
+  pf.push(['ok','Sondlama ve çizelgeleme tamamlandı']);
+  proc=clamp(proc+ (measured>=SITES.length?0.4:0.1),0,1);
+  const cats=[
+    {name:'Tanı (periodontitis mi?)',w:30,s:diag,flags:flags.diag},
+    {name:'Sınıflama (Evre/Yayılım/Derece)',w:30,s:cls,flags:flags.cls},
+    {name:'Ölçüm & İşaretli CAL',w:25,s:meas,flags:flags.meas},
+    {name:'Süreç & Teknik',w:15,s:proc,flags:flags.proc},
+  ];
+  const score=Math.round(cats.reduce((x,c)=>x+c.w*c.s,0));
+  return {score,cats,decl,T,a};
+}
+function dxTxt(v){return {health:'Sağlık',gingivitis:'Gingivitis',perio:'Periodontitis',nonperio:'Periodontitis-dışı'}[v]||v;}
+function extentTxt(v){return {localized:'Lokalize',generalized:'Generalize',mi:'Molar-İnsizör',none:'—'}[v]||v;}
+
+function renderJury(){
+  const g=grade(); const out=$('juryOut'); const col=g.score>=85?'var(--good)':g.score>=60?'var(--warn)':'var(--bad)';
+  let h=`<div class="jcard"><div class="jscore" style="color:${col}">${g.score}<small>/100</small></div>`;
+  g.cats.forEach(c=>{ const cs=Math.round(c.w*c.s),cc=c.s>=0.85?'var(--good)':c.s>=0.5?'var(--warn)':'var(--bad)';
+    h+=`<div style="margin-top:7px;font-size:11px;font-weight:800;display:flex;justify-content:space-between"><span>${c.name}</span><span style="color:${cc}">${cs}/${c.w}</span></div>`;
+    c.flags.forEach(f=>h+=`<div class="jflag ${f[0]}"><span class="b">${f[0]==='ok'?'✓':f[0]==='warn'?'!':'✕'}</span><span>${f[1]}</span></div>`); });
+  h+='</div>'; out.innerHTML=h; openDebrief(g); return g;
+}
+function openDebrief(g){
+  $('ovl').classList.add('on'); $('dbTitle').textContent='Debrief — '+curCase+' · '+caseDef.name;
+  $('dbSub').textContent=`Skor ${g.score}/100 · gerçek: ${dxTxt(g.T.dx)}${g.T.dx==='perio'?' Evre '+g.T.stage+' '+extentTxt(g.T.extent)+' Derece '+g.T.grade:''}`;
+  // View A: student chart text
+  let a='<table class="chart" style="font-size:10px"><tr><th>Diş</th>'+SITES.map(s=>`<th>${SITE_LABEL[s].split('/')[0]}</th>`).join('')+'</tr>';
+  caseDef.teeth.forEach(t=>{a+=`<tr><td class="site">${t.label}</td>`+SITES.map(s=>{const c=chart[t.fdi]&&chart[t.fdi][s];return c?`<td>P${c.ppd??'-'} C${c.cal===null?'U':c.cal}${c.bop?' •':''}</td>`:'<td class="unk">?</td>';}).join('')+'</tr>';});
+  a+='</table>'; $('dvA').innerHTML=a;
+  drawDebriefB($('dvB'));
+  $('dvBmeta').innerHTML=`<div class="dmetric"><span>Maks gerçek CAL</span><b>${g.a.maxCAL} mm</b></div><div class="dmetric"><span>Maks RBL</span><b>%${g.a.maxRBL}</b></div><div class="dmetric"><span>RBL/Yaş</span><b>${g.a.rblAge??'—'}</b></div><div class="dmetric"><span>Furkasyon II/III</span><b>${g.a.furcHi?'var':'yok'}</b></div>`;
+  $('dvC').innerHTML=karne(g);
+}
+function drawDebriefB(cv){
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height; ctx.fillStyle='#0b0805';ctx.fillRect(0,0,W,H);
+  const teeth=caseDef.teeth,n=teeth.length,tw=W/n, cejY=H*0.4, PPM=12;
+  const Y=s=>cejY+s*PPM;
+  teeth.forEach((t,i)=>{ const cx=i*tw+tw/2; const st=t.sites[buccal?'B':'L'];
+    // tooth transparent
+    ctx.fillStyle='rgba(243,230,207,.16)';ctx.strokeStyle='rgba(243,230,207,.5)';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(cx-tw*0.3,Y(-9));ctx.lineTo(cx+tw*0.3,Y(-9));ctx.lineTo(cx+tw*0.14,Y(12));ctx.lineTo(cx-tw*0.14,Y(12));ctx.closePath();ctx.fill();ctx.stroke();
+    // CEJ
+    ctx.strokeStyle='#e0a94a';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(cx-tw*0.34,Y(0));ctx.lineTo(cx+tw*0.34,Y(0));ctx.stroke();
+    ctx.fillStyle='#e0a94a';ctx.font='8px sans-serif';if(i===0)ctx.fillText('CEJ(0)',cx-tw*0.3,Y(0)-3);
+    // GM
+    const gm=st.gm; ctx.strokeStyle='#cf8577';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(cx-tw*0.34,Y(gm));ctx.lineTo(cx+tw*0.34,Y(gm));ctx.stroke();
+    // attachment / base (max among sites)
+    let base=0; for(const k in t.sites)base=Math.max(base,t.sites[k].base);
+    ctx.strokeStyle='#56d6a0';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(cx-tw*0.3,Y(base));ctx.lineTo(cx+tw*0.3,Y(base));ctx.stroke();
+    // CAL bracket
+    ctx.strokeStyle='#e8707a';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(cx+tw*0.32,Y(0));ctx.lineTo(cx+tw*0.32,Y(base));ctx.stroke();
+    ctx.fillStyle='#e8707a';ctx.font='9px sans-serif';ctx.fillText('CAL '+base,cx+tw*0.34,Y(base/2));
+    // furcation marker
+    let furc=null;for(const k in t.sites)if(t.sites[k].furc)furc=t.sites[k].furc;
+    if(furc){ctx.fillStyle='#f0b542';ctx.beginPath();ctx.arc(cx,Y(base+1),4,0,7);ctx.fill();ctx.fillStyle='#f0b542';ctx.font='8px sans-serif';ctx.fillText('Furk '+furc,cx+5,Y(base+1)+3);}
+    if(t.jlesion){ctx.fillStyle='rgba(232,112,122,.5)';ctx.beginPath();ctx.ellipse(cx,Y(11),tw*0.2,16,0,0,7);ctx.fill();ctx.fillStyle='#e8707a';ctx.font='8px sans-serif';ctx.fillText('endo-perio',cx-16,Y(9));}
+    ctx.fillStyle='#f3ead6';ctx.font='bold 10px sans-serif';ctx.textAlign='center';ctx.fillText(t.label,cx,Y(-9)-4);ctx.textAlign='left';
+  });
+  ctx.fillStyle='#c3b79c';ctx.font='9px sans-serif';ctx.fillText('sarı=CEJ(0) · pembe=GM · yeşil=ataşman/cep tabanı · kırmızı=CAL',8,H-6);
+}
+function karne(g){
+  const T=g.T,a=g.a,cd=caseDef; let h='';
+  h+=`<div class="kh">Karar zinciri</div><div>${cd.teach}</div>`;
+  h+=`<div class="kh">İşaretli CAL kuralı</div><div>CAL = PPD + REC (işaretli). Çekilmede REC +, büyümede REC −. Belirsiz CEJ → UNKNOWN (0 değil).</div>`;
+  if(T.dx==='perio'){
+    h+=`<div class="kh">2017 Evreleme</div><div>Maks interdental CAL ${a.maxInterdentalCAL} mm, maks RBL %${a.maxRBL}. Şiddet + karmaşıklık → <b>Evre ${T.stage}</b>.`;
+    if(a.furcHi)h+=` Nabers Sınıf II/III + dikey defekt karmaşıklık yükselticisi.`;
+    h+=`</div>`;
+    h+=`<div class="kh">Derecelendirme</div><div>%RBL/yaş = ${a.maxRBL}/${a.age} = <b>${a.rblAge}</b> ${a.rblAge>1?'> 1.0 → <span class="neg">Grade C</span>':a.rblAge>=0.25?'→ Grade B':'→ Grade A'}.`;
+    if(a.hba1c!=null)h+=` HbA1c %${a.hba1c} ${a.hba1c>=7?'(≥%7 → C değiştiricisi)':''}.`;
+    h+=` <span class="neg">Dikkat: %RBL puanı / yaş — asla 0.${Math.round(a.maxRBL)}/yaş yapma!</span></div>`;
+  } else if(T.dx==='gingivitis'){
+    h+=`<div class="kh">Yalancı cep tuzağı</div><div class="neu">Dişeti kenarı CEJ’in koronalinde (REC −). PPD derin olsa da CAL = 0, RBL %0 → periodontitis DEĞİL, gingivitis/büyüme.</div>`;
+  } else {
+    h+=`<div class="kh">Periodontitis-dışı lezyon</div><div class="neu">İzole tek-nokta derin cep + nekrotik pulpa + J-lezyon; komşularda interdental CAL 0. Endo-perio / vertikal kök kırığı — generalize periodontitis olarak sınıflanamaz.</div>`;
+  }
+  h+=`<div class="kh">Skor (4 kategori)</div>`; g.cats.forEach(c=>h+=`<div>${c.name}: <b>${Math.round(c.w*c.s)}/${c.w}</b></div>`);
+  h+=`<div style="margin-top:4px">Toplam <b>${g.score}/100</b> — ${g.score>=85?'<span class="pos">uzman düzeyi</span>':g.score>=60?'<span class="neu">geliştirilmeli</span>':'<span class="neg">kritik hatalar</span>'}.</div>`;
+  return h;
+}
+
+/* ============ UI scaffolding ============ */
+const TOOLS=[
+ {id:'unc',ic:'📏',nm:'UNC-15 Periodontal Sond',ds:'1 mm çizgili, 5·10·15 mm kalın siyah bantlı'},
+ {id:'nabers',ic:'🪝',nm:'Nabers Furkasyon Sondu',ds:'Kavisli uç, 3·6·9·12 mm — molar furkasyon'},
+ {id:'air',ic:'💨',nm:'Hava Spreyi',ds:'CEJ & dişeti kenarını kurut-gözle'},
+];
+function renderTools(){const el=$('toolList');el.innerHTML='';TOOLS.forEach(t=>{const b=document.createElement('button');b.className='tool'+(t.id===curTool?' on':'');
+  b.innerHTML=`<div class="ic">${t.ic}</div><div><div class="nm">${t.nm}</div><div class="ds">${t.ds}</div></div>`;
+  b.onclick=()=>{curTool=t.id;renderTools();$('sceneHint').textContent=t.id==='nabers'?'Molara tıkla → furkasyon sondla':t.id==='air'?'Dişe tıkla → kurut-gözle':'Sahaya tıkla → sondla (kuvvet/açı etkili)';};el.appendChild(b);});}
+const STEPS=[{t:'Sekstant & Anamnez'},{t:'6-Nokta Sondlama'},{t:'REC & İşaretli CAL'},{t:'Furkasyon & Röntgen'},{t:'2017 Tanı · Evre · Derece'}];
+function renderStepper(){const el=$('stepper');el.innerHTML='';STEPS.forEach((s,i)=>{const d=document.createElement('div');d.className='step'+(i===curStep?' on':'')+(i<curStep?' done':'');
+  d.innerHTML=`<div class="n">${i<curStep?'✓':i+1}</div><div class="t">${s.t}</div>`;d.onclick=()=>setStep(i);el.appendChild(d);});}
+function setStep(i){curStep=i>curStep?i:Math.max(curStep,i);curStep=i;renderStepper();}
+function renderCasePick(){const el=$('casePick');el.innerHTML='';CASE_ORDER.forEach(cid=>{const c=CASES[cid];const b=document.createElement('button');
+  b.className='casebtn'+(cid===curCase?' on':'');b.innerHTML=`${cid}<span class="d">${c.name.split('(')[0].slice(0,12)}</span>`;b.onclick=()=>loadCase(cid);el.appendChild(b);});}
+function renderToothPick(){const el=$('toothPick');el.innerHTML='';caseDef.teeth.forEach((t,i)=>{const b=document.createElement('button');
+  b.className='tpk'+(i===curTooth?' on':'');b.textContent=t.label+(t.mol?' ⬡':'');b.onclick=()=>{curTooth=i;renderToothPick();renderSiteUI();drawClinic();drawLoupe();};el.appendChild(b);});}
+function renderSiteRing(){const el=$('siteRing');el.innerHTML='';const row=buccal?['MB','B','DB']:['ML','L','DL'];const row2=buccal?['ML','L','DL']:['MB','B','DB'];
+  [...row].forEach(s=>{const b=document.createElement('button');b.className='sitebtn'+(s===curSite?' on':'');b.textContent=SITE_LABEL[s];b.onclick=()=>{curSite=s;renderSiteRing();drawClinic();drawLoupe();};el.appendChild(b);});}
+function renderSiteUI(){renderToothPick();renderSiteRing();}
+function renderPatient(){const p=caseDef.patient;$('patientInfo').innerHTML=`Yaş: <b>${p.age}</b> · Kalan diş: <b>${p.teeth}</b><br>Sigara: <b>${p.smoke>0?p.smoke+'/gün':'yok'}</b> · Diyabet: <b>${p.hba1c!=null?'HbA1c %'+p.hba1c:'yok'}</b><br><span style="color:var(--ink-mut)">${p.note}</span>`;}
+function renderHud(){const h=$('hud');h.innerHTML='';
+  const chips=[['Vaka','<b>'+curCase+'</b>'],['Diş','<b>'+caseDef.teeth[curTooth].label+'</b>'],['Saha','<b>'+SITE_LABEL[curSite]+'</b>'],['Mod',curMode==='exam'?'<b style="color:var(--warn)">SINAV</b>':'Keşfet']];
+  chips.forEach(c=>{const d=document.createElement('div');d.className='chip';d.innerHTML=c[0]+' '+c[1];h.appendChild(d);});
+  if(lastProbe&&lastProbe.traumatic){const d=document.createElement('div');d.className='chip bad';d.innerHTML='⚠ Travmatik';h.appendChild(d);}
+}
+
+/* ============ load / reset ============ */
+function loadCase(cid){
+  curCase=cid; caseDef=JSON.parse(JSON.stringify(CASES[cid]));
+  chart={}; lastProbe=null; curTooth=0; curSite=buccal?'B':'L'; curStep=0;
+  $('ePPD').value='';$('eREC').value='';$('eCAL').value='';$('eFurc').value='-';$('eBOP').checked=false;$('eCEJunk').checked=false;
+  $('dDx').value='health';$('dStage').value='none';$('dExtent').value='none';$('dGrade').value='none';$('juryOut').innerHTML='';
+  renderCasePick();renderStepper();renderToothPick();renderSiteRing();renderPatient();renderHud();renderChart();
+  drawClinic();drawLoupe();drawBitewing();$('readout').innerHTML=`<small>Bir sahaya tıkla veya seç → sondla</small>`;
+  toast('Vaka '+cid+' yüklendi: '+CASES[cid].name,'');
+}
+function resetCase(){loadCase(curCase);toast('Vaka sıfırlandı','');}
+
+/* ============ events ============ */
+$('modeSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;curMode=b.dataset.mode;
+  [...$('modeSeg').children].forEach(x=>x.classList.toggle('on',x===b));$('modeSeg').classList.toggle('exam',curMode==='exam');
+  drawClinic();drawLoupe();renderHud();toast(curMode==='exam'?'SINAV: kesitte gizli cep tabanı/ataşman görünmez':'Keşfet modu','');});
+$('flipBtn').addEventListener('click',()=>{buccal=!buccal;curSite=buccal?'B':'L';renderSiteRing();drawClinic();drawLoupe();renderHud();});
+$('forceR').addEventListener('input',e=>$('forceVal').textContent=(+e.target.value).toFixed(2)+' N');
+$('angleR').addEventListener('input',e=>$('angleVal').textContent=e.target.value+'°');
+['ePPD','eREC','eCEJunk'].forEach(id=>$(id).addEventListener('input',updateCAL));
+$('saveSiteBtn').addEventListener('click',saveSite);
+$('juryBtn').addEventListener('click',renderJury);
+$('resetBtn').addEventListener('click',resetCase);
+$('dbX').addEventListener('click',()=>$('ovl').classList.remove('on'));
+$('ovl').addEventListener('click',e=>{if(e.target===$('ovl'))$('ovl').classList.remove('on');});
+
+/* ============ boot ============ */
+renderTools();renderStepper();renderCasePick();initClinic();loadCase('P1');
+
+/* ============ PUBLIC API + SELFTEST ============ */
+window.PERIO={
+  loadCase, setMode:(m)=>{curMode=m;[...$('modeSeg').children].forEach(x=>x.classList.toggle('on',x.dataset.mode===m));$('modeSeg').classList.toggle('exam',m==='exam');drawClinic();drawLoupe();},
+  cases:()=>CASE_ORDER, caseDef:()=>JSON.parse(JSON.stringify(CASES[curCase])),
+  // signed CAL
+  calcCAL:(ppd,rec,cejUnknown)=>{ if(cejUnknown||rec===null||rec===undefined||rec==='')return 'UNKNOWN'; return ppd+rec; },
+  // probe a site with given force/angle
+  setForce:(f)=>{$('forceR').value=f;$('forceVal').textContent=(+f).toFixed(2)+' N';},
+  setAngle:(a)=>{$('angleR').value=a;$('angleVal').textContent=a+'°';},
+  probe:(fdi,siteKey)=>{ const ti=caseDef.teeth.findIndex(t=>t.fdi===fdi); if(ti<0)return null; curTooth=ti;curSite=siteKey; return probeSite(caseDef.teeth[ti],siteKey); },
+  chart:()=>JSON.parse(JSON.stringify(chart)),
+  saveToChart:(fdi,site,obj)=>{chart[fdi]=chart[fdi]||{};chart[fdi][site]=obj;renderChart();},
+  analyze:()=>analyze(),
+  declare:(d)=>{ if(d.dx)$('dDx').value=d.dx; if(d.stage!==undefined)$('dStage').value=d.stage; if(d.extent)$('dExtent').value=d.extent; if(d.grade!==undefined)$('dGrade').value=d.grade; return grade(); },
+  grade:()=>grade(),
+  truth:()=>JSON.parse(JSON.stringify(caseDef.truth)),
+};
+window.__selfTest=function(){
+  const R=[];const ok=(n,c)=>R.push({n,pass:!!c});
+  try{
+    // signed CAL
+    ok('cal-rec-pos', window.PERIO.calcCAL(2,3,false)===5);
+    ok('cal-pseudopocket', window.PERIO.calcCAL(6,-6,false)===0);
+    ok('cal-rec-neg', window.PERIO.calcCAL(6,-2,false)===4);
+    ok('cal-unknown-cej', window.PERIO.calcCAL(6,null,true)==='UNKNOWN');
+    // unmeasured sites stay UNKNOWN (chart empty after load)
+    loadCase('P1'); const ch=window.PERIO.chart(); let anyFilled=false; caseDef.teeth.forEach(t=>SITES.forEach(s=>{if(ch[t.fdi]&&ch[t.fdi][s])anyFilled=true;}));
+    ok('unmeasured-unknown', !anyFilled);
+    // force over-penetration + traumatic bleeding (P1 gingivitis, healthy-ish)
+    loadCase('P1'); window.PERIO.setForce(0.25); window.PERIO.setAngle(10);
+    const normal=window.PERIO.probe(16,'B');
+    window.PERIO.setForce(0.55); const over=window.PERIO.probe(16,'B');
+    ok('force-overpenetration', over.ppdObs>normal.ppdObs && over.traumatic===true && over.bop===true);
+    // 0° interproximal angle catches contact (shallow / incomplete)
+    loadCase('P3'); window.PERIO.setForce(0.25); window.PERIO.setAngle(0); const flat=window.PERIO.probe(13,'MB');
+    window.PERIO.setAngle(12); const angled=window.PERIO.probe(13,'MB');
+    ok('col-angle-contact', flat.incomplete===true && angled.ppdObs>=flat.ppdObs);
+    // P2 not periodontitis (pseudopocket) — declaring perio penalized
+    loadCase('P2'); const gP2=window.PERIO.declare({dx:'perio',stage:'III',extent:'generalized',grade:'B'});
+    const gP2correct=window.PERIO.declare({dx:'gingivitis',stage:'none',extent:'none',grade:'none'});
+    ok('p2-not-periodontitis', gP2correct.cats[0].s===1 && gP2.cats[0].s===0);
+    // P4 furcation II → Stage III
+    loadCase('P4'); const a4=window.PERIO.analyze();
+    ok('p4-furcation-stage3', a4.furcHi===true && window.PERIO.truth().stage==='III' && a4.maxCAL<=4);
+    // P5 grade C: 42/29=1.45 and HbA1c 8.1
+    loadCase('P5'); const a5=window.PERIO.analyze();
+    ok('p5-grade-c', Math.abs(a5.rblAge-1.45)<0.03 && a5.rblAge>1.0 && a5.hba1c>=7 && window.PERIO.truth().grade==='C');
+    // P6 isolated endo/fracture → classifying as periodontitis is caught
+    loadCase('P6'); const a6=window.PERIO.analyze(); const gP6=window.PERIO.declare({dx:'perio',stage:'III',extent:'generalized',grade:'B'});
+    ok('p6-nonperio-exclusion', a6.nonperio===true && gP6.cats[0].s===0);
+    const gP6correct=window.PERIO.declare({dx:'nonperio',stage:'none',extent:'none',grade:'none'});
+    ok('p6-correct-nonperio', gP6correct.cats[0].s===1);
+    loadCase('P1');
+  }catch(e){R.push({n:'exception',pass:false,err:String(e)});}
+  const pass=R.every(r=>r.pass);
+  return {pass,count:R.length,tests:R,failed:R.filter(r=>!r.pass).map(r=>r.n)};
+};
+console.log('[PERIO] ready — cases',CASE_ORDER.length);
+</script>
+</body></html>

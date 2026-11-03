@@ -1013,18 +1013,18 @@
       <div class="modal-head">
         <div>
           <span class="eyebrow accent">DuctusLab · Klinik Simülasyon</span>
-          <div class="card-title" style="font-size:15px; margin-top:2px;">17 Aktif Simülatör · Modül Kitaplığı</div>
+          <div class="card-title" style="font-size:15px; margin-top:2px;">18 Aktif Simülatör · Modül Kitaplığı</div>
         </div>
         <button onclick="togglePortalModal()">Kapat</button>
       </div>
       <div class="portal-filter">
         <input class="portal-search" id="portalSearch" placeholder="🔍 Modül ara (ör. digoksin, pupil, CVC, STEMI, MB2)..." oninput="filterPortal()">
         <div class="pills" id="portalPills">
-          <button class="pill on" data-cat="all" onclick="setPortalCat(this)">Tümü (17)</button>
+          <button class="pill on" data-cat="all" onclick="setPortalCat(this)">Tümü (18)</button>
           <button class="pill" data-cat="muayene" onclick="setPortalCat(this)">🩺 Muayene &amp; Tanı (6)</button>
           <button class="pill" data-cat="akut" onclick="setPortalCat(this)">🫀 Akut · YB &amp; PK/PD (5)</button>
           <button class="pill" data-cat="girisimsel" onclick="setPortalCat(this)">🔬 Girişimsel &amp; Cerrahi (5)</button>
-          <button class="pill" data-cat="dus" onclick="setPortalCat(this)">🦷 Diş Hekimliği · DUS (1)</button>
+          <button class="pill" data-cat="dus" onclick="setPortalCat(this)">🦷 Diş Hekimliği · DUS (2)</button>
         </div>
       </div>
       <div class="portal-scroll">
@@ -1129,6 +1129,12 @@
           <div class="pcard-ttl">Dental Mikroskop · Giriş Kavitesi &amp; MB2</div>
           <div class="pcard-sum">FDI 16 voksel diş; rond/ultrasonik frez, Krasner-Rankow taban, Beer-Lambert SLOB periapikal röntgen.</div>
           <div class="ptags"><span>DUS</span><span>Endodonti</span><span>SLOB</span></div>
+        </div>
+        <div class="pcard" data-cat="dus" data-s="perio periodontoloji sondlama unc-15 nabers furkasyon cal recession 2017 aap efp evre derece stage grade bitewing rbl" onclick="window.open('ductuslab-perio.html','_blank','noopener')">
+          <div class="pcard-top"><span class="mod-ico">PERİO</span><span class="pbadge">Aktif · DUS #2</span></div>
+          <div class="pcard-ttl">6-Nokta Sondlama · İşaretli CAL · Nabers &amp; 2017 Sınıflama</div>
+          <div class="pcard-sum">0.25 N kuvvet fiziği, işaretli CAL (REC ±), Nabers furkasyon, Bitewing %RBL ve 2017 AAP/EFP Evre/Derece jürisi — 6 vaka.</div>
+          <div class="ptags"><span>DUS</span><span>Periodontoloji</span><span>2017 AAP/EFP</span></div>
         </div>
         <div class="pcard" data-cat="girisimsel" data-s="lap laparoskopik kolesistektomi · 30° kolesistektomi mirizzi" onclick="window.open('ductuslab-lapchole.html','_blank','noopener')">
           <div class="pcard-top"><span class="mod-ico">LAP</span><span class="pbadge">Aktif</span></div>
