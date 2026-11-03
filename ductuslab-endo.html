@@ -205,7 +205,7 @@ input[type=range]{flex:1;accent-color:var(--accent)}
         <div class="mini" id="chamberStat"></div>
       </div>
       <div class="panel" id="phase2panel">
-        <h4>Aşama 2 · Oran-Temelli EAL (Root-ZX)</h4>
+        <h4>Oran-Temelli EAL (Root-ZX)</h4>
         <div class="declrow"><label>Kanal</label><select id="ealCanal"></select></div>
         <div class="ctrlrow"><label>Eğe ucu</label><input type="range" id="fileDepth" min="0" max="23" step="0.1" value="0"><span id="fileDepthVal" style="min-width:42px;text-align:right">0.0 mm</span></div>
         <div class="eal-display">
@@ -353,7 +353,7 @@ function gzc(k){return ZBOT + (k+0.5)*VSZ}    // true z accessor
 
 const MID={VOID:0,ENAMEL:1,DENTIN:2,CALC:3,FLOOR:4,PERIO:6};
 // density (attenuation μ, relative) per material for Beer–Lambert
-const MU={0:0.02,1:2.35,2:0.72,3:0.86,4:0.78,6:0.66,7:1.95 /*clamp metal*/,9:0.72}; // enamel≫dentin (clinical ~1.7×); low dentin so pulp chamber/cavity read radiolucent
+const MU={0:0.012,1:2.9,2:1.12,3:1.25,4:1.12,6:0.95,7:1.7 /*clamp metal*/,9:1.1}; // enamel≫dentin; pulp void near-zero → chamber reads clearly dark
 
 let FIELD=null;   // Uint8Array matid, N³
 let caseDef=null, curCase='E1';
@@ -395,8 +395,14 @@ function toothSolid(x,y,z){
 }
 // pulp space (chamber + canals) for a case — these voxels are VOID in intact tooth EXCEPT
 // the roof (dentin above chamber) which is solid until drilled.
-function chamberBox(x,y,z){ // chamber body
-  return (z>-0.3 && z<2.4 && Math.pow(Math.abs(x)/2.05,2.2)+Math.pow(Math.abs(y)/2.0,2.2)<=1.0);
+function chamberBox(x,y,z){ // chamber body + pulp horns (radiolucent on the film)
+  if(z>-0.3 && z<2.4 && Math.pow(Math.abs(x)/2.6,2.2)+Math.pow(Math.abs(y)/2.2,2.2)<=1.0) return true;
+  if(z>=2.4 && z<3.9){                                 // 4 pulp horns up toward the cusps
+    const t=(z-2.4)/1.5, r=0.85*(1-t);
+    const horns=[[1.6,1.5],[-1.7,1.6],[1.7,-1.5],[-1.9,-1.5]];
+    for(const h of horns){ if(Math.hypot(x-h[0],y-h[1])<r) return true; }
+  }
+  return false;
 }
 function canalAt(x,y,z,cd){
   // returns matid-adjust: inside a canal tube => VOID; near calcified MB2 => CALC
@@ -554,12 +560,12 @@ function renderXray(thetaDeg, targetCanvas){
       }
       mu*=0.2;                                       // ds (tooth path)
       mu += boneTerm(yBase,z);                       // alveolar bone backdrop
-      // clamp metal jaws near cervix — thin radiopaque wing profile (not a brick)
-      if(z>0.7 && z<1.9 && Math.abs(yBase)>3.7 && Math.abs(yBase)<4.35) mu+=1.5;
-      // RADIOGRAPHIC BRIGHTNESS: radiopaque(high μ)=WHITE, air/pulp=BLACK (no saturation → pulp chamber reads)
-      let R=1.0-Math.exp(-mu*0.34);
-      R=Math.pow(R,0.92);                            // mild film/sensor S-contrast
-      R=clamp(R*1.04-0.02,0,1);
+      // clamp metal jaws — ONLY at cervical side wings (narrow), never across the crown centre
+      if(z>0.7 && z<1.7 && Math.abs(yBase)>3.9 && Math.abs(yBase)<4.4) mu+=1.3;
+      // RADIOGRAPHIC BRIGHTNESS: low exposure so nothing saturates → dark pulp chamber + horns clearly read
+      let R=1.0-Math.exp(-mu*0.205);
+      R=Math.pow(R,0.95);
+      R=clamp(R*1.02-0.015,0,1);
       let val=clamp(R*255 + (rnd()-0.5)*9, 0,255);
       const o=(v*W+u)*4; d[o]=val*0.9; d[o+1]=val*0.95; d[o+2]=val; d[o+3]=255; // faint warm tint
     }
@@ -912,7 +918,7 @@ const STEPS=[
  {t:'Giriş & Tavan Kaldırma',ph:''},
  {t:'Taban & MB2 Arama',ph:''},
  {t:'Eğe & SLOB Açılı PA',ph:''},
- {t:'Anatomi & Kanal Beyanı',ph:'Aşama 2: EAL/NaOCl'},
+ {t:'Anatomi & Kanal Beyanı',ph:'EAL · NaOCl · Beyan'},
 ];
 function renderStepper(){ const el=$('stepper'); el.innerHTML='';
   STEPS.forEach((s,i)=>{ const d=document.createElement('div'); d.className='step'+(i===curStep?' on':'')+(i<curStep?' done':'');
@@ -1396,6 +1402,10 @@ window.__selfTest=function(){
        sEnamel>sRootDentin+4 &&                 // enamel-bearing crown brighter than dentin-only root (mine>dentin)
        sDentinCrown>sCham+8 &&                  // pulp chamber reads radiolucent vs surrounding crown dentin
        sCham>sAir+8);                           // ...but still brighter than air
+    // test_endo_xray_pulp_contrast_visual: chamber↔lateral wall ≥38 gray + "AŞAMA 2" text removed
+    let maxDiff=0; for(let v=0.25;v<=0.5;v+=0.03){const w=window.ENDO.xraySample(0.73,v),c=window.ENDO.xraySample(0.5,v);if(w-c>maxDiff)maxDiff=w-c;}
+    const noPhase2 = !document.body.innerText.toUpperCase().includes('AŞAMA 2');
+    ok('endo-xray-pulp-contrast-visual', maxDiff>=38 && noPhase2);
 
     // test_eal_leak_vs_perf_and_e5
     loadCase('E1'); let rNorm=window.ENDO.ealRead('MB1',5);          // normal moisture, mid canal
