@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>DuctusLab · Mekanik Ventilasyon &amp; Kan Gazı</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" />
@@ -157,6 +157,9 @@
     #toastBox { position: fixed; bottom: 26px; left: 50%; transform: translateX(-50%) translateY(16px); background: #0e1626; border: 1px solid var(--line-2); color: var(--ink); padding: 10px 16px; border-radius: 10px; font-size: 12px; font-weight: 500; opacity: 0; transition: all .22s; z-index: 100; pointer-events: none; max-width: 90vw; text-align: center; box-shadow: 0 12px 32px rgba(0,0,0,0.5); }
     #toastBox.show { opacity: 1; transform: translateX(-50%) translateY(0); }
   </style>
+<!-- DM-BEGIN -->
+<link rel="stylesheet" href="../ductus-mobile.css">
+<!-- DM-END -->
 </head>
 <body>
 
@@ -751,5 +754,16 @@
       if (k === 'g') takeABG(); else if (k === 'i') doHold('insp'); else if (k === 'e') doHold('exp');
     });
   </script>
+<!-- DM-BEGIN -->
+<script src="../ductus-mobile.js"></script>
+<script>
+DuctusMobile.init({page:'vnt',header:'header',stage:'#monitor',stageH:44,accent:'#6fa3c8',tabs:[
+ {id:'ctl',icon:'🎛️',label:'Kontroller',sel:['#console .pane > .card:nth-child(2)']},
+ {id:'case',icon:'📋',label:'Vaka & Bulgular',sel:['#console .pane > .card:nth-child(1)']},
+ {id:'ev',icon:'📊',label:'Kan Gazı',sel:['#console .pane > .card:nth-child(3)']},
+ {id:'jury',icon:'⚖️',label:'Karar & Jüri',sel:['#console .pane > .card:nth-child(4)']}]});
+
+</script>
+<!-- DM-END -->
 </body>
 </html>

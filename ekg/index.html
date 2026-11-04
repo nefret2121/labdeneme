@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>DuctusLab · Elektrofizyoloji &amp; 12 Derivasyon EKG</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" />
@@ -144,6 +144,9 @@
     #toastBox { position: fixed; bottom: 26px; left: 50%; transform: translateX(-50%) translateY(16px); background: #0e1626; border: 1px solid var(--line-2); color: var(--ink); padding: 10px 16px; border-radius: 10px; font-size: 12px; font-weight: 500; opacity: 0; transition: all .22s; z-index: 100; pointer-events: none; max-width: 90vw; text-align: center; box-shadow: 0 12px 32px rgba(0,0,0,0.5); }
     #toastBox.show { opacity: 1; transform: translateX(-50%) translateY(0); }
   </style>
+<!-- DM-BEGIN -->
+<link rel="stylesheet" href="../ductus-mobile.css">
+<!-- DM-END -->
 </head>
 <body>
 
@@ -932,5 +935,18 @@
       applyHashBridge();
     });
   </script>
+<!-- DM-BEGIN -->
+<script src="../ductus-mobile.js"></script>
+<script>
+DuctusMobile.init({page:'ekg',header:'header',stage:'#center',stageH:50,accent:'#6fa3c8',tabs:[
+ {id:'ctl',icon:'🎛️',label:'Kontroller',sel:['#tab-engine .card-console','#tab-lab .card','#tab-therapy .card']},
+ {id:'case',icon:'📋',label:'Vaka & Bulgular',sel:['#tab-engine > .card:not(.card-console)']},
+ {id:'ev',icon:'📊',label:'Kanıt / İleti',sel:['#leftCol .card']},
+ {id:'jury',icon:'⚖️',label:'Karar & Jüri',sel:['#tab-quiz .card']}]});
+(function(){var b=document.getElementById('caliperBtn'),c=document.getElementById('ecgCanvas');if(!b||!c||!window.MutationObserver)return;
+ new MutationObserver(function(){c.classList.toggle('dm-cal',b.className.indexOf('on-warn')>=0);}).observe(b,{attributes:true,attributeFilter:['class']});})();
+
+</script>
+<!-- DM-END -->
 </body>
 </html>

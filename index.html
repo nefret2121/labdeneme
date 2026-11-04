@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>DuctusLab · Oskültasyon &amp; Hemodinami</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" />
@@ -540,7 +540,31 @@
     @media (hover: none), (max-width: 900px) {
       [data-tip]:hover::after, [data-tip]:focus::after, [data-tip]:active::after { display: none !important; }
     }
+
+    /* ===== PORTAL v2.0 MOBİL (≤900px): tam ekran modal, yatay kayan hap, kompakt hero, tek sütun ===== */
+    @media (max-width: 900px) {
+      #portalModal { padding: 0; z-index: 140; align-items: stretch; overflow: hidden; }
+      #portalModal .modal-box { max-width: none; width: 100vw; height: 100dvh; max-height: 100dvh; border-radius: 0; border: 0; }
+      #portalModal .modal-head { padding: max(10px, env(safe-area-inset-top)) 12px 10px; }
+      #portalModal .modal-head button { min-width: 72px; min-height: 44px; }
+      .portal-filter { padding: 8px 12px; flex-direction: column; align-items: stretch; flex-wrap: nowrap; gap: 8px; }
+      .portal-search { width: 100%; min-width: 0; flex: none; box-sizing: border-box; min-height: 44px; }
+      .pills { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; margin: 0 -12px; padding: 0 12px 2px; }
+      .pills::-webkit-scrollbar { display: none; }
+      .pill { flex: 0 0 auto; min-height: 44px; padding: 0 14px; font-size: 12.5px; display: inline-flex; align-items: center; }
+      .portal-hero { flex-wrap: wrap; padding: 11px 13px; gap: 8px 10px; margin-bottom: 10px; }
+      .portal-hero .hero-ico { font-size: 22px; }
+      .portal-hero .hero-body { flex: 1 1 0; }
+      .portal-hero .hero-ttl { font-size: 13.5px; }
+      .portal-hero .hero-sub { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+      .portal-hero .hero-go { width: 100%; text-align: center; min-height: 40px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; }
+      .pgrid, .portal-grid { grid-template-columns: 1fr; gap: 9px; }
+      .pcard { padding: 12px 13px; min-height: 64px; }
+    }
   </style>
+<!-- DM-BEGIN -->
+<link rel="stylesheet" href="./ductus-mobile.css">
+<!-- DM-END -->
 </head>
 <body>
 
@@ -2838,5 +2862,20 @@ const SPOT3D = {
       requestAnimationFrame(animationLoop);
     });
   </script>
+<!-- DM-BEGIN -->
+<script src="./ductus-mobile.js"></script>
+<script>
+(function(){var fl=null,par=null,nx=null;
+DuctusMobile.init({page:'osk',header:'header',stage:'#thoraxStage',stageH:42,accent:'#6fa3c8',
+ beforeEnter:function(){fl=document.querySelector('.stage-floats');if(fl&&fl.parentNode&&fl.parentNode.id==='thoraxStage'){par=fl.parentNode;nx=fl.nextSibling;document.getElementById('leftViewport').insertBefore(fl,document.getElementById('wiggersContainer'));}},
+ afterLeave:function(){if(fl&&par&&fl.parentNode!==par){par.insertBefore(fl,nx&&nx.parentNode===par?nx:null);}},
+ tabs:[
+ {id:'ctl',icon:'🩺',label:'Stetoskop',sel:['.floating-top-bar','.stage-floats','.bottom-bar']},
+ {id:'wig',icon:'📈',label:'Wiggers',sel:['#wiggersContainer','.phono-section > .monitor-head','.phono-canvas-wrap']},
+ {id:'case',icon:'📋',label:'Vaka & Bulgular',sel:['.panel-head','#tabContent-explore > *']},
+ {id:'jury',icon:'⚖️',label:'Karar & Jüri',sel:['#tabContent-duel > *','#tabContent-daily > *','#tabContent-quiz > *']}]});})();
+
+</script>
+<!-- DM-END -->
 </body>
 </html>

@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>DuctusLab · Spirometri &amp; Akım-Hacim Kalite Lab</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" />
@@ -88,6 +88,9 @@ select:focus{outline:none;border-color:var(--accent-2)}
 .lln .box .b{font-family:var(--mono);font-size:15px;font-weight:600}
 @media(max-width:980px){.main{flex-direction:column}.console{max-width:none;border-left:0;border-top:1px solid var(--line)}.plots{flex-direction:column}}
 </style>
+<!-- DM-BEGIN -->
+<link rel="stylesheet" href="../ductus-mobile.css">
+<!-- DM-END -->
 </head>
 <body>
 <div class="app">
@@ -543,5 +546,16 @@ function init(){ resize(); bindUI(); loadCase(1); }
 if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
 })();
 </script>
+<!-- DM-BEGIN -->
+<script src="../ductus-mobile.js"></script>
+<script>
+DuctusMobile.init({page:'sft',header:'.topbar',stage:'.plots',stageH:46,accent:'#6fa3c8',tabs:[
+ {id:'ctl',icon:'🎛️',label:'Kontroller',sel:['.stage-foot']},
+ {id:'case',icon:'📋',label:'Vaka & Bulgular',sel:['.console-scroll > .card:nth-child(1)','.console-scroll > .card:nth-child(2)']},
+ {id:'ev',icon:'📊',label:'Kalite / Kanıt',sel:['.console-scroll > .card:nth-child(3)','.console-scroll > .card:nth-child(4)']},
+ {id:'jury',icon:'⚖️',label:'Karar & Jüri',sel:['.console-scroll > .card:nth-child(5)','.console-scroll > .card:nth-child(6)']}]});
+
+</script>
+<!-- DM-END -->
 </body>
 </html>

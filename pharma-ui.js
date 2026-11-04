@@ -566,5 +566,7 @@ window.__selfTest=function(){ var checks=[],ok=function(n,c){checks.push({n:n,ok
 $('homeBtn').onclick=function(){ location.href='index.html'; };
 window.addEventListener('resize',function(){ draw(); });
 loadCase(1);
+/* Case Chain senkronu: ?chain=1&case=<id> → doğrudan ilgili farmakoloji vakası/tezgâhı */
+try{ var _q=new URLSearchParams(location.search); if(_q.get('chain')==='1'){ var _c=parseInt(_q.get('case'),10); if(_c&&CASES[_c]) loadCase(_c); } }catch(e){}
 window.PHARMA_READY=true;
 })();

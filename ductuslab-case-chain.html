@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>DuctusLab · Entegre Vaka Zinciri v4.0</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap"/>
@@ -95,7 +95,71 @@ body{background:radial-gradient(1200px 800px at 70% -10%,#0a1424,var(--bg0) 60%)
 .toast.bad{border-left-color:var(--alert)}.toast.warn{border-left-color:var(--amber)}.toast.good{border-left-color:var(--ok)}
 @media(max-width:1100px){.evrail{flex-basis:220px}.rail{flex-basis:190px}}
 @media(max-width:860px){.selgrid{grid-template-columns:1fr}.evrail{display:none}}
+
+/* ===== MOBİL (≤900px): sticky vital şeridi → yatay istasyon hapları → tam genişlik karar kartı → alt sekmeler; gömülü modül tam ekran ===== */
+#ccTabs{display:none}
+.d-only{display:inline}.m-only{display:none}
+@media(max-width:900px){
+ html,body{height:100%;overflow:hidden;max-width:100vw}
+ .app{height:100dvh;min-height:-webkit-fill-available;padding-bottom:calc(56px + env(safe-area-inset-bottom));box-sizing:border-box}
+ .topbar{gap:6px;padding:max(6px,env(safe-area-inset-top)) 8px 6px;overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none;backdrop-filter:none}
+ .topbar::-webkit-scrollbar{display:none}.topbar>*{flex:0 0 auto}
+ .topbar .product,.topbar .vsep,.topbar .spacer{display:none}
+ .topbar .wordmark{font-size:14px}
+ #chainTitle{display:inline !important;max-width:46vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
+ .topbar .btn,.topbar .seg button{min-height:44px}
+ .vitals{display:grid !important;grid-template-columns:repeat(4,1fr);padding:3px 6px;row-gap:0;overflow:visible;position:sticky;top:0;z-index:15}
+ .vitals .vt{padding:2px 6px;border-right:0;border-bottom:0;min-width:0}
+ .vitals .vv{font-size:15px}.vitals .vphase{display:none}
+ .main{flex-direction:column;min-height:0;flex:1 1 0}
+ .rail{flex:0 0 auto;display:flex;flex-direction:row;gap:6px;overflow-x:auto;overflow-y:hidden;border-right:0;border-bottom:1px solid var(--line);padding:7px 8px;scrollbar-width:none;counter-reset:stn;-webkit-overflow-scrolling:touch}
+ .rail::-webkit-scrollbar{display:none}
+ .rail h4,.rail .phasebar{display:none}
+ .station{flex:0 0 auto;margin:0;min-height:44px;align-items:center;padding:6px 11px;border-radius:22px;counter-increment:stn;gap:7px;max-width:70vw}
+ .station .ic{min-width:0;font-size:11px}
+ .station .nm{font-size:12px;white-space:nowrap;max-width:44vw;overflow:hidden;text-overflow:ellipsis}
+ .station .nm::before{content:'İstasyon ' counter(stn) ' · ';color:var(--ink3);font-weight:500}
+ .station .st{display:none}
+ .content{padding:12px 12px 14px;flex:1 1 0;min-height:0;-webkit-overflow-scrolling:touch;touch-action:pan-y}
+ .panel{max-width:none}
+ .panelttl{font-size:16px}
+ .actions button,.actions .btn,.card button{min-height:48px;font-size:14px}
+ .actions{gap:8px}.actions>button{flex:1 1 100%}
+ .evrail{display:none;position:fixed;left:0;right:0;top:0;bottom:calc(56px + env(safe-area-inset-bottom));z-index:55;flex:none;width:auto;border-left:0;background:var(--bg1);padding:max(14px,env(safe-area-inset-top)) 14px 16px;overflow-y:auto}
+ body.cc-evopen .evrail{display:block}
+ #ccTabs{display:grid;grid-template-columns:repeat(3,1fr);position:fixed;left:0;right:0;bottom:0;z-index:70;height:calc(56px + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);background:rgba(7,12,22,.97);border-top:1px solid var(--line2)}
+ #ccTabs button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:0;background:transparent;color:#8f9db0;font:600 11px system-ui,sans-serif;min-height:54px;position:relative}
+ #ccTabs button .ic{font-size:19px}#ccTabs button.on{color:#fff}
+ #ccTabs button.on::before{content:'';position:absolute;top:0;left:20%;right:20%;height:3px;border-radius:0 0 3px 3px;background:var(--accent)}
+ #ccTabs .bdg{position:absolute;top:4px;left:55%;min-width:17px;height:17px;border-radius:9px;background:var(--accent2,#36bd8e);color:#04121a;font-size:10.5px;display:none;align-items:center;justify-content:center;padding:0 4px}
+ #ccTabs .bdg.show{display:flex}
+ /* seçici + jüri tam ekran */
+ .overlay{padding:0;align-items:stretch}
+ .sheet{width:100vw;max-width:100vw;height:100dvh;max-height:100dvh;border-radius:0;border:0;padding:14px 14px calc(18px + env(safe-area-inset-bottom));box-sizing:border-box}
+ .sheet h2{font-size:17px}
+ .selgrid{grid-template-columns:1fr;gap:10px}
+ .selcard{padding:13px}
+ #selTrack{display:grid;grid-template-columns:1fr 1fr;width:100%}
+ #selTrack button{white-space:normal;line-height:1.25;min-height:46px;padding:6px 8px;font-size:12.5px}
+ #selTrack button:first-child{grid-column:1/-1}
+ #selLvl,#selVar{width:100%;display:flex}#selLvl button,#selVar button{flex:1;min-height:44px}
+ .sheet .btn,.sheet button{min-height:44px}
+ .sheet.dm-sheetbar::before{content:none}
+ .toast{left:12px;right:12px;bottom:calc(66px + env(safe-area-inset-bottom));max-width:none}
+ /* gömülü simülatör: tam ekran modal */
+ .d-only{display:none}.m-only{display:inline}
+ .drawer.open{display:flex;flex-direction:column;position:fixed;inset:0;width:100vw;height:100dvh;margin:0;border:0;border-radius:0;z-index:80;background:#05080f}
+ .drawer.open .dh{flex:0 0 auto;padding:max(8px,env(safe-area-inset-top)) 8px 8px;min-height:52px;position:sticky;top:0}
+ .drawer.open .dh>span{display:none}
+ .drawer.open .dh .btn{width:100%;min-height:44px;font-size:14px;font-weight:700;background:linear-gradient(135deg,#49a6e6,#36bd8e);color:#05121c;border:0}
+ .drawer.open>div:last-child{flex:1 1 0;min-height:0;display:flex}
+ .drawer.open iframe{width:100%;height:100%;flex:1}
+ body.cc-embed #ccTabs{display:none}
+}
 </style>
+<!-- DM-BEGIN -->
+<link rel="stylesheet" href="./ductus-mobile.css">
+<!-- DM-END -->
 </head>
 <body>
 <div class="app">
@@ -118,6 +182,7 @@ body{background:radial-gradient(1200px 800px at 70% -10%,#0a1424,var(--bg0) 60%)
 </div>
 <div id="selOverlay" class="overlay open"><div class="sheet" id="selSheet"></div></div>
 <div id="jury" class="overlay"><div class="sheet" id="jurySheet"></div></div>
+<nav id="ccTabs"><button id="ccT-st" class="on" type="button"><span class="ic">🩺</span>İstasyon</button><button id="ccT-ev" type="button"><span class="ic">📎</span>Toplanan Kanıtlar<span class="bdg" id="ccBdg"></span></button><button id="ccT-sw" type="button"><span class="ic">⇄</span>Zincirler</button></nav>
 <div id="toastHost"></div>
 
 <script src="ductus-core.js"></script>
@@ -664,7 +729,7 @@ function renderStation(i){ CC.idx=i; renderRail(); renderVitalsBar(); var st=CC.
     h+='<button onclick="openNewTab('+i+')">↗ Yeni Sekmede Aç</button>'; }
   h+='</div>';
   h+='<div id="finding-'+i+'"></div>';
-  if(url) h+='<div class="drawer" id="drawer-'+i+'"><div class="dh"><span>↳ '+MODNAME[st.mod]+' — bu hastanın vakası (?chain=1) ile gömülü</span><button class="btn sm" onclick="toggleDrawer('+i+')">Kapat</button></div><div id="iframewrap-'+i+'"></div></div>';
+  if(url) h+='<div class="drawer" id="drawer-'+i+'"><div class="dh"><span>↳ '+MODNAME[st.mod]+' — bu hastanın vakası (?chain=1) ile gömülü</span><button class="btn sm" onclick="closeEmbed('+i+')"><span class="d-only">Kapat</span><span class="m-only">← Zincire Dön &amp; Kanıtı Kaydet</span></button></div><div id="iframewrap-'+i+'"></div></div>';
   h+='</div>';
   if(st.decisions&&st.decisions.length){ h+='<div class="card"><h3>Klinik Karar</h3><div class="actions" id="dec-'+i+'">';
     st.decisions.forEach(function(dec){ h+='<button class="'+(dec.kind==='trap'?'trap ':'')+'" id="d-'+i+'-'+dec.id+'" onclick="decide('+i+',\''+dec.id+'\')">'+dec.label+'</button>'; });
@@ -790,6 +855,7 @@ $('switchBtn').onclick=showSelector; $('homeBtn').onclick=function(){ location.h
 var simClockT=Date.now(); function tick(){ var s=Math.floor((Date.now()-simClockT)/1000); $('simClock').textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); requestAnimationFrame(tick); }
 
 /* -------- ZİNCİR → MODÜL VAKA EŞLEMESİ (?case=) -------- */
+CHAINS[8].stations[2].caseN=4; CHAINS[8].stations[3].caseN=4; CHAINS[8].stations[4].caseN=4;  // FRM: Varfarin vakası (PHARMA case 4)
 CHAINS[8].stations[5].caseN='E1'; CHAINS[8].stations[6].caseN='E1';  // ENDO: okunur taban · 4 kanal
 CHAINS[2].stations[1].caseN=3;  // KS: Kompresif CN III (dizi 0-indeks)
 CHAINS[2].stations[2].caseN=8;  // FND: Terson (SAK) (obje 1-indeks)
@@ -943,6 +1009,27 @@ window.__selfTest=function(){
 };
 
 showSelector(); tick(); window.CHAIN_READY=true;
+
+/* ---- mobil: alt sekmeler + gömülü modül tam ekran ---- */
+window.closeEmbed=function(i){ var st=CC.chain&&CC.chain.stations[i]; var mob=window.matchMedia('(max-width:900px)').matches;
+  if(mob&&st&&st.ev&&!CC.done['ev'+i]){ try{ examCapture(i); }catch(e){} }
+  toggleDrawer(i); document.body.classList.remove('cc-embed'); };
+(function(){ var b=document.body,T=document.getElementById('ccTabs'); if(!T) return;
+  function set(ev){ b.classList.toggle('cc-evopen',ev); document.getElementById('ccT-ev').classList.toggle('on',ev); document.getElementById('ccT-st').classList.toggle('on',!ev); }
+  document.getElementById('ccT-st').onclick=function(){ set(false); }; document.getElementById('ccT-ev').onclick=function(){ set(true); };
+  document.getElementById('ccT-sw').onclick=function(){ set(false); var sb=document.getElementById('switchBtn'); if(sb) sb.click(); };
+  var ev=document.getElementById('evrail'); function cnt(){ var n=ev.querySelectorAll('.evitem').length, g=document.getElementById('ccBdg'); g.textContent=n; g.classList.toggle('show',n>0); }
+  if(window.MutationObserver) new MutationObserver(cnt).observe(ev,{childList:true,subtree:true}); cnt();
+  var wd=window.toggleDrawer; window.toggleDrawer=function(i){ wd(i); var dr=document.getElementById('drawer-'+i); b.classList.toggle('cc-embed',!!(dr&&dr.classList.contains('open'))); };
+  window.addEventListener('resize',function(){ if(!window.matchMedia('(max-width:900px)').matches){ b.classList.remove('cc-evopen','cc-embed'); } });
+})();
 </script>
+<!-- DM-BEGIN -->
+<script src="./ductus-mobile.js"></script>
+<script>
+/* case-chain: kendi mobil kabuğu */
+
+</script>
+<!-- DM-END -->
 </body>
 </html>

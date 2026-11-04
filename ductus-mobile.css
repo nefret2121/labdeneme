@@ -1,0 +1,160 @@
+/* =====================================================================
+ * DuctusLab Mobile Shell v1.0 — "Sabit Canlı Sahne + Alt 4 Sekmeli Çekmece"
+ * Sıfır harici bağımlılık. Masaüstü (>=901px) yerleşimine HİÇ dokunmaz:
+ * tüm kabuk kuralları yalnız ductus-mobile.js'in eklediği  html.dm-on  sınıfı altındadır.
+ * Telefona özel evrensel kurallar (16px girdi, dokunma hedefi) @media (max-width:900px) içindedir.
+ * ===================================================================== */
+:root{ --dm-hdr:46px; --dm-stageh:42dvh; --dm-tab:54px; --dm-safe-b:env(safe-area-inset-bottom,0px); --dm-safe-t:env(safe-area-inset-top,0px); }
+
+/* ---- evrensel telefon ergonomisi (iOS otomatik zoom engeli, dokunma hedefi) ---- */
+@media (max-width:900px){
+  select,input:not([type=range]):not([type=checkbox]):not([type=radio]),textarea{ font-size:16px !important; min-height:44px; }
+  input[type=range]{ height:36px; touch-action:pan-y; }
+  button,.btn,[role=button]{ min-height:44px; touch-action:manipulation; }
+  html{ -webkit-text-size-adjust:100%; }
+  body{ -webkit-tap-highlight-color:transparent; overscroll-behavior-y:contain; }
+}
+
+/* ---- kabuk (yalnız JS devredeyken) ---- */
+html.dm-on, html.dm-on body{ height:auto !important; min-height:100dvh; min-height:-webkit-fill-available; overflow-x:hidden !important; overflow-y:auto !important; max-width:100vw; }
+html.dm-on body{ display:block !important; padding-top:calc(var(--dm-hdr) + var(--dm-stageh)) !important; padding-bottom:calc(var(--dm-tab) + var(--dm-safe-b) + 8px) !important; margin:0 !important; }
+html.dm-on .dm-flat{ display:contents !important; }
+html.dm-on .dm-skip, html.dm-on .dm-off{ display:none !important; }
+html.dm-on .dm-hdr{ position:fixed !important; top:0; left:0; right:0; z-index:60; width:auto !important; max-width:100vw; min-height:44px; height:auto !important; padding-top:max(6px,var(--dm-safe-t)); box-sizing:border-box; }
+html.dm-on .dm-hdr2{ position:fixed !important; top:var(--dm-h1,46px); left:0; right:0; z-index:59; width:auto !important; max-width:100vw; box-sizing:border-box; overflow-x:auto !important; overflow-y:hidden; flex-wrap:nowrap !important; white-space:nowrap; scrollbar-width:none; background:rgba(7,12,22,.97); }
+html.dm-on .dm-hdr2::-webkit-scrollbar{ display:none; }
+.dm-only{ display:none; }
+html.dm-on .dm-only{ display:block; }
+html.dm-on .dm-stage{ position:fixed !important; top:var(--dm-hdr); left:0; right:0; width:auto !important; height:var(--dm-stageh) !important; margin:0 !important; z-index:40; overflow:hidden !important; box-sizing:border-box; display:flex; flex-direction:column; background:#05080d; border-bottom:1px solid rgba(160,176,196,.18); }
+html.dm-on .dm-stage canvas{ touch-action:none; -webkit-user-select:none; user-select:none; }
+html.dm-on .dm-stage.dm-big{ height:calc(100dvh - var(--dm-hdr) - var(--dm-tab) - var(--dm-safe-b)) !important; z-index:55; }
+html.dm-on .dm-pane{ width:auto !important; max-width:100% !important; min-width:0 !important; height:auto !important; max-height:none !important; overflow:visible !important; position:static !important; flex:none !important; margin-left:0; margin-right:0; box-sizing:border-box; -webkit-overflow-scrolling:touch; }
+html.dm-on .dm-pane.card,html.dm-on .dm-pane.panel{ margin:10px 10px 0 !important; width:auto !important; }
+html.dm-on .dm-pane button{ min-height:44px; min-width:44px; }
+html.dm-on .dm-pane{ touch-action:pan-y; }
+html.dm-on .dm-enlarge{ position:absolute; bottom:6px; right:6px; z-index:5; width:44px; height:44px; min-width:44px; border-radius:12px; border:1px solid rgba(160,176,196,.3); background:rgba(8,14,24,.78); color:#e4e9f1; font-size:20px; line-height:1; padding:0; display:flex; align-items:center; justify-content:center; cursor:pointer; backdrop-filter:blur(6px); }
+
+/* ---- alt 4 sekmeli bar ---- */
+#dm-tabbar{ display:none; }
+html.dm-on #dm-tabbar{ display:grid; grid-template-columns:repeat(4,1fr); position:fixed; left:0; right:0; bottom:0; z-index:70; height:calc(var(--dm-tab) + var(--dm-safe-b)); padding-bottom:var(--dm-safe-b); background:rgba(7,12,22,.97); border-top:1px solid rgba(160,176,196,.22); backdrop-filter:blur(10px); }
+#dm-tabbar button{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; border:0; background:transparent; color:#8f9db0; font:600 10.5px/1.1 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; padding:4px 2px; min-height:var(--dm-tab); min-width:44px; cursor:pointer; position:relative; }
+#dm-tabbar button .ic{ font-size:19px; line-height:1; }
+#dm-tabbar button .lb{ max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#dm-tabbar button.on{ color:#fff; }
+#dm-tabbar button.on::before{ content:''; position:absolute; top:0; left:18%; right:18%; height:3px; border-radius:0 0 3px 3px; background:var(--dm-accent,#6fa3c8); }
+#dm-tabbar button .dm-badge{ position:absolute; top:5px; right:22%; min-width:16px; height:16px; border-radius:8px; background:#c4565f; color:#fff; font-size:10px; display:none; align-items:center; justify-content:center; padding:0 4px; }
+#dm-tabbar button .dm-badge.show{ display:flex; }
+
+/* ---- telefon yatay: sahne solda, paneller sağda ---- */
+@media (orientation:landscape) and (max-height:520px){
+  :root{ --dm-hdr:40px; --dm-tab:46px; }
+  html.dm-on body{ padding-top:var(--dm-hdr) !important; padding-left:50vw !important; }
+  html.dm-on .dm-stage{ right:auto; width:50vw !important; height:calc(100dvh - var(--dm-hdr)) !important; border-bottom:0; border-right:1px solid rgba(160,176,196,.18); }
+  html.dm-on .dm-stage.dm-big{ width:100vw !important; height:calc(100dvh - var(--dm-hdr) - var(--dm-tab) - var(--dm-safe-b)) !important; }
+  html.dm-on #dm-tabbar{ left:50vw; }
+  html.dm-on .dm-hdr{ padding-top:2px; }
+}
+
+/* ---- mobil debrief / modal standardı: tam ekran, sabit ✕ başlığı, ①②③ sekmeler ---- */
+html.dm-on .dm-modal-full{ position:fixed !important; inset:0 !important; width:100vw !important; height:100dvh !important; max-width:none !important; max-height:none !important; border-radius:0 !important; margin:0 !important; z-index:120 !important; overflow-y:auto !important; -webkit-overflow-scrolling:touch; box-sizing:border-box; padding-bottom:calc(16px + var(--dm-safe-b)) !important; }
+.dm-modal-bar{ display:none; }
+html.dm-on .dm-modal-bar{ display:flex; position:sticky; top:0; z-index:5; align-items:center; gap:8px; padding:8px 10px; background:rgba(7,12,22,.98); border-bottom:1px solid rgba(160,176,196,.22); }
+html.dm-on .dm-modal-bar .dm-x{ min-width:44px; min-height:44px; border-radius:10px; border:1px solid rgba(160,176,196,.3); background:transparent; color:#e4e9f1; font-size:16px; cursor:pointer; }
+html.dm-on .dm-modal-bar .dm-ttl{ flex:1; font:700 14px system-ui,sans-serif; color:#e4e9f1; }
+.dm-d3tabs{ display:none; }
+html.dm-on .dm-d3tabs{ display:flex; gap:6px; padding:8px 10px; position:sticky; top:60px; z-index:4; background:rgba(7,12,22,.98); overflow-x:auto; scrollbar-width:none; }
+html.dm-on .dm-d3tabs button{ flex:1 0 auto; min-height:44px; padding:0 12px; border-radius:10px; border:1px solid rgba(160,176,196,.28); background:transparent; color:#aab6c6; font:600 12.5px system-ui,sans-serif; white-space:nowrap; cursor:pointer; }
+html.dm-on .dm-d3tabs button.on{ background:rgba(111,163,200,.2); color:#fff; border-color:rgba(111,163,200,.6); }
+html.dm-on .dm-d3 { display:block !important; grid-template-columns:none !important; }
+html.dm-on .dm-d3 > .dm-d3off{ display:none !important; }
+html.dm-on .dm-d3 > *{ width:auto !important; max-width:100% !important; margin:8px 10px !important; }
+
+/* ---- yatay kayan hap/şerit yardımcıları (taşma/kesilme yok) ---- */
+html.dm-on .dm-hscroll{ display:flex !important; flex-wrap:nowrap !important; overflow-x:auto !important; overflow-y:hidden; scrollbar-width:none; -webkit-overflow-scrolling:touch; max-width:100%; gap:6px; }
+html.dm-on .dm-hscroll::-webkit-scrollbar{ display:none; }
+html.dm-on .dm-hscroll > *{ flex:0 0 auto !important; white-space:nowrap; }
+
+/* =================== SAYFA ÖZEL (yalnız html.dm-on) =================== */
+/* ---- VNT ---- */
+html.dm-on[data-dmpage=vnt] header{ display:flex; gap:6px; padding:0 8px; overflow-x:auto; scrollbar-width:none; height:var(--dm-hdr) !important; flex-wrap:nowrap; align-items:center; }
+html.dm-on[data-dmpage=vnt] header > *{ flex:0 0 auto; }
+html.dm-on[data-dmpage=vnt] header .product,html.dm-on[data-dmpage=vnt] header .vsep{ display:none; }
+html.dm-on[data-dmpage=vnt] #monitor{ background:#070d18; }
+html.dm-on[data-dmpage=vnt] .vitals-bar{ display:flex; overflow-x:auto; scrollbar-width:none; flex:0 0 auto; }
+html.dm-on[data-dmpage=vnt] .vitals-bar .vital{ flex:0 0 auto; min-width:74px; padding:3px 8px; }
+html.dm-on[data-dmpage=vnt] .alarm-strip:empty{ display:none; }
+html.dm-on[data-dmpage=vnt] .waves{ flex:1 1 0; min-height:0; padding:4px 6px; gap:4px; }
+html.dm-on[data-dmpage=vnt] .wave{ min-height:0; }
+html.dm-on[data-dmpage=vnt] .wave-head .legend{ display:none; }
+html.dm-on .dm-hdr{ display:flex !important; flex-wrap:nowrap !important; align-items:center; gap:6px; overflow-x:auto !important; overflow-y:hidden; scrollbar-width:none; padding-left:8px !important; padding-right:8px !important; }
+html.dm-on .dm-hdr::-webkit-scrollbar{ display:none; }
+html.dm-on .dm-hdr > *{ flex:0 0 auto; }
+html.dm-on .dm-hdr .product,html.dm-on .dm-hdr .vsep,html.dm-on .dm-hdr .spacer{ display:none; }
+html.dm-on .dm-hdr button{ min-height:36px; }
+
+/* ---- EKG ---- */
+html.dm-on[data-dmpage=ekg] #center{ background:#05090f; }
+html.dm-on[data-dmpage=ekg] .vitals{ display:flex; overflow-x:auto; scrollbar-width:none; flex:0 0 auto; }
+html.dm-on[data-dmpage=ekg] .vitals .vital{ flex:0 0 auto; min-width:70px; padding:2px 8px; }
+html.dm-on[data-dmpage=ekg] .toolbar{ height:auto; min-height:44px; overflow-x:auto; scrollbar-width:none; flex-wrap:nowrap; flex:0 0 auto; padding:2px 6px; }
+html.dm-on[data-dmpage=ekg] .toolbar .group{ flex:0 0 auto; }
+html.dm-on[data-dmpage=ekg] .toolbar button{ min-height:40px; white-space:nowrap; }
+html.dm-on[data-dmpage=ekg] .ecg-wrap{ overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; touch-action:pan-x; }
+html.dm-on[data-dmpage=ekg] #ecgCanvas{ width:980px !important; right:auto; touch-action:pan-x; }
+html.dm-on[data-dmpage=ekg] #ecgCanvas.dm-cal{ touch-action:none; }
+html.dm-on[data-dmpage=ekg] .banner{ position:sticky; left:0; }
+html.dm-on[data-dmpage=ekg] .dm-pane.pane,html.dm-on[data-dmpage=ekg] .pane{ display:block; padding:0; }
+html.dm-on[data-dmpage=ekg] .mini-canvas{ width:100% !important; }
+
+/* ---- SFT ---- */
+html.dm-on[data-dmpage=sft] .topbar{ gap:6px; padding:0 8px; }
+html.dm-on[data-dmpage=sft] .plots{ flex:1 1 0; flex-direction:column; padding:4px; gap:4px; min-height:0; }
+html.dm-on[data-dmpage=sft] .plotwrap{ flex:1 1 0; min-height:0; }
+html.dm-on[data-dmpage=sft] .plotttl{ font-size:10.5px; }
+html.dm-on[data-dmpage=sft] .stage-foot{ border:0; background:transparent; padding:8px 10px; }
+html.dm-on[data-dmpage=sft] .toolrow{ flex-wrap:wrap; gap:8px; }
+html.dm-on[data-dmpage=sft] .toolrow button{ flex:1 1 auto; }
+html.dm-on[data-dmpage=sft] .console{ min-width:0 !important; max-width:none !important; }
+html.dm-on[data-dmpage=sft] .console-scroll{ padding:0; }
+
+/* ---- FRM / pharma ---- */
+html.dm-on[data-dmpage=frm] header{ padding:0 8px; gap:6px; }
+html.dm-on[data-dmpage=frm] .benchtabs{ margin-left:0; }
+html.dm-on[data-dmpage=frm] .benchtab{ min-height:36px; white-space:nowrap; }
+html.dm-on[data-dmpage=frm] .stepper{ padding:3px 8px; }
+html.dm-on[data-dmpage=frm] .col-chart{ flex:1 1 0 !important; min-height:0; padding:4px 6px; gap:4px; }
+html.dm-on[data-dmpage=frm] .chartwrap{ flex:1 1 0 !important; min-height:0; }
+html.dm-on[data-dmpage=frm] .legend{ display:none; }
+html.dm-on[data-dmpage=frm] .ctrlstrip{ flex-wrap:wrap; justify-content:flex-start; border-top:0; background:transparent; }
+html.dm-on[data-dmpage=frm] .ctrlstrip button{ min-height:44px; }
+html.dm-on[data-dmpage=frm] .dm-pane .evlist{ max-height:none !important; }
+html.dm-on[data-dmpage=frm] #ptCard,html.dm-on[data-dmpage=frm] #juryCard{ overflow:visible !important; }
+html.dm-on[data-dmpage=frm] .main{ padding:0; overflow:visible; }
+
+/* ---- ACİL ---- */
+html.dm-on[data-dmpage=acil] .dm-only#dmMonitor{ background:#04070c; padding:0; }
+html.dm-on[data-dmpage=acil] #dmMonitor canvas{ display:block; width:100%; height:100%; }
+html.dm-on[data-dmpage=acil] header .nav-tabs{ display:none; }
+html.dm-on[data-dmpage=acil] .disclaimer-bar{ display:none; }
+html.dm-on[data-dmpage=acil] .container{ padding:0 !important; max-width:none !important; }
+html.dm-on[data-dmpage=acil] .grid-main{ display:block !important; }
+html.dm-on[data-dmpage=acil] .grid-main > *{ margin:10px; width:auto !important; }
+html.dm-on[data-dmpage=acil] .dm-pane{ margin:10px !important; }
+
+/* ---- OSK (index.html) ---- */
+html.dm-on[data-dmpage=osk] .dm-stage{ background:#05080d; }
+html.dm-on[data-dmpage=osk] .thorax-stage{ position:fixed !important; height:var(--dm-stageh) !important; padding:0 !important; flex-direction:row !important; align-items:center; justify-content:center; }
+html.dm-on[data-dmpage=osk] #thoraxSvg{ width:100% !important; height:100% !important; max-width:none !important; max-height:none !important; touch-action:none; -webkit-user-select:none; user-select:none; }
+html.dm-on[data-dmpage=osk] #thorax3d,html.dm-on[data-dmpage=osk] #thorax3d canvas{ touch-action:none; }
+html.dm-on[data-dmpage=osk] header{ height:auto !important; padding-top:max(6px,var(--dm-safe-t)); }
+html.dm-on[data-dmpage=osk] #topUtilityButtons{ width:auto !important; display:flex !important; }
+html.dm-on[data-dmpage=osk] .top-actions{ order:3; }
+html.dm-on[data-dmpage=osk] .floating-top-bar{ position:static !important; padding:8px 10px 0 !important; }
+html.dm-on[data-dmpage=osk] #wiggersContainer{ height:auto !important; }
+html.dm-on[data-dmpage=osk] #wiggersCanvas{ height:200px !important; width:100% !important; }
+html.dm-on[data-dmpage=osk] .phono-canvas-wrap{ height:140px !important; }
+html.dm-on[data-dmpage=osk] .phono-canvas-wrap canvas{ width:100%; height:100%; }
+html.dm-on[data-dmpage=osk] .stage-floats{ position:static !important; padding:8px 10px !important; }
+html.dm-on[data-dmpage=osk] .vitals{ grid-template-columns:repeat(4,1fr) !important; }
+html.dm-on[data-dmpage=osk] .panel-head{ border-bottom:0; }
+html.dm-on[data-dmpage=osk] #leftViewport,html.dm-on[data-dmpage=osk] #rightControlPanel,html.dm-on[data-dmpage=osk] #mainWorkspace{ min-height:0 !important; height:auto !important; border:0 !important; }

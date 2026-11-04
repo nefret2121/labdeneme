@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-11-04T00:04:36.370Z",
-  "threeLocal": false,
+  "generatedAt": "2026-11-04T00:36:40.966Z",
+  "threeLocal": true,
   "pages": 23,
   "viewports": [
     {
@@ -40,7 +40,7 @@
       "fails": []
     },
     "gate6_clinical_selftests": {
-      "hooks": 7,
+      "hooks": 9,
       "pass": true,
       "detail": [
         {
@@ -252,9 +252,43 @@
         },
         {
           "page": "ductuslab-lapchole.html",
-          "pass": null,
+          "pass": true,
           "selfTest": {
-            "hook": false
+            "hook": true,
+            "module": "LapChole",
+            "pass": true,
+            "total": 7,
+            "failed": [],
+            "checks": [
+              {
+                "n": "optic 60° çift koni",
+                "ok": true
+              },
+              {
+                "n": "V1 çadırlaşma açısı <22°",
+                "ok": true
+              },
+              {
+                "n": "V1 doğru traksiyon açı >50°",
+                "ok": true
+              },
+              {
+                "n": "CBD kesi → Strasberg E",
+                "ok": true
+              },
+              {
+                "n": "Fenestre drensiz tamamlanamaz",
+                "ok": true
+              },
+              {
+                "n": "Tam subtotal → skor ≥75",
+                "ok": true
+              },
+              {
+                "n": "3 trokar aleti mevcut",
+                "ok": true
+              }
+            ]
           }
         },
         {
@@ -310,9 +344,101 @@
         },
         {
           "page": "ductuslab-endo.html",
-          "pass": null,
+          "pass": true,
           "selfTest": {
-            "hook": false
+            "pass": true,
+            "tests": [
+              {
+                "n": "blender-meshes",
+                "pass": true
+              },
+              {
+                "n": "voxel-field",
+                "pass": true
+              },
+              {
+                "n": "roof-closed-intact",
+                "pass": true
+              },
+              {
+                "n": "floor-exposed-after-roof",
+                "pass": true
+              },
+              {
+                "n": "perforation",
+                "pass": true
+              },
+              {
+                "n": "old-film-immutable",
+                "pass": true
+              },
+              {
+                "n": "slob-+20-mesial",
+                "pass": true
+              },
+              {
+                "n": "slob--20-opposite",
+                "pass": true
+              },
+              {
+                "n": "slob-0-superimpose",
+                "pass": true
+              },
+              {
+                "n": "slob-samedepth-zero",
+                "pass": true
+              },
+              {
+                "n": "e4-safe-full",
+                "pass": true
+              },
+              {
+                "n": "e4-perf-penalized",
+                "pass": true
+              },
+              {
+                "n": "xray-pulp-chamber-visible",
+                "pass": true
+              },
+              {
+                "n": "endo-xray-pulp-contrast-visual",
+                "pass": true
+              },
+              {
+                "n": "eal-no-early-apex-normal",
+                "pass": true
+              },
+              {
+                "n": "eal-coronal-bridge-false-apex",
+                "pass": true
+              },
+              {
+                "n": "eal-dry-fixes-bridge",
+                "pass": true
+              },
+              {
+                "n": "eal-perf-persists-after-dry",
+                "pass": true
+              },
+              {
+                "n": "eal-e5-radiographic-apex-over",
+                "pass": true
+              },
+              {
+                "n": "eal-e5-constriction-green",
+                "pass": true
+              },
+              {
+                "n": "naocl-safe-no-extrusion",
+                "pass": true
+              },
+              {
+                "n": "naocl-wedging-accident",
+                "pass": true
+              }
+            ],
+            "count": 22,
+            "failed": []
           }
         },
         {
@@ -973,6 +1099,599 @@
         "scrollOk": true,
         "modalFits": true
       }
+    },
+    "gate8_mobile_phone_ergonomics": {
+      "pass": true,
+      "checks": 32,
+      "fails": [],
+      "detail": [
+        {
+          "page": "index.html",
+          "viewport": "390x844",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "portal": {
+              "sw": 390,
+              "iw": 390,
+              "cards": 21,
+              "pillsScroll": "auto",
+              "box": [
+                390,
+                844
+              ],
+              "fs": [
+                16
+              ]
+            },
+            "canvas": {
+              "maxW": 390,
+              "maxH": 200,
+              "stackH": 340,
+              "svgOk": true
+            }
+          }
+        },
+        {
+          "page": "index.html",
+          "viewport": "360x800",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "portal": {
+              "sw": 360,
+              "iw": 360,
+              "cards": 21,
+              "pillsScroll": "auto",
+              "box": [
+                360,
+                800
+              ],
+              "fs": [
+                16
+              ]
+            },
+            "canvas": {
+              "maxW": 360,
+              "maxH": 200,
+              "stackH": 340,
+              "svgOk": true
+            }
+          }
+        },
+        {
+          "page": "index.html",
+          "viewport": "844x390",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "portal": {
+              "sw": 844,
+              "iw": 844,
+              "cards": 21,
+              "pillsScroll": "auto",
+              "box": [
+                844,
+                390
+              ],
+              "fs": [
+                16
+              ]
+            },
+            "canvas": {
+              "maxW": 422,
+              "maxH": 200,
+              "stackH": 340,
+              "svgOk": true
+            }
+          }
+        },
+        {
+          "page": "index.html",
+          "viewport": "desktop-1366x768",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "shell": false,
+            "tb": true,
+            "cc": true,
+            "menu": true,
+            "mon": true,
+            "sw": true
+          }
+        },
+        {
+          "page": "ductuslab-suite.html",
+          "viewport": "390x844",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "frame": {
+              "w": 390,
+              "h": 787,
+              "on": true,
+              "sw": 390,
+              "iw": 390,
+              "cv": [
+                [
+                  376,
+                  60
+                ],
+                [
+                  376,
+                  60
+                ],
+                [
+                  376,
+                  60
+                ]
+              ]
+            },
+            "jury": [
+              390,
+              390
+            ],
+            "menu": [
+              0,
+              328
+            ],
+            "canvas": {
+              "maxW": 0,
+              "maxH": 0,
+              "stackH": 0,
+              "svgOk": false
+            }
+          }
+        },
+        {
+          "page": "ductuslab-suite.html",
+          "viewport": "360x800",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "frame": {
+              "w": 360,
+              "h": 743,
+              "on": true,
+              "sw": 360,
+              "iw": 360,
+              "cv": [
+                [
+                  346,
+                  54
+                ],
+                [
+                  346,
+                  54
+                ],
+                [
+                  346,
+                  54
+                ]
+              ]
+            },
+            "jury": [
+              360,
+              360
+            ],
+            "menu": [
+              0,
+              302
+            ],
+            "canvas": {
+              "maxW": 0,
+              "maxH": 0,
+              "stackH": 0,
+              "svgOk": false
+            }
+          }
+        },
+        {
+          "page": "ductuslab-suite.html",
+          "viewport": "844x390",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "frame": {
+              "w": 844,
+              "h": 333,
+              "on": true,
+              "sw": 844,
+              "iw": 844,
+              "cv": [
+                [
+                  407,
+                  42
+                ],
+                [
+                  407,
+                  42
+                ],
+                [
+                  407,
+                  42
+                ]
+              ]
+            },
+            "jury": [
+              844,
+              844
+            ],
+            "menu": [
+              0,
+              340
+            ],
+            "canvas": {
+              "maxW": 0,
+              "maxH": 0,
+              "stackH": 0,
+              "svgOk": false
+            }
+          }
+        },
+        {
+          "page": "ductuslab-suite.html",
+          "viewport": "desktop-1366x768",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "shell": false,
+            "tb": true,
+            "cc": true,
+            "menu": true,
+            "mon": true,
+            "sw": true
+          }
+        },
+        {
+          "page": "ductuslab-case-chain.html",
+          "viewport": "390x844",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "embed": [
+              390,
+              783
+            ],
+            "canvas": {
+              "maxW": 0,
+              "maxH": 0,
+              "stackH": 0,
+              "svgOk": false
+            }
+          }
+        },
+        {
+          "page": "ductuslab-case-chain.html",
+          "viewport": "360x800",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "embed": [
+              360,
+              739
+            ],
+            "canvas": {
+              "maxW": 0,
+              "maxH": 0,
+              "stackH": 0,
+              "svgOk": false
+            }
+          }
+        },
+        {
+          "page": "ductuslab-case-chain.html",
+          "viewport": "844x390",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "embed": [
+              844,
+              329
+            ],
+            "canvas": {
+              "maxW": 0,
+              "maxH": 0,
+              "stackH": 0,
+              "svgOk": false
+            }
+          }
+        },
+        {
+          "page": "ductuslab-case-chain.html",
+          "viewport": "desktop-1366x768",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "shell": false,
+            "tb": true,
+            "cc": true,
+            "menu": true,
+            "mon": true,
+            "sw": true
+          }
+        },
+        {
+          "page": "acil/index.html",
+          "viewport": "390x844",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "canvas": {
+              "maxW": 390,
+              "maxH": 337,
+              "stackH": 337,
+              "svgOk": false
+            }
+          }
+        },
+        {
+          "page": "acil/index.html",
+          "viewport": "360x800",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "canvas": {
+              "maxW": 360,
+              "maxH": 319,
+              "stackH": 319,
+              "svgOk": false
+            }
+          }
+        },
+        {
+          "page": "acil/index.html",
+          "viewport": "844x390",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "canvas": {
+              "maxW": 421,
+              "maxH": 346,
+              "stackH": 346,
+              "svgOk": false
+            }
+          }
+        },
+        {
+          "page": "acil/index.html",
+          "viewport": "desktop-1366x768",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "shell": false,
+            "tb": true,
+            "cc": true,
+            "menu": true,
+            "mon": true,
+            "sw": true
+          }
+        },
+        {
+          "page": "ekg/index.html",
+          "viewport": "390x844",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "canvas": {
+              "maxW": 980,
+              "maxH": 331,
+              "stackH": 441,
+              "svgOk": false
+            }
+          }
+        },
+        {
+          "page": "ekg/index.html",
+          "viewport": "360x800",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "canvas": {
+              "maxW": 980,
+              "maxH": 309,
+              "stackH": 419,
+              "svgOk": false
+            }
+          }
+        },
+        {
+          "page": "ekg/index.html",
+          "viewport": "844x390",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "canvas": {
+              "maxW": 980,
+              "maxH": 256,
+              "stackH": 366,
+              "svgOk": false
+            }
+          }
+        },
+        {
+          "page": "ekg/index.html",
+          "viewport": "desktop-1366x768",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "shell": false,
+            "tb": true,
+            "cc": true,
+            "menu": true,
+            "mon": true,
+            "sw": true
+          }
+        },
+        {
+          "page": "ventilator/index.html",
+          "viewport": "390x844",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "canvas": {
+              "maxW": 376,
+              "maxH": 69,
+              "stackH": 207,
+              "svgOk": false
+            }
+          }
+        },
+        {
+          "page": "ventilator/index.html",
+          "viewport": "360x800",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "canvas": {
+              "maxW": 346,
+              "maxH": 62,
+              "stackH": 186,
+              "svgOk": false
+            }
+          }
+        },
+        {
+          "page": "ventilator/index.html",
+          "viewport": "844x390",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "canvas": {
+              "maxW": 407,
+              "maxH": 61,
+              "stackH": 183,
+              "svgOk": false
+            }
+          }
+        },
+        {
+          "page": "ventilator/index.html",
+          "viewport": "desktop-1366x768",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "shell": false,
+            "tb": true,
+            "cc": true,
+            "menu": true,
+            "mon": true,
+            "sw": true
+          }
+        },
+        {
+          "page": "ductuslab-pharma.html",
+          "viewport": "390x844",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "canvas": {
+              "maxW": 376,
+              "maxH": 343,
+              "stackH": 343,
+              "svgOk": false
+            }
+          }
+        },
+        {
+          "page": "ductuslab-pharma.html",
+          "viewport": "360x800",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "canvas": {
+              "maxW": 346,
+              "maxH": 325,
+              "stackH": 325,
+              "svgOk": false
+            }
+          }
+        },
+        {
+          "page": "ductuslab-pharma.html",
+          "viewport": "844x390",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "canvas": {
+              "maxW": 407,
+              "maxH": 311,
+              "stackH": 311,
+              "svgOk": false
+            }
+          }
+        },
+        {
+          "page": "ductuslab-pharma.html",
+          "viewport": "desktop-1366x768",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "shell": false,
+            "tb": true,
+            "cc": true,
+            "menu": true,
+            "mon": true,
+            "sw": true
+          }
+        },
+        {
+          "page": "sft/index.html",
+          "viewport": "390x844",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "canvas": {
+              "maxW": 382,
+              "maxH": 188,
+              "stackH": 376,
+              "svgOk": false
+            }
+          }
+        },
+        {
+          "page": "sft/index.html",
+          "viewport": "360x800",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "canvas": {
+              "maxW": 352,
+              "maxH": 178,
+              "stackH": 356,
+              "svgOk": false
+            }
+          }
+        },
+        {
+          "page": "sft/index.html",
+          "viewport": "844x390",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "canvas": {
+              "maxW": 413,
+              "maxH": 167,
+              "stackH": 334,
+              "svgOk": false
+            }
+          }
+        },
+        {
+          "page": "sft/index.html",
+          "viewport": "desktop-1366x768",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "shell": false,
+            "tb": true,
+            "cc": true,
+            "menu": true,
+            "mon": true,
+            "sw": true
+          }
+        }
+      ]
     }
   },
   "perPage": {
@@ -1237,11 +1956,45 @@
       "overflow": [],
       "truthLeak": [],
       "selfTest": {
-        "hook": false
+        "hook": true,
+        "module": "LapChole",
+        "pass": true,
+        "total": 7,
+        "failed": [],
+        "checks": [
+          {
+            "n": "optic 60° çift koni",
+            "ok": true
+          },
+          {
+            "n": "V1 çadırlaşma açısı <22°",
+            "ok": true
+          },
+          {
+            "n": "V1 doğru traksiyon açı >50°",
+            "ok": true
+          },
+          {
+            "n": "CBD kesi → Strasberg E",
+            "ok": true
+          },
+          {
+            "n": "Fenestre drensiz tamamlanamaz",
+            "ok": true
+          },
+          {
+            "n": "Tam subtotal → skor ≥75",
+            "ok": true
+          },
+          {
+            "n": "3 trokar aleti mevcut",
+            "ok": true
+          }
+        ]
       },
       "lifecycle": {
-        "supported": false,
-        "advanced": null
+        "supported": true,
+        "advanced": true
       }
     },
     "ductuslab-neurosurgery.html": {
@@ -1331,7 +2084,99 @@
       "overflow": [],
       "truthLeak": [],
       "selfTest": {
-        "hook": false
+        "pass": true,
+        "tests": [
+          {
+            "n": "blender-meshes",
+            "pass": true
+          },
+          {
+            "n": "voxel-field",
+            "pass": true
+          },
+          {
+            "n": "roof-closed-intact",
+            "pass": true
+          },
+          {
+            "n": "floor-exposed-after-roof",
+            "pass": true
+          },
+          {
+            "n": "perforation",
+            "pass": true
+          },
+          {
+            "n": "old-film-immutable",
+            "pass": true
+          },
+          {
+            "n": "slob-+20-mesial",
+            "pass": true
+          },
+          {
+            "n": "slob--20-opposite",
+            "pass": true
+          },
+          {
+            "n": "slob-0-superimpose",
+            "pass": true
+          },
+          {
+            "n": "slob-samedepth-zero",
+            "pass": true
+          },
+          {
+            "n": "e4-safe-full",
+            "pass": true
+          },
+          {
+            "n": "e4-perf-penalized",
+            "pass": true
+          },
+          {
+            "n": "xray-pulp-chamber-visible",
+            "pass": true
+          },
+          {
+            "n": "endo-xray-pulp-contrast-visual",
+            "pass": true
+          },
+          {
+            "n": "eal-no-early-apex-normal",
+            "pass": true
+          },
+          {
+            "n": "eal-coronal-bridge-false-apex",
+            "pass": true
+          },
+          {
+            "n": "eal-dry-fixes-bridge",
+            "pass": true
+          },
+          {
+            "n": "eal-perf-persists-after-dry",
+            "pass": true
+          },
+          {
+            "n": "eal-e5-radiographic-apex-over",
+            "pass": true
+          },
+          {
+            "n": "eal-e5-constriction-green",
+            "pass": true
+          },
+          {
+            "n": "naocl-safe-no-extrusion",
+            "pass": true
+          },
+          {
+            "n": "naocl-wedging-accident",
+            "pass": true
+          }
+        ],
+        "count": 22,
+        "failed": []
       },
       "lifecycle": {
         "supported": false,

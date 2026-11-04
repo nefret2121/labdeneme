@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>DuctusLab · Klinik Farmakoloji, TDM & Reseptör Laboratuvarı</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"/>
@@ -90,6 +90,9 @@ select.fld{width:auto}
 .hidden{display:none!important}
 @media(max-width:1200px){ .col-pt{flex-basis:210px} .col-jury{flex-basis:250px} }
 </style>
+<!-- DM-BEGIN -->
+<link rel="stylesheet" href="./ductus-mobile.css">
+<!-- DM-END -->
 </head>
 <body>
 <header>
@@ -181,5 +184,16 @@ window.PharmaEngine=PharmaEngine;
 </script>
 <script src="pharma-tox.js"></script>
 <script src="pharma-ui.js"></script>
+<!-- DM-BEGIN -->
+<script src="./ductus-mobile.js"></script>
+<script>
+DuctusMobile.init({page:'frm',header:'header',header2:'#stepper',stage:'.col-chart',stageH:42,accent:'#6fa3c8',tabs:[
+ {id:'ctl',icon:'🎛️',label:'Kontroller',sel:['#ctrlStrip']},
+ {id:'case',icon:'📋',label:'Hasta & Lab',sel:['.col-pt > .card']},
+ {id:'ev',icon:'📊',label:'Kanıt / TDM',sel:['.col-jury > .card:nth-child(1)']},
+ {id:'jury',icon:'⚖️',label:'Karar & Jüri',sel:['#juryCard']}]});
+
+</script>
+<!-- DM-END -->
 </body>
 </html>
