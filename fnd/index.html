@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>DuctusLab · Direkt Fundoskopi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" />
@@ -76,6 +76,9 @@ select:focus{outline:none;border-color:var(--accent-2)}
 @keyframes tin{from{opacity:0;transform:translateY(-8px)}}
 @media(max-width:960px){.main{flex-direction:column}.console{max-width:none;border-left:0;border-top:1px solid var(--line)}}
 </style>
+<!-- DM-BEGIN -->
+<link rel="stylesheet" href="../ductus-mobile.css">
+<!-- DM-END -->
 </head>
 <body>
 <div class="app">
@@ -591,10 +594,11 @@ function bindUI(){
   $('markDisk').onclick=function(){ setLook(-0.26*(ENG.eye==='R'?1:-1),0); toast('Diske odaklanıldı.'); };
   $('markMac').onclick=function(){ setLook(0.16*(ENG.eye==='R'?1:-1),0); toast('Makula incelendi.'); };
   // fare sürükle = retinada gez
-  ov.addEventListener('mousedown',function(e){ ENG.dragging=true;ENG._mx=e.clientX;ENG._my=e.clientY; });
-  window.addEventListener('mousemove',function(e){ if(!ENG.dragging)return; var r=ov.getBoundingClientRect();var f=Math.min(r.width,r.height);
+  ov.addEventListener('pointerdown',function(e){ ENG.dragging=true;ENG._mx=e.clientX;ENG._my=e.clientY; });
+  window.addEventListener('pointermove',function(e){ if(!ENG.dragging)return; var r=ov.getBoundingClientRect();var f=Math.min(r.width,r.height);
     setLook(ENG.look.x-(e.clientX-ENG._mx)/f*0.8, ENG.look.y+(e.clientY-ENG._my)/f*0.8); ENG._mx=e.clientX;ENG._my=e.clientY; });
-  window.addEventListener('mouseup',function(){ ENG.dragging=false; });
+  window.addEventListener('pointercancel',function(){ ENG.dragging=false; });
+window.addEventListener('pointerup',function(){ ENG.dragging=false; });
   glcv.parentElement.addEventListener('wheel',function(e){ e.preventDefault(); ENG.diopter=clamp(ENG.diopter+(e.deltaY<0?0.5:-0.5),-8,8); $('diopter').value=ENG.diopter;$('dioVal').textContent=ENG.diopter.toFixed(1)+' D'; },{passive:false});
   $('declareBtn').onclick=evaluate;
 }
@@ -619,5 +623,17 @@ function init(){ initGL(); V=OpticViewport.create({tremorAmp:1.2,fieldRadius:0.9
 if(window.OpticViewport) init(); else { var s=document.createElement('script');s.src='../optic-viewport.js';s.onload=init;document.head.appendChild(s); }
 </script>
 <script src="../optic-viewport.js"></script>
+<!-- DM-BEGIN -->
+<script src="../ductus-mobile.js"></script>
+<script>
+DuctusMobile.init({page:'fnd',fam:'surg',header:'.topbar',stage:'.canvas-wrap',stageH:42,accent:'#6fa3c8',
+ tabs:[
+ {id:'ctl',icon:'🎛️',label:'Vizör / Odak',sel:['.stage-foot']},
+ {id:'case',icon:'📋',label:'Vaka & Bulgular',sel:['.console-scroll > .card:nth-child(1)','.console-scroll > .card:nth-child(2)']},
+ {id:'ev',icon:'📸',label:'Tarama',sel:['.console-scroll > .card:nth-child(3)']},
+ {id:'jury',icon:'⚖️',label:'Karar & Jüri',sel:['.console-scroll > .card:nth-child(4)','.console-scroll > .card:nth-child(5)']}]});
+
+</script>
+<!-- DM-END -->
 </body>
 </html>

@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>DuctusLab · LapChole — Laparoskopik Kolesistektomi (CVS & Bailout)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" />
@@ -112,6 +112,9 @@ body{background:radial-gradient(1200px 800px at 70% -10%,#0a1424 0%,var(--bg-0) 
 @media(max-width:1100px){.console{max-width:none;min-width:280px}.debrief-grid{grid-template-columns:1fr}}
 @media(max-width:960px){.main{flex-direction:column}.console{max-width:none;border-left:0;border-top:1px solid var(--line)}}
 </style>
+<!-- DM-BEGIN -->
+<link rel="stylesheet" href="./ductus-mobile.css">
+<!-- DM-END -->
 </head>
 <body>
 <div class="app">
@@ -1152,5 +1155,19 @@ function loop(ts){ var dt=0.016; SHARED.uTime.value=ENG.t; ENG.t+=dt;
   requestAnimationFrame(loop); }
 init();
 </script>
+<!-- DM-BEGIN -->
+<script src="./ductus-mobile.js"></script>
+<script>
+DuctusMobile.init({page:'lap',fam:'surg',header:'.topbar',header2:'#statusbar,#stepper',stage:'.scope-wrap',stageH:44,accent:'#6fa3c8',
+ pips:[{sel:'.guide-wrap'},{sel:'.dial-wrap'}],
+ modals:[{sel:'#debriefModal .debrief-box',title:'Cerrahi Debrief',grid:'.debrief-grid',labels:['① Kanıtın','② 3B Gerçek','③ Karne'],close:'#dbgClose'},{sel:'#bailoutModal .bailout-box',title:'Subtotal Bailout',close:'#blClose'}],
+ tabs:[
+ {id:'ctl',icon:'🎛️',label:'Alet / Optik',sel:['.stage-foot']},
+ {id:'case',icon:'📋',label:'Vaka & Bulgular',sel:['.console-scroll > .card:nth-child(1)','.console-scroll > .card:nth-child(2)']},
+ {id:'ev',icon:'📸',label:'Kanıt / ICG',sel:['.console-scroll > .card:nth-child(3)']},
+ {id:'jury',icon:'⚖️',label:'Karar & Jüri',sel:['.console-scroll > .card:nth-child(4)','.console-scroll > .card:nth-child(5)']}]});
+
+</script>
+<!-- DM-END -->
 </body>
 </html>

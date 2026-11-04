@@ -23,6 +23,9 @@ const MIME = { '.html':'text/html','.js':'text/javascript','.mjs':'text/javascri
 const ASSET_EXT = ['.jpg','.jpeg','.png','.gif','.webp','.bmp','.glb','.gltf'];
 const ALLOWED_HOSTS = ['fonts.googleapis.com','fonts.gstatic.com','unpkg.com','cdnjs.cloudflare.com','cdn.jsdelivr.net','code.jquery.com'];
 const THREE_LOCAL = process.env.THREE_LOCAL && existsSync(process.env.THREE_LOCAL) ? process.env.THREE_LOCAL : null;
+// three.js yerel eşleme: build/three.module.js + examples/jsm/** (addons) — headless sandbox'ta CDN'e çıkmadan
+function threeLocalFor(u){ if(!THREE_LOCAL) return null; if(/unpkg\.com\/three[^/]*\/build\/three\.module\.js/.test(u)) return THREE_LOCAL;
+  const m=u.match(/unpkg\.com\/three[^/]*\/examples\/jsm\/([^?#]+)/); if(m){ const fp=join(dirname(dirname(THREE_LOCAL)),'examples','jsm',m[1]); if(existsSync(fp)) return fp; } return null; }
 
 // ---- yerel statik sunucu ----
 function serve(){ return new Promise(res=>{ const srv=http.createServer((req,resp)=>{
@@ -64,7 +67,7 @@ async function run(){
       if(!isLocal && !isAllowed) rec.disallowedReq.push(req.url().slice(0,120)); }catch(e){} });
     // istek denetimi: harici asset + three yönlendirme
     await pg.route('**/*',route=>{ const u=route.request().url();
-      if(THREE_LOCAL && /unpkg\.com\/three.*three\.module\.js/.test(u)){ return route.fulfill({path:THREE_LOCAL,contentType:'text/javascript'}); }
+      { const tl=threeLocalFor(u); if(tl){ return route.fulfill({path:tl,contentType:'text/javascript'}); } }
       if(/fonts\.googleapis\.com/.test(u)){ return route.fulfill({status:200,body:'',contentType:'text/css'}); }
       try{ const url=new URL(u); const ext=extname(url.pathname).toLowerCase();
         if(ASSET_EXT.includes(ext)){ const host=url.hostname;
@@ -141,7 +144,7 @@ async function run(){
 
 
   // Gate 8: Mobile Phone Viewport & Ergonomics Audit — Dalga 1 (8 sayfa × 3 telefon ekranı, hasTouch+isMobile)
-  const M8=['index.html','ductuslab-suite.html','ductuslab-case-chain.html','acil/index.html','ekg/index.html','ventilator/index.html','ductuslab-pharma.html','sft/index.html'];
+  const M8=['index.html','ductuslab-suite.html','ductuslab-case-chain.html','acil/index.html','ekg/index.html','ventilator/index.html','ductuslab-pharma.html','sft/index.html','ductuslab-usg-access.html','ductuslab-lapchole.html','ductuslab-airway.html','eko/index.html','ductuslab-cathlab.html','ductuslab-neurosurgery.html','ks/index.html','fnd/index.html','oto/index.html','nro/index.html'];
   const PHONES=[{n:'390x844',w:390,h:844},{n:'360x800',w:360,h:800},{n:'844x390',w:844,h:390}];
   const gate8=[];
   const probe8=()=>{ const de=document.documentElement, iw=innerWidth, ih=innerHeight;
@@ -151,15 +154,16 @@ async function run(){
     const bad=[...document.querySelectorAll('select,input:not([type=range]):not([type=checkbox]):not([type=radio]):not([type=hidden]):not([type=button]):not([type=submit]),textarea')].filter(vis).map(e=>parseFloat(getComputedStyle(e).fontSize)).filter(f=>f<16).length;
     const crit=[...document.querySelectorAll('button,[role=button]')].filter(vis).filter(b=>/Değerlendir|Jüri|Beyan/i.test(b.textContent||'')).length;
     const tb=document.getElementById('dm-tabbar')||document.getElementById('ccTabs'); const tabs=tb?[...tb.querySelectorAll('button')].map(b=>{const r=b.getBoundingClientRect();return [Math.round(r.width),Math.round(r.height)];}):[];
-    return { sw:de.scrollWidth, iw, cvs, svg, bad, crit, tabs, dm:de.classList.contains('dm-on'), api:!!(window.DuctusMobile&&window.DuctusMobile.cfg), ntab:(window.DuctusMobile&&window.DuctusMobile.cfg)?window.DuctusMobile.cfg.tabs.length:0 }; };
+    const big=[...document.querySelectorAll('canvas')].filter(vis).map(c=>({r:c.getBoundingClientRect(),c})).sort((a,b)=>b.r.width*b.r.height-a.r.width*a.r.height)[0]; const asp=(big&&big.r.width>=300&&big.c.width>0&&big.c.height>0)?Math.abs((big.r.width/big.r.height)/(big.c.width/big.c.height)-1):0;
+    return { sw:de.scrollWidth, iw, asp, cvs, svg, bad, crit, tabs, dm:de.classList.contains('dm-on'), api:!!(window.DuctusMobile&&window.DuctusMobile.cfg), ntab:(window.DuctusMobile&&window.DuctusMobile.cfg)?window.DuctusMobile.cfg.tabs.length:0 }; };
   for(const page of M8){
     for(const ph of PHONES){
       const rec={ page, viewport:ph.n, pass:true, fails:[], detail:{} };
       try{
         const ctx=await browser.newContext({viewport:{width:ph.w,height:ph.h},deviceScaleFactor:2,hasTouch:true,isMobile:true});
         const pg=await ctx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(String(e).slice(0,120)));
-        await pg.route('**/*',route=>{ var u=route.request().url(); if(/fonts\.googleapis\.com|cdnjs|jsdelivr|gstatic|unpkg/.test(u))return route.fulfill({status:200,body:'',contentType:'text/css'}); return route.continue(); });
-        await pg.goto(`${base}/${page}`,{waitUntil:'load',timeout:30000}); await pg.waitForTimeout(1400);
+        await pg.route('**/*',route=>{ var u=route.request().url(); var tl=threeLocalFor(u); if(tl)return route.fulfill({path:tl,contentType:'text/javascript'}); if(/fonts\.googleapis\.com|cdnjs|jsdelivr|gstatic|unpkg/.test(u))return route.fulfill({status:200,body:'',contentType:'text/css'}); return route.continue(); });
+        await pg.goto(`${base}/${page}`,{waitUntil:'load',timeout:30000}); await pg.waitForTimeout(THREE_LOCAL?2600:1400);
         const snaps=[]; const st0=await pg.evaluate(probe8); snaps.push(st0);
         let critSeen=st0.crit>0;
         if(st0.api&&st0.ntab>1){ for(let i=0;i<st0.ntab;i++){ await pg.evaluate(i=>window.DuctusMobile.show(i),i); await pg.waitForTimeout(350); const s1=await pg.evaluate(probe8); snaps.push(s1); if(s1.crit>0) critSeen=true; } }
@@ -189,6 +193,7 @@ async function run(){
         const cvOk=(maxW>=300&&(maxH>=160||stackH>=160))||svgOk;
         rec.detail.canvas={maxW,maxH,stackH,svgOk}; if(needsCanvas&&!cvOk) rec.fails.push('ana kanvas ezik/görünmüyor '+JSON.stringify(rec.detail.canvas));
         if(page==='ductuslab-suite.html'&&rec.detail.frame&&!rec.detail.frame.cv.some(c=>c[0]>=300)) rec.fails.push('iframe kanvası <300px');
+        const maxAsp=Math.max(0,...snaps.map(x=>x.asp||0)); rec.detail.asp=+maxAsp.toFixed(3); if(maxAsp>0.12) rec.fails.push('ana kanvas aspect bozuk '+maxAsp.toFixed(2));
         const badFont=Math.max(...snaps.map(x=>x.bad)); if(badFont>0) rec.fails.push('16px altı girdi: '+badFont);
         const tabs=snaps.flatMap(x=>x.tabs); if(tabs.some(t=>t[0]>0&&(t[0]<44||t[1]<44))) rec.fails.push('44px altı sekme düğmesi');
         const usesShell=snaps.some(x=>x.api); if(usesShell&&!(snaps[0].dm)) rec.fails.push('mobil kabuk devreye girmedi');

@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>DuctusLab Neuro · IC-PC Anevrizma Mikrocerrahi Simülatörü</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" />
@@ -94,6 +94,9 @@
   @media (max-width: 1100px) { #checklist { width: 220px; } #monitor { width: 200px; } #tools button { min-width: 92px; } .actions { flex-wrap: wrap; } }
   @media (max-width: 760px) { #checklist, #hint { display: none; } #monitor { width: 170px; right: 8px; top: 54px; } .title small { display: none; } #tools { width: calc(100vw - 16px); overflow-x: auto; } }
 </style>
+<!-- DM-BEGIN -->
+<link rel="stylesheet" href="./ductus-mobile.css">
+<!-- DM-END -->
 </head>
 <body>
 <div id="loading">MİKROSKOP OPTİĞİ VE DOKU ÜRETİLİYOR…</div>
@@ -185,6 +188,13 @@
   <button data-tool="5"><span class="k">5</span>Kalıcı Klips<small>Kese boynu</small></button>
   <button data-tool="6"><span class="k">6</span>ICG Anjiyografi<small>Akım doğrulama</small></button>
 </nav>
+<div class="panel dm-only" id="dmNsr"><div class="eyebrow accent">Dokunmatik Mikro-Alet Kontrolleri</div>
+  <div class="dmk-grid">
+    <button type="button" data-w="1">⬇ Bası +</button><button type="button" data-w="-1">⬆ Bası −</button>
+    <button type="button" data-k="q">⟲ Klips Çene − (Q)</button><button type="button" data-k="e">⟳ Klips Çene + (E)</button>
+    <button type="button" data-k="r">↻ Rulon 90° (R)</button><button type="button" id="dmPark">📌 Aspiratör Sabitle / Bırak</button>
+  </div><div class="fine" style="margin-top:6px;color:var(--ink-3)">Sahnede tek parmak: doku üstünde bastır, boşlukta mikroskobu döndür. Parmağı kaldırınca bası durur.</div></div>
+<div class="panel dm-only" id="dmFinishCard"><div class="eyebrow accent">Karar &amp; Jüri</div><button type="button" id="dmFinish" class="btn" style="width:100%;min-height:52px;margin-top:8px">⚖️ Ameliyatı Tamamla &amp; Jüri</button></div>
 <div id="toast"></div>
 
 <!-- Operatif Kapanış Beyanı -->
@@ -276,7 +286,8 @@ window.getCardiacPulse = getCardiacPulse;
 const stage = document.getElementById('stage');
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
-renderer.setSize(innerWidth, innerHeight);
+const __ss = () => { const r = document.getElementById('stage').getBoundingClientRect(); return [Math.max(2, r.width || innerWidth), Math.max(2, r.height || innerHeight)]; };
+renderer.setSize(__ss()[0], __ss()[1]);
 renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.9;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 stage.appendChild(renderer.domElement);
@@ -285,7 +296,7 @@ scene.fog = new THREE.Fog(0x050608, 70, 160);
 const pmrem = new THREE.PMREMGenerator(renderer);
 scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture; // ıslak BOS parıltısı için ortam yansıması
 // Telefoto mikroskop: 18° FOV; MAG = 280 / mesafe (x2.5 … x8)
-const camera = new THREE.PerspectiveCamera(18, innerWidth / innerHeight, 1, 600);
+const camera = new THREE.PerspectiveCamera(18, __ss()[0] / __ss()[1], 1, 600);
 const TARGET = V(3.5, -4.5, -12);
 const VIEW_DIR = V(16, 34, 58).normalize(); // pterional koridor ekseni (cerrah → saha)
 camera.position.copy(TARGET).add(VIEW_DIR.clone().multiplyScalar(98)); // açılış MAG ≈ x2.9 (genel bakış)
@@ -750,6 +761,7 @@ const SURG = (() => {
     }
   });
   window.addEventListener('pointerup', e => { if (e.button === 0) { sim.pressing = false; sim.dragRotate = false; } });
+  window.addEventListener('pointercancel', () => { sim.pressing = false; sim.dragRotate = false; });
   renderer.domElement.addEventListener('contextmenu', e => {
     e.preventDefault();
     if (sim.tool === 1) {
@@ -1007,7 +1019,7 @@ function animate() {
   if (S.icgStart >= 0) icgU.uIcg.value = t - S.icgStart;
   // etiketler: vizör dışında gizle + ekran uzayında dikey çakışma itmesi
   if (labelsOn) {
-    const w = innerWidth, h = innerHeight, cx = w * 0.5, cy = h * 0.52, R = Math.min(w, h) * 0.41;
+    const w = __ss()[0], h = __ss()[1], cx = w * 0.5, cy = h * 0.52, R = Math.min(w, h) * 0.41;
     const vis = [];
     for (const l of LABELS) { tmpV.copy(l.p).project(camera); const x = (tmpV.x * 0.5 + 0.5) * w, y = (-tmpV.y * 0.5 + 0.5) * h; const inFront = tmpV.z < 1; const inVisor = Math.hypot(x - cx, y - cy) < R - 6; if (inFront && inVisor) vis.push({ l, x, y }); else l.el.style.display = 'none'; }
     vis.sort((a, b) => a.y - b.y);
@@ -1018,7 +1030,8 @@ function animate() {
   if (t - lastEcg > 0.016) { lastEcg = t; drawEcg(t); }
   controls.update(); renderer.render(scene, camera);
 }
-window.addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); });
+window.addEventListener('resize', () => { const [W, H] = __ss(); renderer.setSize(W, H); camera.aspect = W / H; camera.updateProjectionMatrix(); });
+if (window.ResizeObserver) new ResizeObserver(() => { const [W, H] = __ss(); renderer.setSize(W, H); camera.aspect = W / H; camera.updateProjectionMatrix(); }).observe(document.getElementById('stage'));
 document.getElementById('loading').classList.add('hidden');
 window.NeuroSim = { scene, camera, renderer, controls, vesselMesh, materials: MAT, SDF, state: S, setTool, ready: true };
 
@@ -1263,5 +1276,26 @@ window.newCaseMenu = () => { const n = prompt('Yeni vaka numarası (1–4):\n1 S
 
 animate();
 </script>
+<!-- DM-BEGIN -->
+<script src="./ductus-mobile.js"></script>
+<script>
+DuctusMobile.init({page:'nsr',fam:'surg',header:'header',stage:'#stage',stageH:44,accent:'#6fa3c8',keep:['#ocular','#reticle'],
+ modals:[{sel:'#debriefSheet',title:'Ameliyat Debrief',grid:'.dbgrid,.debrief-grid',labels:['① Kanıtın','② 3B Gerçek','③ Karne']},{sel:'#closure .sheet',title:'Kapanış Beyanı'}],
+ onTab:function(id){ if(id==='ev'){ var pr=document.getElementById('preop'); if(pr&&getComputedStyle(pr).display==='none'){ var b=document.getElementById('btnPreop'); if(b)b.click(); } } },
+ tabs:[
+ {id:'ctl',icon:'🎛️',label:'Alet / Mikro',sel:['#tools','#dmNsr']},
+ {id:'case',icon:'📋',label:'Vaka & Vitaller',sel:['#checklist','#monitor']},
+ {id:'ev',icon:'📸',label:'Preop / Kanıt',sel:['#preop']},
+ {id:'jury',icon:'⚖️',label:'Karar & Jüri',sel:['#dmFinishCard']}]});
+(function(){var st=document.getElementById('stage'),cv=function(){return st.querySelector('canvas')||st;};
+ var f=document.getElementById('dmFinish'),b=document.getElementById('btnFinish');if(f&&b)f.onclick=function(){b.click();};
+ function key(k){window.dispatchEvent(new KeyboardEvent('keydown',{key:k,bubbles:true}));}
+ [].forEach.call(document.querySelectorAll('#dmNsr [data-k]'),function(el){el.addEventListener('pointerdown',function(e){e.preventDefault();key(el.dataset.k);});});
+ [].forEach.call(document.querySelectorAll('#dmNsr [data-w]'),function(el){el.addEventListener('pointerdown',function(e){e.preventDefault();window.dispatchEvent(new WheelEvent('wheel',{deltaY:+el.dataset.w>0?-1:1,shiftKey:true,cancelable:true}));});});
+ var pk=document.getElementById('dmPark');if(pk)pk.addEventListener('click',function(){cv().dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true}));});
+})();
+
+</script>
+<!-- DM-END -->
 </body>
 </html>

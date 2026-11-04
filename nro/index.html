@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>DuctusLab · Nörolojik Muayene</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" />
@@ -72,6 +72,9 @@ select:focus{outline:none;border-color:var(--accent-2)}
 .toast.warn{border-left-color:var(--amber)}.toast.bad{border-left-color:var(--alert)}
 @media(max-width:960px){.main{flex-direction:column}.console{max-width:none;border-left:0;border-top:1px solid var(--line)}}
 </style>
+<!-- DM-BEGIN -->
+<link rel="stylesheet" href="../ductus-mobile.css">
+<!-- DM-END -->
 </head>
 <body>
 <div class="app">
@@ -562,9 +565,10 @@ function bindUI(){
   $('jendChk').onchange=function(){ ENG.jendrassik=this.checked; };
   $('declareBtn').onclick=evaluate;
   // fareyle orbit
-  gl.addEventListener('mousedown',function(e){ ENG.dragging=true;ENG._mx=e.clientX;ENG._my=e.clientY;gl.style.cursor='grabbing'; });
-  window.addEventListener('mousemove',function(e){ if(!ENG.dragging)return; ENG.orbitAz-=(e.clientX-ENG._mx)*0.008; ENG.orbitEl=clamp(ENG.orbitEl+(e.clientY-ENG._my)*0.005,-0.1,0.9); ENG._mx=e.clientX;ENG._my=e.clientY; });
-  window.addEventListener('mouseup',function(){ ENG.dragging=false;gl.style.cursor='grab'; });
+  gl.addEventListener('pointerdown',function(e){ ENG.dragging=true;ENG._mx=e.clientX;ENG._my=e.clientY;gl.style.cursor='grabbing'; });
+  window.addEventListener('pointermove',function(e){ if(!ENG.dragging)return; ENG.orbitAz-=(e.clientX-ENG._mx)*0.008; ENG.orbitEl=clamp(ENG.orbitEl+(e.clientY-ENG._my)*0.005,-0.1,0.9); ENG._mx=e.clientX;ENG._my=e.clientY; });
+  window.addEventListener('pointercancel',function(){ ENG.dragging=false; });
+window.addEventListener('pointerup',function(){ ENG.dragging=false;gl.style.cursor='grab'; });
 }
 
 /* ======================= TEST API ======================= */
@@ -590,5 +594,17 @@ window.NRO={
 function init(){ initGL(); bindUI(); loadCase(1); setMode('gait'); setCam(0.35); requestAnimationFrame(loop); }
 init();
 </script>
+<!-- DM-BEGIN -->
+<script src="../ductus-mobile.js"></script>
+<script>
+DuctusMobile.init({page:'nro',fam:'surg',header:'.topbar',stage:'.canvas-wrap',stageH:42,accent:'#6fa3c8',
+ tabs:[
+ {id:'ctl',icon:'🎛️',label:'Muayene',sel:['.stage-foot']},
+ {id:'case',icon:'📋',label:'Vaka & Bulgular',sel:['.console-scroll > .card:nth-child(1)','.console-scroll > .card:nth-child(2)']},
+ {id:'ev',icon:'📸',label:'Refleks',sel:['#reflexCard']},
+ {id:'jury',icon:'⚖️',label:'Karar & Jüri',sel:['.console-scroll > .card:nth-child(4)','.console-scroll > .card:nth-child(5)']}]});
+
+</script>
+<!-- DM-END -->
 </body>
 </html>

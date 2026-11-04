@@ -8,7 +8,7 @@
   'use strict';
   var doc=root.document, MQ='(max-width:900px)';
   var DM={ active:false, cfg:null, tab:0, version:'1.0' };
-  var marked=[], created=[], ro=null, mql=null;
+  var marked=[], created=[], ro=null, mql=null, mobs=[];
 
   function qa(sel,ctx){ var out=[]; (Array.isArray(sel)?sel:[sel]).forEach(function(s){ if(!s) return; [].forEach.call((ctx||doc).querySelectorAll(s),function(e){ if(out.indexOf(e)<0) out.push(e); }); }); return out; }
   function mark(el,cls){ if(!el.classList.contains(cls)){ el.classList.add(cls); marked.push([el,cls]); } }
@@ -18,9 +18,10 @@
   var rq=0; function fireSoon(){ cancelAnimationFrame(rq); rq=requestAnimationFrame(function(){ rq=requestAnimationFrame(fireResize); }); }
 
   function setVars(){
-    var h=doc.querySelector('.dm-hdr'); var h2=doc.querySelector('.dm-hdr2');
-    var h1h=h?Math.ceil(h.getBoundingClientRect().height):46; var h2h=h2?Math.ceil(h2.getBoundingClientRect().height):0; var hh=h1h+h2h;
-    doc.documentElement.style.setProperty('--dm-h1',h1h+'px'); doc.documentElement.style.setProperty('--dm-hdr',hh+'px');
+    var h=doc.querySelector('.dm-hdr'); var h1h=h?Math.ceil(h.getBoundingClientRect().height):46; var acc=h1h;
+    doc.documentElement.style.setProperty('--dm-h1',h1h+'px');
+    [].forEach.call(doc.querySelectorAll('.dm-hdr2'),function(e){ e.style.top=acc+'px'; acc+=Math.ceil(e.getBoundingClientRect().height); });
+    var hh=acc; doc.documentElement.style.setProperty('--dm-hdr',hh+'px');
     var land=root.matchMedia('(orientation:landscape) and (max-height:520px)').matches;
     var sh=(DM.cfg&&DM.cfg.stageH)||42; doc.documentElement.style.setProperty('--dm-stageh',(land?100:sh)+'dvh'.replace('100dvh','100dvh'));
     if(land) doc.documentElement.style.setProperty('--dm-stageh','calc(100dvh - '+hh+'px)');
@@ -34,8 +35,8 @@
     html.classList.add('dm-on'); body.classList.add('dm-on');
     if(cfg.accent) html.style.setProperty('--dm-accent',cfg.accent);
     var panes=[]; cfg.tabs.forEach(function(t,i){ qa(t.sel).forEach(function(e){ if(e===stage||stage.contains(e)) return; e.setAttribute('data-dm',i); mark(e,'dm-pane'); panes.push(e); }); });
-    mark(stage,'dm-stage'); if(hdr) mark(hdr,'dm-hdr'); var hdr2=cfg.header2?qa(cfg.header2)[0]:null; if(hdr2) mark(hdr2,'dm-hdr2');
-    var keep=qa(cfg.keep||[]); var keepSet=keep.concat(hdr?[hdr]:[]).concat(hdr2?[hdr2]:[]);
+    mark(stage,'dm-stage'); if(hdr) mark(hdr,'dm-hdr'); var hdrs2=cfg.header2?qa(cfg.header2):[]; var hdr2=hdrs2[0]||null; hdrs2.forEach(function(e){ mark(e,'dm-hdr2'); });
+    var keep=qa(cfg.keep||[]); var keepSet=keep.concat(hdr?[hdr]:[]).concat(hdrs2);
     // ata zinciri → display:contents ; kardeşler (sahne/panel/başlık/keep/fixed dışı) → gizle
     var chain=[]; [stage].concat(panes).forEach(function(e){ var p=e.parentElement; while(p&&p!==body&&p!==html){ if(chain.indexOf(p)<0) chain.push(p); p=p.parentElement; } });
     var paneSet=panes.concat([stage]);
@@ -48,6 +49,12 @@
       if(c.hasAttribute('data-dm-keep')) return;
       var pos=root.getComputedStyle(c).position; if(pos==='fixed') return;
       mark(c,'dm-skip'); }); });
+    // mini-PiP: köşe kılavuzları küçük + dokununca büyür/küçülür
+    (cfg.pips||[]).forEach(function(pp){ qa(pp.sel).forEach(function(el){ mark(el,'dm-pip'); el.setAttribute('data-dmpip','closed');
+      var h=function(ev){ var o=el.getAttribute('data-dmpip')==='open'; el.setAttribute('data-dmpip',o?'closed':'open'); el.classList.toggle('dm-pip-open',!o); if(ev) ev.stopPropagation(); fireSoon(); };
+      el.__dmPip=h; el.addEventListener('click',h); created.push({parentNode:null,__undo:function(){ el.removeEventListener('click',h); el.removeAttribute('data-dmpip'); el.classList.remove('dm-pip-open'); }}); }); });
+    // tam ekran modal / debrief
+    (cfg.modals||[]).forEach(function(m){ qa(m.sel).forEach(function(el){ DM.modal(el,m.title,m); }); });
     // büyüt/küçült
     var eb=doc.createElement('button'); eb.className='dm-enlarge'; eb.type='button'; eb.setAttribute('aria-label','Sahneyi büyüt / küçült'); eb.textContent='⛶';
     eb.onclick=function(){ var big=stage.classList.toggle('dm-big'); eb.textContent=big?'⤡':'⛶'; fireSoon(); setTimeout(fireResize,250); };
@@ -58,14 +65,14 @@
       b.innerHTML='<span class="ic">'+(t.icon||'')+'</span><span class="lb">'+t.label+'</span><span class="dm-badge"></span>'; b.onclick=function(){ DM.show(i); }; nav.appendChild(b); });
     body.appendChild(nav); created.push(nav);
     DM.active=true; setVars(); DM.show(cfg.start||0,true);
-    if(root.ResizeObserver){ ro=new ResizeObserver(function(){ setVars(); fireSoon(); }); ro.observe(stage); if(hdr) ro.observe(hdr); if(hdr2) ro.observe(hdr2); }
+    if(root.ResizeObserver){ ro=new ResizeObserver(function(){ setVars(); fireSoon(); }); ro.observe(stage); if(hdr) ro.observe(hdr); hdrs2.forEach(function(e){ ro.observe(e); }); }
     if(cfg.onEnter) try{ cfg.onEnter(DM); }catch(e){}
     fireSoon(); setTimeout(fireResize,300);
   }
   function leave(){
     if(!DM.active) return; if(ro){ try{ro.disconnect();}catch(e){} ro=null; }
     marked.forEach(function(m){ m[0].classList.remove(m[1]); if(m[1]==='dm-pane') m[0].removeAttribute('data-dm'); }); marked=[];
-    created.forEach(function(e){ if(e.parentNode) e.parentNode.removeChild(e); }); created=[];
+    created.forEach(function(e){ if(e.__undo) try{ e.__undo(); }catch(x){} else if(e.parentNode) e.parentNode.removeChild(e); }); created=[]; mobs.forEach(function(o){ try{o.disconnect();}catch(x){} }); mobs=[]; [].forEach.call(doc.querySelectorAll('.dm-modal-bar,.dm-d3tabs'),function(e){ e.parentNode&&e.parentNode.removeChild(e); }); [].forEach.call(doc.querySelectorAll('.dm-modal-full,.dm-d3'),function(e){ e.classList.remove('dm-modal-full','dm-d3'); }); [].forEach.call(doc.querySelectorAll('.dm-d3off'),function(e){ e.classList.remove('dm-d3off'); });
     [].forEach.call(doc.querySelectorAll('.dm-off'),function(e){ e.classList.remove('dm-off'); });
     [].forEach.call(doc.querySelectorAll('.dm-big'),function(e){ e.classList.remove('dm-big'); });
     doc.documentElement.classList.remove('dm-on'); doc.body.classList.remove('dm-on');
@@ -85,16 +92,21 @@
   DM.state=function(){ return { active:DM.active, tab:DM.tab, tabs:DM.cfg?DM.cfg.tabs.map(function(t){return t.id;}):[] }; };
 
   // ---- tam ekran modal + ①②③ debrief sekmeleri ----
-  DM.modal=function(el,title){ if(!el) return; el.classList.add('dm-modal-full'); if(el.querySelector(':scope > .dm-modal-bar')) return;
-    var bar=doc.createElement('div'); bar.className='dm-modal-bar'; bar.innerHTML='<button type="button" class="dm-x" aria-label="Kapat">✕ Kapat</button><span class="dm-ttl"></span>'; bar.querySelector('.dm-ttl').textContent=title||'';
-    bar.querySelector('.dm-x').onclick=function(){ var host=el.closest('.overlay,.ovl,#jury,[data-dm-overlay]')||el; host.classList.remove('open'); if(host.style) host.style.display=''; if(el.dataset.dmClose){ try{ new Function(el.dataset.dmClose)(); }catch(e){} } };
-    el.insertBefore(bar,el.firstChild); };
-  DM.tabbedDebrief=function(d3,labels){ if(!d3||d3.dataset.dmTabs) return; var kids=[].filter.call(d3.children,function(c){return c.nodeType===1&&!c.classList.contains('dm-d3tabs');}); if(kids.length<2) return;
-    d3.dataset.dmTabs='1'; d3.classList.add('dm-d3'); labels=labels||['① Kanıtın','② Gerçek Model','③ Karne'];
+  function closeOf(el,cfgm){
+    if(cfgm&&cfgm.close){ var c=doc.querySelector(cfgm.close); if(c){ c.click(); return; } }
+    var btn=[].filter.call(el.querySelectorAll('button'),function(b){ return /^\s*(✕\s*)?(Kapat|Kapa|Close|Tamam)/i.test(b.textContent||'')&&!b.closest('.dm-modal-bar'); })[0];
+    if(btn){ btn.click(); return; }
+    var host=el.closest('.overlay,#debriefModal,#bailoutModal,[data-dm-overlay]')||el; host.classList.remove('open'); host.style.display='none'; }
+  DM.modal=function(el,title,cfgm){ if(!el) return; el.classList.add('dm-modal-full');
+    function ensure(){ if(!el.querySelector(':scope > .dm-modal-bar')){ var bar=doc.createElement('div'); bar.className='dm-modal-bar'; bar.innerHTML='<button type="button" class="dm-x" aria-label="Kapat">✕ Kapat</button><span class="dm-ttl"></span>'; bar.querySelector('.dm-ttl').textContent=title||''; bar.querySelector('.dm-x').onclick=function(){ closeOf(el,cfgm); }; el.insertBefore(bar,el.firstChild); }
+      if(cfgm&&cfgm.grid){ [].forEach.call(el.querySelectorAll(cfgm.grid),function(g){ DM.tabbedDebrief(g,cfgm.labels); }); } }
+    ensure(); if(root.MutationObserver){ var mo=new MutationObserver(function(){ mo.disconnect(); ensure(); mo.observe(el,{childList:true,subtree:true}); }); mo.observe(el,{childList:true,subtree:true}); mobs.push(mo); } };
+  DM.tabbedDebrief=function(d3,labels){ if(!d3||d3.querySelector(':scope > .dm-d3tabs')) return; var kids=[].filter.call(d3.children,function(c){return c.nodeType===1;}); if(kids.length<2) return;
+    d3.classList.add('dm-d3'); labels=labels||['① Kanıtın','② 3B Gerçek','③ Karne'];
     var strip=doc.createElement('div'); strip.className='dm-d3tabs';
     function sel(k){ kids.forEach(function(c,i){ c.classList.toggle('dm-d3off',i!==k); }); [].forEach.call(strip.children,function(b,i){ b.classList.toggle('on',i===k); }); }
-    kids.forEach(function(c,i){ var b=doc.createElement('button'); b.type='button'; b.textContent=labels[i]||('Görünüm '+(i+1)); b.onclick=function(){ sel(i); }; strip.appendChild(b); });
-    d3.insertBefore(strip,d3.firstChild); sel(kids.length-1>=2?2:0); };
+    kids.forEach(function(c,i){ var b=doc.createElement('button'); b.type='button'; b.textContent=labels[i]||('Görünüm '+(i+1)); b.onclick=function(){ sel(i); try{ root.dispatchEvent(new Event('resize')); }catch(e){} }; strip.appendChild(b); });
+    d3.insertBefore(strip,d3.firstChild); sel(0); };
 
   // ---- canlı hasta başı monitörü (ACİL için): EKG / SpO2 pleth / ABP, DPR-keskin, ResizeObserver ----
   DM.liveMonitor=function(cv,get){
@@ -128,8 +140,9 @@
       ctx.fillStyle=cols[2]; ctx.fillText(Math.round(sbp)+'/'+Math.round(dbp),W-8*d,2*rh+5*d); ctx.textAlign='left'; }
     requestAnimationFrame(frame); };
 
+
   DM.init=function(cfg){
-    DM.cfg=cfg; ensureViewport(); if(cfg.page) doc.documentElement.setAttribute('data-dmpage',cfg.page); mql=root.matchMedia(cfg.mq||MQ);
+    DM.cfg=cfg; ensureViewport(); if(cfg.page) doc.documentElement.setAttribute('data-dmpage',cfg.page); if(cfg.fam) doc.documentElement.setAttribute('data-dmfam',cfg.fam); mql=root.matchMedia(cfg.mq||MQ);
     function apply(){ if(mql.matches) enter(); else leave(); }
     if(mql.addEventListener) mql.addEventListener('change',apply); else if(mql.addListener) mql.addListener(apply);
     root.addEventListener('orientationchange',function(){ setTimeout(function(){ setVars(); fireSoon(); },120); });

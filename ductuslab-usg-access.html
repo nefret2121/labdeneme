@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>DuctusLab · USG-Access — POCUS Eşliğinde İğne & Seldinger</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" />
@@ -101,6 +101,9 @@ button[disabled]{opacity:.38;cursor:not-allowed;filter:grayscale(.5)}
 @media(max-width:1100px){.console{max-width:none;min-width:280px}}
 @media(max-width:960px){.main{flex-direction:column}.console{max-width:none;border-left:0;border-top:1px solid var(--line)}.guide-wrap{width:180px;height:128px}#guide{width:180px;height:128px}}
 </style>
+<!-- DM-BEGIN -->
+<link rel="stylesheet" href="./ductus-mobile.css">
+<!-- DM-END -->
 </head>
 <body>
 <div class="app">
@@ -1088,5 +1091,18 @@ window.__selfTest=function(){ var checks=[]; function c(n,ok){ checks.push({n:n,
 function init(){ initGL(); buildStepper(); buildControls(); buildDxSelect(); loadProfile('ijv'); bindUI(); requestAnimationFrame(loop); }
 init();
 </script>
+<!-- DM-BEGIN -->
+<script src="./ductus-mobile.js"></script>
+<script>
+DuctusMobile.init({page:'usg',fam:'surg',header:'.topbar',header2:'#statusbar,#stepper',stage:'.scan-wrap',stageH:42,accent:'#6fa3c8',
+ pips:[{sel:'.guide-wrap'}],
+ tabs:[
+ {id:'ctl',icon:'🎛️',label:'Prob / İğne',sel:['.stage-foot']},
+ {id:'case',icon:'📋',label:'Vaka & Vitaller',sel:['.console-scroll > .card:nth-child(1)','.console-scroll > .card:nth-child(2)']},
+ {id:'ev',icon:'📸',label:'Kanıt / M-Mod',sel:['#evCard']},
+ {id:'jury',icon:'⚖️',label:'Karar & Jüri',sel:['.console-scroll > .card:nth-child(4)','.console-scroll > .card:nth-child(5)']}]});
+
+</script>
+<!-- DM-END -->
 </body>
 </html>

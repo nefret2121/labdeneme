@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>DuctusLab · Zor Havayolu & Video Laringoskopi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap"/>
@@ -90,6 +90,9 @@ body{background:radial-gradient(1200px 800px at 70% -10%,#0a1424,var(--bg0) 60%)
 .toast{position:fixed;left:22px;bottom:20px;background:rgba(10,16,28,.96);border:1px solid var(--line2);border-left:3px solid var(--accent);border-radius:9px;padding:10px 14px;font-size:12.5px;max-width:420px;z-index:70;box-shadow:0 10px 30px rgba(0,0,0,.5)}
 @media(max-width:960px){.main{flex-direction:column}.console{max-width:none;border-left:0;border-top:1px solid var(--line)}}
 </style>
+<!-- DM-BEGIN -->
+<link rel="stylesheet" href="./ductus-mobile.css">
+<!-- DM-END -->
 </head>
 <body>
 <div class="app">
@@ -124,6 +127,7 @@ body{background:radial-gradient(1200px 800px at 70% -10%,#0a1424,var(--bg0) 60%)
     </div>
     <div class="console">
       <div class="console-scroll">
+<div class="card dm-only" id="dmJuryCard"><h3>Karar &amp; Jüri</h3><button class="btn pri" id="dmJuryGo" style="width:100%">⚖️ İşlemi Tamamla &amp; Jüri</button></div>
         <div class="card" id="caseCard"><h3>Vaka <span class="mini" id="caseTag"></span></h3><div class="mini" id="caseStem"></div></div>
         <div class="card">
           <h3>Hasta Monitörü <span class="mini mono" id="monClock">00:00</span></h3>
@@ -678,5 +682,20 @@ $('juryBtn').onclick=openJury;
 function init(){ resizeScope(); buildCaseSeg(); loadCase(1); requestAnimationFrame(loop); }
 init(); window.AIRWAY_READY=true;
 </script>
+<!-- DM-BEGIN -->
+<script src="./ductus-mobile.js"></script>
+<script>
+DuctusMobile.init({page:'hvy',fam:'surg',header:'.topbar',header2:'#stepper',stage:'.scope',stageH:42,accent:'#6fa3c8',
+ pips:[{sel:'#sagCv'}],
+ modals:[{sel:'#jurySheet',title:'Jüri & Debrief',grid:'.debrief,.dbgrid,.debrief-grid',labels:['① Kanıtın','② 3B Gerçek','③ Karne']}],
+ tabs:[
+ {id:'ctl',icon:'🎛️',label:'Blade / ETT',sel:['#scopeTools','#sliderRow','#tubeRow','.console-scroll > .card:nth-child(4)','.console-scroll > .card:nth-child(5)']},
+ {id:'case',icon:'📋',label:'Vaka & Vitaller',sel:['#caseCard']},
+ {id:'ev',icon:'📸',label:'Kapnografi / Kanıt',sel:['.console-scroll > .card:nth-child(3)']},
+ {id:'jury',icon:'⚖️',label:'Karar & Jüri',sel:['#dmJuryCard','.console-scroll > .card:nth-child(6)']}]});
+(function(){var b=document.getElementById('dmJuryGo'),j=document.getElementById('juryBtn');if(b&&j)b.onclick=function(){j.click();};})();
+
+</script>
+<!-- DM-END -->
 </body>
 </html>

@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>DuctusLab CathLab · Koroner Anjiyografi & Primer PCI</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" />
@@ -141,6 +141,9 @@
   #toast.show { opacity:1; }
   @media (max-width:1150px){ main { grid-template-columns:1fr 96px 250px; } }
 </style>
+<!-- DM-BEGIN -->
+<link rel="stylesheet" href="./ductus-mobile.css">
+<!-- DM-END -->
 </head>
 <body>
 <div id="loading"><div class="spin"></div><div style="font-size:11px;color:var(--ink-3)">Kateter laboratuvarı başlatılıyor…</div></div>
@@ -214,7 +217,7 @@
         <div class="meta" id="hcMeta"></div>
         <div class="tgt" id="hcTgt"></div>
       </div>
-      <div class="panel">
+      <div class="panel" id="hemoMon">
         <div class="eyebrow">Hemodinamik Monitör</div>
         <div class="trace"><canvas id="ecg" height="86"></canvas><span class="lbl ecgLbl" id="ecgLbl">II</span><span class="rd ecgLbl" id="ecgRd">72</span></div>
         <div class="trace" style="margin-top:7px"><canvas id="ao" height="86"></canvas><span class="lbl aoLbl">AO</span><span class="rd aoLbl" id="aoRd">124/76</span></div>
@@ -225,10 +228,21 @@
         </div>
       </div>
       <div class="panel" id="devPanel" style="display:none"></div>
-      <div class="panel" style="flex:1">
+      <div class="panel" id="acqPanel" style="flex:1">
         <div class="eyebrow">Edinim Durumu</div>
         <div class="mono" id="acqInfo" style="font-size:11px;line-height:1.7;color:var(--ink-2)"></div>
       </div>
+      <div class="panel dm-only" id="dmKeys">
+        <div class="eyebrow">Dokunmatik Kontroller (klavye yerine)</div>
+        <div class="dmk-grid">
+          <button type="button" data-hold="w">⬆ İlerlet (W)</button><button type="button" data-hold="s">⬇ Geri (S)</button>
+          <button type="button" data-tap="q">⟲ Tork − (Q)</button><button type="button" data-tap="e">⟳ Tork + (E)</button>
+          <button type="button" data-tap="arrowleft">◀ C-kolu α−</button><button type="button" data-tap="arrowright">C-kolu α+ ▶</button>
+          <button type="button" data-tap="arrowup">▲ C-kolu β+</button><button type="button" data-tap="arrowdown">▼ C-kolu β−</button>
+          <button type="button" data-tap="a" class="dmk-wide">🎬 Anjiyo Çek (3 sn Cine + Kontrast)</button>
+        </div>
+      </div>
+      <div class="panel dm-only" id="dmFinishCard"><div class="eyebrow">Karar &amp; Jüri</div><button type="button" id="dmFinish" class="btn" style="width:100%;min-height:52px;margin-top:8px">⚖️ İşlemi Tamamla &amp; Jüri</button></div>
     </div>
   </main>
 
@@ -985,7 +999,7 @@ window.addEventListener('keyup',e=>{ const k=e.key.toLowerCase();
 // 🎬 Anjiyo Çek: 3 sn boyunca otomatik Cine + Kontrast birlikte → dolu anjiyogram kaydı
 function startAngio(){ if(autoAngio>0) return; autoAngio=3.0; pedal=true; doseMode=1; injecting=true; toast('🎬 Anjiyo çekiliyor — 3 sn oto Cine + Kontrast'); }
 // floroskopi pedal butonları (basılı tut)
-function bindPed(id,down,up){ const el=document.getElementById(id); el.addEventListener('pointerdown',e=>{e.preventDefault();down();}); window.addEventListener('pointerup',()=>up&&up()); el.addEventListener('pointerleave',()=>up&&up()); }
+function bindPed(id,down,up){ const el=document.getElementById(id); el.addEventListener('pointerdown',e=>{e.preventDefault();down();}); window.addEventListener('pointerup',()=>up&&up()); window.addEventListener('pointercancel',()=>up&&up()); el.addEventListener('pointerleave',()=>up&&up()); }
 bindPed('pedFloro',()=>{pedal=true;doseMode=0;},()=>{if(autoAngio<=0&&doseMode===0)pedal=false;});
 bindPed('pedCine',()=>{pedal=true;doseMode=1;},()=>{if(autoAngio<=0&&doseMode===1){if(acqMode===2)captureCine();pedal=false;}});
 bindPed('pedCon',()=>{injecting=true;},()=>{if(autoAngio<=0)injecting=false;});
@@ -996,6 +1010,7 @@ fluoroEl.addEventListener('contextmenu',e=>e.preventDefault());
 fluoroEl.addEventListener('pointerdown',e=>{ if(e.button===2){ dragging=true; lastX=e.clientX; lastY=e.clientY; }
   else if(e.button===0){ if(CS.device===5){ qcaAddPoint(e.clientX,e.clientY); } else if(CS.device===2){ wireDrag=true; lastX=e.clientX; } } });
 window.addEventListener('pointerup',()=>{ dragging=false; wireDrag=false; });
+window.addEventListener('pointercancel',()=>{ dragging=false; wireDrag=false; });
 window.addEventListener('pointermove',e=>{ if(dragging){ CARM.tAlpha=clamp(CARM.tAlpha+(e.clientX-lastX)*0.3,-60,60); CARM.tBeta=clamp(CARM.tBeta-(e.clientY-lastY)*0.3,-40,40); lastX=e.clientX; lastY=e.clientY; }
   else if(wireDrag){ CS.wire.torque=clamp(CS.wire.torque+(e.clientX-lastX)*0.01,-1,1); lastX=e.clientX; } });
 let wireDrag=false;
@@ -1252,5 +1267,30 @@ frame();
 setTimeout(()=>document.getElementById('loading').classList.add('hidden'),300);
 window.CathLab={ scene,camera,renderer,CARM,CASES,get case(){return CASE;},CathMetrics:window.CathMetrics,ready:true };
 </script>
+<!-- DM-BEGIN -->
+<script src="./ductus-mobile.js"></script>
+<script>
+(function(){var pj=null,pjP=null,pjN=null,ct=null,ctP=null,ctN=null;
+DuctusMobile.init({page:'kl',fam:'surg',header:'header',stage:'#fluoro',stageH:44,accent:'#6fa3c8',
+ beforeEnter:function(){pj=document.getElementById('projBtns');ct=document.querySelector('header .counters');var dock=document.getElementById('dock'),hemo=document.getElementById('hemo');
+  if(pj&&dock){pjP=pj.parentNode;pjN=pj.nextSibling;dock.parentNode.insertBefore(pj,dock);}
+  if(ct&&hemo){ctP=ct.parentNode;ctN=ct.nextSibling;hemo.insertBefore(ct,hemo.firstChild);}},
+ afterLeave:function(){if(pj&&pjP)pjP.insertBefore(pj,pjN&&pjN.parentNode===pjP?pjN:null);if(ct&&ctP)ctP.insertBefore(ct,ctN&&ctN.parentNode===ctP?ctN:null);},
+ modals:[{sel:'#debriefSheet',title:'CathLab Jüri & Debrief'},{sel:'#closure .sheet',title:'Kapanış Beyanı'}],
+ tabs:[
+ {id:'ctl',icon:'🎛️',label:'Kateter / Tel',sel:['#projBtns','#dock','#devPanel','#dmKeys']},
+ {id:'case',icon:'📋',label:'Vaka & Vitaller',sel:['.counters','#hemo > .caseCard','#hemoMon']},
+ {id:'ev',icon:'📸',label:'Anjiyo / Cine',sel:['#cine','#acqPanel']},
+ {id:'jury',icon:'⚖️',label:'Karar & Jüri',sel:['#dmFinishCard']}]});
+var f=document.getElementById('dmFinish'),b=document.getElementById('btnFinish');if(f&&b)f.onclick=function(){b.click();};
+function key(k,t){window.dispatchEvent(new KeyboardEvent(t,{key:k,code:k.length===1?'Key'+k.toUpperCase():k,bubbles:true}));}
+[].forEach.call(document.querySelectorAll('#dmKeys [data-hold]'),function(el){var k=el.dataset.hold,on=false;
+ function dn(e){e.preventDefault();if(on)return;on=true;key(k,'keydown');} function up(){if(!on)return;on=false;key(k,'keyup');}
+ el.addEventListener('pointerdown',dn);['pointerup','pointercancel','pointerleave'].forEach(function(t){el.addEventListener(t,up);});window.addEventListener('pointerup',up);window.addEventListener('pointercancel',up);});
+[].forEach.call(document.querySelectorAll('#dmKeys [data-tap]'),function(el){var k=el.dataset.tap;el.addEventListener('pointerdown',function(e){e.preventDefault();key(k,'keydown');key(k,'keyup');});});
+})();
+
+</script>
+<!-- DM-END -->
 </body>
 </html>

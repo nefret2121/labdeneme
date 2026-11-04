@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>DuctusLab · 3B Otoskopi &amp; Pnömatik Muayene</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" />
@@ -84,6 +84,9 @@ select:focus{outline:none;border-color:var(--accent-2)}
 .fieldhint{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);font-size:11px;color:var(--ink-3);background:rgba(8,12,20,.6);border-radius:7px;padding:4px 10px;z-index:5}
 @media(max-width:960px){.main{flex-direction:column}.console{max-width:none;border-left:0;border-top:1px solid var(--line)}}
 </style>
+<!-- DM-BEGIN -->
+<link rel="stylesheet" href="../ductus-mobile.css">
+<!-- DM-END -->
 </head>
 <body>
 <div class="app">
@@ -552,13 +555,14 @@ function buildPinBar(){ var b=$('pinBar'); b.innerHTML=''; PIN_STRUCTS.forEach(f
   btn.onclick=function(){ ENG.activeStruct=ENG.activeStruct===s[0]?null:s[0]; [].forEach.call(b.children,function(x){x.classList.toggle('on',x.dataset.s===ENG.activeStruct);}); }; b.appendChild(btn); }); }
 function screenToField(mx,my){ var r=ov.getBoundingClientRect(); var field=Math.min(r.width,r.height)*0.46;
   return { x:(mx-r.left-r.width/2)/field + ENG.look.x, y:-((my-r.top-r.height/2)/field) + ENG.look.y }; }
-ov.addEventListener('mousedown',function(e){ ENG.dragging=true; ENG._mx=e.clientX; ENG._my=e.clientY; ENG._moved=false; });
-window.addEventListener('mousemove',function(e){ if(!ENG.dragging) return; var dx=e.clientX-ENG._mx,dy=e.clientY-ENG._my;
+ov.addEventListener('pointerdown',function(e){ ENG.dragging=true; ENG._mx=e.clientX; ENG._my=e.clientY; ENG._moved=false; });
+window.addEventListener('pointermove',function(e){ if(!ENG.dragging) return; var dx=e.clientX-ENG._mx,dy=e.clientY-ENG._my;
   if(Math.abs(dx)+Math.abs(dy)>3) ENG._moved=true;
   var r=ov.getBoundingClientRect(); var field=Math.min(r.width,r.height)*0.46;
   ENG.look.x=clamp(ENG.look.x-dx/field,-0.7,0.7); ENG.look.y=clamp(ENG.look.y+dy/field,-0.7,0.7);
   ENG._mx=e.clientX; ENG._my=e.clientY; });
-window.addEventListener('mouseup',function(e){ if(ENG.dragging && !ENG._moved){ placePin(e.clientX,e.clientY); } ENG.dragging=false; });
+window.addEventListener('pointercancel',function(){ ENG.dragging=false; });
+window.addEventListener('pointerup',function(e){ if(ENG.dragging && !ENG._moved){ placePin(e.clientX,e.clientY); } ENG.dragging=false; });
 function placePin(mx,my){ if(!ENG.activeStruct){ toast('Önce işaretlenecek yapıyı seçin.'); return; }
   var f=screenToField(mx,my); if(f.x*f.x+f.y*f.y>1.0){ return; }
   ENG.pins.push({s:ENG.activeStruct,x:f.x,y:f.y}); renderPins(); beep(680,0.04); }
@@ -817,5 +821,17 @@ if(window.OpticViewport){ init(); }
 else { var s=document.createElement('script'); s.src='../optic-viewport.js'; s.onload=init; document.head.appendChild(s); }
 </script>
 <script src="../optic-viewport.js"></script>
+<!-- DM-BEGIN -->
+<script src="../ductus-mobile.js"></script>
+<script>
+DuctusMobile.init({page:'oto',fam:'surg',header:'.topbar',stage:'.canvas-wrap',stageH:42,accent:'#6fa3c8',
+ tabs:[
+ {id:'ctl',icon:'🎛️',label:'Otoskop',sel:['.stage-foot']},
+ {id:'case',icon:'📋',label:'Vaka & Bulgular',sel:['.console-scroll > .card:nth-child(1)','.console-scroll > .card:nth-child(2)']},
+ {id:'ev',icon:'📸',label:'Bulgu Pin',sel:['.console-scroll > .card:nth-child(3)']},
+ {id:'jury',icon:'⚖️',label:'Karar & Jüri',sel:['.console-scroll > .card:nth-child(4)','.console-scroll > .card:nth-child(5)']}]});
+
+</script>
+<!-- DM-END -->
 </body>
 </html>

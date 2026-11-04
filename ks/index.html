@@ -8,7 +8,7 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>DuctusLab · Kraniyal Sinir, Pupil &amp; Okülomotor Muayene</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" />
@@ -108,6 +108,9 @@ select:focus{outline:none;border-color:var(--accent-2)}
 .swatch{display:inline-block;width:10px;height:10px;border-radius:3px;vertical-align:middle;margin-right:5px}
 @media(max-width:960px){.main{flex-direction:column}.console{max-width:none;border-left:0;border-top:1px solid var(--line)}}
 </style>
+<!-- DM-BEGIN -->
+<link rel="stylesheet" href="../ductus-mobile.css">
+<!-- DM-END -->
 </head>
 <body>
 <div class="app">
@@ -491,7 +494,7 @@ var cv=$('scene'), ctx=cv.getContext('2d'), DPR=Math.max(1,Math.min(2,window.dev
 var VW=900, VH=560;
 function resize(){
   var r=cv.parentElement.getBoundingClientRect();
-  VW=Math.max(520,r.width); VH=Math.max(360,r.height);
+  var k=Math.max(1,520/Math.max(1,r.width),360/Math.max(1,r.height)); VW=r.width*k; VH=r.height*k; /* en-boy oranı korunur (küçük ekranda tek tip ölçek) */
   cv.width=VW*DPR; cv.height=VH*DPR; cv.style.width=r.width+'px'; cv.style.height=r.height+'px';
   ctx.setTransform(DPR,0,0,DPR,0,0);
 }
@@ -1182,5 +1185,17 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
 
 })();
 </script>
+<!-- DM-BEGIN -->
+<script src="../ductus-mobile.js"></script>
+<script>
+DuctusMobile.init({page:'ks',fam:'surg',header:'.topbar',stage:'.canvas-wrap',stageH:42,accent:'#6fa3c8',
+ tabs:[
+ {id:'ctl',icon:'🎛️',label:'Muayene',sel:['.stage-foot']},
+ {id:'case',icon:'📋',label:'Vaka & Bulgular',sel:['.console-scroll > .card:nth-child(1)','.console-scroll > .card:nth-child(2)','.console-scroll > .card:nth-child(3)']},
+ {id:'ev',icon:'📸',label:'Kayıt',sel:['.console-scroll > .card:nth-child(4)']},
+ {id:'jury',icon:'⚖️',label:'Karar & Jüri',sel:['.console-scroll > .card:nth-child(5)','.console-scroll > .card:nth-child(6)']}]});
+
+</script>
+<!-- DM-END -->
 </body>
 </html>
