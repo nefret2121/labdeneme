@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>DuctusLab · Entegre Vaka Zinciri v3.0</title>
+<title>DuctusLab · Entegre Vaka Zinciri v4.0</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap"/>
 <style>
@@ -83,13 +83,13 @@ body{background:radial-gradient(1200px 800px at 70% -10%,#0a1424,var(--bg0) 60%)
 .sheet h2{font-size:20px;margin-bottom:5px}.sheet .sub{color:var(--ink2);font-size:12.5px;margin-bottom:14px}
 .jcat{margin:9px 0;padding:11px 12px;border:1px solid var(--line);border-radius:11px;background:var(--bg2)}
 .jcat .r{display:flex;justify-content:space-between;font-weight:600;font-size:13px}.bar{height:6px;border-radius:4px;background:#17202f;margin-top:7px;overflow:hidden}.bar>span{display:block;height:100%}
-#selLvl button.on,#selVar button.on{background:linear-gradient(135deg,#49a6e6,#36bd8e);color:#05121c;font-weight:700;box-shadow:0 0 0 1px rgba(90,200,150,.35) inset}
-#selLvl button.on::after,#selVar button.on::after{content:' ✓';font-weight:800}
+#selLvl button.on,#selVar button.on,#selTrack button.on{background:linear-gradient(135deg,#49a6e6,#36bd8e);color:#05121c;font-weight:700;box-shadow:0 0 0 1px rgba(90,200,150,.35) inset}
+#selLvl button.on::after,#selVar button.on::after,#selTrack button.on::after{content:' ✓';font-weight:800}
 #selStatus{margin:10px 0 2px;padding:9px 12px;border:1px solid rgba(90,200,150,.3);background:rgba(54,189,142,.08);border-radius:9px;font-size:12px;color:#bfe9d6;line-height:1.45}
 .selgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px}
 .selcard{border:1px solid var(--line);border-radius:13px;background:var(--bg2);padding:14px;cursor:pointer;transition:.15s}
 .selcard:hover{border-color:var(--accent);transform:translateY(-2px)}
-.selcard .cx{font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:.06em}
+.selcard.dus{border-color:rgba(90,159,127,.35)}.selcard.dus .cx{color:#8fe3bf}.selcard .cx{font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:.06em}
 .selcard .ct{font-size:15px;font-weight:700;margin:4px 0 4px}.selcard .cc{font-size:11.5px;color:var(--ink3);line-height:1.5}.selcard .cm{margin-top:8px;font-size:10px;color:var(--ink3)}
 .toast{position:fixed;left:24px;bottom:22px;background:rgba(10,16,28,.96);border:1px solid var(--line2);border-left:3px solid var(--accent);border-radius:9px;padding:11px 15px;font-size:12.5px;max-width:420px;z-index:70;box-shadow:0 10px 30px rgba(0,0,0,.5)}
 .toast.bad{border-left-color:var(--alert)}.toast.warn{border-left-color:var(--amber)}.toast.good{border-left-color:var(--ok)}
@@ -123,7 +123,7 @@ body{background:radial-gradient(1200px 800px at 70% -10%,#0a1424,var(--bg0) 60%)
 <script src="ductus-core.js"></script>
 <script>
 /* ===================================================================================
- *  DuctusLab · Case Chain v3.0 — 7 entegre hasta zinciri (girişimsel dallar + TG18), 15 modül, ductus-core v1.2
+ *  DuctusLab · Case Chain v4.0 — 11 entegre hasta zinciri (7 TUS + 4 DUS), 21 modül, ductus-core v1.3
  *  Canlı vital barı · zaman damgalı kanıt çizelgesi (GÜNCEL/TARİHSEL) · gömülü iframe
  *  çekmece + gerçek ?chain preset senkronu · meta-spoiler'sız klinik handoff.
  * =================================================================================== */
@@ -132,14 +132,18 @@ var $=function(id){return document.getElementById(id);};
 var HREF={ ACİL:'acil/index.html', EKG:'ekg/index.html', EKO:'eko/index.html', VNT:'ventilator/index.html',
   KS:'ks/index.html', OTO:'oto/index.html', SFT:'sft/index.html', FND:'fnd/index.html', NRO:'nro/index.html',
   CathLab:'ductuslab-cathlab.html', 'NŞR':'ductuslab-neurosurgery.html', OSK:null, POCUS:'eko/index.html',
-  HVY:'ductuslab-airway.html', 'USG-Access':'ductuslab-usg-access.html', LapChole:'ductuslab-lapchole.html' };
+  HVY:'ductuslab-airway.html', 'USG-Access':'ductuslab-usg-access.html', LapChole:'ductuslab-lapchole.html',
+  ENDO:'ductuslab-endo.html', OMFS:'ductuslab-omfs.html', 'PERİO':'ductuslab-perio.html', VPT:'ductuslab-vpt.html', FRM:'ductuslab-pharma.html' };
 var MODNAME={ ACİL:'Acil Konsol', EKG:'12-Derivasyon EKG', EKO:'Eko / POCUS', VNT:'Ventilatör', KS:'Kraniyal Sinir',
   OTO:'Otoskopi', SFT:'Spirometri', FND:'Fundoskopi', NRO:'Nörolojik Muayene', CathLab:'Kateter Lab', 'NŞR':'Nöroşirürji', OSK:'Oskültasyon', POCUS:'POCUS',
-  HVY:'Hava Yolu (RSI)', 'USG-Access':'USG Girişim (POCUS)', LapChole:'Laparoskopik Kolesistektomi' };
+  HVY:'Hava Yolu (RSI)', 'USG-Access':'USG Girişim (POCUS)', LapChole:'Laparoskopik Kolesistektomi',
+  ENDO:'Endodonti (ENDO)', OMFS:'Ağız-Çene Cerrahisi (OMFS)', 'PERİO':'Periodontoloji (PERİO)', VPT:'Vital Pulpa Tedavisi (VPT)', FRM:'Farmakoloji (FRM)',
+  /* kanıt modaliteleri (v1.3 dental) */ PA:'Periapikal Rö (PA)', PAN:'Panoramik Rö', CBCT:'CBCT', EAL:'Apeks Bulucu (EAL)', aspiration:'Aspirasyon Testi', perio_probe:'Periodontal Sondlama', lab:'Laboratuvar / Anamnez', clinical_dental:'Dental Klinik Muayene', capnography:'Kapnografi', ECG12:'12-Derivasyon EKG' };
 var EXAMVERB={ ACİL:'🩸 Değerlendirme Sonucunu Gör', EKG:'⚡ 12-Der EKG Çek & Bulguyu Gör', EKO:'🫀 POCUS Bulgusunu İncele', VNT:'🌬 Ventilatör Yanıtını Gör',
   KS:'👁 Kraniyal Sinir Bulgusunu Gör', OTO:'👂 Otoskopi Bulgusunu Gör', SFT:'🫁 Spirometri Sonucunu Gör', FND:'🔎 Fundoskopi Bulgusunu İncele',
   NRO:'🚶 Nörolojik Muayene Bulgusunu Gör', CathLab:'🩺 Anjiyo/PCI Sonucunu Gör', 'NŞR':'🧠 Operasyon Sonucunu Gör', OSK:'🎧 Oskültasyon Bulgusunu Gör', POCUS:'🫀 POCUS Bulgusunu İncele',
-  HVY:'🌬 Entübasyon Sonucunu Gör', 'USG-Access':'🪡 Girişim Sonucunu Gör', LapChole:'🔪 Cerrahi Sonucunu Gör' };
+  HVY:'🌬 Entübasyon Sonucunu Gör', 'USG-Access':'🪡 Girişim Sonucunu Gör', LapChole:'🔪 Cerrahi Sonucunu Gör',
+  ENDO:'🦷 Endodontik Bulguyu Gör', OMFS:'🦷 Klinik/Radyolojik Bulguyu Gör', 'PERİO':'🦷 Sondlama Bulgusunu Gör', VPT:'🦷 VPT Bulgusunu Gör', FRM:'💊 Anamnez / Laboratuvarı Gör' };
 
 function s(mod,dom,title,prompt,ev,decisions,opts){ return Object.assign({mod:mod,dom:dom,title:title,prompt:prompt,ev:ev||null,decisions:decisions||[]},opts||{}); }
 function d(id,label,kind,lock,critical,vfx){ return {id:id,label:label,kind:kind||'neutral',lock:lock||null,critical:!!critical,vfx:vfx||null}; }
@@ -147,7 +151,7 @@ function MAP(v){ return Math.round(v.dbp+(v.sbp-v.dbp)/3); }
 
 /* =============================== 6 ZİNCİR =============================== */
 var CHAINS={
- 1:{ id:1, nick:'Akut Göğüs Ağrısı & Primer PCI', path:'ACİL → EKG → CathLab → EKO/POCUS',
+ 1:{ id:1, track:'tus', nick:'Akut Göğüs Ağrısı & Primer PCI', path:'ACİL → EKG → CathLab → EKO/POCUS',
    complaint:'58Y erkek, ~1 saattir baskı tarzında göğüs ağrısı, soğuk terleme, bulantı.',
    dxTitle:'İnferiyor STEMI + Sağ Ventrikül Tutulumu (RCA)', dxWords:['STEMI','RCA','infarkt'], truthDom:'coronary',
    vitals:{hr:52,sbp:98,dbp:60,spo2:95,rr:18,gcs:15},
@@ -182,7 +186,7 @@ var CHAINS={
             'Yeni pansistolik üfürüm + ani hipotansiyon (mekanik komplikasyon)',
             'Geniş kompleksli taşikardi / nabızsız ritim (malign aritmi)'] } },
 
- 2:{ id:2, nick:'Gök Gürültüsü Baş Ağrısı & Pitozis', path:'ACİL → KS → FND → EKG → NŞR',
+ 2:{ id:2, track:'tus', nick:'Gök Gürültüsü Baş Ağrısı & Pitozis', path:'ACİL → KS → FND → EKG → NŞR',
    complaint:'48Y kadın, ani başlayan “hayatımın en kötü” baş ağrısı; sağ göz kapağında düşme ve çift görme.',
    dxTitle:'Anevrizmal Subaraknoid Kanama + Kompresif CN III (IC-PC anevrizma)', dxWords:['SAK','subaraknoid','anevrizma'], truthDom:'neuro',
    vitals:{hr:62,sbp:182,dbp:98,spo2:97,rr:16,gcs:14},
@@ -223,7 +227,7 @@ var CHAINS={
             'Yeni fokal defisit veya afazi (gecikmiş serebral iskemi/vazospazm)',
             'Hiponatremi + idrar çıkışında artış (serebral tuz kaybı)'] } },
 
- 3:{ id:3, nick:'Kronik Dispneden Akut Solunum Yetmezliğine', path:'OSK → SFT [Faz 1] → ⏲ → ACİL → EKG → VNT [Faz 2]',
+ 3:{ id:3, track:'tus', nick:'Kronik Dispneden Akut Solunum Yetmezliğine', path:'OSK → SFT [Faz 1] → ⏲ → ACİL → EKG → VNT [Faz 2]',
    complaint:'64Y erkek, aylardır eforla artan nefes darlığı ve kronik öksürük (40 paket-yıl sigara).',
    dxTitle:'KOAH Akut Alevlenme + Akut-Kronik Hiperkapnik Solunum Yetmezliği', dxWords:['KOAH','hiperkapni','oto-PEEP'], truthDom:'respiratory',
    vitals:{hr:104,sbp:138,dbp:82,spo2:86,rr:28,gcs:14,paco2:68},
@@ -264,7 +268,7 @@ var CHAINS={
             'Giderek artan uykululuk / konfüzyon (CO2 narkozu)',
             'NIV/ventilasyon sonrası ani hipotansiyon (dinamik hiperinflasyon/oto-PEEP)'] } },
 
- 4:{ id:4, nick:'Hipertansif Kriz & Görme Bulanıklığı', path:'ACİL → FND → KS/NRO → OSK/EKO',
+ 4:{ id:4, track:'tus', nick:'Hipertansif Kriz & Görme Bulanıklığı', path:'ACİL → FND → KS/NRO → OSK/EKO',
    complaint:'52Y erkek, şiddetli baş ağrısı ve bulanık görme; ölçülen KB 225/135 mmHg.',
    dxTitle:'Malign (Acil) Hipertansiyon — Hedef Organ Hasarı', dxWords:['malign','hedef organ','ensefalopati'], truthDom:'neuro',
    vitals:{hr:88,sbp:225,dbp:135,spo2:96,rr:18,gcs:14},
@@ -294,7 +298,7 @@ var CHAINS={
             'Yırtıcı göğüs/sırt ağrısı + nabız asimetrisi (aort diseksiyonu)',
             'Dispne + bilateral raller (akut akciğer ödemi) veya idrar çıkışında düşme (akut böbrek hasarı)'] } },
 
- 5:{ id:5, nick:'Post-op Senkop & Taşikardi', path:'ACİL → OSK → EKG → EKO/POCUS → VNT',
+ 5:{ id:5, track:'tus', nick:'Post-op Senkop & Taşikardi', path:'ACİL → OSK → EKG → EKO/POCUS → VNT',
    complaint:'71Y kadın, kalça protezi sonrası 3. gün ani nefes darlığı ve bayılma.',
    dxTitle:'Masif Pulmoner Emboli + Obstrüktif (Sağ Kalp) Şok', dxWords:['pulmoner emboli','obstrüktif şok','mcconnell'], truthDom:'hemodynamic',
    vitals:{hr:124,sbp:86,dbp:58,spo2:84,rr:30,gcs:14},
@@ -333,7 +337,7 @@ var CHAINS={
             'Senkop tekrarı veya bilinç kaybı',
             'Dirençli hipoksemi / nabızsız elektriksel aktiviteye geçiş'] } },
 
- 6:{ id:6, nick:'Kronik Otoreden Ataksi ve Diplopiye', path:'OTO → NRO → KS/FND → ACİL',
+ 6:{ id:6, track:'tus', nick:'Kronik Otoreden Ataksi ve Diplopiye', path:'OTO → NRO → KS/FND → ACİL',
    complaint:'29Y erkek, aylardır kötü kokulu kulak akıntısı; son günlerde baş ağrısı ve dengesizlik.',
    dxTitle:'Kolesteatom → Otojenik Serebellar Apse + KİBAS', dxWords:['kolesteatom','apse','serebellar','KİBAS'], truthDom:'neuro',
    vitals:{hr:76,sbp:150,dbp:90,spo2:97,rr:16,gcs:14},
@@ -364,7 +368,7 @@ var CHAINS={
             'Yeni/büyüyen pupil asimetrisi',
             'Yeni nöbet veya hızlı ilerleyen fokal defisit'] } },
 
- 7:{ id:7, nick:'Sağ Üst Kadran Ağrısı, Ateş & Sarılık', path:'ACİL → USG/EKO → USG-Access → LapChole → Handoff',
+ 7:{ id:7, track:'tus', nick:'Sağ Üst Kadran Ağrısı, Ateş & Sarılık', path:'ACİL → USG/EKO → USG-Access → LapChole → Handoff',
    complaint:'67Y kadın, 2 gündür sağ üst kadran ağrısı, ateş (38.8°C), bulantı; sklerada hafif sarılık.',
    dxTitle:'TG18 Akut Kolesistit — Varyant A: Evre II lokal şiddetli / Varyant B: Evre III septik şok',
    dxWords:['Mirizzi','subtotal','kolesistostomi','septik şok'], truthDom:'biliary',
@@ -407,16 +411,204 @@ var CHAINS={
             'Dren / kolesistostomi sonrası bilier peritonit bulguları'] } }
 };
 
+/* =============================== v4.0 — 4 ENTEGRE DUS ZİNCİRİ (D1–D4) =============================== */
+function dx(dec,cmd){ dec.cmd=cmd; return dec; }
+CHAINS[8]={ id:8, code:'D1', track:'dus', nick:'Şiddetli Diş Ağrısı & Kalp Kapağı / Kan Sulandırıcı', path:'FRM → ENDO → Handoff',
+  complaint:'58Y erkek, mekanik aort kapağı + Warfarin (güncel INR 2.8), penisilin alerjisi öyküsü; sağ üst 1. molar (FDI 16) bölgesinde spontan, zonklayıcı ağrı.',
+  complaintByVariant:{ B:'58Y erkek, koroner stent öyküsü (14 ay önce) ve düzenli aspirin; penisilin alerjisi öyküsü; sağ üst 1. molar (FDI 16) bölgesinde spontan, zonklayıcı ağrı.' },
+  dxTitle:'Yüksek riskli kalp hastasında endodontik acil — Varyant A: mekanik kapak (profilaksi GEREKLİ, klindamisin DEĞİL; INR<4 → Warfarin KESİLMEZ) / Varyant B: yalnız koroner stent (profilaksi GEREKSİZ)',
+  dxWords:['profilaksi','azitromisin','klindamisin','endokardit'], truthDom:'toothStructure',
+  dental:{ teethByFDI:{16:{status:'carious_symptomatic'}} }, truthDental:{ pulpHistologyByFDI:{16:'irreversible_pulpitis'} },
+  vitals:{hr:82,sbp:146,dbp:88,spo2:97,rr:16,gcs:15},
+  stations:[
+    s('FRM','hemodynamic','Anamnez, İlaç & Alerji Değerlendirmesi','İlaç listesi, antikoagülan düzeyi ve alerji öyküsünü dental girişim öncesi netleştir.',
+      {mod:'lab',sum:'Mekanik aort kapağı + Warfarin; güncel INR 2.8 (hedef 2.5–3.5); penisilin alerjisi öyküsü; FDI 16 spontan zonklayıcı ağrı, soğukta uzayan',claims:['inr_value']},
+      [ d('inr_ok','Güncel INR değerini ve ilaç dozunu doğrula','safe') ], {vonly:'A'}),
+    s('FRM','hemodynamic','Anamnez, İlaç & Alerji Değerlendirmesi','İlaç listesi ve alerji öyküsünü dental girişim öncesi netleştir.',
+      {mod:'lab',sum:'Koroner stent (DES, 14 ay önce) + aspirin 100 mg; protez kapak / geçirilmiş endokardit YOK; penisilin alerjisi öyküsü; FDI 16 spontan zonklayıcı ağrı',claims:['inr_value']},
+      [ d('med_ok','İlaç listesini (aspirin) ve stent tarihini doğrula','safe') ], {vonly:'B'}),
+    s('FRM','hemodynamic','Dental İşlem Öncesi Antibiyotik Kararı','Kanal tedavisi (apikal/gingival manipülasyon) öncesi antibiyotik gerekli mi? Penisilin alerjisini hesaba kat.',
+      null,
+      [ d('azithro','Azitromisin 500 mg (işlemden 30–60 dk önce)','safe',null,false,null),
+        d('clinda','Klindamisin 600 mg ver','trap','Klindamisin artık profilakside ÖNERİLMEZ (C. difficile riski) — penisilin alerjisinde azitromisin/klaritromisin 500 mg tercih edilir.',true),
+        d('amox','Amoksisilin 2 g ver','trap','Penisilin alerjisi öyküsünde amoksisilin kontrendike (anafilaksi riski).',true),
+        d('no_abx_a','Antibiyotik verme','trap','Mekanik protez kapak = yüksek riskli grup; apikal manipülasyon öncesi endokardit profilaksisi GEREKLİ.',true) ],
+      {vonly:'A'}),
+    s('FRM','hemodynamic','Dental İşlem Öncesi Antibiyotik Kararı','Kanal tedavisi öncesi antibiyotik gerekli mi?',
+      null,
+      [ d('no_abx_b','Antibiyotik profilaksisi verme (yalnız koroner stent)','safe'),
+        d('abx_b','Azitromisin ile profilaksi ver','trap','Koroner stent tek başına endokardit profilaksisi endikasyonu DEĞİLDİR (AHA/ADA); gereksiz antibiyotik direnç riskini artırır.',false),
+        d('stop_asa','Aspirini işlem için kes','trap','Kardiyoloji onayı olmadan antiplatelet kesilmez → stent trombozu riski.',true) ],
+      {vonly:'B'}),
+    s('FRM','hemodynamic','Kanama Yönetimi Kararı','INR 2.8 ile kanal tedavisi planlanıyor. Antikoagülan ve analjezi stratejisi?',
+      null,
+      [ d('continue_local','Warfarin’i KESME (INR < 4.0) — lokal hemostatik önlemlerle devam','safe'),
+        d('para','Analjezi için parasetamol','safe'),
+        d('stop_warf','Warfarin’i 5 gün önce kes','trap','Mekanik kapakta Warfarin kesilirse kapak trombozu / inme riski — SDCEP: INR < 4.0 ise kesilmez.',true,{sbp:8}),
+        d('vitk','K vitamini ver','trap','Kapak trombozu riski; gereksiz antagonizma.',true),
+        d('nsaid','Ağrı için NSAİİ ver','trap','NSAİİ + Warfarin → ciddi kanama riski.',false) ],
+      {vonly:'A'}),
+    s('ENDO','toothStructure','Kanal Tedavisi — Giriş & Periapikal Değerlendirme','FDI 16: periapikal radyografi değerlendir, erişim kaviteyi aç.',
+      {mod:'PA',sum:'Periapikal: 16 MB kökte periapikal genişleme; furkasyon/kök perforasyonu bulgusu YOK',claims:['periapical_lesion','perforation_absent']},
+      [ d('rct','Kanal tedavisini başlat (lokal hemostatik hazır: sütür, hemostatik sünger, traneksamik asit)','safe') ],
+      {phaseBreak:'canalConnectivity', phaseCmd:{type:'PrepareTooth',payload:{fdi:16,kind:'access',status:'accessed'}}, phaseLabel:'Erişim kavitesi / kanal preparasyonu sonrası — önceki periapikal “perforasyon yok” kapsamı TARİHSEL'}),
+    s('ENDO','filePosition','Çalışma Boyu & Kanal Şekillendirme','EAL ile çalışma boyunu belirle; periapikal travmadan kaçın.',
+      {mod:'EAL',sum:'EAL: apikal konstriksiyon −0.5 mm; çalışma boyu 3 kanalda belirlendi, kanama kontrollü',claims:['electronic_working_length']},
+      [ d('wl','EAL + PA ile çalışma boyunu doğrula','safe'),
+        d('overinst','Çalışma boyunu aşarak instrümante et','trap','Apeks ötesi instrümantasyon periapikal travma/kanama yapar; INR altında kanama riski artar.',false) ]) ],
+  handoff:{ status:[
+      'Kanal tedavisi kanama kontrolü altında tamamlandı; antikoagülan/antiplatelet kesilmeden, endokardit riski kapsamında izlemde',
+      'Kanal tedavisi ertelendi; ağrı kontrolsüz, antikoagülan durumu belirsiz',
+      'Diş çekildi, kanama durdurulamadı; hematolojik değerlendirme bekleniyor'],
+    unc:['Postoperatif 24 saatte lokal kanama (INR dalgalanması) riski sürüyor',
+         'Kalıcı restorasyon ve koronal seal zamanlaması netleşmedi',
+         'Periapikal iyileşme 6–12 ayda radyografik izlemle belli olacak'],
+    alarm:['Dişeti/dil altı sürekli kanama ya da hematom (INR kontrolü + hemostaz)',
+           'İşlem sonrası ateş/halsizlik/yeni üfürüm (enfektif endokardit şüphesi)',
+           'Yeni nörolojik defisit veya göğüs ağrısı (kapak trombozu/inme)'] } };
+
+CHAINS[9]={ id:9, code:'D2', track:'dus', nick:'Sağ Alt Yirmi Yaş Ağrısı & Enjeksiyon Sonrası Yakınma', path:'OMFS → FRM → EKG / ACİL → Handoff',
+  complaint:'24Y kadın, sağ alt çene gömülü yirmi yaş dişi (FDI 48) bölgesinde 3 gündür ağrı, ağız açmada hassasiyet ve kötü tat.',
+  dxTitle:'Perikoronit + İAN ile gerçek 3B temas (koronektomi) — Varyant A: vazovagal yanıt / Varyant B: intravasküler kaçış → LAST (%20 lipid emülsiyonu)',
+  dxWords:['lokal anestezik sistemik','lipid','vazovagal','koronektomi'], truthDom:'needlePlacement',
+  dental:{ teethByFDI:{48:{status:'impacted_pericoronitis'}} }, truthDental:{ ianContact3d:true, intravascularLeak:false },
+  vitals:{hr:84,sbp:122,dbp:76,spo2:98,rr:14,gcs:15},
+  stations:[
+    s('OMFS','toothStructure','Ağrı Kaynağı & Görüntüleme Gerekçesi','Panoramik görüntüyü yorumla; ileri görüntüleme için gerekçe var mı?',
+      {mod:'PAN',sum:'Panoramik: 48 mezyoangüler; kök ucu ile mandibüler kanal projeksiyonu örtüşüyor (kök kararması, kanal daralması) — 2B örtüşme gerçek temas demek DEĞİL; perikoronit bulguları',claims:['rood_shehab_signs','impaction_depth_2d']},
+      [ d('cbct_just','Rood-Shehab bulguları var → gerekçeli CBCT iste (İAN ilişkisi)','safe'),
+        d('cbct_routine','Gerekçesiz rutin CBCT iste','trap','Gerekçesiz CBCT ALARA ilkesine aykırıdır; endikasyon (Rood-Shehab bulguları) belgelenmeli.',false),
+        d('pan_only','Yalnız panoramikle “İAN teması yok” deyip rutin çek','trap','Panoramik 2B örtüşmesi 3B İAN temasını doğrulayamaz (PAN ≠ exact 3D IAN contact).',true) ],
+      {caseN:'O3'}),
+    s('OMFS','toothStructure','Cerrahi Karar','CBCT sonucuna göre cerrahi strateji?',
+      {mod:'CBCT',sum:'CBCT: lingual kortikal kayıp + kanal ile kök arasında kortikal ayrım yok (gerçek 3B temas), vital kök',claims:['exact_3d_ian_contact']},
+      [ d('coronectomy','Koronektomi planla (İAN hasarı riskini azalt)','safe'),
+        d('full_ext','Rutin tam çekim planla','trap','Gerçek İAN teması + vital kökte tam çekim kalıcı parestezi riskini artırır; koronektomi tercih edilir.',false) ],
+      {caseN:'O3'}),
+    s('OMFS','needlePlacement','İAN Bloğu (Halstead)','Anestezi uygula: yavaş enjeksiyon ve aspirasyon.',
+      {mod:'aspiration',sum:'Aspirasyon negatif (iki düzlemde); kan gelmedi',claims:['intravascular_injection_excluded']},
+      [ dx(d('halstead','Halstead İAN bloğu — yavaş depozit, aspirasyonlu','safe'),{type:'AdministerLocalAnesthetic',payload:{drugId:'articaine',concentrationMgMl:40,volumeMl:1.7}}),
+        d('no_asp','Aspirasyonsuz hızlı bolus','trap','Aspirasyonsuz hızlı depozit intravasküler enjeksiyon riskini artırır.',true) ],
+      {phaseBreak:'needlePlacement', phaseCmd:{type:'RepositionNeedle',payload:{site:'IAN'}}, phaseLabel:'İğne yeniden konumlandı (ek depozit) — önceki aspirasyon kaydı TARİHSEL'}),
+    s('ACİL','hemodynamic','Enjeksiyon Sonrası Akut Yakınma','Enjeksiyondan dakikalar sonra hasta kötü hissediyor; vitalleri ve EKG’yi değerlendir.',
+      {mod:'ECG12',sum:'Geçici taşikardi sonrası bradikardi, soluk-terli presenkop; dar QRS, geniş QRS yok; nöbet, ağız çevresi uyuşma ve metalik tat YOK; yatırılınca hızla düzeliyor',claims:['rhythm']},
+      [ d('trendelenburg','Hastayı yatır (Trendelenburg), O2, vital izlem','safe',null,false,{sbp:16,hr:6}),
+        d('adrenaline','Adrenalin ver','trap','Vazovagal/geçici sinüs taşikardisinde adrenalin gereksiz ve aritmojenik; önce yatır + izle.',true,{hr:22,sbp:18}),
+        d('lipid_a','%20 lipid emülsiyonu başla','trap','Lipid yalnız LAST (nöbet/ritim toksisitesi) için; burada bulgu yok.',false) ],
+      {vonly:'A'}),
+    s('ACİL','airway','Enjeksiyon Sonrası Yeni Semptomlar','Perioral uyuşma, metalik tat, kulak çınlaması; ardından nöbet.',
+      {mod:'clinical_dental',sum:'Perioral uyuşma, metalik tat, tinnitus → jeneralize tonik-klonik nöbet; SpO2 düşüyor, havayolu korunmuyor',claims:['airway_compromise_clinical']},
+      [ d('airway_o2','Havayolu + %100 O2 + ventilasyon desteği','safe',null,false,{spo2:6}),
+        d('benzo','Nöbet için benzodiazepin','safe'),
+        d('lipid20','%20 intravenöz lipid emülsiyonu (Intralipid 1.5 mL/kg bolus → infüzyon)','safe',null,false,{sbp:14,hr:-8}),
+        d('lido','Aritmi için lidokain ver','trap','Lidokain sınıf IB antiaritmik — zaten lokal anestezik toksisitesi var; kardiyotoksisiteyi derinleştirir.',true,{sbp:-20,hr:-14}),
+        d('propofol','Nöbet için yüksek doz propofol','trap','Yüksek doz propofol kardiyodepresyon yapar; LAST’ta benzodiazepin tercih edilir.',true,{sbp:-26}),
+        d('big_epi','Yüksek doz adrenalin bolus','trap','LAST’ta adrenalin ≤1 µg/kg küçük dozlarda; yüksek doz lipid etkisini azaltır, aritmiyi kötüleştirir.',false,{hr:24}) ],
+      {vonly:'B', phaseBreak:'airway', phaseLabel:'Havayolu/nöbet yönetimi sonrası — önceki klinik kanıt TARİHSEL'}),
+    s('EKG','rhythm','12-Derivasyon EKG','Nöbet ve toksisite bağlamında EKG’yi yorumla.',
+      {mod:'ECG12',sum:'Geniş QRS + ventriküler aritmi / ileti bozukluğu (sodyum kanalı blokajı paterni)',claims:['conduction_block','rhythm']},
+      [ d('read_cardiotox','Kardiyotoksisite olarak yorumla → lipid + ALS (küçük doz epi)','safe'),
+        d('stemi_cath','STEMI sanıp heparin + CathLab’a yolla','trap','Geniş QRS toksik ileti bozukluğudur; STEMI sanıp kateter → yanlış yol, tedavi gecikmesi.',true) ],
+      {vonly:'B'}) ],
+  handoff:{ status:[
+      'Koronektomi planlı; enjeksiyon sonrası geçici vazovagal yanıt düzeldi, hemodinami stabil, kısa izlem sonrası taburculuk planı',
+      'Toksik bulgular lipid emülsiyonu ve destek ile geriliyor; monitörize yoğun bakımda izlem (geç tekrar toksisite riski)',
+      'Enjeksiyon sonrası bilinç kaybı sürüyor; ileri yaşam desteği ve YBÜ değerlendirmesi'],
+    unc:['Geç dönem tekrar nöbet/ritim bozukluğu (lipid sonrası yeniden toksisite) riski sürüyor',
+         'Cerrahinin zamanlaması ve anestezi yöntemi (lokal yerine genel) yeniden planlanmalı',
+         'Parestezi riski CBCT’de gösterilen gerçek İAN temasına bağlı'],
+    alarm:['Yeni nöbet, geniş QRS veya hipotansiyon (tekrar toksisite)',
+           'Bilinç düzeyinde düşme veya solunum yetmezliği',
+           'Dudak/çene alt bölgesinde kalıcı his kaybı (İAN hasarı)'] } };
+
+CHAINS[10]={ id:10, code:'D3', track:'dus', nick:'Alt Molar Çürüğü Sonrası Çene Altı Şişliği & Boğuk Ses', path:'OMFS → ACİL → HVY → OMFS (Kaynak Kontrolü) → Handoff',
+  complaint:'34Y erkek, kontrolsüz alt molar çürüğü; 5 gündür ağrı, son 12 saatte çene altı ve boyunda şişlik, ağız açamama, ses boğuklaşması, tükürüğünü yutamama.',
+  dxTitle:'Ludwig anjini (36/48 kök uçları mylohyoid sırtın altında) — önce havayolu, sonra görüntüleme/cerrahi drenaj',
+  dxWords:['Ludwig','anjin','mylohyoid','asfiksi'], truthDom:'airway',
+  dental:{ teethByFDI:{36:{status:'carious_abscess'},48:{status:'carious_abscess'}}, infection:{sourceToothFDI:36,submandibularInvolvement:true,trismusMm:12,airwayThreat:true} },
+  truthDental:{ pulpHistologyByFDI:{36:'necrotic',48:'necrotic'} },
+  vitals:{hr:116,sbp:132,dbp:80,spo2:91,rr:28,gcs:15,temp:38.9},
+  stations:[
+    s('OMFS','airway','Ağız Tabanı & Havayolu Muayenesi','Ağız tabanı, dil pozisyonu, ağız açıklığı ve nefes sesini değerlendir.',
+      {mod:'clinical_dental',sum:'Bilateral submandibular + sublingual sert şişlik; dil yukarı-arkaya itilmiş; ağız açıklığı 12 mm; salya yutamama; inspiratuvar stridor; 36/48 çürük, ateş 38.9; dik oturmak istiyor',claims:['trismus_mm','floor_of_mouth_swelling','airway_compromise_clinical']},
+      [ dx(d('upright','Dik oturur pozisyonda tut, O2 ver','safe',null,false,{spo2:3}),{type:'SetDental',payload:{infection:{sourceToothFDI:36,submandibularInvolvement:true,trismusMm:12,airwayThreat:true}}}),
+        d('imaging_first','Önce panoramik/CBCT çekmeye gönder','trap','Akut havayolu tehdidinde görüntüleme için hastayı yalnız bırakmak asfiksi/arrest riskidir. Önce havayolu.',true,{spo2:-6,rr:6}),
+        d('supine_drain','Dental koltukta yatırıp lokal drenaj dene','trap','Supin pozisyon dili geriye iterek havayolunu tamamen tıkayabilir; lokal drenaj yetersiz ve tehlikelidir.',true,{spo2:-8}) ]),
+    s('ACİL','airway','Havayolu Önceliği & Triyaj','Havayolu güvence altına alınmadan hangi adımlar atılır?',
+      {mod:'clinical_dental',sum:'SpO2 %91, RR 28, stridor; dik pozisyon + O2; zor havayolu ekibi (anestezi/KBB) ve cerrahi çağrıldı',claims:['airway_compromise_clinical']},
+      [ d('call_airway','Zor havayolu ekibi + cerrahi çağır, hazırlık yap','safe'),
+        d('abx_iv','Geniş spektrumlu IV antibiyotik başla (havayolu hazırlığını geciktirmeden)','safe'),
+        d('ct_first','Boyun BT’sine gönder, sonra havayoluna bak','trap','Görüntüleme öncesi havayolu önceliği: stridorlu hastada BT odasında arrest riski.',true,{spo2:-6}),
+        d('oral_abx','Oral antibiyotik + taburcu','trap','Derin boyun enfeksiyonunda taburculuk ölümcül olabilir; hospitalizasyon + havayolu planı şart.',true) ]),
+    s('HVY','airway','Zor Havayolu Yönetimi','Trismus + ödem: paralitik indüksiyondan önce havayolu stratejisi.',
+      {mod:'capnography',sum:'Uyanık fiberoptik/video-yardımlı entübasyon; EtCO2 dalga formu doğrulandı; cerrahi krikotirotomi seti hazırda',claims:['ett_in_trachea']},
+      [ d('awake_fo','Uyanık fiberoptik / video entübasyon (topikal anestezi)','safe',null,false,{spo2:5}),
+        d('cric_ready','Cerrahi krikotirotomi seti hazır, boyun işaretli','safe'),
+        d('blind_rsi','Hazırlıksız kör paralitik RSI','trap','Trismus + dil ödeminde paralitik ilaç havayolu tonusunu kaldırır → “entübe edilemez-ventile edilemez” (CICO).',true,{spo2:-12}),
+        d('sedate_supine','Sedasyon verip yatırarak entübe et','trap','Sedasyon + supin pozisyon spontan solunumu ve havayolunu kaybettirir.',true,{spo2:-10}) ],
+      {phaseBreak:'airway', phaseLabel:'Havayolu güvence altında — öncesindeki havayolu kanıtları TARİHSEL'}),
+    s('OMFS','airway','Kaynak Kontrolü & Cerrahi Drenaj','Havayolu güvende. Yayılımı görüntüle, boşlukları drene et, kaynak dişi ele al.',
+      {mod:'clinical_dental',sum:'Havayolu güvende; kontrastlı BT (havayolu sonrası): submandibular/sublingual/submental boşluklarda yaygın ödem-kollekt; 36/48 kaynak diş',claims:['floor_of_mouth_swelling']},
+      [ d('ct_after','Kontrastlı BT’yi havayolu sağlandıktan sonra iste','safe'),
+        d('drain_source','Fasiyal boşluk drenajı + etken dişlerin çekimi + IV antibiyotik','safe'),
+        d('abx_only','Yalnız IV antibiyotikle izle, cerrahi bekle','trap','Kaynak kontrolü (drenaj + etken diş) olmadan yalnız antibiyotik yetersizdir.',false) ]) ],
+  handoff:{ status:[
+      'Havayolu güvende (entübe); geniş spektrumlu IV antibiyotik ve cerrahi drenaj sonrası YBÜ’de izlem',
+      'Havayolu henüz güvenceye alınmadı; zor havayolu ekibi ve cerrahi hazırlıkta',
+      'Yutma ve ses yakınmaları geriledi, ağız açıklığı 25 mm; servis izlemi'],
+    unc:['Ekstübasyon zamanı ödem gerilemesine bağlı (cuff-leak testi)',
+         'Mediastene yayılım ve ikinci drenaj ihtiyacı netleşmedi',
+         'Organizma ve antibiyogram sonuçları bekleniyor'],
+    alarm:['Yeniden stridor, SpO2 düşüşü veya ödem artışı (havayolu kaybı)',
+           'Ateş/yeni göğüs ağrısı veya boyun krepitasyonu (mediastinit)',
+           'Hemodinamik bozulma / laktat yükselmesi (sepsis)'] } };
+
+CHAINS[11]={ id:11, code:'D4', track:'dus', nick:'Dişeti Kanaması, Diş Sallanması & Kontrolsüz Diyabet', path:'PERİO → FRM → PERİO (Yeniden Değerlendirme) → Handoff',
+  complaint:'44Y erkek, dişetlerinde kanama, dişlerde sallanma ve ağız kokusu; HbA1c %8.4, günde 15 sigara.',
+  dxTitle:'Generalize Evre III / Derece C Periodontitis — Faz I sonrası klinik sağlıkta bile Evre III korunur',
+  dxWords:['Evre III','Derece C','periodontit'], truthDom:'periodontalChart',
+  dental:{ teethByFDI:{} }, truthDental:{},
+  vitals:{hr:80,sbp:134,dbp:84,spo2:98,rr:15,gcs:15},
+  stations:[
+    s('PERİO','periodontalChart','Hedefli Sondlama & Tam Ağız Değerlendirmesi','Tam ağız sondlama, kanama, ataşman kaybı ve radyografik kemik kaybını değerlendir.',
+      {mod:'perio_probe',sum:'Yaygın PPD 5–7 mm, BOP %78, interdental CAL 5–6 mm, radyografik kemik kaybı kök boyunun >1/3’ü (orta 1/3), diş kaybı yok; ilerleme hızı yüksek; HbA1c %8.4 + 15 sigara/gün',claims:['ppd','bop','cal','furcation_involvement']},
+      [ d('stage3c','Generalize Evre III / Derece C olarak sınıfla','safe'),
+        d('stage2b','Evre II / Derece B olarak sınıfla (risk faktörlerini sayma)','trap','İnterdental CAL 5–6 mm + kemik kaybı orta 1/3 = Evre III; diyabet + sigara ile derece C’ye yükselir.',false) ],
+      {caseN:'P4'}),
+    s('FRM','hemodynamic','Sistemik Risk & Tedavi Planı','Diyabet ve sigara ile periodontal tedaviyi nasıl birlikte yöneteceksin?',
+      null,
+      [ d('glycemic','Glisemik kontrol (endokrin/dahiliye) + ilaç uyumu + sigara bırakma + Faz I (SRP, hijyen eğitimi)','safe'),
+        d('routine_abx','Rutin sistemik antibiyotik ver','trap','Rutin sistemik antibiyotik antibiyotik direncini artırır; endikasyon dışı kullanımdır.',false) ],
+      {phaseBreak:'periodontalChart', phaseCmd:{type:'UpdatePeriodontalChart',payload:{summary:{phase:'post-phase-I-8w'}}}, phaseLabel:'Faz I tamamlandı (8. hafta) — baseline sondlama kaydı TARİHSEL'}),
+    s('PERİO','periodontalChart','Faz I Sonrası 8. Hafta Yeniden Değerlendirme','Sondlamayı tekrar yap, sonucu yorumla ve evreyi belirle.',
+      {mod:'perio_probe',sum:'8. hafta: PPD 6 mm → 3 mm, BOP %12; CAL değişmedi (kalıcı ataşman kaybı); inflamasyon çözüldü',claims:['ppd','bop','cal']},
+      [ d('keep_stage','Evre III / Derece C’yi KORU — klinik sağlık/azaltılmış periodonsiyumda stabil Evre III hasta','safe'),
+        d('supportive','Destekleyici periodontal tedavi: 3 aylık recall','safe'),
+        d('downstage','Evreyi Evre I’e düşür (cepler 3 mm oldu)','trap','Evre geçmiş ataşman kaybına dayanır; inflamasyon çözülünce evre düşürülmez — “stabil Evre III”.',true),
+        d('no_recall','Tedaviyi bitir, recall vermeden taburcu et','trap','Destekleyici bakım olmadan nüks riski yüksek (özellikle diyabet + sigara).',false) ],
+      {caseN:'P4'}) ],
+  handoff:{ status:[
+      'Faz I sonrası inflamasyon çözüldü; Evre III / Derece C korunarak destekleyici periodontal tedavide, glisemik kontrol izleniyor',
+      'Faz I yanıtı kısmi; rezidüel derin ceplerde cerrahi (Faz II) değerlendiriliyor',
+      'Glisemik kontrol bozuk, periodontal yıkım ilerliyor; sistemik yönlendirme ve acil bakım'],
+    unc:['Rezidüel cepler (≥5 mm) için Faz II cerrahi ihtiyacı belirsiz',
+         'Glisemik kontrol ve sigara bırakma uyumu uzun vadeli prognozu belirler',
+         'Diş mobilite/travmatik oklüzyon katkısı netleşmedi'],
+    alarm:['Periodontal apse veya hızlı yeni ataşman kaybı',
+           'HbA1c yükselişi / hipoglisemi atağı',
+           'Yeni diş mobilitesi veya ağrı (travmatik oklüzyon/endo-perio lezyon)'] } };
+
 /* =============================== DURUM / MOTOR =============================== */
-var CC={ chainId:null, chain:null, variant:'A', level:'student', idx:0, done:{}, flags:[], handoff:{}, S:null, booted:false, vitals:null, capturedEv:{} };
+function complaintOf(ch,v){ return (ch.complaintByVariant&&ch.complaintByVariant[v])||ch.complaint; }
+var CC={ track:'all', chainId:null, chain:null, variant:'A', level:'student', idx:0, done:{}, flags:[], handoff:{}, S:null, booted:false, vitals:null, capturedEv:{} };
 
 function openSession(){ CC.S=DuctusCore.open({ patientId:'chain'+CC.chainId+'-'+CC.variant+'-'+Date.now(), forceSeed:true,
-    seed:{ revisions:{coronary:0,rhythm:0,hemodynamic:0,respiratory:0,neuro:0}, truth:{dx:CC.chain.dxTitle} } }); }
+    seed:{ revisions:{coronary:0,rhythm:0,hemodynamic:0,respiratory:0,neuro:0}, truth:{dx:CC.chain.dxTitle, dental:CC.chain.truthDental||undefined}, dental:CC.chain.dental||undefined } }); }
 
 function boot(chainId,variant,level){ CC.chainId=chainId; CC.chain=CHAINS[chainId]; CC.variant=variant||'A'; CC.level=level||CC.level;
   CC.idx=0; CC.done={}; CC.flags=[]; CC.handoff={}; CC.capturedEv={}; CC.booted=true; CC.vitals=Object.assign({},CC.chain.vitals); openSession();
   $('selOverlay').classList.remove('open'); $('jury').classList.remove('open');
-  $('chainTitle').textContent='Zincir #'+chainId+' · '+CC.chain.nick+'  ·  '+CC.chain.path;
+  $('chainTitle').textContent='Zincir #'+chainId+(CC.chain.code?' ('+CC.chain.code+')':'')+' · '+CC.chain.nick+'  ·  '+CC.chain.path;
   $('varChip').style.display=''; $('varB').textContent=CC.variant; $('vitalsBar').style.display='flex';
   [].forEach.call($('lvlSeg').children,function(b){ b.classList.toggle('on',b.dataset.lvl===CC.level); });
   renderVitalsBar(); renderRail(); renderStation(0); renderEvRail();
@@ -465,7 +657,7 @@ function moduleURL(st,i){ var href=HREF[st.mod]; if(!href)return null;
   var u=href+(href.indexOf('?')<0?'?':'&')+'chain=1&chainId='+CC.chainId+'&station='+st.mod+'&variant='+CC.variant+'&pid='+encodeURIComponent(CC.S.getState().patientId);
   if(st.caseN) u+='&case='+st.caseN; return u; }
 function renderStation(i){ CC.idx=i; renderRail(); renderVitalsBar(); var st=CC.chain.stations[i], p=$('panel'), url=moduleURL(st,i);
-  var h='<div class="panelttl">'+st.title+'</div><div class="panelsub"><b>Başvuru:</b> '+CC.chain.complaint+'<br>'+st.prompt+'</div>';
+  var h='<div class="panelttl">'+st.title+'</div><div class="panelsub"><b>Başvuru:</b> '+complaintOf(CC.chain,CC.variant)+'<br>'+st.prompt+'</div>';
   h+='<div class="card"><h3>'+(MODNAME[st.mod]||st.mod)+' İstasyonu</h3><div class="actions">';
   if(st.ev) h+='<button class="pri" id="cap-'+i+'" onclick="examCapture('+i+')">'+(EXAMVERB[st.mod]||'🔎 Bulguyu İncele & Kaydet')+'</button>';
   if(url){ h+='<button onclick="toggleDrawer('+i+')">🔬 Simülatörü İstasyon İçinde Aç (Gömülü)</button>';
@@ -489,8 +681,8 @@ function renderDecFlags(i){ var box=$('decflags-'+i); if(!box)return; var mine=C
   box.innerHTML=mine.map(function(f){ return '<div class="flag '+(f.kind==='trap'?'red':f.kind==='safe'?'green':'amber')+'">'+f.msg+'</div>'; }).join(''); }
 
 window.examCapture=function(i){ var st=CC.chain.stations[i]; if(!st.ev)return;
-  if(!CC.done['ev'+i]){ var rec=CC.S.addEvidence({ modality:st.mod, summary:st.ev.sum, claims:st.ev.claims }); CC.capturedEv[i]=rec; CC.done['ev'+i]=true;
-    var b=$('cap-'+i); if(b){ b.classList.add('done'); b.textContent='✓ Bulgu kaydedildi'; } toast('Kanıt kaydedildi: '+MODNAME[st.mod],'good'); }
+  if(!CC.done['ev'+i]){ var rec=CC.S.addEvidence({ modality:st.ev.mod||st.mod, summary:st.ev.sum, claims:st.ev.claims, dependsOn:st.ev.dependsOn }); CC.capturedEv[i]=rec; CC.done['ev'+i]=true;
+    var b=$('cap-'+i); if(b){ b.classList.add('done'); b.textContent='✓ Bulgu kaydedildi'; } toast('Kanıt kaydedildi: '+(MODNAME[st.ev.mod||st.mod]||st.mod),'good'); }
   renderFinding(i); renderEvRail(); };
 window.toggleDrawer=function(i){ var dr=$('drawer-'+i); if(!dr)return; var open=dr.classList.toggle('open');
   var wrap=$('iframewrap-'+i); if(open&&wrap&&!wrap.firstChild){ var st=CC.chain.stations[i]; var f=document.createElement('iframe'); f.src=moduleURL(st,i); f.loading='lazy'; wrap.appendChild(f); toast(MODNAME[st.mod]+' bu hastanın vakasıyla gömülü açıldı.','good'); } };
@@ -498,6 +690,7 @@ window.openNewTab=function(i){ var st=CC.chain.stations[i]; var url=moduleURL(st
 
 window.decide=function(i,decId){ var st=CC.chain.stations[i], dec=st.decisions.find(function(x){return x.id===decId;}); if(!dec)return; var b=$('d-'+i+'-'+decId);
   if(dec.vfx) applyVitals(dec.vfx);
+  if(dec.cmd){ try{ CC.S.dispatch(dec.cmd); }catch(e){} }
   if(dec.kind==='trap'){ logFlag(i,'trap','🔒 GÜVENLİK KİLİDİ — '+dec.label+': '+dec.lock, dec.critical, decId); if(b){ b.style.borderColor='rgba(196,86,95,.6)'; b.style.color='#e88b92'; } toast('🔒 Kontrendikasyon engellendi: '+dec.label,'bad'); }
   else if(dec.kind==='safe'){ logFlag(i,'safe','✓ Uygun karar: '+dec.label, false, decId); if(b)b.classList.add('done'); }
   else { logFlag(i,'neutral',dec.label+' uygulandı.', false, decId); }
@@ -506,7 +699,7 @@ function logFlag(station,kind,msg,critical,decId){ CC.flags.push({station:statio
 
 window.nextStation=function(i){ var st=CC.chain.stations[i];
   if(st.ev&&!CC.done['ev'+i]){ toast('⚠ Bu istasyonda kanıt kaydetmediniz — Hasta Devri eksik kanıtla zayıflar. Önce bulguyu inceleyin.','warn'); }
-  if(st.phaseBreak){ var dom=st.phaseBreak, cur=CC.S.getRevisions()[dom]; var patch={}; patch[dom]=cur+1; CC.S.update({revisions:patch}); renderEvRail();
+  if(st.phaseBreak){ var dom=st.phaseBreak, cur=CC.S.getRevisions()[dom]; if(st.phaseCmd){ CC.S.dispatch(st.phaseCmd); } else { var patch={}; patch[dom]=cur+1; CC.S.update({revisions:patch}); } renderEvRail();
     toast('⏲ '+(st.phaseLabel||('Revizyon: '+dom)),'warn'); }
   CC.done[i]=true; renderRail();
   var vis=visibleIdx();                                  // yalnız geçerli varyantın istasyonları
@@ -516,7 +709,7 @@ window.nextStation=function(i){ var st=CC.chain.stations[i];
 
 /* -------- SAĞ KANIT ZAMAN ÇİZELGESİ -------- */
 function fmtMs(ms){ var sec=Math.floor(ms/1000); return String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0'); }
-function domTR(a){ return {coronary:'koroner',rhythm:'ritim',hemodynamic:'hemodinamik',respiratory:'solunum',neuro:'nörolojik'}[a]||a; }
+function domTR(a){ return {coronary:'koroner',rhythm:'ritim',hemodynamic:'hemodinamik',respiratory:'solunum',neuro:'nörolojik',airway:'havayolu',toothStructure:'diş yapısı',canalConnectivity:'kanal bağlantısı',filePosition:'eğe/EAL konumu',needlePlacement:'iğne konumu',periodontalChart:'periodontal şema'}[a]||a; }
 function renderEvRail(){ var r=$('evrail'); if(!CC.S){ r.innerHTML=''; return; } var evs=CC.S.getEvidence();
   var h='<h4><span>📑 Toplanan Kanıt</span><span>'+evs.length+'</span></h4>';
   if(!evs.length){ h+='<div class="hint">Henüz kanıt yok. Her istasyonda bulguyu inceleyip kaydedin.</div>'; }
@@ -568,12 +761,19 @@ function buildJury(){ var ch=CC.chain, flags=CC.flags; var clampN=function(x){re
 }
 
 /* -------- SEÇİCİ -------- */
-function showSelector(){ var h='<h2>🩺 6 Entegre Nöbet & Vaka Zinciri</h2><div class="sub">12 modül tam entegre — ductus-core v1.1 ile truth sızmazlığı, alan-bazlı revizyon ve kanıt güncelliği. Mod ve varyant seçin, bir zincir açın. Tanı öncesi spoiler yok.</div>';
+function trackOf(c){ return c.track||'tus'; }
+function trackCounts(){ var n={all:0,tus:0,dus:0}; Object.keys(CHAINS).forEach(function(k){ n.all++; n[trackOf(CHAINS[k])]++; }); return n; }
+function renderSelGrid(){ var h=''; Object.keys(CHAINS).forEach(function(k){ var c=CHAINS[k]; if(CC.track!=='all'&&trackOf(c)!==CC.track)return;
+    h+='<div class="selcard'+(trackOf(c)==='dus'?' dus':'')+'" data-chain="'+k+'" onclick="pickChain('+k+')"><div class="cx">ZİNCİR #'+k+(c.code?' · '+c.code:'')+(trackOf(c)==='dus'?' · 🦷 DUS':' · 🩺 TUS')+'</div><div class="ct">'+c.nick+'</div><div class="cc">'+c.complaint+'</div><div class="cm">'+c.path+'</div></div>'; });
+  var g=$('selGrid'); if(g) g.innerHTML=h; return h; }
+function showSelector(){ var n=trackCounts();
+  var h='<h2>🩺🦷 '+n.all+' Entegre Nöbet &amp; Vaka Zinciri · v4.0</h2><div class="sub">'+n.tus+' TUS + '+n.dus+' DUS zinciri, 21 modül — ductus-core v1.3 ile truth sızmazlığı, alan-bazlı revizyon (dental alanlar dahil) ve kanıt güncelliği. Mod, varyant ve alan seçin, bir zincir açın. Tanı öncesi spoiler yok.</div>';
+  h+='<div class="actions" style="margin-bottom:6px"><div class="seg" id="selTrack"><button data-t="all">Tümü ('+n.all+')</button><button data-t="tus">🩺 Tıp / TUS Zincirleri ('+n.tus+')</button><button data-t="dus">🦷 Diş Hekimliği / DUS Zincirleri ('+n.dus+')</button></div></div>';
   h+='<div class="actions" style="margin-bottom:4px"><div class="seg" id="selLvl"><button class="'+(CC.level==='student'?'on':'')+'" data-lvl="student">TUS / Öğrenci</button><button class="'+(CC.level==='resident'?'on':'')+'" data-lvl="resident">Asistan / Girişimsel</button></div>'+
     '<div class="seg" id="selVar"><button class="'+(CC.variant==='A'?'on':'')+'" data-v="A">Varyant A</button><button class="'+(CC.variant==='B'?'on':'')+'" data-v="B">Varyant B</button></div></div>';
-  h+='<div id="selStatus"></div><div class="selgrid">';
-  Object.keys(CHAINS).forEach(function(k){ var c=CHAINS[k]; h+='<div class="selcard" onclick="pickChain('+k+')"><div class="cx">ZİNCİR #'+k+'</div><div class="ct">'+c.nick+'</div><div class="cc">'+c.complaint+'</div><div class="cm">'+c.path+'</div></div>'; });
-  h+='</div>'; $('selSheet').innerHTML=h; $('selOverlay').classList.add('open'); $('jury').classList.remove('open');
+  h+='<div id="selStatus"></div><div class="selgrid" id="selGrid"></div>'; $('selSheet').innerHTML=h; $('selOverlay').classList.add('open'); $('jury').classList.remove('open');
+  var tseg=$('selTrack'); [].forEach.call(tseg.children,function(b){ b.classList.toggle('on',b.dataset.t===CC.track); b.onclick=function(){ CC.track=b.dataset.t; [].forEach.call(tseg.children,function(x){x.classList.toggle('on',x===b);}); renderSelGrid(); updateSelStatus(); }; });
+  renderSelGrid();
   [].forEach.call($('selLvl').children,function(b){ b.onclick=function(){ CC.level=b.dataset.lvl; [].forEach.call($('selLvl').children,function(x){x.classList.toggle('on',x===b);}); updateSelStatus(); }; });
   [].forEach.call($('selVar').children,function(b){ b.onclick=function(){ CC.variant=b.dataset.v; [].forEach.call($('selVar').children,function(x){x.classList.toggle('on',x===b);}); updateSelStatus(); }; });
   updateSelStatus();
@@ -590,6 +790,7 @@ $('switchBtn').onclick=showSelector; $('homeBtn').onclick=function(){ location.h
 var simClockT=Date.now(); function tick(){ var s=Math.floor((Date.now()-simClockT)/1000); $('simClock').textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); requestAnimationFrame(tick); }
 
 /* -------- ZİNCİR → MODÜL VAKA EŞLEMESİ (?case=) -------- */
+CHAINS[8].stations[5].caseN='E1'; CHAINS[8].stations[6].caseN='E1';  // ENDO: okunur taban · 4 kanal
 CHAINS[2].stations[1].caseN=3;  // KS: Kompresif CN III (dizi 0-indeks)
 CHAINS[2].stations[2].caseN=8;  // FND: Terson (SAK) (obje 1-indeks)
 CHAINS[3].stations[1].caseN=2;  // SFT: KOAH
@@ -636,6 +837,111 @@ window.CC2={
       statusUpdated:(which==='lvl'?(status.indexOf(value==='resident'?'Asistan':'TUS')>=0):(status.indexOf('Varyant '+value)>=0)), statusText:status }; },
   state:function(){ return {chainId:CC.chainId, idx:CC.idx, flags:CC.flags.length, vitals:CC.vitals, revisions:CC.S?CC.S.getRevisions():null}; }
 };
+
+// v4.0 test API eklentileri
+window.CC2.setTrack=function(t){ CC.track=t; showSelector(); var cards=document.querySelectorAll('#selGrid .selcard'); var tabs=[].map.call(document.querySelectorAll('#selTrack button'),function(b){return b.textContent;}); return {cards:cards.length, tabs:tabs, ids:[].map.call(cards,function(c){return +c.dataset.chain;})}; };
+window.CC2.complaint=function(id,v){ return complaintOf(CHAINS[id],v||'A'); };
+
+/* =============================== SELF-TEST (case-chain v4.0 + ductus-core v1.3) =============================== */
+window.__selfTest=function(){
+  var R=[]; function ok(n,c){ R.push({n:n,pass:!!c}); }
+  function fl(id){ return CC.flags.filter(function(f){return f.decId===id;})[0]||null; }
+  function stOf(decId){ var out=-1; CC.chain.stations.forEach(function(st,i){ if(out<0&&stVisible(st)&&st.decisions.some(function(x){return x.id===decId;})) out=i; }); return out; }
+  function pick(decId){ var i=stOf(decId); if(i<0) return null; renderStation(i); decide(i,decId); return fl(decId); }
+  function safeOf(id){ var f=fl(id); return !!f&&f.kind==='safe'; }
+  function critOf(id){ var f=fl(id); return !!f&&f.kind==='trap'&&f.critical===true&&/KİLİDİ/.test(f.msg); }
+  function trapNC(id){ var f=fl(id); return !!f&&f.kind==='trap'&&f.critical===false; }
+  try{
+    var C=window.DuctusCore, N=['coronary','rhythm','hemodynamic','respiratory','neuro','airway','vascularAccess','pleural','pericardial','biliary','device'];
+    // ---------- ductus-core v1.3 ----------
+    ok('core-version-1.3', C.VERSION==='1.3');
+    ok('core-v1.2-areas-preserved', N.every(function(a){return C.AREAS.indexOf(a)>=0;}) && C.SCHEMA_VERSION===1);
+    var S=C.open({patientId:'selftest-core-'+Date.now(),forceSeed:true,seed:{truth:{dx:'x',dental:{ianContact3d:true,pulpHistologyByFDI:{16:'necrotic'}}},dental:{teethByFDI:{16:{status:'carious'},99:{}},infection:{sourceToothFDI:16}}}});
+    var rv=S.getDentalRevisions();
+    ok('core-dental-revision-counters', ['toothStructureRevision','canalConnectivityRevision','filePositionRevision','needlePlacementRevision','periodontalChartRevision'].every(function(k){return rv[k]===0;}));
+    var dn=S.getDental();
+    ok('core-dental-contract', dn.dentition==='permanent' && dn.teethByFDI[16]&&dn.teethByFDI[16].fdi===16 && !dn.teethByFDI[99] && 'drugId' in dn.anesthesia && 'concentrationMgMl' in dn.anesthesia && 'cumulativeDoseMg' in dn.anesthesia && ['sourceToothFDI','submandibularInvolvement','trismusMm','airwayThreat'].every(function(k){return k in dn.infection;}));
+    ok('core-fdi-validation', C.isValidFDI(16)&&C.isValidFDI(48,'permanent')&&!C.isValidFDI(19,'permanent')&&!C.isValidFDI(49)&&C.isValidFDI(55,'primary')&&!C.isValidFDI(56,'primary')&&!C.isValidFDI(16,'primary'));
+    var snap=JSON.stringify(S.getPublicSnapshot()); var ls=''; try{ ls=localStorage.getItem(S.key)||''; }catch(e){}
+    var posted=[]; if(S.bc){ var op=S.bc.postMessage.bind(S.bc); S.bc.postMessage=function(m){ posted.push(JSON.stringify(m)); return op(m); }; }
+    S.dispatch({type:'SetTruthDental',payload:{ianContact3d:true,perforationPresent:true}}); S.dispatch({type:'SetDental',payload:{infection:{trismusMm:12}}});
+    ok('truth-dental-zero-leak', !/"truth"/.test(snap) && !/ianContact3d|pulpHistologyByFDI/.test(snap) && !/ianContact3d|pulpHistologyByFDI/.test(ls) && posted.every(function(m){return !/ianContact3d|perforationPresent|pulpHistologyByFDI|"truth"/.test(m);}) && S.getTruth().dental.ianContact3d===true);
+    ok('modality-PA-cannot-3d-ian', C.canAnswerClaim('PA','exact_3d_ian_contact')===false && C.canAnswerClaim('PAN','exact_3d_ian_contact')===false && C.canAnswerClaim('CBCT','exact_3d_ian_contact')===true);
+    ok('modality-PA-PAN-cannot-pulp-histology', C.canAnswerClaim('PA','pulp_histology')===false && C.canAnswerClaim('PAN','pulp_histology')===false && C.canAnswerClaim('histology','pulp_histology')===true);
+    var evPA=S.addEvidence({modality:'PA',claims:['perforation_absent']}); var evPAN=S.addEvidence({modality:'PAN',claims:['exact_3d_ian_contact']});
+    ok('claim-gate-PAN-rejected', S.supportsClaim(evPAN,'exact_3d_ian_contact').reason==='modality_cannot_answer' && S.supportsClaim(evPA,'perforation_absent').ok===true);
+    var evEAL=S.addEvidence({modality:'EAL',claims:['electronic_working_length']}); var evASP=S.addEvidence({modality:'aspiration',claims:['intravascular_injection_excluded']}); var evPR=S.addEvidence({modality:'perio_probe',claims:['ppd']});
+    var stl=function(e){return S.isStale(e).stale;};
+    ok('dental-evidence-all-fresh-initially', !stl(evPA)&&!stl(evEAL)&&!stl(evASP)&&!stl(evPR));
+    S.dispatch({type:'RepositionFile',payload:{reason:'eal_circuit'}});
+    ok('historicize-EAL-on-filePositionRevision', stl(evEAL) && S.getDentalRevisions().filePositionRevision===1 && !stl(evPA) && !stl(evASP));
+    S.dispatch({type:'PrepareTooth',payload:{fdi:16,kind:'access'}});
+    ok('historicize-PA-perforation-on-canalConnectivityRevision', stl(evPA) && S.supportsClaim(evPA,'perforation_absent').reason==='stale' && S.getDentalRevisions().canalConnectivityRevision===1 && S.getDentalRevisions().toothStructureRevision===1 && !stl(evASP));
+    S.dispatch({type:'RepositionNeedle',payload:{site:'IAN'}});
+    ok('historicize-aspiration-on-needlePlacementRevision', stl(evASP) && S.getDentalRevisions().needlePlacementRevision===1 && !stl(evPR));
+    S.dispatch({type:'UpdatePeriodontalChart',payload:{summary:{phase:'x'}}}); ok('historicize-perio-on-periodontalChartRevision', stl(evPR));
+    S.dispatch({type:'AdministerLocalAnesthetic',payload:{drugId:'articaine',concentrationMgMl:40,volumeMl:1.7}}); S.dispatch({type:'AdministerLocalAnesthetic',payload:{drugId:'articaine',concentrationMgMl:40,volumeMl:1.7}});
+    ok('anesthesia-cumulative-dose-mg', Math.abs(S.getDental().anesthesia.cumulativeDoseMg-136)<0.01 && S.getDental().anesthesia.drugId==='articaine');
+    var evE=S.addEvidence({modality:'ECG12',claims:['rhythm']}); S.dispatch({type:'MarkIntervention',payload:{areas:['coronary']}});
+    ok('core-v1.2-nondental-evidence-behaviour-kept', stl(evE) && Object.keys(evE.dependsOn).indexOf('coronary')>=0);
+    // ---------- zincirler / seçici ----------
+    ok('chains-11', CC2.chains().length===11 && CC2.chains().indexOf(11)>=0);
+    var tt=CC2.setTrack('all'), td=CC2.setTrack('dus'), tu=CC2.setTrack('tus');
+    ok('selector-track-tabs-counts', tt.cards===11&&td.cards===4&&tu.cards===7 && /Tümü \(11\)/.test(tt.tabs[0]) && /Tıp \/ TUS Zincirleri \(7\)/.test(tt.tabs[1]) && /Diş Hekimliği \/ DUS Zincirleri \(4\)/.test(tt.tabs[2]) && td.ids.join()==='8,9,10,11');
+    CC2.setTrack('all');
+    ok('spoiler-clean-all-11', CC2.chains().every(function(id){ return CC2.spoilerCheck(id).clean; }));
+    ok('critical-trap-lock-all-11', CC2.chains().every(function(id){ var r=CC2.fireCriticalTrap(id); return r.fired&&r.locked&&/KİLİDİ/.test(r.msg); }));
+    ok('vitals-rail-D-chains', [8,9,10,11].every(function(id){ var r=CC2.vitalsRailCheck(id); return r.vitalsVisible&&r.railVisible&&r.railHasEvidence; }));
+    ok('v1.2-chain1-phase-stale-intact', (function(){ var r=CC2.phaseStaleCheck(1); return r.hasPhase&&r.bumped&&!r.staleBefore&&r.staleAfter; })() && (function(){ var r=CC2.handoffStaleFlag(2); return r.na||(r.picked&&r.flagged); })());
+    // ---------- D1 ----------
+    boot(8,'A','student'); ok('D1-complaint-INR-2.8', /INR 2\.8/.test(CC2.complaint(8,'A')) && /penisilin/i.test(CC2.complaint(8,'A')) && /FDI 16/.test(CC2.complaint(8,'A')));
+    pick('clinda'); pick('amox'); pick('no_abx_a'); pick('azithro');
+    ok('D1-A-clindamycin-banned-critical', critOf('clinda') && /C\. difficile/.test(fl('clinda').msg) && critOf('amox') && critOf('no_abx_a') && safeOf('azithro'));
+    pick('stop_warf'); pick('vitk'); pick('continue_local'); pick('nsaid'); pick('para');
+    ok('D1-A-INR-below-4-warfarin-kept', critOf('stop_warf') && /INR < 4\.0/.test(fl('stop_warf').msg) && critOf('vitk') && safeOf('continue_local') && trapNC('nsaid') && safeOf('para'));
+    var visA=CC2.visibleStations(8,'A').join(), visB=CC2.visibleStations(8,'B').join();
+    boot(8,'B','student'); pick('no_abx_b'); pick('abx_b'); pick('stop_asa');
+    ok('D1-B-stent-no-prophylaxis', safeOf('no_abx_b') && trapNC('abx_b') && /stent/i.test(fl('abx_b').msg) && critOf('stop_asa') && stOf('clinda')<0 && visA!==visB && /koroner stent/.test(CC2.complaint(8,'B')));
+    boot(8,'A','student'); var e5=5; renderStation(e5); examCapture(e5); var evP=CC.capturedEv[e5]; var b0=CC.S.getDentalRevisions().canalConnectivityRevision, st0=CC.S.isStale(evP).stale; nextStation(e5);
+    renderStation(6); examCapture(6); var evW=CC.capturedEv[6];
+    ok('D1-PA-perforation-historical-after-canal-access', evP.modality==='PA' && !st0 && CC.S.isStale(evP).stale && CC.S.getDentalRevisions().canalConnectivityRevision===b0+1 && !CC.S.isStale(evW).stale && evW.modality==='EAL' && CC.S.getDental().teethByFDI[16].status==='accessed');
+    // ---------- D2 ----------
+    boot(9,'A','student'); pick('pan_only'); pick('cbct_just'); pick('cbct_routine'); pick('full_ext'); pick('coronectomy');
+    ok('D2-pan-not-3d-ian-and-cbct-justified', critOf('pan_only')&&/PAN ≠ exact 3D IAN/.test(fl('pan_only').msg)&&safeOf('cbct_just')&&trapNC('cbct_routine')&&trapNC('full_ext')&&safeOf('coronectomy'));
+    pick('trendelenburg'); pick('adrenaline'); pick('lipid_a');
+    ok('D2-A-vasovagal-no-adrenaline-no-lipid', safeOf('trendelenburg')&&critOf('adrenaline')&&trapNC('lipid_a'));
+    boot(9,'B','student'); pick('airway_o2'); pick('benzo'); pick('lipid20'); pick('lido'); pick('propofol'); pick('big_epi'); pick('read_cardiotox'); pick('stemi_cath');
+    ok('D2-B-LAST-20pct-lipid-vs-traps', safeOf('airway_o2')&&safeOf('benzo')&&safeOf('lipid20')&&/1\.5 mL\/kg/.test(CC.chain.stations[stOf('lipid20')].decisions.filter(function(x){return x.id==='lipid20';})[0].label)&&critOf('lido')&&/sınıf IB/.test(fl('lido').msg)&&critOf('propofol')&&trapNC('big_epi')&&safeOf('read_cardiotox')&&critOf('stemi_cath'));
+    ok('D2-A-B-variant-stations-differ', CC2.visibleStations(9,'A').join()!==CC2.visibleStations(9,'B').join() && CC2.visibleStations(9,'B').indexOf('EKG')>=0 && CC2.visibleStations(9,'A').indexOf('EKG')<0);
+    boot(9,'A','student'); renderStation(2); examCapture(2); var evA=CC.capturedEv[2]; pick('halstead'); var dose=CC.S.getDental().anesthesia.cumulativeDoseMg, aw=CC.S.isStale(evA).stale; nextStation(2);
+    ok('D2-aspiration-historical-after-needle-move+dose', evA.modality==='aspiration' && !aw && CC.S.isStale(evA).stale && CC.S.getDentalRevisions().needlePlacementRevision===1 && Math.abs(dose-68)<0.01 && critOf('no_asp')===false);
+    pick('no_asp'); ok('D2-no-aspiration-critical', critOf('no_asp'));
+    // ---------- D3 ----------
+    boot(10,'A','student'); pick('imaging_first'); pick('supine_drain'); pick('upright'); pick('ct_first'); pick('oral_abx'); pick('call_airway'); pick('abx_iv');
+    ok('D3-airway-before-imaging-gates', critOf('imaging_first')&&/Önce havayolu/.test(fl('imaging_first').msg)&&critOf('supine_drain')&&safeOf('upright')&&critOf('ct_first')&&/havayolu önceliği/.test(fl('ct_first').msg)&&critOf('oral_abx')&&safeOf('call_airway')&&safeOf('abx_iv'));
+    pick('blind_rsi'); pick('sedate_supine'); pick('awake_fo'); pick('cric_ready'); pick('ct_after'); pick('drain_source'); pick('abx_only');
+    ok('D3-awake-fiberoptic-vs-blind-RSI', critOf('blind_rsi')&&/CICO/.test(fl('blind_rsi').msg)&&critOf('sedate_supine')&&safeOf('awake_fo')&&safeOf('cric_ready')&&safeOf('ct_after')&&safeOf('drain_source')&&trapNC('abx_only'));
+    boot(10,'A','student'); renderStation(0); examCapture(0); var evC=CC.capturedEv[0]; pick('upright'); var inf=CC.S.getDental().infection; nextStation(0); nextStation(1); renderStation(2); examCapture(2); var evT=CC.capturedEv[2]; var ar0=CC.S.getRevisions().airway; nextStation(2); renderStation(3); examCapture(3); var evF=CC.capturedEv[3];
+    ok('D3-infection-state+airway-evidence-historical', inf.sourceToothFDI===36&&inf.submandibularInvolvement===true&&inf.trismusMm===12&&inf.airwayThreat===true && CC.S.getRevisions().airway===ar0+1 && CC.S.isStale(evC).stale && CC.S.isStale(evT).stale && !CC.S.isStale(evF).stale);
+    // ---------- D4 ----------
+    boot(11,'A','student'); pick('stage2b'); pick('stage3c'); pick('routine_abx'); pick('glycemic');
+    ok('D4-staging-and-systemic', trapNC('stage2b')&&safeOf('stage3c')&&trapNC('routine_abx')&&safeOf('glycemic'));
+    pick('downstage'); pick('keep_stage'); pick('supportive'); pick('no_recall');
+    ok('D4-stage-preserved-after-treatment', critOf('downstage')&&/stabil Evre III/.test(fl('downstage').msg)&&safeOf('keep_stage')&&safeOf('supportive')&&trapNC('no_recall'));
+    boot(11,'A','student'); renderStation(0); examCapture(0); var evB0=CC.capturedEv[0]; nextStation(0); nextStation(1); renderStation(2); examCapture(2); var evRe=CC.capturedEv[2];
+    ok('D4-baseline-probing-historical-after-phase-I', evB0.modality==='perio_probe' && CC.S.isStale(evB0).stale && !CC.S.isStale(evRe).stale && CC.S.getDentalRevisions().periodontalChartRevision===1);
+    CC.chain.stations.forEach(function(_,i){CC.done[i]=true;}); CC.handoff={status:0,unc:0,alarm:0,evidence:evB0.id,evidenceStale:true}; submitHandoff();
+    ok('D4-handoff-stale-baseline-flagged', !!fl('stale') && fl('stale').critical===true);
+    // ---------- truth sızmazlığı (zincir oturumu) ----------
+    [8,9,10,11].forEach(function(id){ boot(id,'B','student'); });
+    boot(8,'A','student'); var ps=JSON.stringify(CC.S.getPublicSnapshot());
+    ok('chain-session-truth-dental-no-leak', !/"truth"/.test(ps) && !/pulpHistologyByFDI|irreversible_pulpitis/.test(ps) && /teethByFDI/.test(ps) && CC.S.getTruth().dental.pulpHistologyByFDI[16]==='irreversible_pulpitis');
+    ok('chain-no-option-spoilers', !/\((doğru|güvenli|hatalı|riskli)\)/i.test(JSON.stringify(Object.keys(CHAINS).map(function(k){return CHAINS[k].stations.map(function(st){return st.decisions.map(function(x){return x.label;});});}))));
+  }catch(e){ R.push({n:'exception',pass:false,err:String(e&&e.stack||e)}); }
+  try{ CC.track='all'; showSelector(); }catch(e){}
+  var pass=R.every(function(r){return r.pass;}); return {pass:pass,count:R.length,tests:R,failed:R.filter(function(r){return !r.pass;}).map(function(r){return r.n||r.err;})};
+};
+
 showSelector(); tick(); window.CHAIN_READY=true;
 </script>
 </body>

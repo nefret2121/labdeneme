@@ -86,7 +86,9 @@ body[data-kind="ceph"] .p1mf{display:none!important} body[data-kind="mf"] .p1cep
 body[data-kind3="p1"] .p3b{display:none!important} body[data-kind3="p2"] .p3a{display:none!important}
 .lmrow{display:flex;gap:6px;align-items:center;font-size:11px;color:var(--ink-dim);padding:4px 7px;border:1px solid var(--line2);border-radius:8px;margin-bottom:4px;cursor:pointer;background:#14110e}
 .lmrow.on{border-color:var(--accent);background:#211810;color:var(--ink)} .lmrow.placed .dot{background:var(--good)} .lmrow .dot{width:9px;height:9px;border-radius:50%;background:#3a332a;flex-shrink:0}
-.lmrow b{font-weight:800;min-width:30px;color:var(--ink)}
+.lmrow b{font-weight:800;min-width:26px;color:var(--ink)}
+#lmList{display:grid;grid-template-columns:1fr 1fr;gap:3px 4px} #lmList .lmrow{margin:0;padding:3px 5px;font-size:10px;gap:4px;min-width:0} #lmList .lmrow span:not(.dot){overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0} #lmList .lmrow .n{display:none}
+.col.left{overflow-y:auto}
 .kv{display:flex;justify-content:space-between;gap:8px;font-size:11.5px;padding:3px 0;border-bottom:1px dashed var(--line);color:var(--ink-dim)} .kv b{color:var(--ink)}
 .kv .n{color:var(--ink-mut);font-size:10px}
 .cvbox canvas.cross{cursor:crosshair}
@@ -648,8 +650,8 @@ function drawSurv(cv){ const ctx=cv.getContext('2d'),W=cv.width,H=cv.height,d=SR
   ctx.strokeStyle='#e8a35a'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(62,20); ctx.lineTo(62,215); ctx.stroke(); ctx.fillStyle='#e8a35a'; ctx.font='10px sans-serif'; ctx.fillText('analiz çubuğu',6,38);
   const gx=205,gy=160,gw=44; ctx.fillStyle='#14110e'; ctx.fillRect(gx,gy-110,gw,120); ctx.strokeStyle='#2c3a42'; ctx.strokeRect(gx,gy-110,gw,120);
   const yv=m=>gy-m*200; for(const [m,l,col] of [[0.25,'0.25',' #63d08a'],[0.50,'0.50',' #f0b542']]){ ctx.strokeStyle=col.trim(); ctx.setLineDash([3,3]); ctx.beginPath(); ctx.moveTo(gx,yv(m)); ctx.lineTo(gx+gw,yv(m)); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle=col.trim(); ctx.fillText(l,gx+gw+3,yv(m)+3); }
-  ctx.fillStyle=Math.abs(E.uc-E.ucTarget)<=0.06?'#63d08a':'#e8707a'; ctx.fillRect(gx+8,yv(E.uc),gw-16,gy-yv(E.uc)); ctx.fillStyle='#eef2f4'; ctx.font='bold 11px sans-serif'; ctx.fillText('undercut '+E.uc.toFixed(2)+' mm',gx-60,gy+26);
-  ctx.fillStyle='#b1bec5'; ctx.font='10px sans-serif'; ctx.fillText('eğim '+d.tilt.toFixed(1)+'° · hedef '+E.ucTarget.toFixed(2)+' ±0.06 mm',gx-100,gy+42); }
+  ctx.fillStyle=Math.abs(E.uc-E.ucTarget)<=0.06?'#63d08a':'#e8707a'; ctx.fillRect(gx+8,yv(E.uc),gw-16,gy-yv(E.uc)); ctx.fillStyle='#eef2f4'; ctx.font='bold 11px sans-serif'; ctx.fillText('undercut '+E.uc.toFixed(2)+' mm',72,H-22);
+  ctx.fillStyle='#b1bec5'; ctx.font='10px sans-serif'; ctx.fillText('eğim '+d.tilt.toFixed(1)+'° · hedef '+E.ucTarget.toFixed(2)+' ±0.06 mm',72,H-8); }
 function drawKen(cv,mode){ const ctx=cv.getContext('2d'),W=cv.width,H=cv.height; ctx.fillStyle='#06080a'; ctx.fillRect(0,0,W,H); const sc=3.3;
   KARCH.forEach((a,i)=>{ const ox=(i%4)*225+112, oy=(Math.floor(i/4))*0+250; drawMiniArch(ctx,a,ox,oy,sc,{nums:true}); ctx.fillStyle='#e8a35a'; ctx.font='bold 14px sans-serif'; ctx.fillText('Ark '+a.id+' · '+(a.jaw==='mand'?'alt':'üst'),ox-44,24);
     if(a.note){ ctx.fillStyle='#f0b542'; ctx.font='9.5px sans-serif'; ctx.fillText(a.note,ox-104,H-48); }
@@ -670,7 +672,7 @@ function kvRow(l,v,n){ return `<div class="kv"><span>${l}</span><span><b>${v}</b
 const f1=(v,u)=>v==null?'—':(v>0&&u==='mm'?'+':'')+v.toFixed(1)+(u||'');
 function refreshCeph(){ drawCeph($('cephCanvas')); if(!window.__lp) loupe(300,300);
   const el=$('lmList'); el.innerHTML=''; for(const k of REQ){ const d=document.createElement('div'); d.className='lmrow'+(SC.active===k?' on':'')+(SC.marks[k]?' placed':''); const e=lmError(k);
-    d.innerHTML=`<span class="dot"></span><b>${k}</b><span>${curMode==='explore'?LMN[k]:LMN[k].split(' · ')[0].split(' (')[0]}</span>`+(curMode==='explore'&&e!=null?`<span class="n" style="margin-left:auto;font-size:10px;color:var(--ink-mut)">${e.toFixed(1)} mm</span>`:''); d.onclick=()=>{ SC.active=k; refreshCeph(); }; el.appendChild(d); }
+    d.title=LMN[k]; d.innerHTML=`<span class="dot"></span><b>${k}</b><span>${curMode==='explore'?LMN[k]:LMN[k].split(' · ')[0].split(' (')[0]}</span>`+(curMode==='explore'&&e!=null?`<span class="n" style="margin-left:auto;font-size:10px;color:var(--ink-mut)">${e.toFixed(1)} mm</span>`:''); d.onclick=()=>{ SC.active=k; refreshCeph(); }; el.appendChild(d); }
   const m=measure(SC.marks), ex=curMode==='explore';
   $('cephOut').innerHTML=kvRow('SNA',f1(m.SNA,'°'),ex?NORM.SNA:'')+kvRow('SNB',f1(m.SNB,'°'),ex?NORM.SNB:'')+kvRow('ANB',f1(m.ANB,'°'),ex?NORM.ANB:'')+kvRow('Wits (AO–BO)',f1(m.wits,'mm'),ex?NORM.wits:'')+kvRow('GoGn–SN',f1(m.gognsn,'°'),ex?NORM.gognsn:'')+kvRow('FMA',f1(m.fma,'°'),ex?NORM.fma:'')+kvRow('E-hattı · Ls',f1(m.eLs,'mm'),ex?NORM.eLs:'')+kvRow('E-hattı · Li',f1(m.eLi,'mm'),ex?NORM.eLi:'');
   $('cephRef').innerHTML=ex?'Ricketts E-hattı: Pn → Pg′. Wits: A ve B noktalarının oklüzal düzleme dik izdüşümleri (AO, BO); AO önde ise +.<br>Sınıflama eşikleri: ANB &gt;4° ↔ II, &lt;0° ↔ III; Wits ≥ +2.5 ↔ II, ≤ −4.5 ↔ III.':'<span style="color:var(--ink-mut)">Referans değerler DUS/Sınav modunda gizli.</span>';
@@ -829,6 +831,10 @@ window.__selfTest=function(){
     const rej=ORTHO.declareKennedy(1,'IV',1); ok('Kennedy-IV-modification-rejected', rej.rejected===true && rej.code==='CLASS_IV_NO_MODIFICATION' && ORTHO.gradeRPD().codes.includes('CLASS_IV_MODIFICATION_REJECTED'));
     ORTHO.loadCase('P2'); [['II',1],['IV',0],['III',1],['II',0]].forEach((x,i)=>ORTHO.declareKennedy(i,x[0],x[1])); ok('Kennedy-all-correct-100', ORTHO.gradeRPD().score===100);
     ORTHO.declareKennedy(0,'I',0); ok('Kennedy-third-molar-rule-caught', ORTHO.gradeRPD().codes.includes('THIRD_MOLAR_RULE_MISSED'));
+    ORTHO.setBench(1); ORTHO.loadCase('O2'); ORTHO.setMode('exam'); { const rf=document.getElementById('cephRef').innerText; ok('exam-reference-box-hidden', !/ANB\s*>\s*4|Wits\s*≥|eşik/i.test(rf) && /gizli/i.test(rf)); }
+    ORTHO.setMode('explore'); ok('explore-reference-box-visible', /ANB\s*>\s*4/.test(document.getElementById('cephRef').innerText));
+    { const col=document.querySelector('.col.left'), out=document.getElementById('cephOut'); const fits=out.getBoundingClientRect().bottom<=col.getBoundingClientRect().bottom+1; ok('left-column-live-measures-fit', innerHeight<740||fits); ok('left-column-scrollable', getComputedStyle(col).overflowY!=='hidden'); }
+    { const cap=[]; const of=CanvasRenderingContext2D.prototype.fillText; CanvasRenderingContext2D.prototype.fillText=function(t,x,y){ cap.push([String(t),x,y]); return of.apply(this,arguments); }; ORTHO.setBench(3); ORTHO.loadCase('P1'); const c=document.getElementById('survCanvas'); cap.length=0; drawSurv(c); CanvasRenderingContext2D.prototype.fillText=of; const u=cap.find(a=>/^undercut/.test(a[0])); ok('surveyor-label-below-tooth', !!u && u[2]>195 && u[1]>=60); }
     const optTxt=[...document.querySelectorAll('select option')].map(o=>o.textContent).join(' | '); ok('ortho-no-option-spoilers', !/\((doğru|güvenli|hatalı|riskli)\)/i.test(optTxt));
     ORTHO.setBench(1); ORTHO.loadCase('O1');
   }catch(e){ R.push({n:'exception',pass:false,err:String(e&&e.stack||e)}); }

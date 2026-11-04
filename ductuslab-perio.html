@@ -880,5 +880,8 @@ window.__selfTest=function(){
   return {pass,count:R.length,tests:R,failed:R.filter(r=>!r.pass).map(r=>r.n)};
 };
 console.log('[PERIO] ready — cases',CASE_ORDER.length);
+
+/* chain-preset: Case Chain ?chain=1&case=<id> senkronu (yalnız zincir içinde etkin) */
+(function(){ try{ var q=new URLSearchParams(location.search); if(q.get('chain')!=='1')return; var c=q.get('case'); if(c&&window.PERIO&&window.PERIO.loadCase) window.PERIO.loadCase(c); }catch(e){} })();
 </script>
 </body></html>

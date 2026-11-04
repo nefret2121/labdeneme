@@ -1,5 +1,5 @@
 /* =====================================================================
- * DuctusLab Core v1.1 — ortak klinik durum otoritesi, kanıt sözleşmesi ve
+ * DuctusLab Core v1.3 (v1.1 temel + v1.2 girişimsel + v1.3 dental sözleşme) — ortak klinik durum otoritesi, kanıt sözleşmesi ve
  * sekmeler arası canlı hasta paylaşımı. Sıfır dış bağımlılık.
  * Hem <script> (window.DuctusCore) hem ES/CJS import ile kullanılabilir.
  * Mevcut standalone modülleri ETKİLEMEZ — sadece onu YÜKLEYEN sayfalar katılır.
@@ -21,6 +21,15 @@
   var AREAS = ['coronary', 'rhythm', 'hemodynamic', 'respiratory', 'neuro',
                'airway', 'vascularAccess', 'pleural', 'pericardial', 'biliary', 'device'];
   var PLACEMENT_AREAS = ['airway', 'vascularAccess', 'device'];  // placementRevision++ → önceki yerleşim kanıtı TARİHSEL
+  // v1.3 dental revizyon alanları (spec adları: <alan>Revision) — v1.2 alanlarına DOKUNMAZ
+  var DENTAL_AREAS = ['toothStructure', 'canalConnectivity', 'filePosition', 'needlePlacement', 'periodontalChart'];
+  AREAS = AREAS.concat(DENTAL_AREAS);
+  var DENTAL_REVISION_NAMES = { toothStructure: 'toothStructureRevision', canalConnectivity: 'canalConnectivityRevision',
+    filePosition: 'filePositionRevision', needlePlacement: 'needlePlacementRevision', periodontalChart: 'periodontalChartRevision' };
+  // dental kanıtın yalnız İLGİLİ alanlara bağımlı olması: diğer alan değişince eski kayıt GEREKSİZ tarihsel olmaz
+  var DENTAL_DEPENDS = { 'EAL': ['filePosition'], 'PA': ['toothStructure', 'canalConnectivity'], 'PAN': ['toothStructure'],
+    'CBCT': ['toothStructure', 'canalConnectivity'], 'aspiration': ['needlePlacement'], 'perio_probe': ['periodontalChart'],
+    'lab': [], 'clinical_dental': ['airway'] };
   var SCHEMA_VERSION = 1;
 
   function deepClone(o) { return JSON.parse(JSON.stringify(o)); }
@@ -62,7 +71,18 @@
     // LapChole: ICG kolanjiyografi TEK BAŞINA CVS/kistik plağı doğrulamaz; kritik görüş diseksiyon ister
     'icg_cholangiography': ['cystic_duct_patency', 'biliary_tree_continuity', 'biliary_leak'],
     'lap_dissection':      ['cystic_plate_exposed', 'hepatocystic_cleared'],
-    'critical_view':       ['cvs_complete', 'cystic_plate_exposed', 'two_structures_only', 'hepatocystic_cleared']
+    'critical_view':       ['cvs_complete', 'cystic_plate_exposed', 'two_structures_only', 'hepatocystic_cleared'],
+    // --- v1.3 dental modaliteler ---
+    // PA/PAN 2B: İAN'ın 3B teması ve pulpa histolojisi TEK BAŞINA doğrulanamaz (CBCT / histoloji ister)
+    'PA':           ['periapical_lesion', 'root_length_radiographic', 'bone_level_radiographic', 'file_length_radiographic', 'perforation_absent', 'obturation_density'],
+    'PAN':          ['impaction_depth_2d', 'rood_shehab_signs', 'gross_pathology_screen', 'bone_level_radiographic'],
+    'CBCT':         ['exact_3d_ian_contact', 'canal_anatomy_3d', 'perforation_absent', 'root_proximity_3d', 'periapical_lesion'],
+    'EAL':          ['electronic_working_length', 'apical_constriction_estimate'],
+    'aspiration':   ['intravascular_injection_excluded'],
+    'perio_probe':  ['ppd', 'bop', 'cal', 'furcation_involvement'],
+    'histology':    ['pulp_histology'],
+    'pulp_test':    ['pulp_vitality_response'],
+    'clinical_dental': ['trismus_mm', 'floor_of_mouth_swelling', 'airway_compromise_clinical', 'tooth_mobility']
   };
 
   function canAnswerClaim(modality, claim) {
@@ -75,6 +95,30 @@
   //  Not: seed.truth → gizli tanı/suçlu/lezyon (ASLA yayınlanmaz).
   //       seed.projection/pathology → gözlenebilir çizim parametreleri.
   // =====================================================================
+  // ---- v1.3 FDI kimlikleri: kalıcı 11-18,21-28,31-38,41-48 · süt 51-55,61-65,71-75,81-85 ----
+  function isValidFDI(fdi, dentition) {
+    var n = Number(fdi); if (!isFinite(n) || n % 1) return false;
+    var q = Math.floor(n / 10), t = n % 10;
+    if (dentition === 'primary') return q >= 5 && q <= 8 && t >= 1 && t <= 5;
+    if (dentition === 'permanent') return q >= 1 && q <= 4 && t >= 1 && t <= 8;
+    return isValidFDI(n, 'permanent') || isValidFDI(n, 'primary');
+  }
+  function defaultDental(seed) {
+    seed = seed || {};
+    var d = {
+      dentition: seed.dentition === 'primary' ? 'primary' : 'permanent',
+      teethByFDI: {},
+      anesthesia: Object.assign({ drugId: null, concentrationMgMl: 0, cumulativeDoseMg: 0 }, seed.anesthesia || {}),
+      infection: Object.assign({ sourceToothFDI: null, submandibularInvolvement: false, trismusMm: null, airwayThreat: false }, seed.infection || {})
+    };
+    var tb = seed.teethByFDI || {};
+    for (var k in tb) { if (isValidFDI(k, d.dentition)) d.teethByFDI[k] = Object.assign({ fdi: Number(k), present: true, status: 'intact' }, tb[k]); }
+    return d;
+  }
+  function dentalRevisionCounters(st) {
+    var o = {}; DENTAL_AREAS.forEach(function (a) { o[DENTAL_REVISION_NAMES[a]] = (st.revisions && st.revisions[a]) || 0; }); return o;
+  }
+
   function defaultState(seed) {
     seed = seed || {};
     var epoch = nowMs();
@@ -89,7 +133,10 @@
       demographics: Object.assign({ name: 'Anonim Hasta', age: 58, sex: 'E' }, seed.demographics || {}),
       vitals: Object.assign({ hr: 78, sbp: 124, dbp: 76, map: 92, spo2: 97, rr: 16 }, seed.vitals || {}),
       revisions: { coronary: 0, rhythm: 0, hemodynamic: 0, respiratory: 0, neuro: 0,
-        airway: 0, vascularAccess: 0, pleural: 0, pericardial: 0, biliary: 0, device: 0 },
+        airway: 0, vascularAccess: 0, pleural: 0, pericardial: 0, biliary: 0, device: 0,
+        toothStructure: 0, canalConnectivity: 0, filePosition: 0, needlePlacement: 0, periodontalChart: 0 },
+      // v1.3 — GÖZLENEBİLİR dental durum (yayınlanır); gizli gerçek truth.dental içinde kalır
+      dental: defaultDental(seed.dental),
       // gözlenebilir patoloji/çizim parametreleri (yayınlanır)
       pathology: Object.assign({}, seed.pathology || {}),
       projection: Object.assign({}, seed.projection || {}),
@@ -100,6 +147,8 @@
       updatedAt: epoch
     };
     if (seed.revisions) Object.assign(s.revisions, seed.revisions);
+    // v1.3 — truth.dental GİZLİ: gerçek pulpa histolojisi, 3B İAN teması, perforasyon, gerçek çalışma boyu vb.
+    s.truth.dental = Object.assign({ pulpHistologyByFDI: {}, ianContact3d: null, perforationPresent: false, trueWorkingLengthMm: null, intravascularLeak: false }, (seed.truth && seed.truth.dental) || {});
     return s;
   }
 
@@ -182,8 +231,37 @@
     // Cihaz/tel/ETT yeniden konumlandırma → placementRevision++ : önceki yerleşim kanıtı TARİHSEL olur
     RepositionDevice: function (st, p) { p = p || {}; var areas = p.areas || ['device', 'vascularAccess']; bump(st, areas);
       st.projection.lastReposition = { areas: areas, atSimMs: simNow(st) }; },
-    SetProjection: function (st, p) { Object.assign(st.projection, p || {}); if (p && p.bump) bump(st, p.bump); }
+    SetProjection: function (st, p) { Object.assign(st.projection, p || {}); if (p && p.bump) bump(st, p.bump); },
+    // =========== v1.3 dental komutlar ===========
+    // Gözlenebilir dental durum: FDI doğrulaması; geçersiz kimlik sessizce atlanır
+    SetDental: function (st, p) { p = p || {}; ensureDental(st);
+      if (p.dentition === 'primary' || p.dentition === 'permanent') st.dental.dentition = p.dentition;
+      var tb = p.teeth || {}; for (var k in tb) { if (isValidFDI(k, st.dental.dentition)) st.dental.teethByFDI[k] = Object.assign({ fdi: Number(k), present: true, status: 'intact' }, st.dental.teethByFDI[k], tb[k]); else console.warn('[DuctusCore] geçersiz FDI', k); }
+      if (p.anesthesia) Object.assign(st.dental.anesthesia, p.anesthesia);
+      if (p.infection) { Object.assign(st.dental.infection, p.infection); if (p.infection.airwayThreat) bump(st, ['airway']); }
+      if (p.bump) bump(st, p.bump); },
+    // GİZLİ gerçek (publicSnapshot'a girmez)
+    SetTruthDental: function (st, p) { ensureDental(st); Object.assign(st.truth.dental, p || {}); },
+    // Lokal anestezik: kümülatif doz mg = konsantrasyon (mg/mL) × hacim (mL)
+    AdministerLocalAnesthetic: function (st, p) { p = p || {}; ensureDental(st); var a = st.dental.anesthesia;
+      a.drugId = p.drugId || a.drugId; if (p.concentrationMgMl != null) a.concentrationMgMl = p.concentrationMgMl;
+      a.cumulativeDoseMg = Math.round(((a.cumulativeDoseMg || 0) + (p.concentrationMgMl != null ? p.concentrationMgMl : a.concentrationMgMl) * (p.volumeMl || 0)) * 100) / 100;
+      st.treatments.push({ name: 'LA:' + (a.drugId || '?'), atSimMs: simNow(st), area: 'needlePlacement' }); },
+    // Diş kazındı / preparasyon / kanal erişimi → yapı + kanal bağlantısı revizyonu (eski PA "perforasyon yok" kapsamı TARİHSEL)
+    PrepareTooth: function (st, p) { p = p || {}; ensureDental(st);
+      if (p.fdi != null && isValidFDI(p.fdi, st.dental.dentition)) { var t = st.dental.teethByFDI[p.fdi] || (st.dental.teethByFDI[p.fdi] = { fdi: Number(p.fdi), present: true }); t.status = p.status || 'prepared'; if (p.kind === 'extraction') t.present = false; }
+      bump(st, ['toothStructure', 'canalConnectivity']); },
+    // EAL devresi değişti / eğe konumu değişti → eski EAL kaydı TARİHSEL
+    RepositionFile: function (st, p) { p = p || {}; st.projection.lastFileMove = { reason: p.reason || 'position', atSimMs: simNow(st) }; bump(st, ['filePosition']); },
+    // İğne oynadı → eski aspirasyon kaydı TARİHSEL
+    RepositionNeedle: function (st, p) { p = p || {}; st.projection.lastNeedleMove = { site: p.site || null, atSimMs: simNow(st) }; bump(st, ['needlePlacement']); },
+    UpdatePeriodontalChart: function (st, p) { p = p || {}; if (p.summary) st.projection.perioChart = Object.assign({}, st.projection.perioChart, p.summary); bump(st, ['periodontalChart']); }
   };
+  function ensureDental(st) {
+    if (!st.dental) st.dental = defaultDental();
+    if (!st.truth) st.truth = {};
+    if (!st.truth.dental) st.truth.dental = { pulpHistologyByFDI: {}, ianContact3d: null, perforationPresent: false, trueWorkingLengthMm: null, intravascularLeak: false };
+  }
 
   function bump(st, areas) { (areas || []).forEach(function (a) { if (st.revisions[a] != null) st.revisions[a]++; }); }
 
@@ -215,6 +293,7 @@
       // v1.2 geçişi: v1.1 durumunda eksik revizyon alanlarını doldur
       if (!this.state.revisions) this.state.revisions = {};
       for (var _ai = 0; _ai < AREAS.length; _ai++) { if (this.state.revisions[AREAS[_ai]] == null) this.state.revisions[AREAS[_ai]] = 0; }
+      ensureDental(this.state);   // v1.3 geçişi: v1.2 durumuna dental alan/truth.dental ekle
     } else {
       this.state = defaultState(Object.assign({}, opts.seed, { patientId: opts.patientId }));
       this._persist();
@@ -239,6 +318,8 @@
   Session.prototype.getState = function () { return this.state; };
   Session.prototype.getVitals = function () { return this.state.vitals; };
   Session.prototype.getRevisions = function () { return this.state.revisions; };
+  Session.prototype.getDental = function () { ensureDental(this.state); return this.state.dental; };
+  Session.prototype.getDentalRevisions = function () { return dentalRevisionCounters(this.state); };
   Session.prototype.getTruth = function () { return this.state.truth || {}; };                 // yalnız yerel sahip erişir
   Session.prototype.getPublicSnapshot = function () { return publicSnapshot(this.state); };     // truth kesili
 
@@ -250,6 +331,7 @@
     if (patch.demographics) Object.assign(this.state.demographics, patch.demographics);
     if (patch.echoContext) Object.assign(this.state.echoContext, patch.echoContext);
     if (patch.revisions) Object.assign(this.state.revisions, patch.revisions);
+    if (patch.dental) { ensureDental(this.state); Object.assign(this.state.dental, patch.dental); }
     this._touch('state');
   };
 
@@ -312,7 +394,7 @@
       claims: ev.claims || [],         // bu kaydın öne sürdüğü iddialar
       acquiredAtSimMs: ev.acquiredAtSimMs != null ? ev.acquiredAtSimMs : this.simNow(),
       quality: Object.assign({ assessable: true, reasonCodes: [], regionsSeen: [] }, ev.quality || {}),
-      dependsOn: Object.assign({}, snapshotRevisions(this.state), ev.dependsOn || {}),
+      dependsOn: Object.assign({}, dependsFor(ev, this.state), ev.dependsOn || {}),
       summary: ev.summary || ''
     };
     this._evidence.push(rec);
@@ -403,6 +485,11 @@
   Session.prototype.broadcastLifecycle = function (action) { if (this.bc) this._post({ t: 'lifecycle', payload: { action: action } }); this._emit('lifecycle', { action: action }); };
   Session.prototype.destroy = function () { try { this.bc && this.bc.close(); } catch (e) { } if (typeof window !== 'undefined') window.removeEventListener('storage', this._onStorage); };
 
+  // v1.3: dental modaliteler yalnız ilgili alan(lar)a bağlanır; diğer modaliteler v1.2 gibi TÜM alanları anlık görüntüler
+  function dependsFor(ev, st) {
+    var only = DENTAL_DEPENDS[ev.modality]; if (!only) return snapshotRevisions(st);
+    var r = {}; only.forEach(function (a) { r[a] = st.revisions[a] || 0; }); return r;
+  }
   function snapshotRevisions(st) { var r = {}; AREAS.forEach(function (a) { r[a] = st.revisions[a]; }); return r; }
 
   // =====================================================================
@@ -441,7 +528,13 @@
   }
 
   var DuctusCore = {
-    VERSION: '1.2',
+    VERSION: '1.3',
+    DENTAL_AREAS: DENTAL_AREAS,
+    DENTAL_REVISION_NAMES: DENTAL_REVISION_NAMES,
+    DENTAL_DEPENDS: DENTAL_DEPENDS,
+    isValidFDI: isValidFDI,
+    defaultDental: defaultDental,
+    dentalRevisionCounters: dentalRevisionCounters,
     SCHEMA_VERSION: SCHEMA_VERSION,
     AREAS: AREAS,
     PLACEMENT_AREAS: PLACEMENT_AREAS,

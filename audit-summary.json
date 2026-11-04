@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-03T23:27:28.525Z",
+  "generatedAt": "2026-11-04T00:04:36.370Z",
   "threeLocal": false,
   "pages": 23,
   "viewports": [
@@ -27,7 +27,7 @@
     },
     "gate3_link_integrity": {
       "pass": true,
-      "checked": 50,
+      "checked": 55,
       "skipped": 1,
       "broken": []
     },
@@ -40,7 +40,7 @@
       "fails": []
     },
     "gate6_clinical_selftests": {
-      "hooks": 6,
+      "hooks": 7,
       "pass": true,
       "detail": [
         {
@@ -59,9 +59,181 @@
         },
         {
           "page": "ductuslab-case-chain.html",
-          "pass": null,
+          "pass": true,
           "selfTest": {
-            "hook": false
+            "pass": true,
+            "count": 42,
+            "tests": [
+              {
+                "n": "core-version-1.3",
+                "pass": true
+              },
+              {
+                "n": "core-v1.2-areas-preserved",
+                "pass": true
+              },
+              {
+                "n": "core-dental-revision-counters",
+                "pass": true
+              },
+              {
+                "n": "core-dental-contract",
+                "pass": true
+              },
+              {
+                "n": "core-fdi-validation",
+                "pass": true
+              },
+              {
+                "n": "truth-dental-zero-leak",
+                "pass": true
+              },
+              {
+                "n": "modality-PA-cannot-3d-ian",
+                "pass": true
+              },
+              {
+                "n": "modality-PA-PAN-cannot-pulp-histology",
+                "pass": true
+              },
+              {
+                "n": "claim-gate-PAN-rejected",
+                "pass": true
+              },
+              {
+                "n": "dental-evidence-all-fresh-initially",
+                "pass": true
+              },
+              {
+                "n": "historicize-EAL-on-filePositionRevision",
+                "pass": true
+              },
+              {
+                "n": "historicize-PA-perforation-on-canalConnectivityRevision",
+                "pass": true
+              },
+              {
+                "n": "historicize-aspiration-on-needlePlacementRevision",
+                "pass": true
+              },
+              {
+                "n": "historicize-perio-on-periodontalChartRevision",
+                "pass": true
+              },
+              {
+                "n": "anesthesia-cumulative-dose-mg",
+                "pass": true
+              },
+              {
+                "n": "core-v1.2-nondental-evidence-behaviour-kept",
+                "pass": true
+              },
+              {
+                "n": "chains-11",
+                "pass": true
+              },
+              {
+                "n": "selector-track-tabs-counts",
+                "pass": true
+              },
+              {
+                "n": "spoiler-clean-all-11",
+                "pass": true
+              },
+              {
+                "n": "critical-trap-lock-all-11",
+                "pass": true
+              },
+              {
+                "n": "vitals-rail-D-chains",
+                "pass": true
+              },
+              {
+                "n": "v1.2-chain1-phase-stale-intact",
+                "pass": true
+              },
+              {
+                "n": "D1-complaint-INR-2.8",
+                "pass": true
+              },
+              {
+                "n": "D1-A-clindamycin-banned-critical",
+                "pass": true
+              },
+              {
+                "n": "D1-A-INR-below-4-warfarin-kept",
+                "pass": true
+              },
+              {
+                "n": "D1-B-stent-no-prophylaxis",
+                "pass": true
+              },
+              {
+                "n": "D1-PA-perforation-historical-after-canal-access",
+                "pass": true
+              },
+              {
+                "n": "D2-pan-not-3d-ian-and-cbct-justified",
+                "pass": true
+              },
+              {
+                "n": "D2-A-vasovagal-no-adrenaline-no-lipid",
+                "pass": true
+              },
+              {
+                "n": "D2-B-LAST-20pct-lipid-vs-traps",
+                "pass": true
+              },
+              {
+                "n": "D2-A-B-variant-stations-differ",
+                "pass": true
+              },
+              {
+                "n": "D2-aspiration-historical-after-needle-move+dose",
+                "pass": true
+              },
+              {
+                "n": "D2-no-aspiration-critical",
+                "pass": true
+              },
+              {
+                "n": "D3-airway-before-imaging-gates",
+                "pass": true
+              },
+              {
+                "n": "D3-awake-fiberoptic-vs-blind-RSI",
+                "pass": true
+              },
+              {
+                "n": "D3-infection-state+airway-evidence-historical",
+                "pass": true
+              },
+              {
+                "n": "D4-staging-and-systemic",
+                "pass": true
+              },
+              {
+                "n": "D4-stage-preserved-after-treatment",
+                "pass": true
+              },
+              {
+                "n": "D4-baseline-probing-historical-after-phase-I",
+                "pass": true
+              },
+              {
+                "n": "D4-handoff-stale-baseline-flagged",
+                "pass": true
+              },
+              {
+                "n": "chain-session-truth-dental-no-leak",
+                "pass": true
+              },
+              {
+                "n": "chain-no-option-spoilers",
+                "pass": true
+              }
+            ],
+            "failed": []
           }
         },
         {
@@ -378,7 +550,7 @@
           "pass": true,
           "selfTest": {
             "pass": true,
-            "count": 36,
+            "count": 39,
             "tests": [
               {
                 "n": "V1-force-hard-exposes",
@@ -521,6 +693,18 @@
                 "pass": true
               },
               {
+                "n": "exam-layer-labels-hidden-canvas",
+                "pass": true
+              },
+              {
+                "n": "explore-layer-labels-visible",
+                "pass": true
+              },
+              {
+                "n": "debrief-truth-labels-visible",
+                "pass": true
+              },
+              {
                 "n": "vpt-no-option-spoilers",
                 "pass": true
               }
@@ -533,7 +717,7 @@
           "pass": true,
           "selfTest": {
             "pass": true,
-            "count": 39,
+            "count": 44,
             "tests": [
               {
                 "n": "O2-anb-6.5-false-class-II",
@@ -688,6 +872,26 @@
                 "pass": true
               },
               {
+                "n": "exam-reference-box-hidden",
+                "pass": true
+              },
+              {
+                "n": "explore-reference-box-visible",
+                "pass": true
+              },
+              {
+                "n": "left-column-live-measures-fit",
+                "pass": true
+              },
+              {
+                "n": "left-column-scrollable",
+                "pass": true
+              },
+              {
+                "n": "surveyor-label-below-tooth",
+                "pass": true
+              },
+              {
                 "n": "ortho-no-option-spoilers",
                 "pass": true
               }
@@ -813,7 +1017,179 @@
       "overflow": [],
       "truthLeak": [],
       "selfTest": {
-        "hook": false
+        "pass": true,
+        "count": 42,
+        "tests": [
+          {
+            "n": "core-version-1.3",
+            "pass": true
+          },
+          {
+            "n": "core-v1.2-areas-preserved",
+            "pass": true
+          },
+          {
+            "n": "core-dental-revision-counters",
+            "pass": true
+          },
+          {
+            "n": "core-dental-contract",
+            "pass": true
+          },
+          {
+            "n": "core-fdi-validation",
+            "pass": true
+          },
+          {
+            "n": "truth-dental-zero-leak",
+            "pass": true
+          },
+          {
+            "n": "modality-PA-cannot-3d-ian",
+            "pass": true
+          },
+          {
+            "n": "modality-PA-PAN-cannot-pulp-histology",
+            "pass": true
+          },
+          {
+            "n": "claim-gate-PAN-rejected",
+            "pass": true
+          },
+          {
+            "n": "dental-evidence-all-fresh-initially",
+            "pass": true
+          },
+          {
+            "n": "historicize-EAL-on-filePositionRevision",
+            "pass": true
+          },
+          {
+            "n": "historicize-PA-perforation-on-canalConnectivityRevision",
+            "pass": true
+          },
+          {
+            "n": "historicize-aspiration-on-needlePlacementRevision",
+            "pass": true
+          },
+          {
+            "n": "historicize-perio-on-periodontalChartRevision",
+            "pass": true
+          },
+          {
+            "n": "anesthesia-cumulative-dose-mg",
+            "pass": true
+          },
+          {
+            "n": "core-v1.2-nondental-evidence-behaviour-kept",
+            "pass": true
+          },
+          {
+            "n": "chains-11",
+            "pass": true
+          },
+          {
+            "n": "selector-track-tabs-counts",
+            "pass": true
+          },
+          {
+            "n": "spoiler-clean-all-11",
+            "pass": true
+          },
+          {
+            "n": "critical-trap-lock-all-11",
+            "pass": true
+          },
+          {
+            "n": "vitals-rail-D-chains",
+            "pass": true
+          },
+          {
+            "n": "v1.2-chain1-phase-stale-intact",
+            "pass": true
+          },
+          {
+            "n": "D1-complaint-INR-2.8",
+            "pass": true
+          },
+          {
+            "n": "D1-A-clindamycin-banned-critical",
+            "pass": true
+          },
+          {
+            "n": "D1-A-INR-below-4-warfarin-kept",
+            "pass": true
+          },
+          {
+            "n": "D1-B-stent-no-prophylaxis",
+            "pass": true
+          },
+          {
+            "n": "D1-PA-perforation-historical-after-canal-access",
+            "pass": true
+          },
+          {
+            "n": "D2-pan-not-3d-ian-and-cbct-justified",
+            "pass": true
+          },
+          {
+            "n": "D2-A-vasovagal-no-adrenaline-no-lipid",
+            "pass": true
+          },
+          {
+            "n": "D2-B-LAST-20pct-lipid-vs-traps",
+            "pass": true
+          },
+          {
+            "n": "D2-A-B-variant-stations-differ",
+            "pass": true
+          },
+          {
+            "n": "D2-aspiration-historical-after-needle-move+dose",
+            "pass": true
+          },
+          {
+            "n": "D2-no-aspiration-critical",
+            "pass": true
+          },
+          {
+            "n": "D3-airway-before-imaging-gates",
+            "pass": true
+          },
+          {
+            "n": "D3-awake-fiberoptic-vs-blind-RSI",
+            "pass": true
+          },
+          {
+            "n": "D3-infection-state+airway-evidence-historical",
+            "pass": true
+          },
+          {
+            "n": "D4-staging-and-systemic",
+            "pass": true
+          },
+          {
+            "n": "D4-stage-preserved-after-treatment",
+            "pass": true
+          },
+          {
+            "n": "D4-baseline-probing-historical-after-phase-I",
+            "pass": true
+          },
+          {
+            "n": "D4-handoff-stale-baseline-flagged",
+            "pass": true
+          },
+          {
+            "n": "chain-session-truth-dental-no-leak",
+            "pass": true
+          },
+          {
+            "n": "chain-no-option-spoilers",
+            "pass": true
+          }
+        ],
+        "failed": []
       },
       "lifecycle": {
         "supported": false,
@@ -1220,7 +1596,7 @@
       "truthLeak": [],
       "selfTest": {
         "pass": true,
-        "count": 36,
+        "count": 39,
         "tests": [
           {
             "n": "V1-force-hard-exposes",
@@ -1363,6 +1739,18 @@
             "pass": true
           },
           {
+            "n": "exam-layer-labels-hidden-canvas",
+            "pass": true
+          },
+          {
+            "n": "explore-layer-labels-visible",
+            "pass": true
+          },
+          {
+            "n": "debrief-truth-labels-visible",
+            "pass": true
+          },
+          {
             "n": "vpt-no-option-spoilers",
             "pass": true
           }
@@ -1384,7 +1772,7 @@
       "truthLeak": [],
       "selfTest": {
         "pass": true,
-        "count": 39,
+        "count": 44,
         "tests": [
           {
             "n": "O2-anb-6.5-false-class-II",
@@ -1536,6 +1924,26 @@
           },
           {
             "n": "Kennedy-third-molar-rule-caught",
+            "pass": true
+          },
+          {
+            "n": "exam-reference-box-hidden",
+            "pass": true
+          },
+          {
+            "n": "explore-reference-box-visible",
+            "pass": true
+          },
+          {
+            "n": "left-column-live-measures-fit",
+            "pass": true
+          },
+          {
+            "n": "left-column-scrollable",
+            "pass": true
+          },
+          {
+            "n": "surveyor-label-below-tooth",
             "pass": true
           },
           {

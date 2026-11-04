@@ -479,7 +479,7 @@ function drawCross(cv,truth){
       for(let y=wallY0;y<wallY1;y+=2){ const sl=slOf(y,wallY1);
         const x1=side<0? xL-s0*S-sl : xR+s0*S+sl, x2=side<0? xL-b*S-sl : xR+b*S+sl;
         ctx.fillRect(Math.min(x1,x2),y,Math.abs(x2-x1),2.5); }
-      if(truth||curMode==='explore'||(S1.probed[z]&&Math.abs(S1.probed[z].at-r)<1e-6&&l===surfLayer(z))){
+      if(truth||curMode==='explore'){
         const xm=side<0? xL-(s0+b)/2*S-8 : xR+(s0+b)/2*S+8;
         ctx.fillStyle='rgba(0,0,0,.55)';ctx.font='8px sans-serif';ctx.save();ctx.translate(xm,wallY1-6);ctx.rotate(-Math.PI/2);ctx.fillText(l.h==='SOUND_DEJ'?'DEJ-SERT':l.h.split('_')[0],0,0);ctx.restore(); }
     } };
@@ -489,7 +489,7 @@ function drawCross(cv,truth){
     for(const l of ls){ const a=acc,b=acc+l.t; acc=b; const s=Math.max(a,r); if(s>=b-1e-9) continue;
       ctx.fillStyle=l.color; ctx.fillRect(xL,y0+s*S,xR-xL,(b-s)*S);
       ctx.strokeStyle='rgba(0,0,0,.25)';ctx.lineWidth=1;ctx.strokeRect(xL+.5,y0+s*S+.5,xR-xL-1,(b-s)*S-1);
-      if(truth||curMode==='explore'||(S1.probed.floor&&Math.abs(S1.probed.floor.at-r)<1e-6&&l===surfLayer('floor'))){
+      if(truth||curMode==='explore'){
         ctx.fillStyle='rgba(0,0,0,.7)';ctx.font='bold 9px sans-serif';ctx.fillText(l.h+' · '+l.t.toFixed(1)+' mm',xL+6,y0+s*S+Math.min(13,(b-s)*S-2)); } } };
   drawFloor();
   // air in cavity (eğimli duvarlı)
@@ -843,7 +843,15 @@ window.__selfTest=function(){
       ok('exam-pack-rules-hidden', !/Replantasyon|splint|KKT|UNUTULMAZ|UYGULANMAZ/i.test(pk) && /gizli/i.test(pk) && !/Avülse|Genç|immatür/i.test(cb)); }
     VPT.setTx({replant:'yes'}); { const pk=document.getElementById('packOut').innerText; ok('exam-lock-message-neutral', /KİLİDİ/.test(pk) && !/süt dişi replante edilmez/i.test(pk)); }
     VPT.setMode('explore'); VPT.loadCase('T1'); ok('explore-pack-note-visible', /Replantasyon/.test(document.getElementById('packOut').innerText));
-    VPT.setBench(1); VPT.loadCase('V1');
+    { const cap=[]; const of=CanvasRenderingContext2D.prototype.fillText; CanvasRenderingContext2D.prototype.fillText=function(t){ cap.push(String(t)); return of.apply(this,arguments); };
+      const rx=/SOFT_INFECTED|LEATHERY_AFFECTED|HARD_SCLEROTIC|DEJ-SERT|SOFT|LEATHERY|HARD|SOUND/;
+      VPT.setBench(1); VPT.setMode('exam'); VPT.loadCase('V1'); VPT.excavate('dejL',0.5,'hand'); VPT.probe('floor'); VPT.probe('dejL'); cap.length=0; drawCross($('crossCanvas'),false);
+      const examHit=cap.filter(t=>rx.test(t)).length; cap.length=0;
+      VPT.setMode('explore'); drawCross($('crossCanvas'),false); const expHit=cap.filter(t=>rx.test(t)).length; cap.length=0;
+      drawCross($('crossCanvas'),true); const truthHit=cap.filter(t=>rx.test(t)).length;
+      CanvasRenderingContext2D.prototype.fillText=of;
+      ok('exam-layer-labels-hidden-canvas', examHit===0); ok('explore-layer-labels-visible', expHit>0); ok('debrief-truth-labels-visible', truthHit>0); }
+    VPT.setMode('explore'); VPT.setBench(1); VPT.loadCase('V1');
     // spoiler yok
     const optTxt=[...document.querySelectorAll('select option')].map(o=>o.textContent).join(' | ');
     ok('vpt-no-option-spoilers', !/\((doğru|güvenli|hatalı|riskli)\)/i.test(optTxt));
