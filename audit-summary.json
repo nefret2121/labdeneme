@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-04T01:13:00.945Z",
+  "generatedAt": "2026-11-04T04:01:27.172Z",
   "threeLocal": true,
   "pages": 23,
   "viewports": [
@@ -1102,7 +1102,7 @@
     },
     "gate8_mobile_phone_ergonomics": {
       "pass": true,
-      "checks": 72,
+      "checks": 92,
       "fails": [],
       "detail": [
         {
@@ -2293,6 +2293,331 @@
         },
         {
           "page": "nro/index.html",
+          "viewport": "desktop-1366x768",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "shell": false,
+            "tb": true,
+            "cc": true,
+            "menu": true,
+            "mon": true,
+            "sw": true
+          }
+        },
+        {
+          "page": "ductuslab-endo.html",
+          "viewport": "390x844",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "pills": 3,
+            "debrief": true,
+            "canvas": {
+              "maxW": 382,
+              "maxH": 367,
+              "stackH": 367,
+              "svgOk": false
+            },
+            "asp": 0.014
+          }
+        },
+        {
+          "page": "ductuslab-endo.html",
+          "viewport": "360x800",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "pills": 3,
+            "debrief": true,
+            "canvas": {
+              "maxW": 352,
+              "maxH": 320,
+              "stackH": 320,
+              "svgOk": false
+            },
+            "asp": 0.002
+          }
+        },
+        {
+          "page": "ductuslab-endo.html",
+          "viewport": "844x390",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "pills": 3,
+            "debrief": true,
+            "canvas": {
+              "maxW": 413,
+              "maxH": 333,
+              "stackH": 333,
+              "svgOk": false
+            },
+            "asp": 0.013
+          }
+        },
+        {
+          "page": "ductuslab-endo.html",
+          "viewport": "desktop-1366x768",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "shell": false,
+            "tb": true,
+            "cc": true,
+            "menu": true,
+            "mon": true,
+            "sw": true
+          }
+        },
+        {
+          "page": "ductuslab-perio.html",
+          "viewport": "390x844",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "pills": 3,
+            "debrief": true,
+            "canvas": {
+              "maxW": 469,
+              "maxH": 254,
+              "stackH": 254,
+              "svgOk": false
+            },
+            "asp": 0.001
+          }
+        },
+        {
+          "page": "ductuslab-perio.html",
+          "viewport": "360x800",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "pills": 3,
+            "debrief": true,
+            "canvas": {
+              "maxW": 469,
+              "maxH": 233,
+              "stackH": 233,
+              "svgOk": false
+            },
+            "asp": 0.004
+          }
+        },
+        {
+          "page": "ductuslab-perio.html",
+          "viewport": "844x390",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "pills": 3,
+            "debrief": true,
+            "canvas": {
+              "maxW": 469,
+              "maxH": 275,
+              "stackH": 275,
+              "svgOk": false
+            },
+            "asp": 0.002
+          }
+        },
+        {
+          "page": "ductuslab-perio.html",
+          "viewport": "desktop-1366x768",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "shell": false,
+            "tb": true,
+            "cc": true,
+            "menu": true,
+            "mon": true,
+            "sw": true
+          }
+        },
+        {
+          "page": "ductuslab-omfs.html",
+          "viewport": "390x844",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "pills": 4,
+            "debrief": true,
+            "canvas": {
+              "maxW": 821,
+              "maxH": 324,
+              "stackH": 324,
+              "svgOk": false
+            },
+            "asp": 0.002
+          }
+        },
+        {
+          "page": "ductuslab-omfs.html",
+          "viewport": "360x800",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "pills": 4,
+            "debrief": true,
+            "canvas": {
+              "maxW": 770,
+              "maxH": 304,
+              "stackH": 304,
+              "svgOk": false
+            },
+            "asp": 0.002
+          }
+        },
+        {
+          "page": "ductuslab-omfs.html",
+          "viewport": "844x390",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "pills": 4,
+            "debrief": true,
+            "canvas": {
+              "maxW": 838,
+              "maxH": 331,
+              "stackH": 331,
+              "svgOk": false
+            },
+            "asp": 0.001
+          }
+        },
+        {
+          "page": "ductuslab-omfs.html",
+          "viewport": "desktop-1366x768",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "shell": false,
+            "tb": true,
+            "cc": true,
+            "menu": true,
+            "mon": true,
+            "sw": true
+          }
+        },
+        {
+          "page": "ductuslab-vpt.html",
+          "viewport": "390x844",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "pills": 3,
+            "debrief": true,
+            "canvas": {
+              "maxW": 380,
+              "maxH": 312,
+              "stackH": 312,
+              "svgOk": false
+            },
+            "asp": 0.003
+          }
+        },
+        {
+          "page": "ductuslab-vpt.html",
+          "viewport": "360x800",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "pills": 3,
+            "debrief": true,
+            "canvas": {
+              "maxW": 350,
+              "maxH": 287,
+              "stackH": 287,
+              "svgOk": false
+            },
+            "asp": 0.003
+          }
+        },
+        {
+          "page": "ductuslab-vpt.html",
+          "viewport": "844x390",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "pills": 3,
+            "debrief": true,
+            "canvas": {
+              "maxW": 411,
+              "maxH": 331,
+              "stackH": 331,
+              "svgOk": false
+            },
+            "asp": 0.002
+          }
+        },
+        {
+          "page": "ductuslab-vpt.html",
+          "viewport": "desktop-1366x768",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "shell": false,
+            "tb": true,
+            "cc": true,
+            "menu": true,
+            "mon": true,
+            "sw": true
+          }
+        },
+        {
+          "page": "ductuslab-ortho.html",
+          "viewport": "390x844",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "pills": 1,
+            "debrief": true,
+            "canvas": {
+              "maxW": 382,
+              "maxH": 326,
+              "stackH": 326,
+              "svgOk": false
+            },
+            "asp": 0.001
+          }
+        },
+        {
+          "page": "ductuslab-ortho.html",
+          "viewport": "360x800",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "pills": 1,
+            "debrief": true,
+            "canvas": {
+              "maxW": 352,
+              "maxH": 306,
+              "stackH": 306,
+              "svgOk": false
+            },
+            "asp": 0.001
+          }
+        },
+        {
+          "page": "ductuslab-ortho.html",
+          "viewport": "844x390",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "pills": 1,
+            "debrief": true,
+            "canvas": {
+              "maxW": 413,
+              "maxH": 333,
+              "stackH": 333,
+              "svgOk": false
+            },
+            "asp": 0.001
+          }
+        },
+        {
+          "page": "ductuslab-ortho.html",
           "viewport": "desktop-1366x768",
           "pass": true,
           "fails": [],

@@ -819,6 +819,9 @@ function bindUI(){
   glcv.addEventListener('pointerdown',function(e){ ENG.dragging=true; P2._moved=false; glcv.setPointerCapture(e.pointerId); ENG._mx=e.clientX;ENG._my=e.clientY; glcv.style.cursor=(P2.tool==='maryland')?'grabbing':'crosshair'; });
   window.addEventListener('pointermove',function(e){ if(!ENG.dragging)return; if(Math.abs(e.clientX-ENG._mx)+Math.abs(e.clientY-ENG._my)>3)P2._moved=true; ENG.scope.shaftPan=clamp(ENG.scope.shaftPan+(e.clientX-ENG._mx)*0.004,-0.7,0.7); ENG.scope.shaftTilt=clamp(ENG.scope.shaftTilt-(e.clientY-ENG._my)*0.004,-0.5,0.5); ENG._mx=e.clientX;ENG._my=e.clientY; if($('sldPan'))$('sldPan').value=ENG.scope.shaftPan/DEG; if($('sldTilt'))$('sldTilt').value=ENG.scope.shaftTilt/DEG; });
   window.addEventListener('pointerup',function(){ ENG.dragging=false; glcv.style.cursor=(P2.tool==='maryland')?'grab':'crosshair'; });
+  /* güvenlik kesici: parmak/imleç iptal veya sekme odağı kaybı → sürükleme + L-Hook enerji anında durur */
+  var __safeStop=function(){ ENG.dragging=false; ENG._hookActive=false; };
+  window.addEventListener('pointercancel',__safeStop); window.addEventListener('blur',__safeStop); document.addEventListener('visibilitychange',function(){ if(document.hidden) __safeStop(); });
   glcv.addEventListener('click',function(e){ if(P2.tool&&P2.tool!=='maryland'){ p2Pick(e); } else if(P2.tool==='maryland'&&!P2._moved){ p2Pick(e); } });
   // alet kısayolları + L-Hook enerji (Space)
   window.addEventListener('keydown',function(e){ if(/INPUT|TEXTAREA/.test((e.target.tagName||''))) return;

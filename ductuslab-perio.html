@@ -1,5 +1,5 @@
 <!doctype html><html lang="tr"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>DuctusLab PERİO — 6-Nokta Sondlama · İşaretli CAL · Nabers Furkasyon · 2017 AAP/EFP</title>
 <style>
 :root{
@@ -116,6 +116,9 @@ table.chart td.bop{color:var(--bad)}
 @media (max-width:950px){ .main{grid-template-columns:1fr;grid-template-rows:auto 1fr auto;overflow:auto} html,body{overflow:auto} .app{height:auto}
   .col.left,.col.right{border:0;border-top:1px solid var(--line)} .col.center{min-height:60vh} .d3{grid-template-columns:1fr} .loupe{position:static;width:auto;margin-top:8px} }
 </style>
+<!-- DM-BEGIN -->
+<link rel="stylesheet" href="./ductus-mobile.css">
+<!-- DM-END -->
 </head>
 <body>
 <div class="app">
@@ -884,4 +887,22 @@ console.log('[PERIO] ready — cases',CASE_ORDER.length);
 /* chain-preset: Case Chain ?chain=1&case=<id> senkronu (yalnız zincir içinde etkin) */
 (function(){ try{ var q=new URLSearchParams(location.search); if(q.get('chain')!=='1')return; var c=q.get('case'); if(c&&window.PERIO&&window.PERIO.loadCase) window.PERIO.loadCase(c); }catch(e){} })();
 </script>
+<!-- DM-BEGIN -->
+<script src="./ductus-mobile.js"></script>
+<script>
+DuctusMobile.init({page:'perio',fam:'dus',header:'.topbar',header2:'#stepper',stage:'.col.center',stageH:46,accent:'#e0a64f',
+ views:[{id:'clinic',label:'🦷 Klinik Sekstant',sel:['.scenewrap'],fit:'#clinicCanvas'},
+        {id:'loupe',label:'🔎 UNC-15 / Nabers Loupe',sel:['.loupe'],move:true,fit:'#loupeCanvas',scroll:true},
+        {id:'bw',label:'☢️ Bitewing',sel:['#bitewing'],move:true,fit:'#bitewing'}],
+ cards:[{id:'dmCase',title:'Vaka Seç',into:'.col.left'}],
+ move:[{sel:'#casePick',to:'#dmCase'}],
+ modals:[{sel:'#ovl .debrief',title:'Debrief',grid:'.d3',labels:['① Kanıtın','② 3B Gerçek','③ Karne'],close:'#dbX'}],
+ tabs:[
+ {id:'ctl',icon:'🎛️',label:'Sond & Kuvvet',sel:['.col.left .panel:nth-child(1)','.col.left .panel:nth-child(2)','.col.left .panel:nth-child(3)','.col.right .panel:nth-child(1)']},
+ {id:'case',icon:'📋',label:'Hasta & Özet',sel:['#dmCase','.col.left .panel:nth-child(4)']},
+ {id:'ev',icon:'📊',label:'Çizelge',sel:['.col.right .panel:nth-child(2)','.col.right .panel:nth-child(3)']},
+ {id:'jury',icon:'⚖️',label:'Evre/Derece & Jüri',sel:['.col.right .panel:nth-child(4)']}]});
+
+</script>
+<!-- DM-END -->
 </body></html>

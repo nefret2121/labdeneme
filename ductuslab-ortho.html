@@ -1,5 +1,5 @@
 <!doctype html><html lang="tr"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>DuctusLab ORTO · TME · HBP — Sefalometrik Analiz, M/F Biyomekaniği, TME Kondil-Disk Kinematiği & Paralelometre Simülatörü</title>
 <style>
 :root{
@@ -97,7 +97,10 @@ body[data-kind3="p1"] .p3b{display:none!important} body[data-kind3="p2"] .p3a{di
 .ctl input[type=range]{min-width:90px}
 .krow{border:1px solid var(--line2);border-radius:9px;padding:6px 8px;margin-bottom:6px;background:#14110e}
 .krow h6{margin:0 0 4px;font-size:11px;color:var(--accent)}
-</style></head><body data-bench="1" data-kind="ceph" data-kind3="p1">
+</style><!-- DM-BEGIN -->
+<link rel="stylesheet" href="./ductus-mobile.css">
+<!-- DM-END -->
+</head><body data-bench="1" data-kind="ceph" data-kind3="p1">
 <div class="app">
   <div class="topbar">
     <div class="brand">Ductus<span class="en">Lab ORTO·TME·HBP</span><span class="tag">Sefalometri · M/F Biyomekaniği · TME Kinematiği · Paralelometre/RPD</span></div>
@@ -735,7 +738,7 @@ function renderJury(){ const g=gradeNow(); const col=g.score>=85?'var(--good)':g
   g.cats.forEach(c=>{ const cs=Math.round(c.w*c.s),cc=c.s>=0.85?'var(--good)':c.s>=0.5?'var(--warn)':'var(--bad)'; h+=`<div style="margin-top:7px;font-size:11px;font-weight:800;display:flex;justify-content:space-between"><span>${c.name}</span><span style="color:${cc}">${cs}/${c.w}</span></div>`; c.flags.forEach(f=>h+=`<div class="jflag ${f[0]}"><span class="b">${f[0]==='ok'?'✓':f[0]==='warn'?'!':'✕'}</span><span>${f[1]}</span></div>`); });
   h+='</div>'; $('juryOut').innerHTML=h; setStep(4); openDebrief(g); return g; }
 /* ---- olaylar ---- */
-const cxy=(e,cv)=>{ const r=cv.getBoundingClientRect(); return [(e.clientX-r.left)*cv.width/r.width,(e.clientY-r.top)*cv.height/r.height]; };
+const cxy=(e,cv)=>{ const r=cv.getBoundingClientRect(); const off=(e.type==='pointermove'&&e.pointerType==='touch'&&window.__dmTouchOff)||0; /* mobil: parmak altındaki noktayı görmek için sürüklerken ofset */ return [(e.clientX-r.left)*cv.width/r.width,(e.clientY-off-r.top)*cv.height/r.height]; };
 $('benchSeg').addEventListener('click',e=>{const b=e.target.closest('button'); if(b) setBench(+b.dataset.bench);});
 $('modeSeg').addEventListener('click',e=>{const b=e.target.closest('button'); if(b) setMode(b.dataset.mode);});
 $('juryBtn').addEventListener('click',renderJury); $('resetBtn').addEventListener('click',()=>loadCase(CID[bench]));
@@ -746,6 +749,8 @@ cephCv.addEventListener('pointerdown',e=>{ const q=cxy(e,cephCv); let near=null,
   if(near&&(near!==SC.active||SC.marks[SC.active])){ SC.drag=near; SC.active=near; } else { const k=SC.active; placeMark(k,Pinv(q)); SC.drag=k; } try{cephCv.setPointerCapture(e.pointerId);}catch(_){} loupe(q[0],q[1]); refreshCeph(); });
 cephCv.addEventListener('pointermove',e=>{ const q=cxy(e,cephCv); window.__lp=1; if(SC.drag){ SC.marks[SC.drag]=Pinv(q); refreshCeph(); } loupe(q[0],q[1]); });
 cephCv.addEventListener('pointerup',()=>{ SC.drag=null; refreshCeph(); });
+cephCv.addEventListener('pointercancel',()=>{ SC.drag=null; refreshCeph(); });
+window.addEventListener('blur',()=>{ if(SC) SC.drag=null; });
 $('lmClear').addEventListener('click',()=>{ SC.marks={}; SC.active='S'; refreshCeph(); });
 $('lmAuto').addEventListener('click',()=>{ REQ.forEach(k=>SC.marks[k]=[SC.T[k][0]+0.3,SC.T[k][1]-0.3]); SC.active='S'; refreshCeph(); });
 for(const [id,k] of [['dCls','cls'],['dBasis','basis'],['dVert','vert'],['dLip','lip']]) $(id).addEventListener('change',e=>{ SC.dec[k]=e.target.value; refreshCeph(); });
@@ -842,4 +847,33 @@ window.__selfTest=function(){
 };
 console.log('[ORTHO] ready');
 </script>
+<!-- DM-BEGIN -->
+<script src="./ductus-mobile.js"></script>
+<script>
+(function(){ var B=function(n){return function(){return document.body.dataset.bench===String(n);};};
+ var C=function(n,k){return function(){return document.body.dataset.bench===String(n)&&document.body.dataset.kind===k;};};
+ var K3=function(k){return function(){return document.body.dataset.bench==='3'&&document.body.dataset.kind3===k;};};
+DuctusMobile.init({page:'ortho',fam:'dus',header:'.topbar',header2:'#stepper,#dmBenchBar',stage:'.col.center',stageH:46,accent:'#d99a5f',
+ onEnter:function(){ window.__dmTouchOff=44; var c=document.getElementById('cephCanvas'); if(c&&!c.__dmLp){ c.__dmLp=1; var f=function(e){ var r=c.getBoundingClientRect(), w=c.closest('.dm-vw'); if(w) w.setAttribute('data-lp',(e.clientX-r.left)>r.width/2?'left':'right'); }; c.addEventListener('pointermove',f); c.addEventListener('pointerdown',f); } }, afterLeave:function(){ window.__dmTouchOff=0; },
+ views:[{id:'ceph',label:'📐 Sefalometri + Loupe',sel:['.scenewrap.p1ceph > .cvbox','.scenewrap.p1ceph .stack > .cvbox'],move:true,fit:'#cephCanvas',when:C(1,'ceph')},
+        {id:'mf',label:'⚙️ M/F & C_res',sel:['.scenewrap.p1mf > .cvbox'],move:true,fit:'#mfCanvas',when:C(1,'mf')},
+        {id:'tmj',label:'🦴 Sagital TME',sel:['.scenewrap.pane2 > .cvbox'],move:true,fit:'#tmjCanvas',when:B(2)},
+        {id:'front',label:'↕️ Kesici Açılma Yolu',sel:['.scenewrap.pane2 .stack > .cvbox'],move:true,fit:'#frontCanvas',when:B(2)},
+        {id:'arch',label:'🦷 Ark & Fulkrum',sel:['.scenewrap.p3a > .cvbox'],move:true,fit:'#archCanvas',when:K3('p1')},
+        {id:'surv',label:'📏 Paralelometre',sel:['.scenewrap.p3a .stack > .cvbox:nth-child(2)'],move:true,fit:'#survCanvas',when:K3('p1')},
+        {id:'lever',label:'⚖️ Kaldıraç',sel:['.scenewrap.p3a .stack > .cvbox:nth-child(1)'],move:true,fit:'#leverCanvas',when:K3('p1')},
+        {id:'ken',label:'🧩 Kennedy Arkları',sel:['.scenewrap.p3b > .cvbox'],move:true,fit:'#kenCanvas',scroll:true,when:K3('p2')}],
+ cards:[{id:'dmBenchBar',into:'.app',cls:'dm-benchbar'},{id:'dmCase',title:'Vaka Seç',into:'.col.left'},{id:'dmCtl',title:'Kontroller',into:'.col.left'},{id:'dmAn',title:'Analiz Özeti',into:'.col.left'}],
+ move:[{sel:'#benchSeg',to:'#dmBenchBar'},{sel:'#casePick',to:'#dmCase'},{sel:'.scenewrap.pane2 .ctl',to:'#dmCtl'},{sel:'.scenewrap.p3a .ctl',to:'#dmCtl'},
+       {sel:'.scenewrap .stack > .panel',to:'#dmAn'},{sel:'#kRulesBox',to:'#dmAn'},{sel:'#tRead',to:'#dmAn'}],
+ modals:[{sel:'#ovl .debrief',title:'Debrief',grid:'.d3',labels:['① Kanıtın','② Şeffaf Gerçek','③ Karne'],close:'#dbX'}],
+ tabs:[
+ {id:'ctl',icon:'🎛️',label:'Nokta / Kuvvet / Kroşe',sel:['.col.left .pane1 > .panel:nth-child(1)','.col.left .p1mf > .panel:nth-child(2)','.col.left .p1mf > .panel:nth-child(3)','.col.left .pane2 > .panel:nth-child(2)','#dmCtl','.col.left .p3a > .panel','.col.left .p3b > .panel']},
+ {id:'case',icon:'📋',label:'Vaka & Ölçümler',sel:['#dmCase','.col.left .p1ceph > .panel:nth-child(2)','.col.left .p1mf > .panel:nth-child(1)','.col.left .pane2 > .panel:nth-child(1)']},
+ {id:'ev',icon:'📊',label:'Analiz Özeti',sel:['#dmAn','.col.right .p3a > .panel']},
+ {id:'jury',icon:'⚖️',label:'Karar & Jüri',sel:['.col.right .pane1 > .panel','.col.right .pane2 > .panel','.col.right > .panel']}]});
+})();
+
+</script>
+<!-- DM-END -->
 </body></html>

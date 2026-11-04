@@ -1,5 +1,5 @@
 <!doctype html><html lang="tr"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>DuctusLab VPT & Travma — Selektif Ekskavasyon, Vital Pulpa Tedavisi & IADT Dental Travma</title>
 <style>
 :root{
@@ -79,7 +79,10 @@ body[data-bench="1"] .pane2{display:none!important} body[data-bench="2"] .pane1{
 .grp[hidden]{display:none!important}
 @media (max-width:1150px){ .main{grid-template-columns:220px 1fr 300px} }
 @media (max-width:950px){ .main{grid-template-columns:1fr;grid-template-rows:auto 1fr auto;overflow:auto} html,body{overflow:auto} .app{height:auto} .col.left,.col.right{border:0;border-top:1px solid var(--line)} .d3{grid-template-columns:1fr} .scenewrap{grid-template-columns:1fr} }
-</style></head><body data-bench="1">
+</style><!-- DM-BEGIN -->
+<link rel="stylesheet" href="./ductus-mobile.css">
+<!-- DM-END -->
+</head><body data-bench="1">
 <div class="app">
   <div class="topbar">
     <div class="brand">Ductus<span class="en">Lab VPT</span><span class="tag">Selektif Ekskavasyon · Vital Pulpa Tedavisi · IADT Travma</span></div>
@@ -862,4 +865,24 @@ window.__selfTest=function(){
 };
 console.log('[VPT] ready');
 </script>
+<!-- DM-BEGIN -->
+<script src="./ductus-mobile.js"></script>
+<script>
+DuctusMobile.init({page:'vpt',fam:'dus',header:'.topbar',header2:'#stepper,#dmBenchBar',stage:'.col.center',stageH:46,accent:'#d9a05f',
+ views:[{id:'cross',label:'🦷 Kron-Pulpa Kesiti',sel:['.scenewrap.pane1 > .cvbox'],move:true,fit:'#crossCanvas',when:function(){return document.body.dataset.bench==='1';}},
+        {id:'occl',label:'⭕ Oklüzal Kavite',sel:['.scenewrap.pane1 .stack > .cvbox:nth-child(1)'],move:true,fit:'#occlCanvas',when:function(){return document.body.dataset.bench==='1';}},
+        {id:'rx',label:'☢️ Periapikal',sel:['.scenewrap.pane1 .stack > .cvbox:nth-child(2)'],move:true,fit:'#rxCanvas',when:function(){return document.body.dataset.bench==='1';}},
+        {id:'tcv',label:'🦷 Alveol & Splint',sel:['.scenewrap.pane2 > .cvbox'],move:true,fit:'#tCanvas',when:function(){return document.body.dataset.bench==='2';}},
+        {id:'trx',label:'☢️ Açık/Kapalı Apeks PA',sel:['.scenewrap.pane2 .stack > .cvbox:nth-child(1)'],move:true,fit:'#trxCanvas',when:function(){return document.body.dataset.bench==='2';}}],
+ cards:[{id:'dmBenchBar',into:'.app',cls:'dm-benchbar'},{id:'dmCase',title:'Vaka Seç',into:'.col.left'},{id:'dmFind',title:'Test & Müdahale Bulguları',into:'.col.left'}],
+ move:[{sel:'#benchSeg',to:'#dmBenchBar'},{sel:'#casePick',to:'#dmCase'},{sel:'#dxOut',to:'#dmFind'},{sel:'#toolOut',to:'#dmFind'},{sel:'#tDxOut',to:'#dmFind'},{sel:'#packOut',to:'#dmFind'}],
+ modals:[{sel:'#ovl .debrief',title:'Debrief',grid:'.d3',labels:['① Kanıtın','② Şeffaf Gerçek','③ Karne'],close:'#dbX'}],
+ tabs:[
+ {id:'ctl',icon:'🎛️',label:'Muayene & Müdahale',sel:['.col.left .pane1 > .panel','.col.right .pane1 > .panel:nth-child(2)','.col.left .pane2 > .panel:nth-child(3)','.col.right .pane2 > .panel']},
+ {id:'case',icon:'📋',label:'Vaka & Pulpa/PDL',sel:['#dmCase','.col.right .pane1 > .panel:nth-child(1)','.col.left .pane2 > .panel:nth-child(1)','.col.left .pane2 > .panel:nth-child(2)']},
+ {id:'ev',icon:'🧪',label:'Test Bulguları',sel:['#dmFind']},
+ {id:'jury',icon:'⚖️',label:'Karar & Jüri',sel:['.col.right > .panel']}]});
+
+</script>
+<!-- DM-END -->
 </body></html>

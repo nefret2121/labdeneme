@@ -258,3 +258,108 @@ html.dm-on[data-dmfam=surg] .stage-foot .toolgrp{ flex-wrap:wrap; }
 html.dm-on[data-dmpage=ks] .gaze-grid{ grid-template-columns:repeat(3,minmax(64px,1fr)); grid-template-rows:repeat(3,44px); gap:6px; width:100%; max-width:300px; }
 html.dm-on[data-dmpage=ks] .gaze-grid button{ min-height:44px; font-size:12px; }
 html.dm-on[data-dmpage=ks] .gaze-hint{ flex-basis:100%; }
+
+/* =================== Sahne görünüm hapları (Stage Switcher Pills) =================== */
+html.dm-on .dm-vhide{ display:none !important; }
+html.dm-on .dm-vpills{ flex:0 0 auto; display:flex; gap:6px; padding:4px 54px 4px 6px; overflow-x:auto; scrollbar-width:none; background:rgba(6,10,16,.92); border-bottom:1px solid rgba(160,176,196,.16); z-index:6; -webkit-overflow-scrolling:touch; }
+html.dm-on .dm-vpills::-webkit-scrollbar{ display:none; }
+html.dm-on .dm-vpills button{ flex:0 0 auto; min-height:44px; padding:0 14px; border-radius:22px; border:1px solid rgba(160,176,196,.3); background:rgba(14,22,34,.9); color:#c9d3e0; font:700 13px/1 system-ui,sans-serif; white-space:nowrap; }
+html.dm-on .dm-vpills button.on{ background:var(--dm-accent,#6fa3c8); color:#04121c; border-color:transparent; }
+html.dm-on .dm-vw{ flex:1 1 0; min-height:0; position:relative; display:flex; align-items:center; justify-content:center; overflow:hidden; background:#05080d; }
+html.dm-on .dm-vw > *{ flex:0 0 auto; margin:0 !important; }
+html.dm-on .dm-stage > .dm-enlarge{ top:4px !important; bottom:auto !important; right:4px; z-index:9; }
+html.dm-on .dm-dupx{ display:none !important; }
+
+/* =================== DUS ortak =================== */
+html.dm-on[data-dmfam=dus] .dm-stage{ background:#04080d; }
+html.dm-on[data-dmfam=dus] .panel{ border-bottom:1px solid rgba(160,176,196,.14); }
+html.dm-on[data-dmfam=dus] button, html.dm-on[data-dmfam=dus] select{ min-height:44px; }
+html.dm-on[data-dmfam=dus] .ctrlrow input[type=range], html.dm-on[data-dmfam=dus] input[type=range]{ min-height:36px; touch-action:pan-y; }
+html.dm-on[data-dmfam=dus] .dm-stage canvas{ touch-action:none; }
+/* ENDO */
+html.dm-on[data-dmpage=endo] .scopewrap{ padding:4px; }
+html.dm-on[data-dmpage=endo] .hud{ left:8px; top:8px; transform:scale(.9); transform-origin:left top; }
+html.dm-on[data-dmpage=endo] .magbar{ right:6px; top:48px; }
+html.dm-on[data-dmpage=endo] .magbar button{ min-height:36px; width:44px; }
+html.dm-on[data-dmpage=endo] .section-guide{ left:6px; bottom:6px; top:auto !important; padding:2px; }
+html.dm-on[data-dmpage=endo] .section-guide .gt{ display:none; }
+html.dm-on[data-dmpage=endo] .section-guide.dm-pip-open .gt{ display:flex; }
+html.dm-on[data-dmpage=endo] .scope-pan-hint{ display:none; }
+html.dm-on[data-dmpage=endo] .dm-vw .eal-display{ width:calc(100% - 16px); }
+html.dm-on[data-dmpage=endo] .dm-vw .eal-read .big{ font-size:34px; }
+html.dm-on[data-dmpage=endo] .dm-vw .xraywrap{ border:0; }
+html.dm-on[data-dmpage=endo] .casepick{ flex-wrap:wrap; }
+html.dm-on[data-dmpage=endo] .casebtn{ min-height:44px; min-width:52px; }
+html.dm-on .dm-stage{ min-height:0 !important; max-height:none !important; }
+html.dm-on .dm-vw.dm-scrollx{ justify-content:flex-start; overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; }
+html.dm-on .dm-vw.dm-scrollx canvas{ touch-action:pan-x !important; }
+html.dm-on .dm-vw.dm-scrollx > *{ flex:0 0 auto; }
+/* PERİO */
+html.dm-on[data-dmpage=perio] .scenewrap{ padding:4px; }
+html.dm-on[data-dmpage=perio] .scene-hint{ display:none; }
+html.dm-on[data-dmpage=perio] .dm-vw .loupe{ border:0; padding:0; background:transparent; height:100%; display:flex; flex-direction:column; }
+html.dm-on[data-dmpage=perio] .dm-vw .loupe .lt{ position:sticky; left:0; }
+html.dm-on[data-dmpage=perio] .chartwrap{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
+html.dm-on[data-dmpage=perio] .entryrow input, html.dm-on[data-dmpage=perio] .entryrow select, html.dm-on[data-dmpage=endo] select{ font-size:16px; min-height:44px; }
+html.dm-on[data-dmpage=perio] .casepick{ flex-wrap:wrap; }
+html.dm-on[data-dmpage=perio] .casebtn{ min-height:44px; min-width:52px; }
+/* OMFS */
+html.dm-on[data-dmpage=omfs] .scenewrap{ display:none !important; }
+html.dm-on[data-dmpage=omfs] .dm-vw .mprcell, html.dm-on[data-dmpage=omfs] .dm-vw .panowrap{ width:auto; max-width:none; }
+html.dm-on[data-dmpage=omfs] .dm-vw .mprcell .ct{ font-size:12px; }
+html.dm-on[data-dmpage=omfs] .dm-vw canvas{ width:auto; }
+html.dm-on[data-dmpage=omfs] .dm-vpills button.act{ background:#143a52; color:#8fd3ff; border-color:#5fb3d9; }
+html.dm-on[data-dmpage=omfs] .casepick{ flex-wrap:wrap; }
+html.dm-on[data-dmpage=omfs] .casebtn{ min-height:44px; min-width:52px; }
+html.dm-on[data-dmpage=omfs] #dmMpr .cr{ display:flex; align-items:center; gap:6px; margin:6px 0; }
+html.dm-on[data-dmpage=omfs] #dmMpr .cr input{ flex:1; }
+html.dm-on[data-dmpage=omfs] .surg2 .ctrlrow{ flex-wrap:wrap; }
+html.dm-on[data-dmpage=omfs] select, html.dm-on[data-dmpage=omfs] input[type=text]{ font-size:16px; }
+/* VPT / bench konteynerleri */
+html.dm-on body[data-bench="2"] .pane1, html.dm-on body[data-bench="1"] .pane2{ display:none !important; }
+html.dm-on[data-dmpage=vpt] .scenewrap, html.dm-on[data-dmpage=ortho] .scenewrap{ display:none !important; }
+html.dm-on .dm-benchbar{ display:flex; padding:4px 6px; background:#0b0f15; border-bottom:1px solid rgba(160,176,196,.16); }
+html.dm-on .dm-benchbar .seg{ width:100%; display:flex; }
+html.dm-on .dm-benchbar .seg button{ flex:1 1 0; min-height:44px; font-size:12.5px; line-height:1.15; white-space:normal; padding:4px 6px; }
+html.dm-on[data-dmpage=vpt] .brand .tag, html.dm-on[data-dmpage=ortho] .brand .tag{ display:none; }
+html.dm-on[data-dmfam=dus] select, html.dm-on[data-dmfam=dus] input:not([type=range]):not([type=checkbox]):not([type=radio]){ font-size:16px; }
+html.dm-on[data-dmfam=dus] .casepick{ flex-wrap:wrap; }
+html.dm-on[data-dmfam=dus] .casebtn{ min-height:44px; min-width:52px; }
+html.dm-on[data-dmfam=dus] .optbtn, html.dm-on[data-dmfam=dus] .tool{ min-height:44px; }
+/* ORTO — bench / kind gizleme kurallarını flatten'a karşı güçlendir */
+html.dm-on body[data-bench="1"] .pane2, html.dm-on body[data-bench="1"] .pane3,
+html.dm-on body[data-bench="2"] .pane1, html.dm-on body[data-bench="2"] .pane3,
+html.dm-on body[data-bench="3"] .pane1, html.dm-on body[data-bench="3"] .pane2,
+html.dm-on body[data-kind="ceph"] .p1mf, html.dm-on body[data-kind="mf"] .p1ceph,
+html.dm-on body[data-kind3="p1"] .p3b, html.dm-on body[data-kind3="p2"] .p3a{ display:none !important; }
+html.dm-on[data-dmpage=ortho] .dm-vw .cvbox{ border:0; }
+html.dm-on[data-dmpage=ortho] .dm-vw .cvbox:has(#loupeCanvas){ position:absolute; top:6px; right:6px; width:116px !important; height:auto; z-index:7; border:1px solid var(--accent,#d99a5f); pointer-events:none; opacity:.95; }
+html.dm-on[data-dmpage=ortho] .dm-vw .cvbox:has(#loupeCanvas) canvas{ width:100% !important; height:auto !important; }
+html.dm-on[data-dmpage=ortho] .dm-vw .cvbox:has(#loupeCanvas) .tag{ font-size:8px; }
+html.dm-on[data-dmpage=ortho] #lmList{ grid-template-columns:1fr 1fr; }
+html.dm-on[data-dmpage=ortho] #lmList .lmrow{ min-height:44px; font-size:12px; }
+html.dm-on[data-dmpage=ortho] .ctl button, html.dm-on[data-dmpage=ortho] .zrow button{ min-height:44px; }
+html.dm-on[data-dmpage=ortho] .dm-vw[data-lp=left] .cvbox:has(#loupeCanvas){ right:auto !important; left:6px; }
+html.dm-on .dm-modal-full.dm-mclosed{ display:none !important; }
+html.dm-on .dm-d3 > .dm-modal-bar, html.dm-on .dm-d3 > .dm-d3tabs{ margin:0 !important; max-width:none !important; width:auto !important; }
+html.dm-on .dm-modal-full{ background:#070c16; }
+html.dm-on #jurySheet.dm-res > h2, html.dm-on #jurySheet.dm-res > .sub, html.dm-on #jurySheet.dm-res > .card, html.dm-on #jurySheet.dm-res > .toolrow{ display:none !important; }
+html.dm-on .dm-ovl-top{ z-index:130 !important; }
+
+/* =================== Case Chain gömülü (?chain=1): tek satır kompakt üst bar =================== */
+html.dm-chain.dm-on .dm-hdr{ min-height:36px !important; padding-top:2px !important; padding-bottom:2px !important; gap:6px !important; flex-wrap:nowrap !important; overflow-x:auto; scrollbar-width:none; }
+html.dm-chain.dm-on .dm-hdr .brand, html.dm-chain.dm-on .dm-hdr .tag, html.dm-chain.dm-on .dm-hdr .sp, html.dm-chain.dm-on .dm-hdr h1{ display:none !important; }
+html.dm-chain.dm-on .dm-hdr button, html.dm-chain.dm-on .dm-hdr .seg button{ min-height:32px !important; padding-top:2px; padding-bottom:2px; font-size:12px; }
+html.dm-chain.dm-on .dm-hdr2{ padding-top:2px !important; padding-bottom:2px !important; min-height:0 !important; }
+html.dm-chain.dm-on .dm-hdr2 .step, html.dm-chain.dm-on .dm-hdr2 .st{ padding-top:2px; padding-bottom:2px; }
+html.dm-chain.dm-on .dm-benchbar .seg button{ min-height:32px; }
+html.dm-chain.dm-on .dm-vpills{ padding-top:2px; padding-bottom:2px; }
+html.dm-chain.dm-on .dm-vpills button{ min-height:36px; }
+
+/* ---- DUS yatay: sahne tüm yükseklik (sol), başlıklar+paneller sağda ---- */
+@media (orientation:landscape) and (max-height:520px){
+  html.dm-on[data-dmfam=dus] .dm-stage{ top:0 !important; height:100dvh !important; }
+  html.dm-on[data-dmfam=dus] .dm-stage.dm-big{ height:calc(100dvh - var(--dm-tab) - var(--dm-safe-b)) !important; }
+  html.dm-on[data-dmfam=dus] .dm-hdr, html.dm-on[data-dmfam=dus] .dm-hdr2{ left:50vw !important; right:0 !important; max-width:50vw !important; }
+  html.dm-on[data-dmfam=dus] .dm-vpills button{ min-height:40px; }
+}

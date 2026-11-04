@@ -144,7 +144,7 @@ async function run(){
 
 
   // Gate 8: Mobile Phone Viewport & Ergonomics Audit — Dalga 1 (8 sayfa × 3 telefon ekranı, hasTouch+isMobile)
-  const M8=['index.html','ductuslab-suite.html','ductuslab-case-chain.html','acil/index.html','ekg/index.html','ventilator/index.html','ductuslab-pharma.html','sft/index.html','ductuslab-usg-access.html','ductuslab-lapchole.html','ductuslab-airway.html','eko/index.html','ductuslab-cathlab.html','ductuslab-neurosurgery.html','ks/index.html','fnd/index.html','oto/index.html','nro/index.html'];
+  const M8=['index.html','ductuslab-suite.html','ductuslab-case-chain.html','acil/index.html','ekg/index.html','ventilator/index.html','ductuslab-pharma.html','sft/index.html','ductuslab-usg-access.html','ductuslab-lapchole.html','ductuslab-airway.html','eko/index.html','ductuslab-cathlab.html','ductuslab-neurosurgery.html','ks/index.html','fnd/index.html','oto/index.html','nro/index.html','ductuslab-endo.html','ductuslab-perio.html','ductuslab-omfs.html','ductuslab-vpt.html','ductuslab-ortho.html'];
   const PHONES=[{n:'390x844',w:390,h:844},{n:'360x800',w:360,h:800},{n:'844x390',w:844,h:390}];
   const gate8=[];
   const probe8=()=>{ const de=document.documentElement, iw=innerWidth, ih=innerHeight;
@@ -167,6 +167,12 @@ async function run(){
         const snaps=[]; const st0=await pg.evaluate(probe8); snaps.push(st0);
         let critSeen=st0.crit>0;
         if(st0.api&&st0.ntab>1){ for(let i=0;i<st0.ntab;i++){ await pg.evaluate(i=>window.DuctusMobile.show(i),i); await pg.waitForTimeout(350); const s1=await pg.evaluate(probe8); snaps.push(s1); if(s1.crit>0) critSeen=true; } }
+        if(['ductuslab-endo.html','ductuslab-perio.html','ductuslab-omfs.html','ductuslab-vpt.html','ductuslab-ortho.html'].includes(page)){
+          const np=await pg.evaluate(()=>document.querySelectorAll('.dm-vpills button').length); rec.detail.pills=np; if(np<1) rec.fails.push('sahne görünüm hapları yok');
+          for(let i=0;i<np;i++){ await pg.evaluate(i=>{const b=document.querySelectorAll('.dm-vpills button')[i]; if(b&&!b.disabled) b.click();},i); await pg.waitForTimeout(300); snaps.push(await pg.evaluate(probe8)); }
+          const nb=await pg.evaluate(()=>{const bs=[...document.querySelectorAll('#benchSeg button, .dm-benchbar button')];return bs.length;});
+          for(let i=0;i<nb;i++){ await pg.evaluate(i=>{const bs=[...document.querySelectorAll('#benchSeg button, .dm-benchbar button')]; bs[i]&&bs[i].click();},i); await pg.waitForTimeout(350); snaps.push(await pg.evaluate(probe8)); }
+          const jm=await pg.evaluate(()=>{const m=document.querySelector('#ovl'); return !!m;}); rec.detail.debrief=jm; if(!jm) rec.fails.push('debrief modalı yok'); }
         if(page==='ductuslab-case-chain.html'){ await pg.evaluate(()=>{ window.pickChain&&window.pickChain(1); }); await pg.waitForTimeout(500); const s2=await pg.evaluate(probe8); snaps.push(s2);
           const idx=await pg.evaluate(()=>CC.chain.stations.findIndex(s=>!!HREF[s.mod])); await pg.evaluate(i=>{renderStation(i);toggleDrawer(i);},idx); await pg.waitForTimeout(1500);
           const fr=await pg.evaluate(()=>{const f=document.querySelector('.drawer.open iframe');if(!f)return null;const r=f.getBoundingClientRect();return [Math.round(r.width),Math.round(r.height)];}); rec.detail.embed=fr;

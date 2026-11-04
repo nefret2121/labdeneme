@@ -562,6 +562,7 @@ window.addEventListener('pointermove',function(e){ if(!ENG.dragging) return; var
   ENG.look.x=clamp(ENG.look.x-dx/field,-0.7,0.7); ENG.look.y=clamp(ENG.look.y+dy/field,-0.7,0.7);
   ENG._mx=e.clientX; ENG._my=e.clientY; });
 window.addEventListener('pointercancel',function(){ ENG.dragging=false; });
+window.addEventListener('blur',function(){ ENG.dragging=false; });
 window.addEventListener('pointerup',function(e){ if(ENG.dragging && !ENG._moved){ placePin(e.clientX,e.clientY); } ENG.dragging=false; });
 function placePin(mx,my){ if(!ENG.activeStruct){ toast('Önce işaretlenecek yapıyı seçin.'); return; }
   var f=screenToField(mx,my); if(f.x*f.x+f.y*f.y>1.0){ return; }

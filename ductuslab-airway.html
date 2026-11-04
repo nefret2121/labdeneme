@@ -89,6 +89,8 @@ body{background:radial-gradient(1200px 800px at 70% -10%,#0a1424,var(--bg0) 60%)
 .jcat .r{display:flex;justify-content:space-between;font-weight:600;font-size:13px}.bar{height:6px;border-radius:4px;background:#17202f;margin-top:7px;overflow:hidden}.bar>span{display:block;height:100%}
 .toast{position:fixed;left:22px;bottom:20px;background:rgba(10,16,28,.96);border:1px solid var(--line2);border-left:3px solid var(--accent);border-radius:9px;padding:10px 14px;font-size:12.5px;max-width:420px;z-index:70;box-shadow:0 10px 30px rgba(0,0,0,.5)}
 @media(max-width:960px){.main{flex-direction:column}.console{max-width:none;border-left:0;border-top:1px solid var(--line)}}
+/* Debrief 3 grup: masaüstünde eski sıra (karne → kanıt → gerçek), mobilde ①②③ sekmeleri */
+.dbwrap{display:flex;flex-direction:column}.dbv3{order:1}.dbv1{order:2}.dbv2{order:3}
 </style>
 <!-- DM-BEGIN -->
 <link rel="stylesheet" href="./ductus-mobile.css">
@@ -587,9 +589,11 @@ function doSuction(){ ENG.suctioned=true; buildScopeTools(); scopeToast('Yankaue
 
 /* ============ FARE / KLAVYE ============ */
 cv.addEventListener('wheel',function(e){ e.preventDefault(); ENG.depth=clamp(ENG.depth+(e.deltaY<0?0.04:-0.04),0,1); renderSliders(); onMove(); },{passive:false});
-cv.addEventListener('mousedown',function(e){ ENG.drag={btn:e.button,x:e.clientX,y:e.clientY}; cv.style.cursor='grabbing'; onMove(); });
-window.addEventListener('mousemove',function(e){ if(!ENG.drag)return; var dy=(e.clientY-ENG.drag.y)*0.004,dx=(e.clientX-ENG.drag.x)*0.004; if(ENG.drag.btn===0)ENG.lift=clamp(ENG.lift-dy,0,1); else ENG.pitch=clamp(ENG.pitch+dx-dy,0,1); ENG.drag.x=e.clientX; ENG.drag.y=e.clientY; renderSliders(); onMove(); });
-window.addEventListener('mouseup',function(){ ENG.drag=null; cv.style.cursor='grab'; });
+cv.addEventListener('pointerdown',function(e){ try{cv.setPointerCapture(e.pointerId);}catch(_){} ENG.drag={btn:(e.pointerType==='touch'?0:e.button),x:e.clientX,y:e.clientY}; cv.style.cursor='grabbing'; onMove(); });
+window.addEventListener('pointermove',function(e){ if(!ENG.drag)return; var dy=(e.clientY-ENG.drag.y)*0.004,dx=(e.clientX-ENG.drag.x)*0.004; if(ENG.drag.btn===0)ENG.lift=clamp(ENG.lift-dy,0,1); else ENG.pitch=clamp(ENG.pitch+dx-dy,0,1); ENG.drag.x=e.clientX; ENG.drag.y=e.clientY; renderSliders(); onMove(); });
+window.addEventListener('pointerup',function(){ ENG.drag=null; cv.style.cursor='grab'; });
+window.addEventListener('pointercancel',function(){ ENG.drag=null; cv.style.cursor='grab'; });
+window.addEventListener('blur',function(){ ENG.drag=null; });
 window.addEventListener('keydown',function(e){ var k=e.key.toLowerCase(); var tag=(e.target.tagName||'').toLowerCase(); if(tag==='input')return;
   if(k==='w'){ENG.depth=clamp(ENG.depth+0.04,0,1);renderSliders();} else if(k==='s'){ENG.depth=clamp(ENG.depth-0.04,0,1);renderSliders();}
   else if(k==='q')ENG.pitch=clamp(ENG.pitch-0.05,0,1); else if(k==='e'){ if(ENG.tool==='ett')advanceETT((ENG.ettDepth||16)+1); else ENG.pitch=clamp(ENG.pitch+0.05,0,1); }
@@ -609,7 +613,7 @@ function openJury(){ var p=$('jurySheet'); var statusOpts=['Endotrakeal (trakeal
     '<div class="card"><div class="ho-q"><div class="q">1) Mevcut Havayolu Durumu</div>'+statusOpts.map(function(o,k){return '<label onclick="AWJ.pick(\'status\','+k+',this)"><input type="radio" name="jst"><span>'+o+'</span></label>';}).join('')+'</div></div>'+
     '<div class="card"><div class="ho-q"><div class="q">2) Doğrulama Kanıtın</div>'+evOpts.map(function(o,k){return '<label onclick="AWJ.pick(\'ev\','+k+',this)"><input type="radio" name="jev"><span>'+o+'</span></label>';}).join('')+'</div></div>'+
     '<div class="toolrow"><button class="btn pri" onclick="AWJ.submit()">DAS 2025 Jürisini Çalıştır →</button></div><div id="juryOut" style="margin-top:12px"></div>';
-  $('jury').classList.add('open'); }
+  p.classList.remove('dm-res'); $('jury').classList.add('open'); }
 var AWJ={ status:null, ev:null, pick:function(key,v,el){ this[key]=v; var grp=el.parentNode.querySelectorAll('label'); [].forEach.call(grp,function(l){l.classList.remove('sel');}); el.classList.add('sel'); }, submit:function(){ buildJuryCard(this.status,this.ev); } };
 window.AWJ=AWJ;
 function buildJuryCard(statusSel,evSel){ var flags=[],clampN=function(x){return Math.max(0,Math.min(100,Math.round(x)));};
@@ -638,14 +642,15 @@ function buildJuryCard(statusSel,evSel){ var flags=[],clampN=function(x){return 
   var fl=flags.map(function(f){return '<div class="flag '+f.c+'">'+f.t+'</div>';}).join(''); if(!flags.length)fl='<div class="flag green">Kritik ihlal yok, güvenli yönetim.</div>';
   window.__juryResult={ overall:overall, cats:[c1,c2,c3,c4], crit:crit, flags:flags.map(function(f){return f.t;}), truthLoc:truthLoc, verified:verified };
   var jo=$('juryOut'); if(!jo) return window.__juryResult;
-  jo.innerHTML='<div class="jcat" style="border-color:rgba(111,163,200,.3)"><div class="r"><span>Genel DAS 2025 Skoru</span><span class="mono" style="font-size:20px;color:'+col(overall)+'">'+overall+'</span></div></div>'+
+  var __sh=$('jurySheet'); if(__sh) __sh.classList.add('dm-res');
+  jo.innerHTML='<div class="dbwrap"><div class="dbv dbv3" data-ord="3"><div class="jcat" style="border-color:rgba(111,163,200,.3)"><div class="r"><span>Genel DAS 2025 Skoru</span><span class="mono" style="font-size:20px;color:'+col(overall)+'">'+overall+'</span></div></div>'+
     cat('Hazırlık, Pre-O2 & RSI (%25)',c1,['Pre-O2: '+(ENG.preox?'✓':'yok')+(ENG.cas.id===3?' · şok: '+(ENG.induction||'—'):'')])+
     cat('Laringoskopi Tekniği (%25)',c2,['Diş kanırtma: '+ENG.dentalCount+' · deneme: '+ENG.attempts+(ENG.cas.id===3?' · Yankauer: '+(ENG.suctioned?'✓':'yok'):'')])+
     cat('Tüp/Buji & CICO Kararı (%25)',c3,[ENG.cas.id===4?('eFONA: '+(ENG.cicoStep>=4?'✓':'yapılmadı')):('Yerleşim: '+truthTxt)])+
     cat('Doğrulama & Oksijenasyon (%25)',c4,['6 soluk kapno + oskültasyon: '+(verified?'✓':'eksik')+' · min SpO2 %'+Math.round(ENG.minSpo2)])+
-    '<div style="margin-top:10px">'+fl+'</div>'+
-    '<div class="jcat" style="margin-top:12px;border-color:rgba(154,134,201,.3)"><div class="r"><span>🔎 Sagital Şeffaf Gerçek</span></div><div class="hint">Gerçek yerleşim: <b>'+truthTxt+'</b> · Beyan: '+(['trakeal 21–23','sağ bronş','özofagus','LMA','CICO','doğrulanmadı'][statusSel]||'—')+' · Kapnografi: '+(ENG.ettLoc==='trachea'||ENG.ettLoc==='mainstem'?'kare dalga var':'düz/yok')+' · min SpO2 %'+Math.round(ENG.minSpo2)+'</div>'+
-    '<div class="toolrow" style="margin-top:8px"><button class="btn sm" onclick="window.open(\'ventilator/index.html\',\'_blank\',\'noopener\')">→ Mekanik Ventilatöre Bağla (VNT)</button><button class="btn sm" onclick="window.open(\'index.html\',\'_blank\',\'noopener\')">→ Oskültasyonda Dinle (OSK)</button><button class="btn sm" onclick="window.open(\'acil/index.html\',\'_blank\',\'noopener\')">→ Acil Konsol</button></div></div>'+
+    '</div><div class="dbv dbv1" data-ord="1"><div style="margin-top:10px">'+fl+'</div><div class="jcat" style="margin-top:10px"><div class="r"><span>📝 Beyanın & Kanıtın</span></div><div class="hint">Beyan: '+(['trakeal 21–23','sağ bronş','özofagus','LMA','CICO','doğrulanmadı'][statusSel]||'—')+' · Kanıt: '+(verified?'6 soluk kapnografi + oskültasyon ✓':'doğrulama eksik')+'</div></div></div>'+
+    '<div class="dbv dbv2" data-ord="2"><div class="jcat" style="margin-top:12px;border-color:rgba(154,134,201,.3)"><div class="r"><span>🔎 Sagital Şeffaf Gerçek</span></div><div class="hint">Gerçek yerleşim: <b>'+truthTxt+'</b> · Beyan: '+(['trakeal 21–23','sağ bronş','özofagus','LMA','CICO','doğrulanmadı'][statusSel]||'—')+' · Kapnografi: '+(ENG.ettLoc==='trachea'||ENG.ettLoc==='mainstem'?'kare dalga var':'düz/yok')+' · min SpO2 %'+Math.round(ENG.minSpo2)+'</div>'+
+    '<div class="toolrow" style="margin-top:8px"><button class="btn sm" onclick="window.open(\'ventilator/index.html\',\'_blank\',\'noopener\')">→ Mekanik Ventilatöre Bağla (VNT)</button><button class="btn sm" onclick="window.open(\'index.html\',\'_blank\',\'noopener\')">→ Oskültasyonda Dinle (OSK)</button><button class="btn sm" onclick="window.open(\'acil/index.html\',\'_blank\',\'noopener\')">→ Acil Konsol</button></div></div></div></div>'+
     '<div class="toolrow" style="margin-top:12px"><button class="btn" onclick="document.getElementById(\'jury\').classList.remove(\'open\')">Kapat</button></div>';
 }
 
@@ -687,7 +692,7 @@ init(); window.AIRWAY_READY=true;
 <script>
 DuctusMobile.init({page:'hvy',fam:'surg',header:'.topbar',header2:'#stepper',stage:'.scope',stageH:42,accent:'#6fa3c8',
  pips:[{sel:'#sagCv'}],
- modals:[{sel:'#jurySheet',title:'Jüri & Debrief',grid:'.debrief,.dbgrid,.debrief-grid',labels:['① Kanıtın','② 3B Gerçek','③ Karne']}],
+ modals:[{sel:'#jurySheet',title:'Jüri & Debrief',grid:'.dbwrap',labels:['① Kanıtın','② 3B Gerçek','③ Karne'],closeFn:function(){ var j=document.getElementById('jury'); if(j) j.classList.remove('open'); }}],
  tabs:[
  {id:'ctl',icon:'🎛️',label:'Blade / ETT',sel:['#scopeTools','#sliderRow','#tubeRow','.console-scroll > .card:nth-child(4)','.console-scroll > .card:nth-child(5)']},
  {id:'case',icon:'📋',label:'Vaka & Vitaller',sel:['#caseCard']},

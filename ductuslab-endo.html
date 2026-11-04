@@ -1,5 +1,5 @@
 <!doctype html><html lang="tr"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>DuctusLab ENDO — Dental Mikroskop · Giriş Kavitesi · Kalsifiye MB2 & SLOB</title>
 <style>
 :root{
@@ -173,6 +173,9 @@ input[type=range]{flex:1;accent-color:var(--accent)}
 .flowbar span{display:block}
 .safelock{background:#2a0e12;border:1px solid #5a2026;color:var(--bad);border-radius:8px;padding:6px 8px;font-size:10.5px;font-weight:700;margin-top:5px}
 </style>
+<!-- DM-BEGIN -->
+<link rel="stylesheet" href="./ductus-mobile.css">
+<!-- DM-END -->
 </head>
 <body>
 <div class="app">
@@ -248,7 +251,7 @@ input[type=range]{flex:1;accent-color:var(--accent)}
       <div class="panel">
         <h4>Periapikal Röntgen (Beer–Lambert)</h4>
         <div class="xraywrap"><canvas id="xrayCanvas" width="252" height="300"></canvas></div>
-        <div class="ctrlrow"><label>Yatay tüp</label><input type="range" id="tubeR" min="-30" max="30" value="0"><span id="tubeVal" style="min-width:34px;text-align:right">0°</span></div>
+        <div class="ctrlrow" id="tubeRow"><label>Yatay tüp</label><input type="range" id="tubeR" min="-30" max="30" value="0"><span id="tubeVal" style="min-width:34px;text-align:right">0°</span></div>
         <div class="xray-ang" id="xrayAng"></div>
         <button class="capbtn" id="capBtn">⊕ Filmi Çek & Kanıta Ekle</button>
         <div class="evrow" id="evRow"></div>
@@ -685,6 +688,8 @@ function initScene(){
   cv.addEventListener('pointerdown',onScopeDown);
   cv.addEventListener('pointermove',onScopeMove);
   window.addEventListener('pointerup',()=>{dragging=false;});
+window.addEventListener('pointercancel',()=>{dragging=false;});
+window.addEventListener('blur',()=>{dragging=false;});
 }
 const VIEWDIST={k:15.5, look:null};
 function camForMag(){
@@ -1459,4 +1464,23 @@ console.log('[ENDO] ready — FDI16 meshes:',Object.keys(GEO.meshes).length,'vox
 /* chain-preset: Case Chain ?chain=1&case=<id> senkronu (yalnız zincir içinde etkin) */
 (function(){ try{ var q=new URLSearchParams(location.search); if(q.get('chain')!=='1')return; var c=q.get('case'); if(c&&window.ENDO&&window.ENDO.loadCase) window.ENDO.loadCase(c); }catch(e){} })();
 </script>
+<!-- DM-BEGIN -->
+<script src="./ductus-mobile.js"></script>
+<script>
+DuctusMobile.init({page:'endo',fam:'dus',header:'.topbar',header2:'#stepper',stage:'.col.center',stageH:46,accent:'#4fc3d9',
+ pips:[{sel:'.section-guide'}],
+ views:[{id:'scope',label:'🔬 Operasyon Mikroskobu',sel:['.scopewrap']},
+        {id:'xray',label:'☢️ Periapikal / SLOB',sel:['.xraywrap'],move:true,fit:'#xrayCanvas'},
+        {id:'eal',label:'📟 Canlı Root-ZX EAL',sel:['.eal-display'],move:true,fit:'#ealCanvas'}],
+ cards:[{id:'dmSlob',title:'SLOB Tüp Açısı & Film',into:'.col.left'},{id:'dmCase',title:'Vaka Seç (E1–E6)',into:'.col.left'}],
+ move:[{sel:'#tubeRow',to:'#dmSlob'},{sel:'#xrayAng',to:'#dmSlob'},{sel:'#capBtn',to:'#dmSlob'},{sel:'#casePick',to:'#dmCase'}],
+ modals:[{sel:'#ovl .debrief',title:'Debrief',grid:'.d3',labels:['① Kanıtın','② 3B Gerçek','③ Karne'],close:'#dbX'}],
+ tabs:[
+ {id:'ctl',icon:'🎛️',label:'Alet & İrrigasyon',sel:['.col.left .panel:nth-child(1)','.col.left .panel:nth-child(2)','#phase2panel','#irrigPanel','#dmSlob']},
+ {id:'case',icon:'📋',label:'Vaka (E1–E6)',sel:['.col.left .panel:nth-child(3)','#dmCase']},
+ {id:'ev',icon:'🩻',label:'Filmler & WL',sel:['.col.right .panel:nth-child(1)']},
+ {id:'jury',icon:'⚖️',label:'Karar & Jüri',sel:['.col.right .panel:nth-child(2)']}]});
+
+</script>
+<!-- DM-END -->
 </body></html>
