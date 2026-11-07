@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-07T09:56:21.004Z",
+  "generatedAt": "2026-11-07T19:12:13.659Z",
   "threeLocal": true,
   "pages": 24,
   "viewports": [
@@ -1093,7 +1093,7 @@
           "pass": true,
           "selfTest": {
             "pass": true,
-            "count": 19,
+            "count": 24,
             "tests": [
               {
                 "n": "cv-240mm-4ms-60",
@@ -1223,6 +1223,58 @@
               {
                 "n": "mup-normal-duration-7-12ms",
                 "pass": true
+              },
+              {
+                "n": "cascadedTraces-ge2-and-anatomy-map",
+                "pass": true,
+                "info": {
+                  "n": 3,
+                  "limb": {
+                    "draws": 208,
+                    "kind": "arm",
+                    "hasElectrodes": true,
+                    "sites": 4
+                  }
+                }
+              },
+              {
+                "n": "zoomed-MUP-2msdiv-risetime-slope",
+                "pass": true,
+                "info": {
+                  "near": 204.08163265306123,
+                  "far": 907.0294784580499,
+                  "n": 5
+                }
+              },
+              {
+                "n": "myotonic-crescendo-decrescendo-envelope",
+                "pass": true,
+                "info": {
+                  "n": 128,
+                  "peak": 154.77197265625,
+                  "tail": 47.23543167114258,
+                  "ratio": 3.2766075630214777,
+                  "hz0": 74.36762225969686,
+                  "hz1": 21.72413793103456
+                }
+              },
+              {
+                "n": "rns-side-by-side-1to5-default",
+                "pass": true,
+                "info": {
+                  "labs": [
+                    "Bazal 3 Hz tren",
+                    "10 sn MVC hemen sonrası",
+                    "+3 dk sonrası (post-aktivasyon)"
+                  ]
+                }
+              },
+              {
+                "n": "exam-mode-hides-diagnosis-titles",
+                "pass": true,
+                "info": {
+                  "bad": []
+                }
               }
             ],
             "failed": []
@@ -4095,7 +4147,7 @@
       "truthLeak": [],
       "selfTest": {
         "pass": true,
-        "count": 19,
+        "count": 24,
         "tests": [
           {
             "n": "cv-240mm-4ms-60",
@@ -4225,6 +4277,58 @@
           {
             "n": "mup-normal-duration-7-12ms",
             "pass": true
+          },
+          {
+            "n": "cascadedTraces-ge2-and-anatomy-map",
+            "pass": true,
+            "info": {
+              "n": 3,
+              "limb": {
+                "draws": 208,
+                "kind": "arm",
+                "hasElectrodes": true,
+                "sites": 4
+              }
+            }
+          },
+          {
+            "n": "zoomed-MUP-2msdiv-risetime-slope",
+            "pass": true,
+            "info": {
+              "near": 204.08163265306123,
+              "far": 907.0294784580499,
+              "n": 5
+            }
+          },
+          {
+            "n": "myotonic-crescendo-decrescendo-envelope",
+            "pass": true,
+            "info": {
+              "n": 128,
+              "peak": 154.77197265625,
+              "tail": 47.23543167114258,
+              "ratio": 3.2766075630214777,
+              "hz0": 74.36762225969686,
+              "hz1": 21.72413793103456
+            }
+          },
+          {
+            "n": "rns-side-by-side-1to5-default",
+            "pass": true,
+            "info": {
+              "labs": [
+                "Bazal 3 Hz tren",
+                "10 sn MVC hemen sonrası",
+                "+3 dk sonrası (post-aktivasyon)"
+              ]
+            }
+          },
+          {
+            "n": "exam-mode-hides-diagnosis-titles",
+            "pass": true,
+            "info": {
+              "bad": []
+            }
           }
         ],
         "failed": []

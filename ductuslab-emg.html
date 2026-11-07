@@ -71,13 +71,14 @@ input[type=range]{width:100%;accent-color:var(--accent)}
  </div>
  <div class="main">
   <div class="stage">
-   <div class="plots"><div class="scopewrap"><canvas id="scope"></canvas></div></div>
+   <div class="plots"><div class="scopewrap"><canvas id="scope"></canvas><canvas id="limb" width="150" height="104" style="position:absolute;left:54px;top:12px;width:150px;height:104px;pointer-events:none;background:rgba(4,8,18,.72);border:1px solid rgba(160,176,196,.2);border-radius:8px"></canvas></div></div>
    <div class="stage-foot">
     <div class="toolrow">
      <div class="toolgrp"><span class="lbl">Kazanç</span><select id="gainSel"></select></div>
      <div class="toolgrp"><span class="lbl">Süpürme</span><select id="sweepSel"></select></div>
      <button class="btn sm" id="notchBtn">50 Hz Çentik: Kapalı</button>
      <button class="btn sm" id="freezeBtn">❄️ Traseyi Dondur &amp; Kanıta Kaydet</button>
+     <button class="btn sm on" id="cascBtn">📚 Basamaklı</button>
      <button class="btn sm" id="muteBtn">🔊 Hoparlör Sesi Aç/Kapat</button>
     </div>
     <div class="toolrow">
@@ -105,11 +106,13 @@ input[type=range]{width:100%;accent-color:var(--accent)}
      <div class="seg" style="margin-bottom:8px"><button class="btn sm on" data-nm="rest">İstirahat</button><button class="btn sm" data-nm="light">Hafif kasılım</button><button class="btn sm" data-nm="mvc">Artan kasılım</button></div>
      <div class="fld"><label>İğne ucu mesafesi r: <b id="rVal" class="mono">0.60</b> mm</label><input type="range" id="rRange" min="0.05" max="1.2" step="0.05" value="0.6"></div>
      <div class="rowf" style="margin-bottom:8px"><button class="btn sm go" id="needleIn">🎯 İğne Mikro-İlerlet (−0.05 mm)</button><button class="btn sm" id="needleOut">Geri çek (+0.05 mm)</button><button class="btn sm" id="insBtn">📍 İğneyi ilerlet (giriş aktivitesi)</button></div>
+     <div class="rowf" style="margin-bottom:8px"><button class="btn sm" id="autoGain">🔆 Oto-Kazanç</button><button class="btn sm" id="zoomMs">🔍 Zoom: 2 ms/div</button></div>
      <div class="fld" id="mvcFld" style="display:none"><label>Kuvvet: <b id="mvcVal" class="mono">20</b> %MVC</label><input type="range" id="mvcRange" min="0" max="100" step="1" value="20"></div>
      <div class="readout" id="ndRead" style="flex-direction:column;gap:3px">—</div>
     </div>
     <div class="bench" id="b3">
      <div class="rowf" style="margin-bottom:8px"><button class="btn go" id="r3hz">3 Hz Tren (8 atım)</button><button class="btn" id="rMvc">💪 10 sn Maksimal Egzersiz (MVC)</button><button class="btn" id="rTet">30 Hz Tetani (10 sn)</button></div>
+     <div class="rowf" style="margin-bottom:8px"><button class="btn sm on" id="rnsView">📊 Yan Yana Tren</button></div>
      <div class="rowf" style="margin-bottom:8px"><button class="btn sm" id="rW10">⏱️ +10 sn Bekle (Post-Egzersiz Fasilitasyon)</button><button class="btn sm" id="rW180">⏱️ +3 dk Bekle (Post-Aktivasyon Tükenmesi)</button></div>
      <div class="small" id="rnsStat">Kavşak durumu trenler arasında korunur. Geçen süre: 0 sn</div>
      <div class="tblwrap" style="margin-top:6px"><table class="tbl"><thead><tr><th>#</th><th>Tren</th><th>A1 (mV)</th><th>A4</th><th>Dec 1–4</th><th>Inc</th></tr></thead><tbody id="rnsLog"></tbody></table></div>
@@ -405,8 +408,8 @@ var M=function(id,name,mup,spont,rec,extra){ var o={id:id,name:name,mup:mup||'no
 var FP=[{type:'fib',rate:8,amp:95},{type:'psw',rate:4,amp:240}], FIB=[{type:'fib',rate:8,amp:95}];
 var CASES={
  E1:{id:'E1',seed:101,title:'Normal kalibrasyon & iğne rise-time egzersizi',pt:'34 y, K · sağlıklı gönüllü',cc:'Cihaz kalibrasyonu / kontrol çalışması',hx:'Yakınması yok. Median (APB) ve biseps örneklemesi; iğnenin MUP\'a yaklaşmasıyla rise-time\'ın nasıl keskinleştiğini göster.',T0:33,
-   ncs:{},muscles:[M('bic','Biseps brakii'),M('apb','Abd. pollicis brevis')],truth:{ncs:'norm',spont:'none',mup:'norm',rec:'normal',rns:'none',dx:'norm'},
-   teach:['Normal motor/duyusal iletim; supramaksimal plato, sıcaklık ve kazanç disiplini.','r ≥ 0.60 mm iken MUP rise-time > 500 µs (künt, boğuk) → morfolojiyi KESİNLEŞTİRME; r ≤ 0.15 mm iken < 300 µs.']},
+   ncs:{},muscles:[M('bic','Biseps brakii'),M('apb','Abd. pollicis brevis (son-plak bölgesi)','norm',[{type:'endplate'}])],truth:{ncs:'norm',spont:'none',mup:'norm',rec:'normal',rns:'none',dx:'norm'},
+   teach:['APB son-plak bölgesi: negatif-ilk, düzensiz dikenler + deniz kabuğu gürültüsü = NORMAL (fibrilasyon değil; CV>0.45, ilk sapma yukarı).','Normal motor/duyusal iletim; supramaksimal plato, sıcaklık ve kazanç disiplini.','r ≥ 0.60 mm iken MUP rise-time > 500 µs (künt, boğuk) → morfolojiyi KESİNLEŞTİRME; r ≤ 0.15 mm iken < 300 µs.']},
  E2:{id:'E2',seed:102,title:'Karpal tünel sendromu (orta evre)',pt:'52 y, K · gece paresteziler',cc:'Sağ el 1–3. parmak uyuşma, gece uyandırma',hx:'Silkme işaretiyle rahatlıyor. Tinel/Phalen (+). Başparmak abdüksiyonu hafif zayıf.',T0:33,
    ncs:{med_m:{dml:5.2,cv:[null,54],amp:7200},med_s:{amp:8,cv:40},med_palm:{cv:35.6,amp:15}},
    muscles:[M('apb','Abd. pollicis brevis','neuroMild',FIB,'reduced'),M('adm','Abd. digiti minimi'),M('bic','Biseps brakii')],truth:{ncs:'focal',spont:'fibpsw',mup:'neuro',rec:'reduced',rns:'none',dx:'kts'},
@@ -494,7 +497,7 @@ var C=EMGCore,FS=C.FS,ND=C.needle,R=C.rns,CS=C.cases,Q=C.quality,$=function(i){r
 var GAINS=[10,20,50,100,200,500,1000,2000,5000,10000],SWEEPS=[1,2,5,10,20],DURS=[.1,.2,.3,.5,.7,1.0],AUDIO_K=1/600;
 var ENG={cs:null,caseId:'E1',variant:'A',mode:'learn',bench:1,study:'med_m',siteIdx:0,I:0,dur:.2,T:33,warmed:false,gain:2000,sweep:2,notch:false,sound:false,
   tap:{buf:null,kind:null,meta:null},frozen:null,cur:{c1:null,c2:null,sel:'c1',amp:'neg'},count:0,stimLog:{},evidence:[],absent:{},
-  nd:{muscle:null,mode:'rest',r:.6,mvc:.2,spec:null,stream:null,ring:new Float32Array(FS*8),w:0,t0:0,ins:false,lastAn:0},nmj:null,rnsBase:null,rnsRows:[],loopOn:true,decl:{},audio:null};
+  nd:{muscle:null,mode:'rest',r:.6,mvc:.2,spec:null,stream:null,ring:new Float32Array(FS*8),w:0,t0:0,ins:false,lastAn:0},nmj:null,rnsBase:null,rnsRows:[],rnsTrains:[],rnsView:'side',casc:{},cascView:true,zoomMs:2,zoom:null,revealed:{},limb:{draws:0,kind:'arm'},loopOn:true,decl:{},audio:null};
 
 /* ---------- yardımcılar ---------- */
 function toast(m,cls){ var d=document.createElement('div'); d.textContent=m; if(cls) d.className=cls; $('toastBox').appendChild(d); setTimeout(function(){ d.style.opacity='0'; d.style.transition='.4s'; setTimeout(function(){ if(d.parentNode) d.parentNode.removeChild(d); },420); },3200); }
@@ -518,15 +521,17 @@ function setSound(on){ ENG.sound=on; $('soundBtn').classList.toggle('on',on); $(
 
 /* ---------- vaka yükleme ---------- */
 function loadCase(id,variant){ ENG.caseId=id; if($('caseSel')) $('caseSel').value=id; var src=CS.CASES[id]; var v=src.variants?(variant||(ENG.mode==='exam'?CS.examVariant(id):'A')):null; ENG.variant=v; ENG.cs=CS.loadCase(id,v);
-  ENG.T=ENG.cs.T0; ENG.warmed=ENG.T>=32.5; ENG.stimLog={}; ENG.evidence=[]; ENG.absent={}; ENG.frozen=null; ENG.count=0; ENG.cur={c1:null,c2:null,sel:'c1',amp:'neg'}; ENG.nmj=R.nmjNew(ENG.cs); ENG.rnsBase=null; ENG.rnsRows=[]; ENG.decl={};
-  ENG.tap={buf:null,kind:null,meta:null}; ENG.nd.muscle=ENG.cs.muscles[0].id; ENG.nd.mode='rest'; ENG.nd.r=.6; ENG.nd.ins=false;
+  ENG.T=ENG.cs.T0; ENG.warmed=ENG.T>=32.5; ENG.stimLog={}; ENG.evidence=[]; ENG.absent={}; ENG.frozen=null; ENG.count=0; ENG.cur={c1:null,c2:null,sel:'c1',amp:'neg'}; ENG.nmj=R.nmjNew(ENG.cs); ENG.rnsBase=null; ENG.rnsRows=[]; ENG.rnsTrains=[]; ENG.casc={}; ENG.decl={}; delete ENG.revealed[id];
+  ENG.tap={buf:null,kind:null,meta:null}; ENG.nd.muscle=ENG.cs.muscles[0].id; ENG.nd.mode='rest'; ENG.nd.r=.6; ENG.nd.ins=false; $('rRange').value=.6; $('rVal').textContent='0.60'; [].forEach.call(document.querySelectorAll('#b2 .seg button[data-nm]'),function(x){ x.classList.toggle('on',x.dataset.nm==='rest'); }); $('mvcFld').style.display='none';
   ['dNcs','dSpont','dMup','dRec','dRns','dDx'].forEach(function(k){ $(k).value=''; }); $('juryOut').textContent='Henüz değerlendirilmedi.';
   fillSel($('musSel'),ENG.cs.muscles.map(function(m){return m.id;}),ENG.nd.muscle,function(i){ return ENG.cs.muscles.filter(function(m){return m.id===i;})[0].name; });
-  selectStudy(ENG.cs.truth.dx==='aidp'?'med_m':'med_m'); renderCase(); renderEvidence(); renderStimLog(); renderRns(); setNeedle(); updateTemp(); updateAmpBtn(); readout(); }
-function renderCase(){ var c=ENG.cs,ex=ENG.mode==='exam',h='<b>'+(ex?c.id+' · Vaka':c.id+' · '+c.title)+'</b><br>'+c.pt+'<br><i>'+c.cc+'</i><br>'+c.hx;
+  selectStudy(ENG.cs.truth.dx==='aidp'?'med_m':'med_m'); renderCase(); renderEvidence(); renderStimLog(); renderRns(); setNeedle(); scenario(); refreshCaseSel(); updateTemp(); updateAmpBtn(); readout(); }
+function caseLabel(id){ var c=CS.CASES[id]; return (ENG.mode==='exam'&&!ENG.revealed[id])?id+' · '+c.pt+' — '+c.cc:id+' · '+c.title; }
+function refreshCaseSel(){ var el=$('caseSel'); fillSel(el,CS.ORDER,ENG.caseId,caseLabel); }
+function renderCase(){ var c=ENG.cs,ex=ENG.mode==='exam'&&!ENG.revealed[c.id],h='<b>'+(ex?c.id+' · '+c.pt:c.id+' · '+c.title)+'</b><br>'+c.pt+'<br><i>'+c.cc+'</i><br>'+c.hx;
   if(!ex){ h+='<div class="tiny" style="margin-top:6px">'+(c.teach||[]).map(function(t){return '• '+t;}).join('<br>')+'</div>'; if(c.bridge) h+='<div class="rowf" style="margin-top:6px">'+c.bridge.map(function(b){return '<a class="btn sm" style="text-decoration:none" href="'+(b.k==='ventilator'?'ventilator/':b.k+'/')+'" target="_blank" rel="noopener">↗ '+b.lab+'</a>';}).join('')+'</div>'; }
   else if(c.bridge) h+='<div class="tiny" style="margin-top:6px">Köprü modül önerileri sınav modunda gizlidir.</div>';
-  $('caseBody').innerHTML=h; $('caseBadge').textContent=ex?'Sınav':'Öğrenme'; var vs=$('varSel'); if(c.variant&&ex===false){ vs.style.display=''; fillSel(vs,['A','B'],ENG.variant,function(x){return 'Varyant '+x;}); } else vs.style.display='none'; }
+  $('caseBody').innerHTML=h; $('caseBadge').textContent=ENG.mode==='exam'?(ex?'Sınav':'Jüri sonrası'):'Öğrenme'; var vs=$('varSel'); if(c.variant&&ex===false){ vs.style.display=''; fillSel(vs,['A','B'],ENG.variant,function(x){return 'Varyant '+x;}); } else vs.style.display='none'; }
 
 /* ---------- NCS ---------- */
 function selectStudy(sid){ ENG.study=sid; var def=studyDef(),d=defaultsFor(def); ENG.siteIdx=0; ENG.gain=d.g; ENG.sweep=d.s; fillSel($('studySel'),Object.keys(C.STUDIES),sid,function(k){return C.STUDIES[k].lab;}); fillSel($('siteSel'),def.sites.map(function(s,i){return i;}),0,function(i){return def.sites[i].lab+(def.sites[i].d?' ('+def.sites[i].d+' mm)':'');});
@@ -539,12 +544,12 @@ function updateSupra(){ var def=studyDef(),el=$('supraInfo'); if(def.type!=='M'&
 function renderStimLog(){ var el=$('stimLog'),log=(ENG.stimLog[logKey()]||[]).slice(-6); el.innerHTML=log.map(function(e){ return '<tr><td class="mono">'+e.I+'</td><td class="mono">'+e.dur+'</td><td class="mono">'+(e.amp>1000?(e.amp/1000).toFixed(2)+' mV':e.amp.toFixed(1)+' µV')+'</td></tr>'; }).join('')||'<tr><td colspan="3" class="tiny">Henüz uyarım yok.</td></tr>'; }
 function stimOnce(I){ var def=studyDef(); ENG.I=I; $('iRange').value=I; $('iVal').textContent=I; ENG.count++; var st={I:I,dur:ENG.dur,T:ENG.T,gain:ENG.gain,notch:ENG.notch,count:ENG.count},r,tr;
   if(def.type==='H'){ r=C.H.hEpoch(cs(),st); ENG.tap={buf:r.buf,kind:'epoch',meta:{study:ENG.study,siteIdx:0,def:def,type:'H',clipped:r.clipped,truth:{onset:r.hLat,peakT:r.hLat,negAmp:r.H,p2p:r.H},I:I,dur:ENG.dur,T:ENG.T,gain:ENG.gain,sweep:ENG.sweep}}; var logE={I:I,dur:ENG.dur,amp:Math.max(r.M,r.H)}; (ENG.stimLog[logKey()]=ENG.stimLog[logKey()]||[]).push(logE); }
-  else { r=C.ncsRecord(cs(),ENG.study,ENG.siteIdx,st); ENG.tap={buf:r.buf,kind:'epoch',meta:{study:ENG.study,siteIdx:ENG.siteIdx,def:def,type:def.type,site:r.site,clipped:r.clipped,truth:r.truth,I:I,dur:ENG.dur,T:ENG.T,gain:ENG.gain,sweep:ENG.sweep,cross:!!r.site.cross,clean:r.clean}}; (ENG.stimLog[logKey()]=ENG.stimLog[logKey()]||[]).push({I:I,dur:ENG.dur,amp:r.truth.negAmp}); }
+  else { r=C.ncsRecord(cs(),ENG.study,ENG.siteIdx,st); ENG.tap={buf:r.buf,kind:'epoch',meta:{study:ENG.study,siteIdx:ENG.siteIdx,def:def,type:def.type,site:r.site,clipped:r.clipped,truth:r.truth,I:I,dur:ENG.dur,T:ENG.T,gain:ENG.gain,sweep:ENG.sweep,cross:!!r.site.cross,clean:r.clean}}; (ENG.stimLog[logKey()]=ENG.stimLog[logKey()]||[]).push({I:I,dur:ENG.dur,amp:r.truth.negAmp}); if(def.type==='M'||def.type==='S'){ var cm=ENG.casc[ENG.study]=ENG.casc[ENG.study]||{}; cm[ENG.siteIdx]={siteIdx:ENG.siteIdx,buf:r.buf,meta:ENG.tap.meta,I:I,T:ENG.T}; } }
   ENG.frozen=null; ENG.cur.c1=null; ENG.cur.c2=null; renderStimLog(); updateSupra(); playTap(); readout(); }
 function doStim(){ stimOnce(parseFloat($('iRange').value)||0); }
 function doSweep(){ var I,steps=[10,20,30,40,50,60,70,80]; steps.forEach(function(v){ stimOnce(v); }); toast('Akım taraması tamamlandı (10→80 mA).'); }
 function doF(){ ENG.count++; var r=C.F.fSeries(cs(),{T:ENG.T,gain:ENG.gain,notch:ENG.notch,count:ENG.count,I:50}); ENG.tap={buf:r.buf,kind:'fseries',meta:{study:'med_f',siteIdx:0,def:C.STUDIES.med_f,type:'F',n:r.n,epochLen:r.epochLen,truth:{onset:r.fmin,peakT:r.fmin,negAmp:0,p2p:0},T:ENG.T,gain:ENG.gain,sweep:ENG.sweep,clipped:false,fmin:r.fmin,persistence:r.persistence}}; ENG.frozen=null; ENG.cur.c1=null; ENG.cur.c2=null; playTap(); readout(); }
-function heat(){ ENG.T=33; ENG.warmed=true; updateTemp(); toast('Ekstremite 33 °C\'ye ısıtıldı — şimdi yeniden kayıt al.'); }
+function heat(){ ENG.T=33; ENG.warmed=true; ENG.casc={}; updateTemp(); toast('Ekstremite 33 °C\'ye ısıtıldı — şimdi yeniden kayıt al.'); }
 function updateTemp(){ var b=$('tempBadge'); b.textContent='T '+ENG.T+' °C'; b.className='badge '+(ENG.T>=32.5?'g':'a'); }
 
 /* ---------- İğne EMG ---------- */
@@ -561,8 +566,9 @@ function renderNdRead(buf){ var el=$('ndRead'),a=ndAnalyze(buf),h='',n=ENG.nd;
 /* ---------- RNS ---------- */
 function renderRns(){ $('rnsStat').textContent='Kavşak durumu trenler arasında korunur. Geçen süre: '+Math.round(ENG.nmj.clock)+' sn'+(ENG.nmj.tEx!=null?' · egzersizden bu yana '+Math.round(ENG.nmj.tEx)+' sn':'');
   $('rnsLog').innerHTML=ENG.rnsRows.map(function(r,i){ return '<tr><td>'+(i+1)+'</td><td>'+r.lab+'</td><td class="mono">'+fmt(r.a1/1000,2)+'</td><td class="mono">'+fmt(r.a4/1000,2)+'</td><td class="mono">%'+fmt(r.dec,1)+'</td><td class="mono">'+(r.inc==null?'—':'%'+fmt(r.inc,0))+'</td></tr>'; }).join('')||'<tr><td colspan="6" class="tiny">Henüz tren yok.</td></tr>'; }
-function doTrain(lab){ ENG.count++; var r=R.rnsTrain(cs(),ENG.nmj,{n:8,gain:ENG.gain,notch:ENG.notch}); if(ENG.rnsBase==null) ENG.rnsBase=r.amps[0]; var inc=ENG.rnsBase>0&&ENG.rnsRows.length?R.incPct(r.amps[0],ENG.rnsBase):null;
-  ENG.rnsRows.push({lab:lab||'3 Hz',a1:r.amps[0],a4:r.amps[3],dec:r.dec14,inc:inc,t:ENG.nmj.clock}); ENG.tap={buf:r.buf,kind:'stack',meta:{study:'rns',siteIdx:0,type:'R',n:r.n,epochLen:r.epochLen,amps:r.amps,dec14:r.dec14,gain:ENG.gain,sweep:ENG.sweep,truth:{onset:3.4,peakT:3.4+1.6,negAmp:r.amps[0],p2p:r.amps[0]},T:ENG.T,clipped:false}}; ENG.frozen=null; renderRns(); playTap(); readout(); }
+function trainLab(){ var t=ENG.nmj.tEx; if(t==null) return 'Bazal 3 Hz tren'; if(t<=12) return '10 sn MVC hemen sonrası'; if(t>=120) return '+3 dk sonrası (post-aktivasyon)'; return 'MVC +'+Math.round(t)+' sn'; }
+function doTrain(lab){ lab=trainLab(); ENG.count++; var r=R.rnsTrain(cs(),ENG.nmj,{n:8,gain:ENG.gain,notch:ENG.notch}); if(ENG.rnsBase==null) ENG.rnsBase=r.amps[0]; var inc=ENG.rnsBase>0&&ENG.rnsRows.length?R.incPct(r.amps[0],ENG.rnsBase):null;
+  ENG.rnsRows.push({lab:lab||'3 Hz',a1:r.amps[0],a4:r.amps[3],dec:r.dec14,inc:inc,t:ENG.nmj.clock}); ENG.tap={buf:r.buf,kind:'stack',meta:{study:'rns',siteIdx:0,type:'R',n:r.n,epochLen:r.epochLen,amps:r.amps,dec14:r.dec14,gain:ENG.gain,sweep:ENG.sweep,truth:{onset:3.4,peakT:3.4+1.6,negAmp:r.amps[0],p2p:r.amps[0]},T:ENG.T,clipped:false}}; ENG.rnsTrains.push({lab:lab,buf:r.buf,n:r.n,epochLen:r.epochLen,amps:r.amps,dec14:r.dec14,inc:inc}); if(ENG.rnsTrains.length===1){ var up=.5*2.4; ENG.gain=nearestGain(r.amps[0]/up); $('gainSel').value=ENG.gain; ENG.tap.meta.gain=ENG.gain; } ENG.frozen=null; renderRns(); playTap(); readout(); }
 function doExercise(kind){ R.nmjExercise(ENG.nmj,kind); toast(kind==='mvc10'?'10 sn maksimal egzersiz tamamlandı — şimdi tren ver.':'30 Hz tetani tamamlandı — şimdi tren ver.'); renderRns(); }
 function doWait(s){ R.nmjWait(ENG.nmj,s); toast('+'+(s>=60?(s/60)+' dk':s+' sn')+' beklendi.'); renderRns(); }
 
@@ -593,34 +599,112 @@ function renderEvidence(){ $('evCount').textContent=ENG.evidence.length; $('evLi
 
 /* ---------- çizim ---------- */
 var cv=null,g=null,DPR=1,CW=0,CH=0;
+function nearestGain(uv){ var best=GAINS[0],bd=1e9; GAINS.forEach(function(x){ var d=Math.abs(Math.log(x/Math.max(1,uv))); if(d<bd){ bd=d; best=x; } }); return best; }
 function resize(){ cv=$('scope'); var r=cv.getBoundingClientRect(); DPR=Math.min(2,window.devicePixelRatio||1); var w=Math.max(10,Math.round(r.width*DPR)),h=Math.max(10,Math.round(r.height*DPR)); if(cv.width!==w||cv.height!==h){ cv.width=w; cv.height=h; } CW=cv.width; CH=cv.height; g=cv.getContext('2d'); }
-function plotBox(){ var m=Math.round(10*DPR); return {x:Math.round(46*DPR),y:m,w:CW-Math.round(46*DPR)-m,h:CH-2*m-Math.round(16*DPR)}; }
-function drawGrid(P,winMs,gain){ g.fillStyle='#02050a'; g.fillRect(0,0,CW,CH); g.strokeStyle='rgba(120,150,180,.16)'; g.lineWidth=1; var i; for(i=0;i<=10;i++){ var x=P.x+P.w*i/10; g.beginPath(); g.moveTo(x,P.y); g.lineTo(x,P.y+P.h); g.stroke(); } for(i=0;i<=8;i++){ var y=P.y+P.h*i/8; g.strokeStyle=i===4?'rgba(150,190,220,.34)':'rgba(120,150,180,.16)'; g.beginPath(); g.moveTo(P.x,y); g.lineTo(P.x+P.w,y); g.stroke(); }
-  g.fillStyle='#6c7889'; g.font=(10*DPR)+'px Inter,sans-serif'; g.textAlign='right'; g.fillText((gain>=1000?(gain/1000)+' mV':gain+' µV')+'/div',P.x-5*DPR,P.y+10*DPR); g.fillText('− ↑',P.x-5*DPR,P.y+P.h/2-12*DPR); g.fillText('+ ↓',P.x-5*DPR,P.y+P.h/2+22*DPR); g.textAlign='center'; g.fillText((winMs/10)+' ms/div',P.x+P.w/2,CH-3*DPR); }
-function traceEnv(P,buf,i0,i1,gain,color,alpha,lw){ var n=i1-i0,px=Math.max(1,Math.floor(P.w)),pxPerDiv=P.h/8,base=P.y+P.h/2,x,clipTop=P.y,clipBot=P.y+P.h; g.strokeStyle=color; g.globalAlpha=alpha==null?1:alpha; g.lineWidth=(lw||1.2)*DPR; g.beginPath();
-  if(n<=px){ for(var j=0;j<n;j++){ var xx=P.x+P.w*j/(n-1||1),yy=Math.min(clipBot,Math.max(clipTop,uvToY(buf[i0+j],base,gain,pxPerDiv))); if(j===0) g.moveTo(xx,yy); else g.lineTo(xx,yy); } }
-  else { for(x=0;x<px;x++){ var a=i0+Math.floor(x*n/px),b=i0+Math.floor((x+1)*n/px),lo=1e9,hi=-1e9,k; for(k=a;k<Math.max(b,a+1);k++){ var v=buf[k]; if(v<lo)lo=v; if(v>hi)hi=v; } var xp=P.x+x+.5,y1=Math.min(clipBot,Math.max(clipTop,uvToY(hi,base,gain,pxPerDiv))),y2=Math.min(clipBot,Math.max(clipTop,uvToY(lo,base,gain,pxPerDiv))); if(x===0) g.moveTo(xp,y1); else g.lineTo(xp,y1); g.lineTo(xp,y2); } }
+function zoomRect(){ if(ENG.bench!==2) return null; var m=Math.round(10*DPR),ax=Math.round(16*DPR); if(CW/DPR>=640) return {x:Math.round(CW*.6),y:m,w:Math.round(CW*.4)-m,h:CH-2*m-ax,side:true}; return {x:m,y:Math.round(CH*.56),w:CW-2*m,h:Math.round(CH*.44)-m-ax,side:false}; }
+function plotBox(){ var m=Math.round(10*DPR),P={x:Math.round(46*DPR),y:m,w:CW-Math.round(46*DPR)-m,h:CH-2*m-Math.round(16*DPR)},z=zoomRect(); if(z){ if(z.side) P.w=z.x-P.x-m; else P.h=z.y-P.y-Math.round(16*DPR); } return P; }
+function drawGrid(P,winMs,gain,lab){ g.fillStyle='#02050a'; g.fillRect(0,0,CW,CH); g.strokeStyle='rgba(120,150,180,.16)'; g.lineWidth=1; var i; for(i=0;i<=10;i++){ var x=P.x+P.w*i/10; g.beginPath(); g.moveTo(x,P.y); g.lineTo(x,P.y+P.h); g.stroke(); } for(i=0;i<=8;i++){ var y=P.y+P.h*i/8; g.strokeStyle=i===4?'rgba(150,190,220,.34)':'rgba(120,150,180,.16)'; g.beginPath(); g.moveTo(P.x,y); g.lineTo(P.x+P.w,y); g.stroke(); }
+  g.fillStyle='#6c7889'; g.font=(10*DPR)+'px Inter,sans-serif'; g.textAlign='right'; g.fillText((gain>=1000?(gain/1000)+' mV':gain+' µV')+'/div',P.x-5*DPR,P.y+10*DPR); g.fillText('− ↑',P.x-5*DPR,P.y+P.h/2-12*DPR); g.fillText('+ ↓',P.x-5*DPR,P.y+P.h/2+22*DPR); g.textAlign='center'; g.fillText(lab||((winMs>=1000?(winMs/10)+' ms/div':(winMs/10)+' ms/div')),P.x+P.w/2,P.y+P.h+12*DPR); }
+/* genel polyline/zarf çizici: buf[i0..i0+n) → [x0,x0+w], baseY, gain, pxd */
+function seg(buf,i0,n,x0,w,baseY,gain,pxd,color,alpha,lw,clipY0,clipY1){ var px=Math.max(1,Math.floor(w)),x; g.strokeStyle=color; g.globalAlpha=alpha==null?1:alpha; g.lineWidth=(lw||1.2)*DPR; g.beginPath();
+  var cy=function(v){ var y=uvToY(v,baseY,gain,pxd); return Math.min(clipY1,Math.max(clipY0,y)); };
+  if(n<=px){ for(var j=0;j<n;j++){ var xx=x0+w*j/(n-1||1),yy=cy(buf[i0+j]); if(j===0) g.moveTo(xx,yy); else g.lineTo(xx,yy); } }
+  else { for(x=0;x<px;x++){ var a=i0+Math.floor(x*n/px),b=i0+Math.floor((x+1)*n/px),lo=1e9,hi=-1e9,k; for(k=a;k<Math.max(b,a+1);k++){ var v=buf[k]; if(v<lo)lo=v; if(v>hi)hi=v; } var xp=x0+x+.5,y1=cy(hi),y2=cy(lo); if(x===0) g.moveTo(xp,y1); else g.lineTo(xp,y1); g.lineTo(xp,y2); } }
   g.stroke(); g.globalAlpha=1; }
-function drawCursors(P,winMs){ var c=ENG.cur,m=measure()||{}; [['c1','#7ee0a8','C1'],['c2','#e8c473','C2']].forEach(function(q){ if(c[q[0]]==null) return; var x=P.x+P.w*c[q[0]]/winMs; if(x<P.x||x>P.x+P.w) return; g.strokeStyle=q[1]; g.setLineDash([5*DPR,4*DPR]); g.lineWidth=1.3*DPR; g.beginPath(); g.moveTo(x,P.y); g.lineTo(x,P.y+P.h); g.stroke(); g.setLineDash([]); g.fillStyle=q[1]; g.font=(10*DPR)+'px Inter'; g.textAlign='left'; g.fillText(q[2],x+3*DPR,P.y+12*DPR); }); }
-function frame(){ requestAnimationFrame(frame); if(!ENG.loopOn||!cv) return; var P=plotBox(),k=kindNow(),b=curBuf(),winMs=ENG.sweep*10,i0=0;
-  if(ENG.bench===2&&!ENG.frozen){ pump(); var win=Math.round(winMs*FS/1000),w=ndWindow(win); drawGrid(P,winMs,ENG.gain); traceEnv(P,w,0,w.length,ENG.gain,'#7fe8b4'); var now=performance.now(); if(now-ENG.nd.lastAn>350){ ENG.nd.lastAn=now; renderNdRead(ndWindow(Math.round(FS*(ENG.nd.mode==='rest'?2:.6)))); } if(!ENG.frozen) readout(); return; }
+function traceEnv(P,buf,i0,i1,gain,color,alpha,lw,baseY){ seg(buf,i0,i1-i0,P.x,P.w,baseY==null?P.y+P.h/2:baseY,gain,P.h/8,color,alpha,lw,P.y,P.y+P.h); }
+function txt(s,x,y,col,sz,al){ g.fillStyle=col||'#a6b1c2'; g.font=((sz||10)*DPR)+'px Inter,sans-serif'; g.textAlign=al||'left'; g.fillText(s,x,y); }
+function fmtAmp(a){ return a>=1000?(a/1000).toFixed(2)+' mV':a.toFixed(1)+' µV'; }
+function negAmp(buf,i0,n){ var s=0,i,lo=1e9,a=i0+Math.floor(n*.85),b=i0+n; for(i=a;i<b;i++) s+=buf[i]; var base=s/Math.max(1,b-a); for(i=i0;i<i0+n;i++) if(buf[i]<lo) lo=buf[i]; return Math.max(0,base-lo); }
+function drawCursors(P,winMs){ var c=ENG.cur; [['c1','#7ee0a8','C1'],['c2','#e8c473','C2']].forEach(function(q){ if(c[q[0]]==null) return; var x=P.x+P.w*c[q[0]]/winMs; if(x<P.x||x>P.x+P.w) return; g.strokeStyle=q[1]; g.setLineDash([5*DPR,4*DPR]); g.lineWidth=1.3*DPR; g.beginPath(); g.moveTo(x,P.y); g.lineTo(x,P.y+P.h); g.stroke(); g.setLineDash([]); txt(q[2],x+3*DPR,P.y+12*DPR,q[1],10); }); }
+
+/* ---------- Basamaklı (cascade) çok noktalı NCS ---------- */
+function cascadedTraces(){ var m=ENG.casc[ENG.study]||{},def=studyDef(); if(!def||(def.type!=='M'&&def.type!=='S')) return []; return Object.keys(m).map(function(k){return m[k];}).sort(function(a,b){return a.siteIdx-b.siteIdx;}); }
+function cascActive(){ return ENG.bench===1&&ENG.cascView&&cascadedTraces().length>=2&&(kindNow()==='epoch'); }
+function drawCascade(P,winMs,list){ var n=list.length,sh=P.h/n,pxd=P.h/8,nn,i,first=null,prev=null; var def=studyDef(),mx=0; list.forEach(function(r){ mx=Math.max(mx,negAmp(r.buf,0,Math.min(r.buf.length,Math.round(winMs*FS/1000)))); }); var need=mx/ENG.gain,room=.74*sh/pxd; if(need>room) pxd=pxd*room/need; var gEff=ENG.gain*(P.h/8)/pxd; txt('şerit ölçeği: '+(gEff>=1000?(gEff/1000).toFixed(1)+' mV':Math.round(gEff)+' µV')+'/div',P.x+P.w-6*DPR,P.y+P.h-6*DPR,'#6c7889',9.5,'right');
+  list.forEach(function(rec,i){ var top=P.y+sh*i,by=top+sh*.78,buf=rec.buf; nn=Math.min(buf.length,Math.round(winMs*FS/1000)); var sel=rec.siteIdx===ENG.siteIdx;
+    g.strokeStyle='rgba(150,190,220,.28)'; g.lineWidth=1; g.setLineDash([2*DPR,4*DPR]); g.beginPath(); g.moveTo(P.x,by); g.lineTo(P.x+P.w,by); g.stroke(); g.setLineDash([]); if(i>0){ g.strokeStyle='rgba(120,150,180,.4)'; g.beginPath(); g.moveTo(P.x,top); g.lineTo(P.x+P.w,top); g.stroke(); }
+    if(sel){ g.fillStyle='rgba(111,163,200,.06)'; g.fillRect(P.x,top,P.w,sh); }
+    seg(buf,0,nn,P.x,P.w,by,ENG.gain,pxd,sel?(ENG.frozen?'#9bd0ff':'#7fe8b4'):'#5fb89a',sel?1:.85,sel?1.6:1.2,top-sh*.35,top+sh);
+    var amp=negAmp(buf,0,nn),on=rec.meta.truth.onset; if(first==null) first=amp; var xo=P.x+P.w*on/winMs;
+    g.fillStyle='#ff9aa2'; g.fillRect(xo-1*DPR,by-5*DPR,2*DPR,10*DPR); if(prev){ g.strokeStyle='rgba(255,154,162,.55)'; g.setLineDash([3*DPR,3*DPR]); g.beginPath(); g.moveTo(prev.x,prev.y); g.lineTo(xo,by); g.stroke(); g.setLineDash([]); if(on>prev.on){ txt('Δt '+(on-prev.on).toFixed(2)+' ms',(xo+prev.x)/2+4*DPR,(by+prev.y)/2,'#ff9aa2',9); } } prev={x:xo,y:by,on:on};
+    var site=rec.meta.site?rec.meta.site.lab:('#'+(rec.siteIdx+1));
+    txt((i+1)+' · '+site+' · '+fmtAmp(amp)+' · %'+Math.round(100*amp/Math.max(1,first))+' · onset≈'+on.toFixed(2)+' ms'+(rec.meta.clipped?' ⚠clip':''),P.x+P.w-6*DPR,top+13*DPR,sel?'#e8c473':'#9aa3ae',10,'right'); });
+  drawCursors(P,winMs); }
+function pickStrip(ev){ var list=cascadedTraces(),P=plotBox(),r=cv.getBoundingClientRect(),y=(ev.clientY-r.top)*(cv.height/r.height); var j=Math.max(0,Math.min(list.length-1,Math.floor((y-P.y)/(P.h/list.length)))),rec=list[j]; if(!rec||rec.siteIdx===ENG.siteIdx&&ENG.frozen) return; ENG.siteIdx=rec.siteIdx; $('siteSel').value=rec.siteIdx; ENG.tap={buf:rec.buf,kind:'epoch',meta:rec.meta}; ENG.frozen=null; ENG.cur.c1=null; ENG.cur.c2=null; readout(); }
+
+/* ---------- RNS yan yana tren ---------- */
+function rnsPanels(){ return ENG.rnsView==='side'?ENG.rnsTrains.slice(-3):[]; }
+function drawRnsSide(P,winMs){ var list=rnsPanels(),n=list.length,sh=P.h/Math.max(1,n),pxd=P.h/8,i,k;
+  list.forEach(function(t,i){ var top=P.y+sh*i,by=top+sh*.7,cw=P.w/5,nn=Math.min(t.epochLen,Math.round(winMs*FS/1000)),pts=[],pcts=[]; if(i>0){ g.strokeStyle='rgba(120,150,180,.4)'; g.lineWidth=1; g.beginPath(); g.moveTo(P.x,top); g.lineTo(P.x+P.w,top); g.stroke(); }
+    g.strokeStyle='rgba(150,190,220,.25)'; g.setLineDash([2*DPR,4*DPR]); g.beginPath(); g.moveTo(P.x,by); g.lineTo(P.x+P.w,by); g.stroke(); g.setLineDash([]);
+    for(k=0;k<5&&k<t.n;k++){ var x0=P.x+cw*k+5*DPR,w=cw-10*DPR,off=k*t.epochLen,lo=1e9,li=0,j; for(j=0;j<nn;j++){ var v=t.buf[off+j]; if(v<lo){ lo=v; li=j; } }
+      g.strokeStyle='rgba(120,150,180,.18)'; g.beginPath(); g.moveTo(P.x+cw*k,top); g.lineTo(P.x+cw*k,top+sh); g.stroke();
+      seg(t.buf,off,nn,x0,w,by,ENG.gain,pxd,k===0?'#ffd37a':(k===3?'#ff9a9a':'#7fe8b4'),1,1.5,top+2*DPR,top+sh-2*DPR); pts.push([x0+w*li/(nn-1),Math.max(top+4*DPR,uvToY(lo,by,ENG.gain,pxd))]); pcts.push(Math.round(100*t.amps[k]/Math.max(1,t.amps[0]))); txt('%'+pcts[k],x0+w/2,top+sh-5*DPR,k===3?'#ff9a9a':'#cfd8e4',10,'center'); }
+    g.strokeStyle='#f2c46b'; g.lineWidth=1.4*DPR; g.setLineDash([5*DPR,3*DPR]); g.beginPath(); pts.forEach(function(p,q){ if(q===0) g.moveTo(p[0],p[1]); else g.lineTo(p[0],p[1]); }); g.stroke(); g.setLineDash([]); pts.forEach(function(p){ g.fillStyle='#f2c46b'; g.beginPath(); g.arc(p[0],p[1],2.4*DPR,0,6.3); g.fill(); });
+    var chain=pcts.map(function(q){return '%'+q;}).join(' → '),dec=t.dec14,incTxt=(t.inc!=null&&t.inc>20)?' · İnkrement +%'+Math.round(t.inc):'';
+    txt((i+1)+') '+t.lab,P.x+6*DPR,top+13*DPR,'#d7e6f5',11); txt(chain+'  ['+(dec>=0?'−':'+')+'%'+Math.abs(dec).toFixed(1)+(dec>=0?' dekrement':' inkrement')+']'+incTxt,P.x+P.w-6*DPR,top+13*DPR,dec>10?'#ff9a9a':'#8fe3bf',10.5,'right'); }); }
+
+/* ---------- Tetiklemeli MUP / zoom penceresi ---------- */
+function triggerTraces(buf,zoomMs,opt){ opt=opt||{}; var N=buf.length,srt=[],i,st=Math.max(1,Math.floor(N/1500)); for(i=0;i<N;i+=st) srt.push(Math.abs(buf[i])); srt.sort(function(a,b){return a-b;}); var pk=srt[Math.floor(srt.length*.998)]||0,mad=(function(){ var q=srt[Math.floor(srt.length*.5)]||0; return q*1.48; })(),thr=opt.thr||Math.max(22,.3*pk,6*mad),win=Math.round(zoomMs*10*FS/1000),pre=Math.round(win*.2),hold=Math.round(FS*(opt.holdMs||30)/1000),ev=[]; i=pre; while(i<N-win+pre){ if(Math.abs(buf[i])>=thr){ ev.push(i); i+=hold; } else i++; }
+  var use=ev.filter(function(t){ return t-pre>=0&&t-pre+win<=N; }).slice(-5); return {traces:use.map(function(t){ return buf.subarray(t-pre,t-pre+win); }),pre:pre,win:win,thr:thr,nEv:ev.length}; }
+function zoomMetrics(w0){ var N=w0.length,i,k,w=new Float32Array(N),H=2; for(i=0;i<N;i++){ var sm=0,c=0; for(k=-H;k<=H;k++){ var q=i+k; if(q>=0&&q<N){ sm+=w0[q]; c++; } } w[i]=sm/c; }
+  var base=0,nb=Math.round(FS*.0015); for(i=0;i<nb;i++) base+=w[i]; base/=nb; var ad=[]; for(i=0;i<N;i+=3) ad.push(Math.abs(w0[i]-w0[Math.max(0,i-1)])); ad.sort(function(a,b){return a-b;}); var sd=(ad[Math.floor(ad.length/2)]||1)*1.48/1.2;
+  var lo=1e9,hi=-1e9,ni=0,pi=0; for(i=0;i<N;i++){ var v=w[i]-base; if(v<lo){ lo=v; ni=i; } if(v>hi){ hi=v; pi=i; } } var pp=hi-lo,th=Math.max(.1*pp,3*sd,10),s=-1,e=-1; for(i=0;i<N;i++) if(Math.abs(w[i]-base)>=th){ if(s<0) s=i; e=i; }
+  var peakPos=-1e9,pj=Math.max(0,ni-Math.round(FS*.0012)); for(i=pj;i<=ni;i++){ if(w[i]-base>peakPos){ peakPos=w[i]-base; pj=i; } } var risePossible=-lo>=.5*hi,riseUs=risePossible?(ni-pj)/FS*1e6:null,col=riseUs==null?'amber':(riseUs<300?'green':(riseUs>500?'red':'amber'));
+  var ex=[],cut=Math.max(.14*pp,3.5*sd); for(i=2;i<N-2;i++){ var a=w[i-1],b=w[i],c2=w[i+1],bb=b-base; if(((b>a&&b>=c2)||(b<a&&b<=c2))&&Math.abs(bb)>=cut&&(!ex.length||i-ex[ex.length-1]>FS*.0004)) ex.push(i); } var zc=0,sg=0; if(s>=0) for(i=s;i<=e;i++){ var vv=w[i]-base; if(Math.abs(vv)<th) continue; var q2=vv>0?1:-1; if(sg&&q2!==sg) zc++; sg=q2; }
+  return {base:base,pp:pp,pi:pj,ni:ni,riseUs:riseUs,slopeColor:col,s:s,e:e,durMs:s<0?0:(e-s)/FS*1000,phases:zc+1,turns:Math.max(0,ex.length-(zc+1)),ex:ex,posFirst:(s>=0&&w[s]-base>0),sd:sd}; }
+function drawZoom(Z){ g.fillStyle='#030a12'; g.fillRect(Z.x,Z.y,Z.w,Z.h); g.strokeStyle='rgba(111,163,200,.45)'; g.lineWidth=1; g.strokeRect(Z.x,Z.y,Z.w,Z.h);
+  var buf=ENG.frozen&&ENG.frozen.kind==='needle'?ENG.frozen.buf:ndWindow(Math.round(FS*3)),zms=ENG.zoomMs,tt=triggerTraces(buf,zms),i,w=tt.win,pad=Math.round(8*DPR),ix=Z.x+pad,iw=Z.w-2*pad,iy=Z.y+Math.round(22*DPR),ih=Z.h-Math.round(40*DPR);
+  txt('Tetiklemeli MUP · '+zms+' ms/div · ×'+tt.traces.length,Z.x+pad,Z.y+14*DPR,'#9bd0ff',10.5);
+  g.strokeStyle='rgba(120,150,180,.16)'; for(i=0;i<=10;i++){ var xx=ix+iw*i/10; g.beginPath(); g.moveTo(xx,iy); g.lineTo(xx,iy+ih); g.stroke(); } for(i=0;i<=4;i++){ var yy=iy+ih*i/4; g.strokeStyle=i===2?'rgba(150,190,220,.3)':'rgba(120,150,180,.16)'; g.beginPath(); g.moveTo(ix,yy); g.lineTo(ix+iw,yy); g.stroke(); }
+  if(!tt.traces.length){ txt('Tetik bekleniyor (eşik '+Math.round(tt.thr)+' µV)…',Z.x+Z.w/2,Z.y+Z.h/2,'#6c7889',11,'center'); ENG.zoom={msPerDiv:zms,nTraces:0,riseUs:null,slopeColor:null}; return; }
+  var pk=0; tt.traces.forEach(function(t){ for(var k=0;k<t.length;k+=3){ var a=Math.abs(t[k]); if(a>pk) pk=a; } }); var zg=nearestGain(pk/(.75*2)),pxd=ih/4,by=iy+ih/2,x0=ix,cnt=tt.traces.length;
+  tt.traces.forEach(function(t,k){ var last=k===cnt-1; seg(t,0,w,ix,iw,by,zg,pxd,last?'#ffffff':'#7fe8b4',last?1:.38,last?1.9:1.2,iy,iy+ih); });
+  var L=tt.traces[cnt-1],M=zoomMetrics(L),px=function(i){ return ix+iw*i/(w-1); },py=function(v){ return uvToY(v,by,zg,pxd); };
+  if(M.s>=0){ g.strokeStyle='#7ee0a8'; g.setLineDash([4*DPR,3*DPR]); g.lineWidth=1.2*DPR; [M.s,M.e].forEach(function(q){ g.beginPath(); g.moveTo(px(q),iy); g.lineTo(px(q),iy+ih); g.stroke(); }); g.setLineDash([]); g.beginPath(); g.moveTo(px(M.s),iy+ih-4*DPR); g.lineTo(px(M.e),iy+ih-4*DPR); g.stroke(); txt('süre '+M.durMs.toFixed(1)+' ms',(px(M.s)+px(M.e))/2,iy+ih-8*DPR,'#7ee0a8',10,'center'); }
+  M.ex.forEach(function(q){ g.strokeStyle='#ffd37a'; g.lineWidth=1.2*DPR; g.beginPath(); g.arc(px(q),py(L[q]-M.base+M.base),3.3*DPR,0,6.3); g.stroke(); });
+  var colHex={green:'#5fe39a',amber:'#f2c46b',red:'#ff6b78'}[M.slopeColor]; if(M.riseUs!=null){ g.strokeStyle=colHex; g.lineWidth=3*DPR; g.beginPath(); g.moveTo(px(M.pi),py(L[M.pi])); g.lineTo(px(M.ni),py(L[M.ni])); g.stroke(); g.fillStyle=colHex; [M.pi,M.ni].forEach(function(q){ g.beginPath(); g.arc(px(q),py(L[q]),3.6*DPR,0,6.3); g.fill(); }); txt(ENG.nd.mode==='rest'?('Pozitif→negatif tepe '+Math.round(M.riseUs)+' µs · '+(M.posFirst?'ilk sapma + (↓)':'ilk sapma − (↑)')):('Rise-time '+Math.round(M.riseUs)+' µs '+(M.slopeColor==='green'?'· dik ✓':M.slopeColor==='red'?'· künt ✗ (iğne uzak)':'· sınırda')),Z.x+pad,Z.y+Z.h-5*DPR,ENG.nd.mode==='rest'?'#cfd8e4':colHex,11); }
+  else txt(M.posFirst?'İlk sapma POZİTİF (aşağı ↓)':'İlk sapma NEGATİF (yukarı ↑)',Z.x+pad,Z.y+Z.h-5*DPR,'#cfd8e4',11);
+  txt((zg>=1000?zg/1000+' mV':zg+' µV')+'/div',Z.x+Z.w-pad,Z.y+14*DPR,'#a6b1c2',10,'right'); txt('Faz '+M.phases+' · Turn '+M.turns,Z.x+Z.w-pad,Z.y+Z.h-5*DPR,'#a6b1c2',10,'right');
+  ENG.zoom={msPerDiv:zms,nTraces:cnt,riseUs:M.riseUs,slopeColor:M.slopeColor,durMs:M.durMs,phases:M.phases,turns:M.turns,drawn:true}; }
+
+/* ---------- Anatomik ekstremite & elektrot şeması ---------- */
+function drawLimb(){ var lc=$('limb'); if(!lc) return; var show=ENG.bench===1&&lc.parentNode.clientWidth>=420; lc.style.display=show?'block':'none'; if(!show) return; var d=Math.min(2,window.devicePixelRatio||1); if(lc.width!==150*d){ lc.width=150*d; lc.height=104*d; } var c=lc.getContext('2d'); c.setTransform(d,0,0,d,0,0); c.clearRect(0,0,150,104);
+  var sid=ENG.study,def=studyDef(),leg=(sid==='per_m'||sid==='tib_h'||sid==='sural'),T=ENG.T,warm=T>=32.5,limb=warm?'#d99a6c':(T<30?'#4d7fc4':'#9d9fb0'),pts=leg?[[8,22],[52,40],[100,50],[134,64]]:[[8,34],[56,46],[106,40],[138,38]];
+  var yAt=function(x){ for(var i=0;i<pts.length-1;i++){ if(x>=pts[i][0]&&x<=pts[i+1][0]){ var q=(x-pts[i][0])/(pts[i+1][0]-pts[i][0]); return pts[i][1]+q*(pts[i+1][1]-pts[i][1]); } } return pts[pts.length-1][1]; };
+  c.lineCap='round'; c.lineJoin='round'; c.strokeStyle=limb; c.lineWidth=13; c.beginPath(); pts.forEach(function(p,i){ if(i===0) c.moveTo(p[0],p[1]); else c.lineTo(p[0],p[1]); }); c.stroke(); c.lineWidth=17; c.beginPath(); c.moveTo(pts[2][0]+12,yAt(pts[2][0]+12)); c.lineTo(pts[3][0],pts[3][1]); c.stroke();
+  c.font='8px Inter,sans-serif'; c.textAlign='left'; c.fillStyle=warm?'#e8c473':(T<30?'#8fb8ff':'#c9cdd6'); c.fillText(T+' °C'+(T<30?' ❄':warm?' 🔥':''),4,97); c.fillStyle='#8a97a8'; c.fillText(leg?'Alt ekstremite · L5/S1':'Üst ekstremite · C8–T1',4,10);
+  var xs=leg?[104,70,44,24]:[108,84,52,28],sites=def.sites||[]; var xr=leg?128:122,y1=yAt(xr)+5,y2=yAt(xr+12)+4;
+  if(def.type==='M'||def.type==='H'||def.type==='F'){ c.fillStyle='#e0525c'; c.beginPath(); c.arc(xr,y1,3.4,0,6.3); c.fill(); c.fillStyle='#111'; c.strokeStyle='#ddd'; c.lineWidth=.8; c.beginPath(); c.arc(xr+14,y2,3.2,0,6.3); c.fill(); c.stroke(); c.fillStyle='#e8c473'; c.fillText('G1',xr-5,y1+12); c.fillText('G2',xr+10,y2+11); }
+  else { c.fillStyle='#e0525c'; c.beginPath(); c.arc(132,yAt(132)+0,3.2,0,6.3); c.fill(); c.fillStyle='#111'; c.strokeStyle='#ddd'; c.lineWidth=.8; c.beginPath(); c.arc(143,yAt(138),3,0,6.3); c.fill(); c.stroke(); }
+  c.fillStyle='#4fbf74'; c.beginPath(); c.arc(leg?90:96,yAt(leg?90:96)+10,3.2,0,6.3); c.fill(); c.fillStyle='#4fbf74'; c.fillText('Z',(leg?90:96)-2,yAt(leg?90:96)+22);
+  sites.forEach(function(st,i){ var x=xs[Math.min(i,xs.length-1)],y=yAt(x),sel=i===ENG.siteIdx; c.fillStyle='#111'; c.strokeStyle=sel?'#7ee0a8':'#ddd'; c.lineWidth=sel?1.8:.9; c.beginPath(); c.arc(x,y-1,sel?4.3:3.2,0,6.3); c.fill(); c.stroke(); c.fillStyle='#e0525c'; c.beginPath(); c.arc(x-11,yAt(x-11)-1,2.6,0,6.3); c.fill(); if(sel){ c.fillStyle='#7ee0a8'; c.fillText('K',x-2,y-8); } });
+  if(ENG.mode==='learn'&&ENG.caseId==='E12'&&!leg){ c.strokeStyle='#b684ff'; c.lineWidth=1.6; c.setLineDash([3,2]); c.beginPath(); c.moveTo(60,yAt(60)-5); c.quadraticCurveTo(82,yAt(82)-12,98,yAt(98)+1); c.stroke(); c.setLineDash([]); c.fillStyle='#b684ff'; c.fillText('Martin-Gruber',60,yAt(60)-13); }
+  if(ENG.mode==='learn'&&(ENG.caseId==='E4')&&!leg){ c.fillStyle='#f2c46b'; c.fillText('DRG ← C8–T1 kök',50,96); }
+  if(ENG.mode==='learn'&&(ENG.caseId==='E5')&&leg){ c.fillStyle='#f2c46b'; c.fillText('Fibula başı ↔ L5',44,96); }
+  c.fillStyle='#8a97a8'; c.fillText('K=katot ●=anot ●G1 ●G2 ●Z',4,104-1>100?101:101); ENG.limb.draws++; ENG.limb.kind=leg?'leg':'arm'; ENG.limb.hasElectrodes=true; ENG.limb.sites=sites.length; }
+function frame(){ requestAnimationFrame(frame); if(!ENG.loopOn||!cv) return; var P=plotBox(),k=kindNow(),b=curBuf(),winMs=ENG.sweep*10;
+  if(ENG.bench===1) drawLimb(); else if($('limb')) $('limb').style.display='none';
+  if(ENG.bench===2){ var Z=zoomRect(); if(ENG.nd.autoAt&&performance.now()>ENG.nd.autoAt){ ENG.nd.autoAt=0; autoGain(); }
+    if(!ENG.frozen){ pump(); } var win=Math.round(winMs*FS/1000),w=ENG.frozen&&ENG.frozen.kind==='needle'?ENG.frozen.buf:ndWindow(win); drawGrid(P,winMs,ENG.gain); traceEnv(P,w,0,Math.min(w.length,win),ENG.gain,ENG.frozen?'#9bd0ff':'#7fe8b4'); drawZoom(Z); var now=performance.now(); if(!ENG.frozen&&now-ENG.nd.lastAn>350){ ENG.nd.lastAn=now; renderNdRead(ndWindow(Math.round(FS*(ENG.nd.mode==='rest'?2:.6)))); readout(); } return; }
+  if(ENG.bench===3&&k==='stack'&&ENG.rnsView==='side'){ drawGrid(P,winMs,ENG.gain,'her yanıt: '+winMs/10+' ms/div · 1…5. atım yan yana'); drawRnsSide(P,winMs); return; }
   drawGrid(P,winMs,ENG.gain); if(ENG.frozen&&ENG.frozen.kind==='needle'){ var wb=ENG.frozen.buf,nn=Math.min(wb.length,Math.round(winMs*FS/1000)); traceEnv(P,wb,0,nn,ENG.gain,'#9bd0ff'); return; }
-  if(!b){ g.fillStyle='#5b6878'; g.font=(13*DPR)+'px Inter'; g.textAlign='center'; g.fillText('Trase yok — ⚡ Uyar',P.x+P.w/2,P.y+P.h/2); return; }
+  if(!b){ txt('Trase yok — ⚡ Uyar',P.x+P.w/2,P.y+P.h/2,'#5b6878',13,'center'); return; }
   var m=meta();
-  if(k==='epoch'){ var n=Math.min(b.length,Math.round(winMs*FS/1000)); traceEnv(P,b,0,n,ENG.gain,ENG.frozen?'#9bd0ff':'#7fe8b4'); }
-  else if(k==='fseries'){ var L=m.epochLen,nn2=Math.min(L,Math.round(winMs*FS/1000)),ii; for(ii=0;ii<m.n;ii++) traceEnv(P,b,ii*L,ii*L+nn2,ENG.gain,'#7fe8b4',.45,1); }
-  else if(k==='stack'){ var L2=m.epochLen,nn3=Math.min(L2,Math.round(winMs*FS/1000)),jj; for(jj=0;jj<m.n;jj++) traceEnv(P,b,jj*L2,jj*L2+nn3,ENG.gain,jj===0?'#ffd37a':(jj===3?'#ff9a9a':'#7fe8b4'),jj===0||jj===3?1:.5,jj===0||jj===3?1.6:1); }
-  drawCursors(P,winMs); if(m&&m.clipped){ g.fillStyle='#e88b92'; g.font=(11*DPR)+'px Inter'; g.textAlign='right'; g.fillText('ADC KIRPILDI',P.x+P.w-6*DPR,P.y+14*DPR); } }
+  if(k==='epoch'){ if(cascActive()){ drawCascade(P,winMs,cascadedTraces()); } else { var n=Math.min(b.length,Math.round(winMs*FS/1000)); traceEnv(P,b,0,n,ENG.gain,ENG.frozen?'#9bd0ff':'#7fe8b4'); drawCursors(P,winMs); } }
+  else if(k==='fseries'){ var L=m.epochLen,nn2=Math.min(L,Math.round(winMs*FS/1000)),ii; for(ii=0;ii<m.n;ii++) traceEnv(P,b,ii*L,ii*L+nn2,ENG.gain,'#7fe8b4',.45,1); drawCursors(P,winMs); }
+  else if(k==='stack'){ var L2=m.epochLen,nn3=Math.min(L2,Math.round(winMs*FS/1000)),jj; for(jj=0;jj<m.n;jj++) traceEnv(P,b,jj*L2,jj*L2+nn3,ENG.gain,jj===0?'#ffd37a':(jj===3?'#ff9a9a':'#7fe8b4'),jj===0||jj===3?1:.5,jj===0||jj===3?1.6:1); drawCursors(P,winMs); }
+  if(m&&m.clipped){ txt('ADC KIRPILDI',P.x+P.w-6*DPR,P.y+26*DPR,'#e88b92',11,'right'); } }
 
 /* ---------- imleç etkileşimi ---------- */
 function setCursorFromX(ev){ var k=kindNow(); if(!(k==='epoch'||k==='fseries'||k==='stack')) return; var P=plotBox(),r=cv.getBoundingClientRect(),x=(ev.clientX-r.left)*(cv.width/r.width); var t=(x-P.x)/P.w*ENG.sweep*10; t=Math.max(0,Math.min(ENG.sweep*10,Math.round(t*20)/20)); ENG.cur[ENG.cur.sel]=t; if(ENG.cur.sel==='c1'&&ENG.cur.c2==null){} readout(); }
-function bindScope(){ cv=$('scope'); var down=false; cv.addEventListener('pointerdown',function(e){ down=true; try{ cv.setPointerCapture(e.pointerId); }catch(_){} if(!ENG.frozen&&(ENG.tap.buf&&ENG.tap.kind!=='needle')){ ENG.frozen={kind:ENG.tap.kind,buf:new Float32Array(ENG.tap.buf),meta:ENG.tap.meta}; } setCursorFromX(e); });
+function bindScope(){ cv=$('scope'); var down=false; cv.addEventListener('pointerdown',function(e){ down=true; try{ cv.setPointerCapture(e.pointerId); }catch(_){} if(cascActive()) pickStrip(e); if(!ENG.frozen&&(ENG.tap.buf&&ENG.tap.kind!=='needle')){ ENG.frozen={kind:ENG.tap.kind,buf:new Float32Array(ENG.tap.buf),meta:ENG.tap.meta}; } setCursorFromX(e); });
   cv.addEventListener('pointermove',function(e){ if(down) setCursorFromX(e); }); var up=function(){ down=false; }; cv.addEventListener('pointerup',up); cv.addEventListener('pointercancel',up); cv.addEventListener('lostpointercapture',up); window.addEventListener('blur',up); }
 
 /* ---------- jüri & debrief ---------- */
 function session(){ return {evidence:ENG.evidence,decl:ENG.decl,warmed:ENG.warmed,gain:ENG.gain}; }
 function readDecl(){ var d={ncs:$('dNcs').value,spont:$('dSpont').value,mup:$('dMup').value,rec:$('dRec').value,rns:$('dRns').value,dx:$('dDx').value,absent:ENG.absent}; ENG.decl=d; return d; }
-function evaluate(){ readDecl(); var j=Q.judge(cs(),session()); renderJury(j); openDebrief(j); return j; }
+function evaluate(){ readDecl(); var j=Q.judge(cs(),session()); ENG.revealed[ENG.caseId]=true; refreshCaseSel(); renderCase(); renderJury(j); openDebrief(j); return j; }
 function colorFor(v){ return v>=75?'#8fe3bf':v>=55?'#d9a441':'#e88b92'; }
 function renderJury(j){ var pct=Math.round(j.total),col=colorFor(pct),h='<div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:13px">EMG Jüri Karnesi</b><span class="mono" style="font-size:22px;font-weight:700;color:'+col+'">'+pct+'</span></div>';
   j.cats.forEach(function(c){ var p=Math.round(100*c.s/c.m),cc=colorFor(p); h+='<div class="jury-cat"><div class="row"><span>'+c.n+'</span><span class="mono" style="color:'+cc+'">'+c.s+'/'+c.m+'</span></div><div class="bar"><span style="width:'+p+'%;background:'+cc+'"></span></div><div class="hint">'+c.h+'</div></div>'; });
@@ -642,21 +726,25 @@ function drawTruth(cvs){ var c=cvs.getContext('2d'),W=cvs.width,H=cvs.height,tr=
   var mx=Math.max.apply(null,t1.amps.concat(t2.amps),1); [[t1.amps,'#6fa3c8',0],[t2.amps,'#e0944a',1]].forEach(function(q){ q[0].forEach(function(a,k){ var x=bx+bw*(k+.5+q[2]*.0)/8+(q[2]?bw/16*.45:-bw/16*.45)*.9,hh=h3*a/mx; c.fillStyle=q[1]; c.fillRect(x-bw/40,y3+8+h3-hh,bw/22,hh); }); });
   c.fillStyle='#6c7889'; c.font='10px Inter'; c.fillText('A1='+fmt(t1.amps[0]/1000,2)+' mV · Dec1-4 %'+fmt(t1.dec14,1)+' · MVC sonrası A1='+fmt(t2.amps[0]/1000,2)+' mV',10,H-4); }
 function clamp01(x){ return x<0?0:x>1?1:x; }
-function openDebrief(j){ $('dbTitle').textContent='Debrief — '+(ENG.mode==='exam'?ENG.caseId:ENG.cs.title); $('dbSub').textContent=ENG.mode==='exam'?'':'Gerçek tanı: '+j.dxLabel; drawEvidenceGrid($('dvA')); drawTruth($('dvB'));
+function openDebrief(j){ $('dbTitle').textContent='Debrief — '+ENG.cs.title; $('dbSub').textContent='Gerçek tanı: '+j.dxLabel; drawEvidenceGrid($('dvA')); drawTruth($('dvB'));
   $('dvAmeta').innerHTML=ENG.evidence.length+' kanıt · mor/yeşil imleç = senin C1/C2; kırmızı çizgi = gerçek onset.'; $('dvBmeta').innerHTML='Truth yalnız jüri aşamasında açılır (postMessage ile sızdırılmaz).'; if(window.DuctusMobile&&window.DuctusMobile.openModal&&document.documentElement.classList.contains('dm-on')){ try{ window.DuctusMobile.openModal('#ovl .debrief'); }catch(e){ $('ovl').classList.add('on'); } } else $('ovl').classList.add('on'); }
 
 /* ---------- bağlama ---------- */
 function setBench(b){ ENG.bench=b; [].forEach.call(document.querySelectorAll('#cardBench .seg button[data-b]'),function(x){ x.classList.toggle('on',+x.dataset.b===b); }); [1,2,3].forEach(function(i){ $('b'+i).classList.toggle('on',i===b); });
   ENG.frozen=null; ENG.cur.c1=null; ENG.cur.c2=null;
-  if(b===1){ var d=defaultsFor(studyDef()); } if(b===2){ ENG.gain=200; ENG.sweep=10; setNeedle(); ENG.tap={buf:null,kind:'needle',meta:{study:'needle'}}; } if(b===3){ ENG.gain=2000; ENG.sweep=2; ENG.tap={buf:null,kind:null,meta:null}; }
-  if(b===1){ var dd=defaultsFor(studyDef()); ENG.gain=dd.g; ENG.sweep=dd.s; ENG.tap={buf:null,kind:null,meta:null}; }
-  fillSel($('gainSel'),GAINS,ENG.gain,function(g){return g>=1000?(g/1000)+' mV/div':g+' µV/div';}); fillSel($('sweepSel'),SWEEPS,ENG.sweep,function(s){return s+' ms/div';}); readout(); }
+  if(b===1){ var dd=defaultsFor(studyDef()); ENG.gain=dd.g; ENG.sweep=dd.s; ENG.tap={buf:null,kind:null,meta:null}; fillScopeSel(); }
+  if(b===2){ ENG.gain=200; ENG.sweep=10; setNeedle(); ENG.tap={buf:null,kind:'needle',meta:{study:'needle'}}; fillScopeSel(); scenario(); }
+  if(b===3){ ENG.gain=2000; ENG.sweep=2; ENG.tap={buf:null,kind:null,meta:null}; fillScopeSel(); if(ENG.rnsTrains.length){ var t=ENG.rnsTrains[ENG.rnsTrains.length-1]; ENG.tap={buf:t.buf,kind:'stack',meta:{study:'rns',siteIdx:0,type:'R',n:t.n,epochLen:t.epochLen,amps:t.amps,dec14:t.dec14,gain:ENG.gain,sweep:ENG.sweep,truth:{onset:3.4,peakT:5,negAmp:t.amps[0],p2p:t.amps[0]},T:ENG.T,clipped:false}}; } }
+  readout(); }
+function fillScopeSel(){ var sw=ENG.bench===2?[2,5,10,20,50,100,200]:SWEEPS; if(sw.indexOf(ENG.sweep)<0) ENG.sweep=sw[Math.min(sw.length-1,2)]; fillSel($('gainSel'),GAINS,ENG.gain,function(g){return g>=1000?(g/1000)+' mV/div':g+' µV/div';}); fillSel($('sweepSel'),sw,ENG.sweep,function(s){return s+' ms/div';}); }
+function scenario(){ if(ENG.bench!==2) return; var n=ENG.nd,m=muscle(),sp=(m.spont||[]).map(function(x){return x.type;}); ENG.sweep=n.mode==='rest'?(sp.indexOf('myotonic')>=0?200:50):(n.mode==='light'?10:20); fillScopeSel(); n.autoAt=performance.now()+1000; }
+function autoGain(){ var n=ENG.nd,w=ndWindow(Math.round(FS*(n.mode==='rest'?3:1.5))),i,pk=0; for(i=0;i<w.length;i+=2){ var a=Math.abs(w[i]); if(a>pk) pk=a; } ENG.gain=Math.max(20,nearestGain(pk/(4*.55))); $('gainSel').value=ENG.gain; if(n.spec) n.spec.gain=ENG.gain; if(n.stream&&n.stream.cache) {} readout(); return ENG.gain; }
 function bind(){
-  fillSel($('caseSel'),CS.ORDER,'E1',function(i){ return i+' · '+(ENG.mode==='exam'?'Vaka':CS.CASES[i].title); }); $('caseSel').onchange=function(){ loadCase(this.value); };
+  fillSel($('caseSel'),CS.ORDER,'E1',caseLabel); $('caseSel').onchange=function(){ loadCase(this.value); };
   $('varSel').onchange=function(){ loadCase(ENG.caseId,this.value); };
   fillSel($('dDx'),['']  .concat(Object.keys(CS.DX)),'',function(k){ return k?CS.DX[k]:'— seç —'; });
-  $('modeLearn').onclick=function(){ ENG.mode='learn'; this.classList.add('on'); $('modeExam').classList.remove('on'); fillSel($('caseSel'),CS.ORDER,ENG.caseId,function(i){ return i+' · '+CS.CASES[i].title; }); renderCase(); };
-  $('modeExam').onclick=function(){ ENG.mode='exam'; this.classList.add('on'); $('modeLearn').classList.remove('on'); fillSel($('caseSel'),CS.ORDER,ENG.caseId,function(i){ return i+' · Vaka'; }); loadCase(ENG.caseId); };
+  $('modeLearn').onclick=function(){ ENG.mode='learn'; this.classList.add('on'); $('modeExam').classList.remove('on'); refreshCaseSel(); renderCase(); };
+  $('modeExam').onclick=function(){ ENG.mode='exam'; this.classList.add('on'); $('modeLearn').classList.remove('on'); loadCase(ENG.caseId); };
   $('soundBtn').onclick=function(){ setSound(!ENG.sound); }; $('muteBtn').onclick=function(){ setSound(!ENG.sound); };
   [].forEach.call(document.querySelectorAll('#cardBench .seg button[data-b]'),function(b){ b.onclick=function(){ setBench(+this.dataset.b); }; });
   $('gainSel').onchange=function(){ ENG.gain=+this.value; if(ENG.nd.spec) ENG.nd.spec.gain=ENG.gain; readout(); }; $('sweepSel').onchange=function(){ ENG.sweep=+this.value; readout(); };
@@ -668,8 +756,8 @@ function bind(){
   $('durSel').onchange=function(){ ENG.dur=+this.value; updateSupra(); }; $('iRange').oninput=function(){ $('iVal').textContent=this.value; };
   $('stimBtn').onclick=doStim; $('iUp').onclick=function(){ var v=Math.min(100,Math.round(((+$('iRange').value||5)*1.1)*2)/2); $('iRange').value=v; $('iVal').textContent=v; }; $('iDn').onclick=function(){ var v=Math.max(0,Math.round(((+$('iRange').value)*.9)*2)/2); $('iRange').value=v; $('iVal').textContent=v; };
   $('iSweep').onclick=doSweep; $('heatBtn').onclick=heat; $('fBtn').onclick=doF;
-  [].forEach.call(document.querySelectorAll('#b2 .seg button[data-nm]'),function(b){ b.onclick=function(){ ENG.nd.mode=this.dataset.nm; [].forEach.call(document.querySelectorAll('#b2 .seg button[data-nm]'),function(x){ x.classList.toggle('on',x===b); }); $('mvcFld').style.display=ENG.nd.mode==='rest'?'none':''; if(ENG.nd.mode==='light') ENG.nd.mvc=.06; else if(ENG.nd.mode==='mvc'){ ENG.nd.mvc=(+$('mvcRange').value)/100; } ENG.frozen=null; setNeedle(); }; });
-  $('musSel').onchange=function(){ ENG.nd.muscle=this.value; ENG.frozen=null; setNeedle(); };
+  [].forEach.call(document.querySelectorAll('#b2 .seg button[data-nm]'),function(b){ b.onclick=function(){ ENG.nd.mode=this.dataset.nm; [].forEach.call(document.querySelectorAll('#b2 .seg button[data-nm]'),function(x){ x.classList.toggle('on',x===b); }); $('mvcFld').style.display=ENG.nd.mode==='rest'?'none':''; if(ENG.nd.mode==='light') ENG.nd.mvc=.06; else if(ENG.nd.mode==='mvc'){ ENG.nd.mvc=(+$('mvcRange').value)/100; } ENG.frozen=null; setNeedle(); scenario(); }; });
+  $('musSel').onchange=function(){ ENG.nd.muscle=this.value; ENG.frozen=null; setNeedle(); scenario(); };
   $('rRange').oninput=function(){ ENG.nd.r=+this.value; $('rVal').textContent=(+this.value).toFixed(2); if(ENG.nd.spec){ ENG.nd.spec.r=ENG.nd.r; ENG.nd.stream.cache={}; } };
   $('needleIn').onclick=function(){ var v=Math.max(.05,Math.round((ENG.nd.r-.05)*100)/100); $('rRange').value=v; $('rRange').oninput.call($('rRange')); }; $('needleOut').onclick=function(){ var v=Math.min(1.2,Math.round((ENG.nd.r+.05)*100)/100); $('rRange').value=v; $('rRange').oninput.call($('rRange')); };
   $('insBtn').onclick=function(){ ENG.nd.ins=true; ENG.frozen=null; setNeedle(); ENG.nd.ins=false; if(ENG.nd.spec) ENG.nd.spec.insertion=true; ENG.nd.stream=new ND.Stream(ENG.nd.spec); };
@@ -677,6 +765,9 @@ function bind(){
   $('r3hz').onclick=function(){ doTrain('3 Hz'); }; $('rMvc').onclick=function(){ doExercise('mvc10'); }; $('rTet').onclick=function(){ doExercise('tetani30'); }; $('rW10').onclick=function(){ doWait(10); }; $('rW180').onclick=function(){ doWait(180); };
   $('evList').addEventListener('click',function(e){ var d=e.target.getAttribute&&e.target.getAttribute('data-del'); if(d!=null){ ENG.evidence.splice(+d,1); renderEvidence(); } });
   $('absentBox').addEventListener('change',function(e){ var k=e.target.getAttribute('data-abs'); if(k) ENG.absent[k]=e.target.checked; });
+  $('cascBtn').onclick=function(){ ENG.cascView=!ENG.cascView; this.classList.toggle('on',ENG.cascView); this.textContent=ENG.cascView?'📚 Basamaklı':'📄 Tekil'; };
+  $('autoGain').onclick=autoGain; $('zoomMs').onclick=function(){ ENG.zoomMs=ENG.zoomMs===2?5:2; this.textContent='🔍 Zoom: '+ENG.zoomMs+' ms/div'; };
+  $('rnsView').onclick=function(){ ENG.rnsView=ENG.rnsView==='side'?'stack':'side'; this.classList.toggle('on',ENG.rnsView==='side'); this.textContent=ENG.rnsView==='side'?'📊 Yan Yana Tren':'🗂️ Üst Üste (Superimposed)'; };
   $('evalBtn').onclick=evaluate; $('juryTop').onclick=function(){ $('cardDecision').scrollIntoView({behavior:'smooth'}); }; $('dbX').onclick=function(){ $('ovl').classList.remove('on'); };
   document.addEventListener('pointerdown',function(){ if(ENG.sound) resumeAudio(); },{once:false});
   window.addEventListener('message',function(e){ var d=e.data; if(!d||!d.ductus) return; if(d.type==='suite:pause'||d.type==='suite:module:deactivate') ENG.loopOn=false; else if(d.type==='suite:resume'||d.type==='suite:module:activate') ENG.loopOn=true; });
@@ -684,7 +775,7 @@ function bind(){
   window.addEventListener('resize',resize); if(window.ResizeObserver) new ResizeObserver(resize).observe($('scope').parentNode); bindScope(); }
 
 /* ---------- API + kabul testleri ---------- */
-window.EMG={ENG:ENG,uvToY:uvToY,audioFeedFor:audioFeedFor,AUDIO_K:AUDIO_K,loadCase:loadCase,evaluate:evaluate,stimOnce:stimOnce,setBench:setBench,doTrain:doTrain,doExercise:doExercise,doWait:doWait,freezeSave:freezeSave,heat:heat,selectStudy:selectStudy,doF:doF,
+window.EMG={cascadedTraces:cascadedTraces,rnsPanels:rnsPanels,triggerTraces:triggerTraces,zoomMetrics:zoomMetrics,drawLimb:drawLimb,anatomyActive:function(){ return ENG.limb.draws>0&&ENG.limb.hasElectrodes; },zoomInfo:function(){ return ENG.zoom; },caseLabel:caseLabel,setMode:function(m){ $(m==='exam'?'modeExam':'modeLearn').click(); },ENG:ENG,uvToY:uvToY,audioFeedFor:audioFeedFor,AUDIO_K:AUDIO_K,loadCase:loadCase,evaluate:evaluate,stimOnce:stimOnce,setBench:setBench,doTrain:doTrain,doExercise:doExercise,doWait:doWait,freezeSave:freezeSave,heat:heat,selectStudy:selectStudy,doF:doF,
   tapBuf:function(){ return ENG.tap.buf; }, audioSourceBuf:function(){ return ENG.tap.buf; }, scopeSourceBuf:function(){ return ENG.tap.buf; }, state:function(){ return {bench:ENG.bench,T:ENG.T,evidence:ENG.evidence.length,mode:ENG.mode}; }};
 window.__selfTest=function(){ var R_=[],ok=function(n,c,info){ R_.push({n:n,pass:!!c,info:info}); };
   try{
@@ -709,6 +800,18 @@ window.__selfTest=function(){ var R_=[],ok=function(n,c,info){ R_.push({n:n,pass
     loadCase('E1'); stimOnce(60); var tb=EMG.tapBuf(),feed=audioFeedFor(tb),same=EMG.audioSourceBuf()===EMG.scopeSourceBuf(),k=0,i,max=0; for(i=0;i<tb.length;i+=97){ var d=Math.abs(feed[i]/AUDIO_K-tb[i]); if(d>max) max=d; } ok('audio-and-scope-share-one-buffer',same&&tb.length===Math.round(FS*.2)&&max<1e-3&&FS===44100,{max:max});
     var P=60,base=100,y1=uvToY(-100,base,100,40),y2=uvToY(100,base,100,40); ok('negative-voltage-draws-UP',y1<base&&y2>base&&y1===60);
     var u=ND.mupWave('norm',.55,.1,12345),mm=ND.mupMetrics(u); ok('mup-normal-duration-7-12ms',ENG.nd&&mm.durMs>=3&&true);
+    /* 5: basamaklı NCS + anatomi */
+    loadCase('E3'); selectStudy('uln_m'); [0,1,2].forEach(function(i){ ENG.siteIdx=i; stimOnce(100); }); var ct=cascadedTraces(); drawLimb(); var okA=ct.length>=2&&ct.length===3&&ct[0].siteIdx===0&&ct[2].siteIdx===2&&ct[2].meta.truth.onset>ct[0].meta.truth.onset; var wideLimb=ENG.limb.draws>0&&ENG.limb.hasElectrodes&&ENG.limb.kind==='arm'&&ENG.limb.sites>=3;
+    ok('cascadedTraces-ge2-and-anatomy-map',okA&&wideLimb&&EMG.anatomyActive()&&ct.every(function(r){return r.buf&&r.buf.length>0;}),{n:ct.length,limb:ENG.limb});
+    /* 6: zoom MUP + miyotonik zarf */
+    var mkTr=function(r){ var b=ND.renderNeedle({muscle:{id:'bic',mup:'norm',spont:[]},mode:'light',mvc:.1,r:r,seed:5,noise:3,mains:0},2); var tt=triggerTraces(b,2); var L=tt.traces[tt.traces.length-1]; return {tt:tt,M:L?zoomMetrics(L):null}; };
+    var zn=mkTr(.10),zf=mkTr(.80); ok('zoomed-MUP-2msdiv-risetime-slope',ENG.zoomMs===2&&zn.tt.traces.length>=2&&zn.M.riseUs<300&&zn.M.slopeColor==='green'&&zf.M&&zf.M.riseUs>500&&zf.M.slopeColor==='red',{near:zn.M&&zn.M.riseUs,far:zf.M&&zf.M.riseUs,n:zn.tt.traces.length});
+    var mb=ND.renderNeedle({muscle:{id:'fdi',mup:'norm',spont:[{type:'myotonic'}]},mode:'rest',seed:31,noise:4,mains:0},4.5),ev=[],ii=0,hold=Math.round(FS*.004),thrM=30; while(ii<mb.length){ if(Math.abs(mb[ii])>=thrM){ var pkm=0,q; for(q=ii;q<Math.min(mb.length,ii+Math.round(FS*.003));q++) pkm=Math.max(pkm,Math.abs(mb[q])); ev.push({t:ii/FS,a:pkm}); ii+=hold+Math.round(FS*.003); } else ii++; }
+    var clu=[],cur=[]; ev.forEach(function(e){ if(cur.length&&e.t-cur[cur.length-1].t>.15){ clu.push(cur); cur=[]; } cur.push(e); }); if(cur.length) clu.push(cur); var big=clu.sort(function(a,b){return b.length-a.length;})[0]||[],pkA=0; big.forEach(function(e){ pkA=Math.max(pkA,e.a); }); var tailA=big.length?big[big.length-1].a:1,hz0=big.length>4?1/(big[1].t-big[0].t):0,hz1=big.length>4?1/(big[big.length-1].t-big[big.length-2].t):0;
+    ok('myotonic-crescendo-decrescendo-envelope',big.length>=15&&pkA/tailA>2.2&&hz0>hz1*2,{n:big.length,peak:pkA,tail:tailA,ratio:pkA/tailA,hz0:hz0,hz1:hz1});
+    /* 7: RNS yan yana + sınav körlüğü */
+    loadCase('E10'); setBench(3); doTrain(); doExercise('mvc10'); doTrain(); doWait(180); doTrain(); var pn=EMG.rnsPanels(); ok('rns-side-by-side-1to5-default',ENG.rnsView==='side'&&pn.length===3&&pn.every(function(t){return t.n>=5&&t.amps.length>=5;})&&/Bazal/.test(pn[0].lab)&&/MVC/.test(pn[1].lab)&&/3 dk/.test(pn[2].lab),{labs:pn.map(function(t){return t.lab;})});
+    setBench(1); EMG.setMode('exam'); var opts=[].map.call($('caseSel').options,function(o){return o.textContent;}).join('|')+'|'+$('caseBody').textContent+'|'+$('dbTitle').textContent+'|'+document.querySelector('.topbar').textContent; var bad=[]; CS.ORDER.forEach(function(id){ var t=CS.CASES[id].title; if(opts.indexOf(t)>=0) bad.push(t); }); Object.keys(CS.DX).forEach(function(k){ if(opts.indexOf(CS.DX[k])>=0) bad.push(CS.DX[k]); }); var hasCC=opts.indexOf(CS.CASES.E3.cc)>=0&&/E3 · /.test(opts); loadCase('E3'); var after=$('caseBody').textContent.indexOf(CS.CASES.E3.title)<0; EMG.setMode('learn'); var back=$('caseSel').options[2].textContent.indexOf(CS.CASES.E3.title)>=0; ok('exam-mode-hides-diagnosis-titles',bad.length===0&&hasCC&&after&&back,{bad:bad});
   }catch(e){ ok('exception',false,String(e).slice(0,160)); }
   var failed=R_.filter(function(r){return !r.pass;}).map(function(r){return r.n;}); return {pass:failed.length===0,count:R_.length,tests:R_,failed:failed}; };
 window.addEventListener('DOMContentLoaded',function(){ bind(); resize(); loadCase('E1'); setBench(1); setSound(false); frame(); });
