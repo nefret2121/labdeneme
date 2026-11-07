@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-11-04T04:01:27.172Z",
+  "generatedAt": "2026-11-07T09:56:21.004Z",
   "threeLocal": true,
-  "pages": 23,
+  "pages": 24,
   "viewports": [
     {
       "w": 1920,
@@ -27,7 +27,7 @@
     },
     "gate3_link_integrity": {
       "pass": true,
-      "checked": 55,
+      "checked": 57,
       "skipped": 1,
       "broken": []
     },
@@ -40,7 +40,7 @@
       "fails": []
     },
     "gate6_clinical_selftests": {
-      "hooks": 9,
+      "hooks": 10,
       "pass": true,
       "detail": [
         {
@@ -1087,13 +1087,153 @@
           "selfTest": {
             "hook": false
           }
+        },
+        {
+          "page": "ductuslab-emg.html",
+          "pass": true,
+          "selfTest": {
+            "pass": true,
+            "count": 19,
+            "tests": [
+              {
+                "n": "cv-240mm-4ms-60",
+                "pass": true
+              },
+              {
+                "n": "I0-zero-response",
+                "pass": true
+              },
+              {
+                "n": "supramax-needs-plateau+20pct",
+                "pass": true
+              },
+              {
+                "n": "cold-vs-warm-DML-CV-amp",
+                "pass": true,
+                "info": {
+                  "dml27": 4.285714285714286,
+                  "dml33": 3.4467120181405897,
+                  "cv27": 45.42489270386266,
+                  "cv33": 56.29787234042553
+                }
+              },
+              {
+                "n": "physiologic-snap-drop-not-block",
+                "pass": true,
+                "info": {
+                  "ratio": 0.5071985741202693
+                }
+              },
+              {
+                "n": "E3-elbow-block",
+                "pass": true,
+                "info": {
+                  "r": 0.521938578172937
+                }
+              },
+              {
+                "n": "fib-positive-regular",
+                "pass": true,
+                "info": {
+                  "cv": 0.05911995667377284,
+                  "pol": 1
+                }
+              },
+              {
+                "n": "endplate-negative-irregular",
+                "pass": true,
+                "info": {
+                  "cv": 0.6951379797173912,
+                  "pol": -1
+                }
+              },
+              {
+                "n": "rise-time-near-lt300-far-gt500",
+                "pass": true,
+                "info": {
+                  "r10": 158.73015873015873,
+                  "r80": 929.7052154195011
+                }
+              },
+              {
+                "n": "recruitment-myopathic-early-neurogenic-reduced",
+                "pass": true,
+                "info": {
+                  "n": 4,
+                  "m": 33,
+                  "r": {
+                    "nActive": 3,
+                    "maxRate": 38,
+                    "N": 3
+                  }
+                }
+              },
+              {
+                "n": "RNS-normal-dec-lt5",
+                "pass": true,
+                "info": {
+                  "dec": 0.007276046488106535
+                }
+              },
+              {
+                "n": "RNS-MG-dec-gt10-repair-then-deeper",
+                "pass": true,
+                "info": {
+                  "dec": 18.851286969454193,
+                  "post": 11.4211826672704,
+                  "p3": 39.3051347958999
+                }
+              },
+              {
+                "n": "RNS-LEMS-lowbase-inc-gt100",
+                "pass": true,
+                "info": {
+                  "base": 1769.107999795712,
+                  "inc": 235.8496149227417,
+                  "dec": 22.79676854258453
+                }
+              },
+              {
+                "n": "RNS-state-persists-between-trains",
+                "pass": true,
+                "info": {
+                  "a1": 8897.459458375753,
+                  "a2": 7021.20083169627
+                }
+              },
+              {
+                "n": "underresolved-5mV-div-20uV",
+                "pass": true
+              },
+              {
+                "n": "judge-flags-DISPLAY_UNDERRESOLVED",
+                "pass": true
+              },
+              {
+                "n": "audio-and-scope-share-one-buffer",
+                "pass": true,
+                "info": {
+                  "max": 0.00023651123046875
+                }
+              },
+              {
+                "n": "negative-voltage-draws-UP",
+                "pass": true
+              },
+              {
+                "n": "mup-normal-duration-7-12ms",
+                "pass": true
+              }
+            ],
+            "failed": []
+          }
         }
       ]
     },
     "gate7_portal_accessibility": {
       "pass": true,
       "detail": {
-        "cards": 21,
+        "cards": 22,
         "lapBadgeClean": true,
         "frmPresent": true,
         "scrollOk": true,
@@ -1102,7 +1242,7 @@
     },
     "gate8_mobile_phone_ergonomics": {
       "pass": true,
-      "checks": 92,
+      "checks": 96,
       "fails": [],
       "detail": [
         {
@@ -1114,7 +1254,7 @@
             "portal": {
               "sw": 390,
               "iw": 390,
-              "cards": 21,
+              "cards": 22,
               "pillsScroll": "auto",
               "box": [
                 390,
@@ -1142,7 +1282,7 @@
             "portal": {
               "sw": 360,
               "iw": 360,
-              "cards": 21,
+              "cards": 22,
               "pillsScroll": "auto",
               "box": [
                 360,
@@ -1170,7 +1310,7 @@
             "portal": {
               "sw": 844,
               "iw": 844,
-              "cards": 21,
+              "cards": 22,
               "pillsScroll": "auto",
               "box": [
                 844,
@@ -1703,6 +1843,65 @@
         },
         {
           "page": "sft/index.html",
+          "viewport": "desktop-1366x768",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "shell": false,
+            "tb": true,
+            "cc": true,
+            "menu": true,
+            "mon": true,
+            "sw": true
+          }
+        },
+        {
+          "page": "ductuslab-emg.html",
+          "viewport": "390x844",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "canvas": {
+              "maxW": 368,
+              "maxH": 348,
+              "stackH": 348,
+              "svgOk": false
+            },
+            "asp": 0
+          }
+        },
+        {
+          "page": "ductuslab-emg.html",
+          "viewport": "360x800",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "canvas": {
+              "maxW": 338,
+              "maxH": 329,
+              "stackH": 329,
+              "svgOk": false
+            },
+            "asp": 0
+          }
+        },
+        {
+          "page": "ductuslab-emg.html",
+          "viewport": "844x390",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "canvas": {
+              "maxW": 399,
+              "maxH": 312,
+              "stackH": 312,
+              "svgOk": false
+            },
+            "asp": 0
+          }
+        },
+        {
+          "page": "ductuslab-emg.html",
           "viewport": "desktop-1366x768",
           "pass": true,
           "fails": [],
@@ -3880,6 +4079,155 @@
       "truthLeak": [],
       "selfTest": {
         "hook": false
+      },
+      "lifecycle": {
+        "supported": false,
+        "advanced": null
+      }
+    },
+    "ductuslab-emg.html": {
+      "page": "ductuslab-emg.html",
+      "pageerrors": [],
+      "consoleErrors": [],
+      "externalAssets": [],
+      "disallowedReq": [],
+      "overflow": [],
+      "truthLeak": [],
+      "selfTest": {
+        "pass": true,
+        "count": 19,
+        "tests": [
+          {
+            "n": "cv-240mm-4ms-60",
+            "pass": true
+          },
+          {
+            "n": "I0-zero-response",
+            "pass": true
+          },
+          {
+            "n": "supramax-needs-plateau+20pct",
+            "pass": true
+          },
+          {
+            "n": "cold-vs-warm-DML-CV-amp",
+            "pass": true,
+            "info": {
+              "dml27": 4.285714285714286,
+              "dml33": 3.4467120181405897,
+              "cv27": 45.42489270386266,
+              "cv33": 56.29787234042553
+            }
+          },
+          {
+            "n": "physiologic-snap-drop-not-block",
+            "pass": true,
+            "info": {
+              "ratio": 0.5071985741202693
+            }
+          },
+          {
+            "n": "E3-elbow-block",
+            "pass": true,
+            "info": {
+              "r": 0.521938578172937
+            }
+          },
+          {
+            "n": "fib-positive-regular",
+            "pass": true,
+            "info": {
+              "cv": 0.05911995667377284,
+              "pol": 1
+            }
+          },
+          {
+            "n": "endplate-negative-irregular",
+            "pass": true,
+            "info": {
+              "cv": 0.6951379797173912,
+              "pol": -1
+            }
+          },
+          {
+            "n": "rise-time-near-lt300-far-gt500",
+            "pass": true,
+            "info": {
+              "r10": 158.73015873015873,
+              "r80": 929.7052154195011
+            }
+          },
+          {
+            "n": "recruitment-myopathic-early-neurogenic-reduced",
+            "pass": true,
+            "info": {
+              "n": 4,
+              "m": 33,
+              "r": {
+                "nActive": 3,
+                "maxRate": 38,
+                "N": 3
+              }
+            }
+          },
+          {
+            "n": "RNS-normal-dec-lt5",
+            "pass": true,
+            "info": {
+              "dec": 0.007276046488106535
+            }
+          },
+          {
+            "n": "RNS-MG-dec-gt10-repair-then-deeper",
+            "pass": true,
+            "info": {
+              "dec": 18.851286969454193,
+              "post": 11.4211826672704,
+              "p3": 39.3051347958999
+            }
+          },
+          {
+            "n": "RNS-LEMS-lowbase-inc-gt100",
+            "pass": true,
+            "info": {
+              "base": 1769.107999795712,
+              "inc": 235.8496149227417,
+              "dec": 22.79676854258453
+            }
+          },
+          {
+            "n": "RNS-state-persists-between-trains",
+            "pass": true,
+            "info": {
+              "a1": 8897.459458375753,
+              "a2": 7021.20083169627
+            }
+          },
+          {
+            "n": "underresolved-5mV-div-20uV",
+            "pass": true
+          },
+          {
+            "n": "judge-flags-DISPLAY_UNDERRESOLVED",
+            "pass": true
+          },
+          {
+            "n": "audio-and-scope-share-one-buffer",
+            "pass": true,
+            "info": {
+              "max": 0.00023651123046875
+            }
+          },
+          {
+            "n": "negative-voltage-draws-UP",
+            "pass": true
+          },
+          {
+            "n": "mup-normal-duration-7-12ms",
+            "pass": true
+          }
+        ],
+        "failed": []
       },
       "lifecycle": {
         "supported": false,
