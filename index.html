@@ -1037,15 +1037,15 @@
       <div class="modal-head">
         <div>
           <span class="eyebrow accent">DuctusLab · Klinik Simülasyon</span>
-          <div class="card-title" style="font-size:15px; margin-top:2px;">21 Aktif Simülatör · Modül Kitaplığı</div>
+          <div class="card-title" style="font-size:15px; margin-top:2px;">22 Aktif Simülatör · Modül Kitaplığı</div>
         </div>
         <button onclick="togglePortalModal()">Kapat</button>
       </div>
       <div class="portal-filter">
         <input class="portal-search" id="portalSearch" placeholder="🔍 Modül ara (ör. digoksin, pupil, CVC, STEMI, MB2)..." oninput="filterPortal()">
         <div class="pills" id="portalPills">
-          <button class="pill on" data-cat="all" onclick="setPortalCat(this)">Tümü (21)</button>
-          <button class="pill" data-cat="muayene" onclick="setPortalCat(this)">🩺 Muayene &amp; Tanı (6)</button>
+          <button class="pill on" data-cat="all" onclick="setPortalCat(this)">Tümü (22)</button>
+          <button class="pill" data-cat="muayene" onclick="setPortalCat(this)">🩺 Muayene &amp; Tanı (7)</button>
           <button class="pill" data-cat="akut" onclick="setPortalCat(this)">🫀 Akut · YB &amp; PK/PD (5)</button>
           <button class="pill" data-cat="girisimsel" onclick="setPortalCat(this)">🔬 Girişimsel &amp; Cerrahi (5)</button>
           <button class="pill" data-cat="dus" onclick="setPortalCat(this)">🦷 Diş Hekimliği · DUS (5)</button>
@@ -1093,6 +1093,12 @@
           <div class="pcard-ttl">Spirometri &amp; Akım-Hacim Lab</div>
           <div class="pcard-sum">Akım-hacim halkası; FEV1/FVC, ATS/ERS kalite, reversibilite.</div>
           <div class="ptags"><span>Pulmoner</span><span>Spirometri</span></div>
+        </div>
+        <div class="pcard" data-cat="muayene" data-s="emg enmg sinir iletim ncs iğne emg mup rns miyastenia lems polinöropati" onclick="window.open('ductuslab-emg.html','_blank','noopener')">
+          <div class="pcard-top"><span class="mod-ico">EMG</span><span class="pbadge">Aktif</span></div>
+          <div class="pcard-ttl">EMG &amp; ENMG Laboratuvarı</div>
+          <div class="pcard-sum">NCS, iğne EMG (MUP rise-time), F/H ve RNS; 44.1 kHz ses = ekran = gerçek.</div>
+          <div class="ptags"><span>NCS</span><span>İğne EMG</span><span>RNS</span></div>
         </div>
         <div class="pcard" data-cat="akut" data-s="aci̇l acil yatak başı klinik konsol triyaj akg qsofa" onclick="inSuite() ? window.parent.DuctusSuite.switchModule('acil') : (window.location.href='acil/')">
           <div class="pcard-top"><span class="mod-ico">ACİL</span><span class="pbadge">Aktif</span></div>

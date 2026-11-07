@@ -16,7 +16,7 @@ const PAGES = [
   'ductuslab-airway.html', 'ductuslab-cathlab.html', 'ductuslab-lapchole.html',
   'ductuslab-neurosurgery.html', 'ductuslab-usg-access.html', 'ductuslab-pharma.html', 'ductuslab-endo.html', 'ductuslab-perio.html', 'ductuslab-omfs.html', 'ductuslab-vpt.html', 'ductuslab-ortho.html',
   'acil/index.html', 'ekg/index.html', 'eko/index.html', 'fnd/index.html',
-  'ks/index.html', 'nro/index.html', 'oto/index.html', 'sft/index.html', 'ventilator/index.html'
+  'ks/index.html', 'nro/index.html', 'oto/index.html', 'sft/index.html', 'ventilator/index.html', 'ductuslab-emg.html'
 ];
 const VIEWPORTS = [ {w:1920,h:1080}, {w:1366,h:768}, {w:1180,h:820} ];
 const MIME = { '.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.svg':'image/svg+xml','.ico':'image/x-icon','.woff2':'font/woff2','.woff':'font/woff' };
@@ -129,7 +129,7 @@ async function run(){
       var lapBadge = lap? lap.querySelector('.pbadge').textContent.trim() : '';
       return { cards:cards.length, lapBadgeClean:(lapBadge==='Aktif'), frmPresent:!!frm, scrollOk:scrollOk,
         modalFits:(br? (br.bottom<=window.innerHeight+2):false) }; });
-    portalCheck={ pass:(pc.cards===21 && pc.lapBadgeClean && pc.frmPresent && pc.scrollOk && pc.modalFits), detail:pc };
+    portalCheck={ pass:(pc.cards===22 && pc.lapBadgeClean && pc.frmPresent && pc.scrollOk && pc.modalFits), detail:pc };
     await pctx.close();
   }catch(e){ portalCheck={pass:false,error:String(e).slice(0,100)}; }
 
@@ -144,7 +144,7 @@ async function run(){
 
 
   // Gate 8: Mobile Phone Viewport & Ergonomics Audit — Dalga 1 (8 sayfa × 3 telefon ekranı, hasTouch+isMobile)
-  const M8=['index.html','ductuslab-suite.html','ductuslab-case-chain.html','acil/index.html','ekg/index.html','ventilator/index.html','ductuslab-pharma.html','sft/index.html','ductuslab-usg-access.html','ductuslab-lapchole.html','ductuslab-airway.html','eko/index.html','ductuslab-cathlab.html','ductuslab-neurosurgery.html','ks/index.html','fnd/index.html','oto/index.html','nro/index.html','ductuslab-endo.html','ductuslab-perio.html','ductuslab-omfs.html','ductuslab-vpt.html','ductuslab-ortho.html'];
+  const M8=['index.html','ductuslab-suite.html','ductuslab-case-chain.html','acil/index.html','ekg/index.html','ventilator/index.html','ductuslab-pharma.html','sft/index.html','ductuslab-emg.html','ductuslab-usg-access.html','ductuslab-lapchole.html','ductuslab-airway.html','eko/index.html','ductuslab-cathlab.html','ductuslab-neurosurgery.html','ks/index.html','fnd/index.html','oto/index.html','nro/index.html','ductuslab-endo.html','ductuslab-perio.html','ductuslab-omfs.html','ductuslab-vpt.html','ductuslab-ortho.html'];
   const PHONES=[{n:'390x844',w:390,h:844},{n:'360x800',w:360,h:800},{n:'844x390',w:844,h:390}];
   const gate8=[];
   const probe8=()=>{ const de=document.documentElement, iw=innerWidth, ih=innerHeight;
@@ -187,7 +187,7 @@ async function run(){
           await pg.evaluate(()=>{ DuctusSuite.toggleJury(); document.body.classList.add('dm-menu'); }); await pg.waitForTimeout(350); const mn=await pg.evaluate(()=>{const r=document.querySelector('.navwrap').getBoundingClientRect();return [Math.round(r.left),Math.round(r.width)];}); rec.detail.menu=mn; if(mn[0]<-2||mn[1]<200) rec.fails.push('çekmece menü açılmıyor '+mn);
           critSeen=true; }
         if(page==='index.html'){ await pg.evaluate(()=>{window.togglePortalModal&&window.togglePortalModal();}); await pg.waitForTimeout(500); const pp=await pg.evaluate(()=>({sw:document.documentElement.scrollWidth,iw:innerWidth,cards:document.querySelectorAll('#pgrid .pcard').length,pillsScroll:getComputedStyle(document.getElementById('portalPills')).overflowX,box:(()=>{const r=document.querySelector('.modal-box').getBoundingClientRect();return [Math.round(r.width),Math.round(r.height)];})(),fs:[...document.querySelectorAll('#portalSearch')].map(e=>parseFloat(getComputedStyle(e).fontSize))})); rec.detail.portal=pp;
-          if(pp.sw>pp.iw) rec.fails.push('portal yatay taşma'); if(pp.cards!==21) rec.fails.push('portal kart '+pp.cards); if(!/auto|scroll/.test(pp.pillsScroll)) rec.fails.push('kategori hapları kaymıyor'); if(pp.fs[0]<16) rec.fails.push('portal arama <16px');
+          if(pp.sw>pp.iw) rec.fails.push('portal yatay taşma'); if(pp.cards!==22) rec.fails.push('portal kart '+pp.cards); if(!/auto|scroll/.test(pp.pillsScroll)) rec.fails.push('kategori hapları kaymıyor'); if(pp.fs[0]<16) rec.fails.push('portal arama <16px');
           await pg.evaluate(()=>window.togglePortalModal()); await pg.waitForTimeout(250); }
         // (a) yatay taşma, (b) kanvas, (c) font + kritik aksiyon + dokunma hedefi
         const mw=Math.max(...snaps.map(x=>x.sw-x.iw)); if(mw>0) rec.fails.push('yatay taşma +'+mw+'px');
