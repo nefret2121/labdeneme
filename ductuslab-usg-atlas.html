@@ -722,7 +722,7 @@ var UA = { ver: '1.0' };
     { id: 4, short: 'Sağ üst', ico: '🟤', name: 'Sağ Üst Kadran · KC/SK/Morison', probe: 'cvx', depth: 170, pose: { site: 'torso', phi: -1.4, s: -110, rot: 90, tilt: -24, rock: 0 }, lim: { phi: [-3.14, 0.5], s: [-180, 40] } },
     { id: 5, short: 'Sol üst', ico: '🫘', name: 'Sol Üst Kadran · Dalak/Böbrek', probe: 'cvx', depth: 170, pose: { site: 'torso', phi: 2.3, s: -40, rot: 90, tilt: -24, rock: 0 }, lim: { phi: [-0.5, 3.14], s: [-180, 40] } },
     { id: 6, short: 'Aorta/IVC', ico: '🔴', name: 'Abdominal Aorta · IVC', probe: 'cvx', depth: 160, pose: { site: 'torso', phi: 0.05, s: -92, rot: 0, tilt: 0, rock: 0 }, lim: { phi: [-0.9, 0.9], s: [-260, 0] } },
-    { id: 7, short: 'Pelvis', ico: '🟡', name: 'Pelvis · Mesane/Uterus/Prostat', probe: 'cvx', depth: 150, pose: { site: 'torso', phi: 0, s: -316, rot: 90, tilt: 0, rock: 0 }, lim: { phi: [-0.8, 0.8], s: [-345, -240] } },
+    { id: 7, short: 'Pelvis', ico: '🟡', name: 'Pelvis · Mesane/Uterus/Prostat', probe: 'cvx', depth: 150, pose: { site: 'torso', phi: 0, s: -272, rot: 90, tilt: 0, rock: 25 }, lim: { phi: [-0.8, 0.8], s: [-345, -240] } },
     { id: 8, short: 'Bacak/Meme', ico: '🦵', name: 'Femoral–Popliteal Ven · Meme', probe: 'lin', depth: 45, pose: { site: 'legR', phi: 0.13, s: -395, rot: 0, tilt: 0, rock: 0 }, lim: { phi: [-3.14, 3.14], s: [-815, -372] } }
   ];
   UA.WINDOWS = { // hızlı pencere kısayolları
@@ -736,10 +736,11 @@ var UA = { ver: '1.0' };
     morison: { name: 'Morison (RUQ)', probe: 'cvx', depth: 170, pose: { site: 'torso', phi: -1.4, s: -110, rot: 90, tilt: -24, rock: 0 } },
     luq: { name: 'Perisplenik (LUQ)', probe: 'cvx', depth: 170, pose: { site: 'torso', phi: 2.3, s: -40, rot: 90, tilt: -24, rock: 0 } },
     kidL: { name: 'Sol böbrek uzun eksen', probe: 'cvx', depth: 150, pose: { site: 'torso', phi: 2.2, s: -100, rot: 90, tilt: -8, rock: 0 } },
+    kidLh: { name: 'Sol böbrek · hilus (koronal)', probe: 'cvx', depth: 150, pose: { site: 'torso', phi: 2.5, s: -110, rot: 90, tilt: -20, rock: 0 } },
     kidR: { name: 'Sağ böbrek uzun eksen', probe: 'cvx', depth: 150, pose: { site: 'torso', phi: -2.2, s: -110, rot: 90, tilt: 8, rock: 0 } },
     aaa: { name: 'Aorta enine (göbek üstü)', probe: 'cvx', depth: 160, pose: { site: 'torso', phi: 0.05, s: -130, rot: 0, tilt: 0, rock: 0 } },
-    uterus: { name: 'Uterus (suprapubik üstü)', probe: 'cvx', depth: 150, pose: { site: 'torso', phi: 0, s: -250, rot: 90, tilt: 0, rock: 0 } },
-    pelvis: { name: 'Pelvis sagittal', probe: 'cvx', depth: 150, pose: { site: 'torso', phi: 0, s: -316, rot: 90, tilt: 0, rock: 0 } },
+    uterus: { name: 'Uterus (suprapubik üstü)', probe: 'cvx', depth: 150, pose: { site: 'torso', phi: 0, s: -262, rot: 90, tilt: 0, rock: 25 } },
+    pelvis: { name: 'Pelvis sagittal', probe: 'cvx', depth: 150, pose: { site: 'torso', phi: 0, s: -272, rot: 90, tilt: 0, rock: 25 } },
     subx: { name: 'Subksifoid', probe: 'pha', depth: 190, pose: { site: 'torso', phi: 0, s: -45, rot: 0, tilt: 58, rock: 8 } }
   };
   function idxOf(L, key) { for (var i = 0; i < L.length; i++) if (L[i].key === key) return i; return -1; }
@@ -878,7 +879,7 @@ var UA = { ver: '1.0' };
       { t: 'Pelvis penceresi kanıtı', f: function (e) { return has(e, 'bladder', 300); } }],
     teach: 'Solda sıvı önce diyafram altında, dalağın ÜSTÜNDE toplanır; yalnız splenorenal aralığa bakmak hatadır. Mide içi sıvı ve perirenal yağ serbest sıvı sanılmamalı. İnstabil + pozitif FAST = ameliyathane.' });
 
-  sc({ id: 'S10', region: 5, female: true, title: 'Akut obstrüktif hidronefroz (evre II–III)', start: 'kidL', stem: '38 y kadın. Sol yan ağrısı, kasığa yayılıyor; mikroskopik hematüri.',
+  sc({ id: 'S10', region: 5, female: true, title: 'Akut obstrüktif hidronefroz (evre II–III)', start: 'kidLh', stem: '38 y kadın. Sol yan ağrısı, kasığa yayılıyor; mikroskopik hematüri.',
     build: function (L) { var c = [64 - 6, 47, -88]; var Q = [P.ell('pelvfl', 'hydro', 'Dilate renal pelvis', c, [13, 11, 24], A())];
       for (var q = 0; q < 6; q++) { var th = q * 1.05 + 0.4; Q.push(P.ell('pelvfl', 'hydro', 'Dilate kaliks', [c[0] + 5 + Math.cos(th) * 11, c[1] + Math.sin(th) * 9, c[2] + (q - 2.5) * 13.5], [8.5, 7.5, 9], A())); }
       Q.push(P.cap('pelvfl', 'hydro', 'Dilate proksimal üreter', [c[0] - 8, c[1] - 2, c[2] - 20], [40, 44, -150], 5, 3.5, A()));
