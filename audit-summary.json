@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-11-07T19:12:13.659Z",
+  "generatedAt": "2026-11-15T03:38:56.353Z",
   "threeLocal": true,
-  "pages": 24,
+  "pages": 25,
   "viewports": [
     {
       "w": 1920,
@@ -27,7 +27,7 @@
     },
     "gate3_link_integrity": {
       "pass": true,
-      "checked": 57,
+      "checked": 59,
       "skipped": 1,
       "broken": []
     },
@@ -40,7 +40,7 @@
       "fails": []
     },
     "gate6_clinical_selftests": {
-      "hooks": 10,
+      "hooks": 11,
       "pass": true,
       "detail": [
         {
@@ -1093,7 +1093,7 @@
           "pass": true,
           "selfTest": {
             "pass": true,
-            "count": 24,
+            "count": 31,
             "tests": [
               {
                 "n": "cv-240mm-4ms-60",
@@ -1230,10 +1230,69 @@
                 "info": {
                   "n": 3,
                   "limb": {
-                    "draws": 208,
+                    "draws": 255,
                     "kind": "arm",
                     "hasElectrodes": true,
-                    "sites": 4
+                    "sites": 2,
+                    "w": 360,
+                    "h": 215,
+                    "s": 1,
+                    "hit": [
+                      {
+                        "x": 258,
+                        "y": 72,
+                        "i": 0,
+                        "r": 13
+                      },
+                      {
+                        "x": 130,
+                        "y": 72,
+                        "i": 1,
+                        "r": 13
+                      }
+                    ],
+                    "big": false,
+                    "lesion": true,
+                    "overlaps": 0,
+                    "dropped": 0,
+                    "dropNames": [],
+                    "siteLab": 2,
+                    "nLabels": 33,
+                    "tree": {
+                      "nodes": [
+                        "Üst trunkus",
+                        "Orta trunkus",
+                        "Alt trunkus",
+                        "Lateral kord",
+                        "Posterior kord",
+                        "Medial kord",
+                        "Median",
+                        "Radial",
+                        "Ulnar",
+                        "MABC"
+                      ],
+                      "roots": [
+                        "C5",
+                        "C6",
+                        "C7",
+                        "C8",
+                        "T1"
+                      ],
+                      "route": [
+                        "tU",
+                        "tM",
+                        "tL",
+                        "dUL",
+                        "dML",
+                        "dLM",
+                        "cL",
+                        "cM",
+                        "nMedL",
+                        "nMedM"
+                      ],
+                      "drg": 5
+                    },
+                    "oob": 0
                   }
                 }
               },
@@ -1275,9 +1334,206 @@
                 "info": {
                   "bad": []
                 }
+              },
+              {
+                "n": "test_anatomy_map_click_and_rns_headroom",
+                "pass": true,
+                "info": {
+                  "L0": {
+                    "w": 360,
+                    "h": 215
+                  },
+                  "w": 360,
+                  "h": 215,
+                  "sOK": true,
+                  "sw": true,
+                  "exOK": true,
+                  "lnOK": true,
+                  "hOK": true,
+                  "hd": "{\"0\":{\"gain\":2000,\"peakPx\":53.40630281066895,\"room\":110.23333333333333},\"1\":{\"gain\":3955.6850569605886,\"peakPx\":90.39133333333332,\"room\":110.23333333333332},\"2\""
+                }
+              },
+              {
+                "n": "test_plexus_tree_no_label_overlap",
+                "pass": true,
+                "info": {
+                  "n": 40,
+                  "plOK": true,
+                  "armOK": true,
+                  "legOK": true,
+                  "exT": true,
+                  "lnT": true,
+                  "bad": []
+                }
+              },
+              {
+                "n": "test_averager_sqrtN_and_50hz_phase_lock",
+                "pass": true,
+                "info": {
+                  "q": 0.2134321259020416,
+                  "lock": 0.9976048820318021,
+                  "free": 0.41779275522260034
+                }
+              },
+              {
+                "n": "test_f_raster_repeater_and_2cm_inching",
+                "pass": true,
+                "info": {
+                  "valid": 20,
+                  "rep": true,
+                  "dLsrc": [
+                    0.36281179138322006,
+                    0.3628117913832192,
+                    1.3151927437641726,
+                    0.36281179138322006
+                  ],
+                  "normal": [
+                    0.36281179138322006,
+                    0.34013605442176864,
+                    0.36281179138322006,
+                    0.3628117913832192
+                  ],
+                  "shift": 1.7999999999999998,
+                  "dLx": 0.43083900226757343,
+                  "normalRep": false
+                }
+              },
+              {
+                "n": "test_turns_cloud_bevel_and_cn_jitter",
+                "pass": true,
+                "info": {
+                  "rr": 2.333333333333333,
+                  "aa": 3.207680160661178,
+                  "n": 6,
+                  "m": 6,
+                  "u": 6,
+                  "mg": 81.19632038964282,
+                  "mgb": 13.5,
+                  "nm": 25.68986176324438
+                }
+              },
+              {
+                "n": "test_fellowship_cases_mmn_myokymia_and_dmcmap",
+                "pass": true,
+                "info": {
+                  "blk": 0.6124958629614468,
+                  "snap": 30,
+                  "RA": 0.16674356953955863,
+                  "RB": 0.8019666652046846,
+                  "sA": 2,
+                  "sB": 11.999996185302734
+                }
+              },
+              {
+                "n": "test_hipct_fascicle_and_nmus_heckmatt_csa",
+                "pass": true,
+                "info": {
+                  "nF": 18,
+                  "gN": 0.47643470280192196,
+                  "gA": 0.9197544161999138,
+                  "atro": 5154,
+                  "infl": 5510,
+                  "musN": 73.61129458435245,
+                  "shN": 6.381945162611322,
+                  "musA": 184.7240559478977,
+                  "shA": 50.43938838663991,
+                  "g9": 4,
+                  "csa2": 15.083333333333334,
+                  "csa3": 14.805555555555555,
+                  "csaN": 7.638888888888889,
+                  "rv": 4,
+                  "fa": true,
+                  "fn": false
+                }
               }
             ],
             "failed": []
+          }
+        },
+        {
+          "page": "ductuslab-usg-atlas.html",
+          "pass": true,
+          "selfTest": {
+            "hook": true,
+            "module": "USG-Atlas",
+            "pass": true,
+            "total": 5,
+            "failed": [],
+            "checks": [
+              {
+                "n": "test_single_coordinate_truth_and_rib_stone_shadow",
+                "ok": true,
+                "pass": true,
+                "info": {
+                  "labelMismatch": [],
+                  "stoneShadowDb": 17,
+                  "ribShadowDb": 19.1,
+                  "bladderEnhDb": 24.2,
+                  "stoneGoneOffPlane": true
+                }
+              },
+              {
+                "n": "test_speckle_statistics_and_tissue_anchoring",
+                "ok": true,
+                "pass": true,
+                "info": {
+                  "meanOverSD": 1.943,
+                  "n": 2693,
+                  "anchoredSame": 40,
+                  "decorrelatedAtFixedWorld": 40,
+                  "dzMm": 14,
+                  "compressionWarp": true
+                }
+              },
+              {
+                "n": "test_lung_mmode_seashore_vs_barcode_and_doppler_cos",
+                "ok": true,
+                "pass": true,
+                "info": {
+                  "normal": "seashore 0.296",
+                  "ptx": "barcode 0.082",
+                  "lungPointAlternates": "12",
+                  "lungPointInOneFrame": true,
+                  "cosRatioMeasured": 1.908,
+                  "cosRatioPredicted": 1.921,
+                  "v30": 40.9,
+                  "v90": 0.2,
+                  "theta90": 89.8
+                }
+              },
+              {
+                "n": "test_dvt_compression_and_jury_traps",
+                "ok": true,
+                "pass": true,
+                "info": {
+                  "normalVeinOpen": 0,
+                  "normalArteryOpen": 1,
+                  "normalAreaRatio": 0.02,
+                  "dvtVeinOpen": 0.88,
+                  "dvtAreaRatio": 0.92,
+                  "OUT_OF_PLANE_SLIP": true,
+                  "lumenMm": 34.3,
+                  "outerMm": 61.4,
+                  "AAA_LUMEN_ONLY_TRAP": true,
+                  "clearedByOuterWall": true,
+                  "ALARA_DOPPLER_VIOLATION": true
+                }
+              },
+              {
+                "n": "test_hipct_3tier_zoom_and_us_invariance",
+                "ok": true,
+                "pass": true,
+                "info": {
+                  "murrayMaxErr": 6.468801622866874e-16,
+                  "k2Segments": 385,
+                  "k2FinestRadiusMm": 0.0125,
+                  "k3Deterministic": true,
+                  "k3UmPerSample": 2,
+                  "usResolutionUnchanged": true,
+                  "usFrameHashSameGeometry": "yeni kare gürültüsü"
+                }
+              }
+            ]
           }
         }
       ]
@@ -1285,7 +1541,7 @@
     "gate7_portal_accessibility": {
       "pass": true,
       "detail": {
-        "cards": 22,
+        "cards": 23,
         "lapBadgeClean": true,
         "frmPresent": true,
         "scrollOk": true,
@@ -1294,7 +1550,7 @@
     },
     "gate8_mobile_phone_ergonomics": {
       "pass": true,
-      "checks": 96,
+      "checks": 100,
       "fails": [],
       "detail": [
         {
@@ -1306,7 +1562,7 @@
             "portal": {
               "sw": 390,
               "iw": 390,
-              "cards": 22,
+              "cards": 23,
               "pillsScroll": "auto",
               "box": [
                 390,
@@ -1334,7 +1590,7 @@
             "portal": {
               "sw": 360,
               "iw": 360,
-              "cards": 22,
+              "cards": 23,
               "pillsScroll": "auto",
               "box": [
                 360,
@@ -1362,7 +1618,7 @@
             "portal": {
               "sw": 844,
               "iw": 844,
-              "cards": 22,
+              "cards": 23,
               "pillsScroll": "auto",
               "box": [
                 844,
@@ -2880,6 +3136,65 @@
             "mon": true,
             "sw": true
           }
+        },
+        {
+          "page": "ductuslab-usg-atlas.html",
+          "viewport": "390x844",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "canvas": {
+              "maxW": 390,
+              "maxH": 337,
+              "stackH": 974,
+              "svgOk": false
+            },
+            "asp": 0.001
+          }
+        },
+        {
+          "page": "ductuslab-usg-atlas.html",
+          "viewport": "360x800",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "canvas": {
+              "maxW": 360,
+              "maxH": 319,
+              "stackH": 938,
+              "svgOk": false
+            },
+            "asp": 0
+          }
+        },
+        {
+          "page": "ductuslab-usg-atlas.html",
+          "viewport": "844x390",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "canvas": {
+              "maxW": 421,
+              "maxH": 305,
+              "stackH": 910,
+              "svgOk": false
+            },
+            "asp": 0
+          }
+        },
+        {
+          "page": "ductuslab-usg-atlas.html",
+          "viewport": "desktop-1366x768",
+          "pass": true,
+          "fails": [],
+          "detail": {
+            "shell": false,
+            "tb": true,
+            "cc": true,
+            "menu": true,
+            "mon": true,
+            "sw": true
+          }
         }
       ]
     }
@@ -4147,7 +4462,7 @@
       "truthLeak": [],
       "selfTest": {
         "pass": true,
-        "count": 24,
+        "count": 31,
         "tests": [
           {
             "n": "cv-240mm-4ms-60",
@@ -4284,10 +4599,69 @@
             "info": {
               "n": 3,
               "limb": {
-                "draws": 208,
+                "draws": 255,
                 "kind": "arm",
                 "hasElectrodes": true,
-                "sites": 4
+                "sites": 2,
+                "w": 360,
+                "h": 215,
+                "s": 1,
+                "hit": [
+                  {
+                    "x": 258,
+                    "y": 72,
+                    "i": 0,
+                    "r": 13
+                  },
+                  {
+                    "x": 130,
+                    "y": 72,
+                    "i": 1,
+                    "r": 13
+                  }
+                ],
+                "big": false,
+                "lesion": true,
+                "overlaps": 0,
+                "dropped": 0,
+                "dropNames": [],
+                "siteLab": 2,
+                "nLabels": 33,
+                "tree": {
+                  "nodes": [
+                    "Üst trunkus",
+                    "Orta trunkus",
+                    "Alt trunkus",
+                    "Lateral kord",
+                    "Posterior kord",
+                    "Medial kord",
+                    "Median",
+                    "Radial",
+                    "Ulnar",
+                    "MABC"
+                  ],
+                  "roots": [
+                    "C5",
+                    "C6",
+                    "C7",
+                    "C8",
+                    "T1"
+                  ],
+                  "route": [
+                    "tU",
+                    "tM",
+                    "tL",
+                    "dUL",
+                    "dML",
+                    "dLM",
+                    "cL",
+                    "cM",
+                    "nMedL",
+                    "nMedM"
+                  ],
+                  "drg": 5
+                },
+                "oob": 0
               }
             }
           },
@@ -4329,6 +4703,117 @@
             "info": {
               "bad": []
             }
+          },
+          {
+            "n": "test_anatomy_map_click_and_rns_headroom",
+            "pass": true,
+            "info": {
+              "L0": {
+                "w": 360,
+                "h": 215
+              },
+              "w": 360,
+              "h": 215,
+              "sOK": true,
+              "sw": true,
+              "exOK": true,
+              "lnOK": true,
+              "hOK": true,
+              "hd": "{\"0\":{\"gain\":2000,\"peakPx\":53.40630281066895,\"room\":110.23333333333333},\"1\":{\"gain\":3955.6850569605886,\"peakPx\":90.39133333333332,\"room\":110.23333333333332},\"2\""
+            }
+          },
+          {
+            "n": "test_plexus_tree_no_label_overlap",
+            "pass": true,
+            "info": {
+              "n": 40,
+              "plOK": true,
+              "armOK": true,
+              "legOK": true,
+              "exT": true,
+              "lnT": true,
+              "bad": []
+            }
+          },
+          {
+            "n": "test_averager_sqrtN_and_50hz_phase_lock",
+            "pass": true,
+            "info": {
+              "q": 0.2134321259020416,
+              "lock": 0.9976048820318021,
+              "free": 0.41779275522260034
+            }
+          },
+          {
+            "n": "test_f_raster_repeater_and_2cm_inching",
+            "pass": true,
+            "info": {
+              "valid": 20,
+              "rep": true,
+              "dLsrc": [
+                0.36281179138322006,
+                0.3628117913832192,
+                1.3151927437641726,
+                0.36281179138322006
+              ],
+              "normal": [
+                0.36281179138322006,
+                0.34013605442176864,
+                0.36281179138322006,
+                0.3628117913832192
+              ],
+              "shift": 1.7999999999999998,
+              "dLx": 0.43083900226757343,
+              "normalRep": false
+            }
+          },
+          {
+            "n": "test_turns_cloud_bevel_and_cn_jitter",
+            "pass": true,
+            "info": {
+              "rr": 2.333333333333333,
+              "aa": 3.207680160661178,
+              "n": 6,
+              "m": 6,
+              "u": 6,
+              "mg": 81.19632038964282,
+              "mgb": 13.5,
+              "nm": 25.68986176324438
+            }
+          },
+          {
+            "n": "test_fellowship_cases_mmn_myokymia_and_dmcmap",
+            "pass": true,
+            "info": {
+              "blk": 0.6124958629614468,
+              "snap": 30,
+              "RA": 0.16674356953955863,
+              "RB": 0.8019666652046846,
+              "sA": 2,
+              "sB": 11.999996185302734
+            }
+          },
+          {
+            "n": "test_hipct_fascicle_and_nmus_heckmatt_csa",
+            "pass": true,
+            "info": {
+              "nF": 18,
+              "gN": 0.47643470280192196,
+              "gA": 0.9197544161999138,
+              "atro": 5154,
+              "infl": 5510,
+              "musN": 73.61129458435245,
+              "shN": 6.381945162611322,
+              "musA": 184.7240559478977,
+              "shA": 50.43938838663991,
+              "g9": 4,
+              "csa2": 15.083333333333334,
+              "csa3": 14.805555555555555,
+              "csaN": 7.638888888888889,
+              "rv": 4,
+              "fa": true,
+              "fn": false
+            }
           }
         ],
         "failed": []
@@ -4336,6 +4821,101 @@
       "lifecycle": {
         "supported": false,
         "advanced": null
+      }
+    },
+    "ductuslab-usg-atlas.html": {
+      "page": "ductuslab-usg-atlas.html",
+      "pageerrors": [],
+      "consoleErrors": [],
+      "externalAssets": [],
+      "disallowedReq": [],
+      "overflow": [],
+      "truthLeak": [],
+      "selfTest": {
+        "hook": true,
+        "module": "USG-Atlas",
+        "pass": true,
+        "total": 5,
+        "failed": [],
+        "checks": [
+          {
+            "n": "test_single_coordinate_truth_and_rib_stone_shadow",
+            "ok": true,
+            "pass": true,
+            "info": {
+              "labelMismatch": [],
+              "stoneShadowDb": 17,
+              "ribShadowDb": 19.1,
+              "bladderEnhDb": 24.2,
+              "stoneGoneOffPlane": true
+            }
+          },
+          {
+            "n": "test_speckle_statistics_and_tissue_anchoring",
+            "ok": true,
+            "pass": true,
+            "info": {
+              "meanOverSD": 1.943,
+              "n": 2693,
+              "anchoredSame": 40,
+              "decorrelatedAtFixedWorld": 40,
+              "dzMm": 14,
+              "compressionWarp": true
+            }
+          },
+          {
+            "n": "test_lung_mmode_seashore_vs_barcode_and_doppler_cos",
+            "ok": true,
+            "pass": true,
+            "info": {
+              "normal": "seashore 0.296",
+              "ptx": "barcode 0.082",
+              "lungPointAlternates": "12",
+              "lungPointInOneFrame": true,
+              "cosRatioMeasured": 1.908,
+              "cosRatioPredicted": 1.921,
+              "v30": 40.9,
+              "v90": 0.2,
+              "theta90": 89.8
+            }
+          },
+          {
+            "n": "test_dvt_compression_and_jury_traps",
+            "ok": true,
+            "pass": true,
+            "info": {
+              "normalVeinOpen": 0,
+              "normalArteryOpen": 1,
+              "normalAreaRatio": 0.02,
+              "dvtVeinOpen": 0.88,
+              "dvtAreaRatio": 0.92,
+              "OUT_OF_PLANE_SLIP": true,
+              "lumenMm": 34.3,
+              "outerMm": 61.4,
+              "AAA_LUMEN_ONLY_TRAP": true,
+              "clearedByOuterWall": true,
+              "ALARA_DOPPLER_VIOLATION": true
+            }
+          },
+          {
+            "n": "test_hipct_3tier_zoom_and_us_invariance",
+            "ok": true,
+            "pass": true,
+            "info": {
+              "murrayMaxErr": 6.468801622866874e-16,
+              "k2Segments": 385,
+              "k2FinestRadiusMm": 0.0125,
+              "k3Deterministic": true,
+              "k3UmPerSample": 2,
+              "usResolutionUnchanged": true,
+              "usFrameHashSameGeometry": "yeni kare gürültüsü"
+            }
+          }
+        ]
+      },
+      "lifecycle": {
+        "supported": true,
+        "advanced": true
       }
     }
   },
